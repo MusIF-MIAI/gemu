@@ -3,9 +3,6 @@
 #include "ge.h"
 #include "msl.h"
 
-typedef int (*on_clock_cb)(struct ge *);
-
-static on_clock_cb on_clock[MAX_CLOCK];
 
 static int ge_halted(struct ge *ge)
 {
@@ -14,7 +11,7 @@ static int ge_halted(struct ge *ge)
 
 int ge_init(struct ge *ge)
 {
-    ge->ticks = 0;
+    ge->ticks = 0; 
     return 0;
 }
 
@@ -25,28 +22,21 @@ int ge_run_cycle(struct ge *ge)
 
     for(;ge->current_clock < MAX_CLOCK; ge->current_clock++) {
 
-        if (on_clock[ge->current_clock] != 0) {
-            r = on_clock[ge->current_clock](ge);
-            if (r != 0)
-                return r;
-        }
+        /* Execute machine logic for pulse*/
+        pulse(ge);
 
         c = msl_get_cell(ge->current_clock, ge->rSO);
-
         for (;c != NULL; c = c->next) {
             if (c->condition && !c->condition(ge))
                 continue;
-
             if (c->cmd == NULL || c->cmd->fn == NULL)
                 continue;
-
             r = c->cmd->fn(ge);
             if (r != 0)
                 return r;
         }
 
     }
-
     return 0;
 }
 
