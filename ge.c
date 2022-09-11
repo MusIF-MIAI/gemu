@@ -21,15 +21,9 @@ int ge_run_cycle(struct ge *ge)
     int r;
 
     for(;ge->current_clock < MAX_CLOCK; ge->current_clock++) {
-        struct pulse_event *c_ev = ge->on_pulse[ge->current_clock];
-        while (c_ev) {
-            if (c_ev->cb) {
-                r = c_ev->cb(ge);
-                if (r != 0)
-                    return r;
-            }
-            c_ev = c_ev->next;
-        }
+
+        /* Execute machine logic for pulse*/
+        pulse(ge);
 
         c = msl_get_cell(ge->current_clock, ge->rSO);
         for (;c != NULL; c = c->next) {

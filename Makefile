@@ -1,4 +1,4 @@
-OBJS=main.o msl.o ge.o
+OBJS=main.o msl.o ge.o pulse.o
 
 ge : $(OBJS)
 	cc -o ge $(OBJS)

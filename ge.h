@@ -147,4 +147,7 @@ struct pulse_event {
     struct pulse_event *next;
 };
 
+/* Defined in pulse.c: execute pulse events */
+int pulse(struct ge *ge);
+
 #endif /* GE_H */
