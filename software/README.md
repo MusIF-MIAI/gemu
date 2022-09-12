@@ -9,8 +9,10 @@ manuals.
 
 ## Contents
 
+
 ### From Diagnostic Organisation CR 1590013
 
-- (loader.txt)[Loader coding]: Chapter 8.0 (fo. 43)
-- (compile-print.txt)[Coding of compiling and printing sub-program]: Chapter 9.0 (fo. 45)
 
+- [loader.txt](loader.txt): Loader coding - Chapter 8.0 (fo. 43)
+- [compile-print.txt](compile-print.txt): Coding of compiling and 
+  printing sub-program - Chapter 9.0 (fo. 45)
