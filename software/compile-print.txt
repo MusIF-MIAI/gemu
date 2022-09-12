@@ -1,0 +1,114 @@
+0D7E SB   FF 10 0DFF 0FF9
+0D84 JU   47 F0 0DFC
+0D88 MVC  D2 01 0DFS 00FE  Compile return branch
+0D8F MVC  D2 01 0D96 0F9C
+0D94 MVC  D2 03 0000 0F98  Substitute space for each line of printout
+0D9A AB   FE 10 0D97 0FFC  Add 4
+0DA0 CMC  D5 01 0D96 OF9E
+0DA6 JNE  47 DO 0D94
+0DAA MVC  D2 00 0F73 00CD  Length, transfer for MB
+0DB0 MVC  D2 00 0F95 00CD  Length, field E for MB
+0DB6 AB   FE 10 0DFF 0FF9
+0DBC MVC  D2 00 0DEF 00CD  Length, transfer for MZ
+0DC2 MVC  D2 00 0E8F 00CD  Lenght, field E
+
+0DC9 CMI  95 FF 0D68       Integrated MZ4 present
+0DCC JE   47 20 0894       Check for other printers
+0DD0 PER  9E C0 0E92       MZ4 Integrated out of service
+0DD4 JC   47 50 0E94       Branch on verified condition
+0DD8 MVI  92 C0 0DF5       Compile MZ4 unit code for single space instruction
+0DDC MVI  92 C0 0DF9       Compile M4 unit code for print instruction
+0DE0 MVI  92 80 0E8A       Code "Z" for Single space instruction - MZ4
+0DF4 MVI  92 51 0E8C       Code "Z" for print instruction - MZ
+0DF8 MVC  D2 01 0DF2 00CB  Compile address
+0DEE MVC  D2 00 0E02 0000  Transier to printout field (ndr: wrong addresses in original?)
+0DF4 PER  9E C0 0E8A       Single space instruction - MZ
+0DF4 PER  9E C0 DE8C       Print instruction - M2
+0DFC JU   47 F0 0000       Return branch compiled
+0E00 DC   01 01            (ndr: written by hand)
+0E8A DP   81 0B            Single space instruction - MZ
+0E8C DP   51 42 0000 0E00  Print instruction - MZ - compiled
+0E92 DP   C1 14            (ndr: C1 was spelled as CI)
+0E94 CMI  95 FF 0D69       MZ4 on standard channel
+0E98 JE   47 20 0EC4
+0E9C MVC  D2 0D 0EA3 0D69
+0EA2 PER  9E 00 OEC2       MZ4 out of service
+0EA6 JC   47 50 0ECA 
+0EAA MVC  D2 00 0DF5 0D69  Compile with unit name
+0EB0 MVC  D2 00 0DF9 0D69
+0EB6 MVI  92 8C OE8A       Compile "Z" code field (ndr: address spelled 0E86 in original)
+
+0EBA MVI  92 50 0E8C
+0EBE JU   47 F0 0DE8       (ndr: address spelled 0E8E in original)
+0EC2 DP   C0 14            MZ4 out of service
+0EC4 CMI  95 FF 0D6A       MZ3 present
+0EC8 JE   47 20 0EF2
+0ECC MVC  D2 00 0ED3 0D6A
+0ED2 PER  9E 00 0EC2       MZ3 out of service
+0ED6 JC   47 50 0EF2 
+0EDA MVC  D2 00 0DF5 0D6A  Compile with unit name
+0EED MVC  D2 00 0DF9 0D6A
+0EE6 JU   47 F0 0EB6
+0EF2 CMI  95 FF 0D6B       MZ2 present
+0EF6 JE   47 20 0F20
+0EFA MVC  D2 00 0F01 0D6B
+0F00 PER  9E 00 0EC2       MZ2 out of service
+0F04 JC   47 50 0F20
+0F08 MVC  D2 00 0DF5 0D6B  Compile with unit name
+0F0E MVC  D2 00 0DF9 0D6B
+0F14 JU   47 F9 0EB6
+0F20 CMI  95 FF 0D6C       MB present
+0F24 JE   47 20 0D7E
+0F28 MVC  D2 00 0F2F 0D6C
+0F2E PER  9E 00 0EC2       MB out of service
+0F32 JC   47 50 0D7E
+0F36 MVC  D2 00 0F7F 0D6C  Compile with unit name
+0F3C JU   47 F0 0F60
+0F60 MVC  D2 00 0F83 0D6C
+0F66 MVC  D2 00 0F87 0D6C
+0F6C MVC  D2 01 0F76 00CB  Transfer in print out field
+0F72 MVC  D2 00 0E02 0000
+
+0F78 NOP2 07 00
+0F7A NOP2 07 00
+0F7C NOP2 07 00
+0F7E PER  9E 00 0F90
+0F82 PER  9E 00 0F8E       Single space
+0F86 PER  9E 00 0F92       Print
+0F8A JU   47 F0 0DFC      
+0F8E DP   80 0A            Single Space
+0F90 DP   80 0D            Carriager return (MB)
+0F92 DP   50 42 0000 0E02  Print MB
+0F98 DP   50 50 5050       Print space
+0F9C DC         0E02       Print line beginning
+0F9E DC         0E86      
+0F40 DC   50 51 5253       0 A B C
+0F44 DC   54 55 5657       D E F G
+0F48 DC   58 59 A1A2       H I J K
+0F4C DC   A3 A4 A5A6       L M N 0 (ndr: address spelled 0FAC)
+0F50 DC   40 A1 A2A3       0
+0F54 DC   A4 A5 A6A7
+0F58 DC   A8 A9 464E
+0F5C DC   4C 4D 4E4F
+0FA0 DC   A0 AA ABAC
+0FA4 DC   AD AE AFB0
+0FA8 DC   B1 B2 4D44
+0FAC DC   4A BD BE47
+0FB0 DC   4B 4F B3B4
+0FB4 DC   B5 B6 B7B8
+0FB8 DC   B9 BA BB4C
+0FCC DC   45 BD BEBF
+0FC0 MVC  D2 01 0FD4 00FE  Compile return branch
+0FCA MVC  D2 01 0FCE 00C8
+0FCC CMC  D5 01 0000 0FFA  End of table
+
+0FD2 JE   47 20 0000       Return branch compiled
+0FD6 MVC  D2 91 0FE0 00C8
+0FDC MVC  D2 01 0FEA 0000
+0FE2 AB   FE 10 0FEB 0FF8  Add 1
+0FE8 MVC  D2 00 0000 00CA
+0FEE AB   FE 10 00C8 0FF9  Add 2
+0FF4 JU   47 F0 0FC6
+0FF8 DC   01 02 FFFF       AA
+0FFC DC   04
+

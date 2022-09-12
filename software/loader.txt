@@ -1,0 +1,24 @@
+0000 PER  9E 80 0010       Read card at address 0028
+0004 PER  92 80 0016       Read card at address 0050
+0008 NOP2 07 00
+00OA NOP2 07 00
+000C JU   47 FO 0028       Jump at address 0028 (loader execution)
+0010 DP   00 40 004F 0028
+0016 DP   00 40 004F 0050
+0028 PER  9E 80 005A       Read card at 0000
+002C PER  9E 80 0060       Examine or of abnormal conditions
+0030 JC   47 10 0050
+0034 MVC  D2 02 003B 000A  Compiles LL and Address of the second MVC (ndr: last 000A not readable from source material)
+
+0O3A MVC  D2 00 0000 0007  Transfer read card to the reauested address
+0040 MVC  D2 00 0049 0027  Compile second byte of address JU to compiled address from MVC
+0046 JU   47 F0 0000
+004A HLT  0A 00            Loading end
+0040 JU   47 F0 0000       Jump to address = 0000
+0050 HLT  0A 00            Read error (or any other abnormal situation)
+0052 PER  9E 80 0062       Reset error
+0056 JU   47 F0 0028
+005A DP   00 40 0027 0000  Field E Read
+0060 DP   C0 44            Field E exam of conditions
+0062 DP   80 47            Field & reset error command
+
