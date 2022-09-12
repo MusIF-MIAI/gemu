@@ -11,6 +11,9 @@ int main(int argc, char *argv[])
 
     /* load with memory / and or setup peripherics */
 
+    ge_clear(&ge130);
+    ge_start(&ge130);
+
     ret = ge_run(&ge130);
     return ret;
 }
