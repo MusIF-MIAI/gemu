@@ -127,7 +127,8 @@ int ge_run(struct ge *ge)
     int r;
 
     while (!ge_halted(ge)) {
-        r = ge_run_cycle(ge);
+//        r = ge_run_cycle(ge);
+        r = ge_run_state(ge);
         if (r != 0)
             return r;
         ge->ticks++;
