@@ -44,6 +44,4 @@ void CU10(struct ge*);
 void CU11(struct ge*);
 void CU17(struct ge*);
 
-void NONE(struct ge*);
-
 #endif /* MSL_COMMANDS_H */

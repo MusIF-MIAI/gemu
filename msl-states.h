@@ -72,7 +72,6 @@ struct msl_timing_chart state_E0[] = {
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
     { TO40, CO00, 0 },
-    { TO50, NONE, 0 }, // NO -> BO
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO80, CI39, 0 },
@@ -92,7 +91,6 @@ struct msl_timing_chart state_E4[] = {
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
     { TO40, CO00, 0 },
-    { TO50, NONE, 0 }, // NO -> BO
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO70, CI65, 0 },
@@ -112,7 +110,6 @@ struct msl_timing_chart state_E6[] = {
     { TO25, CO30, 0 },
     { TO30, CI12, 0 },
     { TO40, CO00, 0 },
-    { TO50, NONE, 0 }, // NO -> BO
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO80, CI38, state_E6_TO80_CI38 },
@@ -135,7 +132,6 @@ struct msl_timing_chart state_E5[] = {
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
     { TO40, CO00, 0 },
-    { TO50, NONE, 0 }, // NO -> BO
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO70, CI65, 0 },
@@ -157,7 +153,6 @@ struct msl_timing_chart state_E7[] = {
     { TO25, CO30, 0 },
     { TO30, CI12, 0 },
     { TO40, CO00, 0 },
-    { TO50, NONE, 0 }, // NO -> BO
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO80, CI38, state_E7_TO80_CI38 },
