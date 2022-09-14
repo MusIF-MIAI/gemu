@@ -3,19 +3,10 @@
 
 #include <stdint.h>
 #include "ge.h"
-#include "msl.h"
 
-struct msl_cell {
-    struct msl_cell *next;
-    int (*condition)(struct ge*);
-    struct command *cmd;
-};
+struct msl_timing_state;
 
-struct command {
-    const char *name;
-    int (*fn)(struct ge*);
-};
-
-struct msl_cell *msl_get_cell(enum clock clock, uint8_t status);
+struct msl_timing_state* msl_get_state(uint8_t);
+void msl_run_state(struct ge*, struct msl_timing_state *);
 
 #endif /* MSL_H */

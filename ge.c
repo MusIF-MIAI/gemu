@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include "ge.h"
 #include "msl.h"
-#include "msl-timings.h"
 
 static int ge_halted(struct ge *ge)
 {
@@ -62,16 +62,15 @@ static void ge_print_well_known_states(uint8_t state) {
 int ge_run_cycle(struct ge *ge)
 {
     struct msl_timing_state *state;
-    struct msl_timing_chart *chart;
 
     int old_SO = ge->rSO;
 
     ge_print_well_known_states(ge->rSO);
     printf("Running state %02X\n", ge->rSO);
 
-    state = &msl_timings[ge->rSO];
+    state = msl_get_state(ge->rSO);
 
-    if (!state->count || !state->chart) {
+    if (!state) {
         printf("no timing charts found for state %02X\n", ge->rSO);
         return 1;
     }
@@ -81,16 +80,7 @@ int ge_run_cycle(struct ge *ge)
         pulse(ge);
 
         /* Execute the commands from the timing charts */
-        for (int i = 0; i < state->count; i++) {
-            chart = &state->chart[i];
-
-            if (chart->clock == ge->current_clock) {
-                if (chart->condition && !chart->condition(ge))
-                    continue;
-
-                chart->command(ge);
-            }
-        }
+        msl_run_state(ge, state);
     }
 
     if (ge->rSO == old_SO) {

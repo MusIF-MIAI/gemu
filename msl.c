@@ -1,15 +1,29 @@
 #include <stdint.h>
 
 #include "msl.h"
+#include "msl-timings.h"
 
-#define MAX_STATUS 255
-
-static struct msl_cell MSL[MAX_CLOCK][MAX_STATUS];
-
-struct msl_cell *msl_get_cell(enum clock clock, uint8_t status)
+struct msl_timing_state* msl_get_state(uint8_t SO)
 {
-    //return MSL[clock, status];
+    struct msl_timing_state *state = &msl_timings[SO];
 
-    MSL[0][0] = MSL[0][0];
-    return 0;
+    return (!state->count || !state->chart)
+        ? NULL
+        : state;
+}
+
+void msl_run_state(struct ge* ge, struct msl_timing_state *state)
+{
+    struct msl_timing_chart *chart;
+
+    for (int i = 0; i < state->count; i++) {
+        chart = &state->chart[i];
+
+        if (chart->clock == ge->current_clock) {
+            if (chart->condition && !chart->condition(ge))
+                continue;
+
+            chart->command(ge);
+        }
+    }
 }
