@@ -59,7 +59,7 @@ static void ge_print_well_known_states(uint8_t state) {
     }
 }
 
-static int ge_run_state(struct ge *ge)
+int ge_run_cycle(struct ge *ge)
 {
     struct msl_timing_state *state;
     struct msl_timing_chart *chart;
@@ -101,38 +101,12 @@ static int ge_run_state(struct ge *ge)
     return 0;
 }
 
-int ge_run_cycle(struct ge *ge)
-{
-    struct msl_cell *c;
-    int r;
-
-    for(;ge->current_clock < MAX_CLOCK; ge->current_clock++) {
-
-        /* Execute machine logic for pulse*/
-        pulse(ge);
-
-        c = msl_get_cell(ge->current_clock, ge->rSO);
-        for (;c != NULL; c = c->next) {
-            if (c->condition && !c->condition(ge))
-                continue;
-            if (c->cmd == NULL || c->cmd->fn == NULL)
-                continue;
-            r = c->cmd->fn(ge);
-            if (r != 0)
-                return r;
-        }
-
-    }
-    return 0;
-}
-
 int ge_run(struct ge *ge)
 {
     int r;
 
     while (!ge_halted(ge)) {
-//        r = ge_run_cycle(ge);
-        r = ge_run_state(ge);
+        r = ge_run_cycle(ge);
         if (r != 0)
             return r;
         ge->ticks++;
