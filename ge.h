@@ -77,6 +77,7 @@ struct ge {
     /* Main clock */
     enum clock current_clock;
     uint64_t ticks;
+    uint8_t halted;
 
     /* Lists of events and operations for all
      * pulses
@@ -136,9 +137,24 @@ struct ge {
     uint8_t mem[MEM_SIZE];
 };
 
+/// Initialize the emulator
 int ge_init(struct ge *ge);
+
+/// Run the emulator
 int ge_run(struct ge *ge);
+
+/// Run a sigle cycle (all GE "mastri" clock periods)
 int ge_run_cycle(struct ge *ge);
+
+/// Emulate the press of the "clear" button in the console
+void ge_clear(struct ge * ge);
+
+/// Emulate the press of the "load" button in the console
+void ge_load(struct ge * ge);
+
+/// Emulate the press of the "start" button in the console
+void ge_start(struct ge * ge);
+
 
 typedef int (*on_pulse_cb)(struct ge *);
 
