@@ -77,6 +77,10 @@ static int ge_run_state(struct ge *ge)
     }
 
     for(ge->current_clock = TO00; ge->current_clock < MAX_CLOCK; ge->current_clock++) {
+        /* Execute machine logic for pulse*/
+        pulse(ge);
+
+        /* Execute the commands from the timing charts */
         for (int i = 0; i < state->count; i++) {
             chart = &state->chart[i];
 
