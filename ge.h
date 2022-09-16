@@ -71,7 +71,10 @@ enum clock {
  *
  * @rSA: Register that drives the MLS and the logic to generate future status
  *       configuration
- *
+ * @ffFI: 7 Flip-Flops containing special conditions which occur during the
+ *      performance of an instruction. Unloaded in @FA in T010
+ * @ffFA: 7 Flip-Flops containing special conditions which occur during the
+ *      performance of an instruction. Loaded from @FI in T010
  */
 struct ge {
     /* Main clock */
@@ -128,8 +131,9 @@ struct ge {
     /* MLS/Future state configuration register */
     uint8_t rSA;
 
-    /* Registers for special conditions and exceptions */
-    uint8_t rFI[7];
+    /* Registers for special conditions and exceptions (7bits)*/
+    uint8_t ffFI;
+    uint8_t ffFA;
 
     /* Faults: TODO (pp. 139-141) */
 
