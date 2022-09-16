@@ -150,10 +150,10 @@ int ge_run_cycle(struct ge *ge);
 void ge_clear(struct ge * ge);
 
 /// Emulate the press of the "load" button in the console
-void ge_load(struct ge * ge);
+int ge_load(struct ge * ge, uint8_t *program, uint8_t size);
 
 /// Emulate the press of the "start" button in the console
-void ge_start(struct ge * ge);
+int ge_start(struct ge * ge);
 
 
 typedef int (*on_pulse_cb)(struct ge *);

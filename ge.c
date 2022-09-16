@@ -13,12 +13,12 @@ static int ge_halted(struct ge *ge)
 int ge_init(struct ge *ge)
 {
     ge->halted = 1;
-    ge->ticks = 0; 
+    ge->ticks = 0;
     return 0;
 }
 
 /// Emulate the press of the "clear" button in the console
-void ge_clear(struct ge * ge)
+void ge_clear(struct ge *ge)
 {
     // From 14023130-0, sheet 5:
     // The pressure of the "CLEAR" push button only determines the continuos
@@ -30,13 +30,14 @@ void ge_clear(struct ge * ge)
 }
 
 /// Emulate the press of the "load" button in the console
-void ge_load(struct ge * ge)
+int ge_load(struct ge *ge, uint8_t *program, uint8_t size)
 {
     // not emulated
+    return 0;
 }
 
 /// Emulate the press of the "start" button in the console
-void ge_start(struct ge * ge)
+int ge_start(struct ge *ge)
 {
     // From 14023130-0, sheet 5:
     // With the rotating switch in "NORM" position, after the operation
@@ -44,6 +45,8 @@ void ge_start(struct ge * ge)
     ge->rSO = 0x80;
 
     ge->halted = 0;
+
+    return 0;
 }
 
 static void ge_print_well_known_states(uint8_t state) {
