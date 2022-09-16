@@ -27,6 +27,17 @@ enum clock {
     MAX_CLOCK
 };
 
+enum console_rotary_pos {
+    ROTARY_NORM = 0,
+};
+
+struct ge_console {
+    enum console_rotary_pos rotary;
+};
+
+struct ge_counting_network {
+    uint16_t output;
+};
 
 /**
  * struct ge
@@ -141,6 +152,9 @@ struct ge {
 
     uint8_t AINI:1;
     /* Faults: TODO (pp. 139-141) */
+
+    struct ge_console console;
+    struct ge_counting_network counting_network;
 
     /* Memory */
     uint8_t mem[MEM_SIZE];
