@@ -5,6 +5,7 @@
 #include "ge.h"
 #include "msl.h"
 
+#define MAX_PROGRAM_STORAGE_WORDS 129
 static int ge_halted(struct ge *ge)
 {
     return ge->halted;
@@ -27,12 +28,33 @@ void ge_clear(struct ge *ge)
 
     // Also clear the emulated memory... what else?!
     memset(ge->mem, 0, sizeof(ge->mem));
+
+    ge->AINI = 0;
 }
 
 /// Emulate the press of the "load" button in the console
 int ge_load(struct ge *ge, uint8_t *program, uint8_t size)
 {
-    // not emulated
+    if (program == NULL && size != 0)
+        return -1;
+
+    /* When pressing LOAD button, AINI is set. If AINI is set, the state 80
+     * (initialitiation) goes to state c8, starting the loading of the program
+     * (of max 129 words) from one of the peripherc unit. */
+
+    /* set AINI FF to 1 (pag. 96)*/
+    ge->AINI = 1;
+    if (program != NULL) {
+        if (size > MAX_PROGRAM_STORAGE_WORDS)
+            size = MAX_PROGRAM_STORAGE_WORDS;
+
+        /* simulate the loading for now */
+        memcpy(ge->mem, program, size);
+
+        /* I'm supposing that the AINI signal is resetted after loading */
+        ge->AINI = 0;
+    }
+
     return 0;
 }
 
