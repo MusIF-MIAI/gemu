@@ -105,9 +105,9 @@ struct ge {
     uint16_t rL3;
 
     /* Knot temporary values */
-    uint16_t rNO;
-    uint8_t rNA;
-    uint16_t rNI;
+    uint16_t kNO;
+    uint8_t kNA;
+    uint16_t kNI;
 
 
     /* General-purpose */
