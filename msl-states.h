@@ -10,11 +10,9 @@
 // to state E2+E3 if !AINI
 //          C8    if AINI
 
-static uint8_t AINI = 0; // stub value to test condition logic
-
-uint8_t state_80_TI06_CU01(struct ge *ge) { return !AINI; }
-uint8_t state_80_TI06_CU03(struct ge *ge) { return AINI; }
-uint8_t state_80_TI06_CU05(struct ge *ge) { return !AINI; }
+uint8_t state_80_TI06_CU01(struct ge *ge) { return !ge->AINI; }
+uint8_t state_80_TI06_CU03(struct ge *ge) { return ge->AINI; }
+uint8_t state_80_TI06_CU05(struct ge *ge) { return !ge->AINI; }
 
 struct msl_timing_chart state_80[] = {
     { TO30, CI19, 0 },

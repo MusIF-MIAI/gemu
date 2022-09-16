@@ -75,6 +75,10 @@ enum clock {
  *      performance of an instruction. Unloaded in @FA in T010
  * @ffFA: 7 Flip-Flops containing special conditions which occur during the
  *      performance of an instruction. Loaded from @FI in T010
+ * @AINI: FF It as the meaning of "Program Loading". It is set pressing "LOAD"
+ * and it is reset pressing "CLEAR" or with command CI39 (E0 status alpha)
+ * @counting_network: represent the GE counting network
+ * @console: represent the GE console
  */
 struct ge {
     /* Main clock */
@@ -135,6 +139,7 @@ struct ge {
     uint8_t ffFI;
     uint8_t ffFA;
 
+    uint8_t AINI:1;
     /* Faults: TODO (pp. 139-141) */
 
     /* Memory */
