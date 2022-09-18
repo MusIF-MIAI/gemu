@@ -13,11 +13,18 @@ led_spacing = 3
 sw_up = '┸'
 sw_down = '┰'
 
+MS_VAL = 0
+AM_VAL = 0
+
 
 
 scr = curses.initscr()
 curses.noecho()
 curses.cbreak()
+curses.nocbreak()
+curses.mousemask(1)
+scr.keypad(True)
+curses.curs_set(0)
 curses.start_color()
 led_colorpair = curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 #
@@ -40,7 +47,7 @@ def draw_led_labels():
     scr.addstr(y + 1, 20, 'UR')
 
     y += 6
-    
+
     # second line
     scr.addstr(y - 1, 9, "┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓ ┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓")
     scr.addstr(y + 1, 37, '07 06 05 04 03 02 01 00')
@@ -123,7 +130,52 @@ def draw_switch_row(pos_y, pos_x, n, value):
         else:
             val = False
         draw_switch(pos_y, pos_x + (i * sw_spacing) + 1, val)
-    
+
+def parse_mouse(i, y, x):
+    global MS_VAL
+    global AM_VAL
+    x0 = 90
+    if y < 8:
+        return
+    if y < 16:
+        x0 = 85
+        row = 0
+    elif y < 21:
+        row = 1
+    elif y < 28:
+        row = 2
+    else:
+        return
+    if (x < x0):
+        return
+    pos = (x - x0) // 5
+    if (row == 1) and pos > 8:
+        return
+    if (row != 1) and pos > 7:
+        return
+    if (row == 1):
+        pos += 8
+
+
+    if (row > 0):
+        bp = 15 -pos
+        if (AM_VAL & (1 << bp)) == 0:
+            AM_VAL |= (1 << bp)
+        else:
+            AM_VAL &= ~(1 << bp)
+        return
+
+    bp = 8 - pos
+    if (MS_VAL & (1 << bp)) == 0:
+        MS_VAL |= (1 << bp)
+    else:
+        MS_VAL &= ~(1 << bp)
+
+
+
+
+
+
 
 
 def main(stdscr):
@@ -141,9 +193,9 @@ def main(stdscr):
 
         #switch labels & switches
         draw_switch_labels()
-        draw_switch_row(10, 85, 9, 0x8F) 
-        draw_switch_row(18, 90, 8, 0xF0) 
-        draw_switch_row(24, 90, 8, 0xF0) 
+        draw_switch_row(10, 85, 9, MS_VAL)
+        draw_switch_row(18, 90, 8, AM_VAL & 0xFF)
+        draw_switch_row(24, 90, 8, (AM_VAL & 0xFF00) >> 8)
         draw_switch(3,122,True)
 
         #dial labels & dial
@@ -151,18 +203,22 @@ def main(stdscr):
         #
 
         #bottom buttons + display
-        
 
-        scr.refresh()
-        k = scr.getkey()
-        if k == 'q' or k == 'Q':
+
+        k = scr.getch()
+        if k == ord('q') or k == ord('Q'):
             break
+        if k == curses.KEY_MOUSE:
+            (m_id, mx, my, mz, bstat) = curses.getmouse()
+            parse_mouse(m_id, my, mx)
+            val[1]+= 1;
+            scr.addstr(0, 0, str(mx)+ ' ' + str(my))
+        scr.refresh()
+
 
 wrapper(main)
 
 
 
-curses.nocbreak()
-stdscr.keypad(False)
 curses.echo()
 curses.endwin()
