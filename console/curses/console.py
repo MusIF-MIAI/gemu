@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 import curses
+import socket
+import struct
 from curses import wrapper
 import time
 
@@ -17,6 +19,8 @@ L1_VAL = 0
 L2_VAL = 0
 L3_VAL = 0
 SCREEN = 'top'
+CPU_sock = None
+CPU_sock_connected = False
 
 scr = curses.initscr()
 curses.noecho()
@@ -27,13 +31,30 @@ scr.keypad(True)
 curses.curs_set(0)
 curses.start_color()
 led_colorpair = curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-chassis_colorpair = curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_BLUE)
+chassis_colorpair = curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLUE)
 button_red_colorpair = curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_RED)
 button_white_colorpair = curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
 MAX_Y,MAX_X = scr.getmaxyx()
 
+def statusbar(st):
+    global SCREEN
+    if SCREEN == 'front':
+        cp = 1
+    else:
+        cp = 2
+
+    for x in range(0, MAX_X):
+        scr.addch(MAX_Y - 2, x,  ' ', curses.color_pair(cp))
+    scr.addstr(MAX_Y - 2, 0, st, curses.color_pair(cp))
+    x = len(st) + 2
+    if (SCREEN == 'front'):
+        scr.addstr(MAX_Y - 2, x, "Operator panel. Press [TAB] to switch.", curses.color_pair(cp))
+    else:
+        scr.addstr(MAX_Y - 2, x, "Diagnostic panel. Press [TAB] to switch.", curses.color_pair(cp))
+
 def switch_screen():
     global SCREEN
+    scr.clear()
     if SCREEN == 'top':
         SCREEN = 'front'
     else:
@@ -202,10 +223,6 @@ def draw_front_labels():
             scr.addstr(19, x, button_labels[i + 9][0], curses.color_pair(4))
             scr.addstr(20, x, button_labels[i + 9][1], curses.color_pair(4))
 
-
-
-
-
 def draw_front_panel():
     global MS_VAL, AM_VAL, L1_VAL, L2_VAL, L3_VAL
     for y in range(0, 14):
@@ -217,12 +234,11 @@ def draw_front_panel():
         for x in range(MAX_X - 2, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
 
-    for y in range(23, MAX_Y - 1):
+    for y in range(23, MAX_Y - 3):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
     draw_leds(16, 75, L2_VAL)
     draw_leds(20, 75, L3_VAL)
-    #scr.addstr(28,4,'Honeywell', curses.color_pair(2))
 
     # Buttons: top row
     for y in range (15, 18):
@@ -291,32 +307,61 @@ def parse_mouse(i, y, x):
         pass
 
 
+def comm_cpu():
+    global CPU_sock;
+    global CPU_sock_connected;
+    if CPU_sock is None:
+        CPU_sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        CPU_sock.setblocking(False)
+        statusbar("CPU socket created.")
+    if CPU_sock_connected == False:
+        statusbar("Connecting to CPU...")
+        try:
+            CPU_sock.connect("/tmp/gemu.console")
+        except:
+            return False
+    CPU_sock_connected == True
+    statusbar("Connected to CPU.")
+    CPU_sock.send(struct.pack("HH", 0x00, 0x00))
+    r = CPU_sock.recv(1024)
+    if r != None:
+        # TODO: parse ge_console struct
+        return True
+    return False
+
+
 
 # Curses wrapped function
 def main(stdscr):
     global SCREEN
     global L2_VAL, L3_VAL
+    scr.timeout(100)
     while True:
-        scr.clear()
-        L2_VAL+=1
         if SCREEN == 'top':
             draw_top_panel()
         elif SCREEN == 'front':
             draw_front_panel()
+
+        scr.refresh()
+
+        # Blocking point
         k = scr.getch()
+        if k == -1:
+            L2_VAL+=1
+            if (False == comm_cpu()):
+                continue
         if k == ord('q') or k == ord('Q'):
             break
         if k == ord('\t'):
             switch_screen()
+            scr.refresh()
             continue
         if k == curses.KEY_MOUSE:
             (m_id, mx, my, mz, bstat) = curses.getmouse()
             parse_mouse(m_id, my, mx)
             L3_VAL += 1;
             scr.addstr(0, 0, str(mx)+ ' ' + str(my))
-
-
-        scr.refresh()
+        scr.clear()
 
 
 wrapper(main)
