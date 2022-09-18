@@ -4,6 +4,7 @@
 #include <string.h>
 #include "ge.h"
 #include "msl.h"
+#include "console_socket.h"
 
 #define MAX_PROGRAM_STORAGE_WORDS 129
 static int ge_halted(struct ge *ge)
@@ -13,6 +14,12 @@ static int ge_halted(struct ge *ge)
 
 int ge_init(struct ge *ge)
 {
+    ge->ge_console_socket = console_socket_init();
+    if (ge->ge_console_socket < 0) {
+        perror("Error creating console socket");
+    } else {
+        printf("Console socket created (fd = %d)\n", ge->ge_console_socket);
+    }
     ge->halted = 1;
     ge->ticks = 0;
     return 0;
@@ -106,11 +113,15 @@ int ge_run_cycle(struct ge *ge)
     }
 
     for(ge->current_clock = TO00; ge->current_clock < MAX_CLOCK; ge->current_clock++) {
+
         /* Execute machine logic for pulse*/
         pulse(ge);
 
         /* Execute the commands from the timing charts */
         msl_run_state(ge, state);
+
+        /* Update console socket */
+        console_socket_check(ge);
     }
 
     if (ge->rSO == old_SO) {

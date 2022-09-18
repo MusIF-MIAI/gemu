@@ -1,4 +1,4 @@
-OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o
+OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o console_socket.o
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 

@@ -323,10 +323,13 @@ def comm_cpu():
     CPU_sock_connected == True
     statusbar("Connected to CPU.")
     CPU_sock.send(struct.pack("HH", 0x00, 0x00))
-    r = CPU_sock.recv(1024)
-    if r != None:
-        # TODO: parse ge_console struct
-        return True
+    try:
+        r = CPU_sock.recv(1024)
+        if r != None:
+            # TODO: parse ge_console struct
+            return True
+    except:
+        return False
     return False
 
 
