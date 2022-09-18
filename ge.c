@@ -69,6 +69,7 @@ int ge_start(struct ge *ge)
     // With the rotating switch in "NORM" position, after the operation
     // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
     ge->rSO = 0x80;
+    ge->console.rotary = RS_NORM;
 
     ge->halted = 0;
 

@@ -2,7 +2,6 @@
 #define GE_H
 
 #include <stdint.h>
-#include "console.h"
 
 #define MEM_SIZE 65536
 
@@ -28,13 +27,100 @@ enum clock {
     MAX_CLOCK
 };
 
-enum console_rotary_pos {
-    ROTARY_NORM = 0,
+enum register_switch {
+    RS_V4,
+    RS_L3,
+    RS_V3,
+    RS_RI_L2,
+    RS_V2,
+    RS_L1,
+    RS_V1,
+    RS_V1_SCR,
+    RS_V1_LETT,
+    RS_NORM,
+    RS_PO,
+    RS_FI_UR,
+    RS_SO,
+    RS_FO,
 };
 
-struct ge_console {
-    enum console_rotary_pos rotary;
+struct __attribute__((packed)) ge_console {
+    struct __attribute__((packed)) console_lamp {
+        uint16_t RO:9,
+                _pad0:3,
+                UR:1,
+                _pad1:3;    /* RO 9 LSbits  + UR at bit 12 */
+
+        uint16_t SO:8,
+                 _pad2:4,
+                 FA:4;      /* SO 8 bits  + FA bits 12-15 */
+
+        uint16_t SA:8,
+                 _pad3:4,
+                 B:4;       /* SA 8 bits  + B bits 12-15 */
+
+        uint16_t ADD_reg;   /* 4 nibbles ADD REG - front panel */
+        uint16_t OP_reg:8,
+                 C3:1,
+                 C2:1,
+                 C1:1,
+                 I:1,
+                 JE:1,
+                 IM:1,
+                 NZ:1,
+                 OF:1;
+        uint16_t
+            LP_DC_ALERT:1,       /* red */
+            LP_POWER_OFF:1,      /* yellow */
+            LP_STAND_BY:1,       /* blue */
+            LP_POWER_ON:1,       /* yellow */
+            LP_MAINTENANCE_ON:1, /* red */
+            LP_MEM_CHECK:1,      /* red */
+            LP_INV_ADD:1,        /* red */
+            LP_SWITCH_1:1,       /* white */
+            LP_SWITCH_2:1,       /* white */
+            LP_STEP_BY_STEP:1,   /* white */
+            LP_HALT:1,           /* white */
+            LP_LOAD_1:1,         /* white */
+            LP_LOAD_2:1,         /* white */
+            LP_OPERATOR_CALL:1;  /* blue */
+    } lamps;
+
+    struct __attribute__((packed)) console_switch {
+        uint16_t PAPA:1,
+                 PATE:1,
+                 RICI:1,
+                 ACOV:1,
+                 ACON:1,
+                 INAR:1,
+                 INCE:1,
+                 SITE:1,
+                 lamps_on:1,
+                 _padding:6;
+        uint16_t AM;
+    } switches;
+
+    struct __attribute__((packed)) console_button {
+        uint16_t
+            B_AC_ON:1,
+            B_DC_ALERT:1,
+            B_POWER_ON:1,
+            B_MAINTENANCE_ON:1,
+            B_SWITCH_1:1,
+            B_SWITCH_2:1,
+            B_STEP_BY_STEP:1,
+            B_LOAD_1_2:1,
+            B_EMERGEN_OFF:1,
+            B_STANDBY:1,
+            B_MEM_CHECK:1,
+            B_CLEAR:1,
+            B_LOAD:1,
+            B_HALT_START:1,
+            B_OPER_CALL:1;
+    } buttons;
+    uint8_t rotary;
 };
+
 
 struct ge_counting_network {
     uint16_t output;
@@ -161,18 +247,6 @@ struct ge {
     /* Memory */
     uint8_t mem[MEM_SIZE];
 
-    /* Operator Panel */
-    enum generic_switch  PAPA:1;
-    enum generic_switch  PATE:1;
-    enum generic_switch  RICI:1;
-    enum generic_switch  ACOV:1;
-    enum generic_switch  ACON:1;
-    enum generic_switch  INAR:1;
-    enum generic_switch  INCE:1;
-    enum generic_switch  SITE:1;
-    enum generic_switch  AM:1;
-    enum lamps_switch    LAMPS:2;
-    enum register_switch register_rotary;
 
     int step_by_step:1; /* XXX: replace with signal name */
     int operator_call:1; /* XXX: replace with signal name */

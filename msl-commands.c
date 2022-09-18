@@ -28,8 +28,8 @@ void CI12(struct ge* ge) CC
 void CI19(struct ge* ge)
 {
     /* TODO: not sure if this is correct */
-    if (ge->console.rotary != ROTARY_NORM) {
-        printf("Forcing not yet impelementd\n");
+    if (ge->console.rotary != RS_NORM) {
+        printf("Forcing not yet impelemented\n");
         ge->halted = 1;
     }
 }
