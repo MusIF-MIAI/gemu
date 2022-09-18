@@ -26,6 +26,10 @@ void ge_clear(struct ge *ge)
     // performance of the "00" status
     ge->rSO = 0;
 
+    /* From 30004122 o/A, sheet 31:
+     * The light is switched off by tle LOFF instruction or by the CLEAR key */
+    ge->operator_call = 0;
+
     // Also clear the emulated memory... what else?!
     memset(ge->mem, 0, sizeof(ge->mem));
 
@@ -128,4 +132,9 @@ int ge_run(struct ge *ge)
     }
 
     return 0;
+}
+
+int ge_struct_sizeof(void)
+{
+    return sizeof(struct ge);
 }

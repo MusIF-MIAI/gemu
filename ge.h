@@ -2,6 +2,7 @@
 #define GE_H
 
 #include <stdint.h>
+#include "console.h"
 
 #define MEM_SIZE 65536
 
@@ -152,12 +153,39 @@ struct ge {
 
     uint8_t AINI:1;
     /* Faults: TODO (pp. 139-141) */
+    uint8_t rFA;
 
     struct ge_console console;
     struct ge_counting_network counting_network;
 
     /* Memory */
     uint8_t mem[MEM_SIZE];
+
+    /* Operator Panel */
+    enum generic_switch  PAPA:1;
+    enum generic_switch  PATE:1;
+    enum generic_switch  RICI:1;
+    enum generic_switch  ACOV:1;
+    enum generic_switch  ACON:1;
+    enum generic_switch  INAR:1;
+    enum generic_switch  INCE:1;
+    enum generic_switch  SITE:1;
+    enum generic_switch  AM:1;
+    enum lamps_switch    LAMPS:2;
+    enum register_switch register_rotary;
+
+    int step_by_step:1; /* XXX: replace with signal name */
+    int operator_call:1; /* XXX: replace with signal name */
+
+    int JS1:1; /* console jump condition */
+    int JS2:1; /* console jump condition */
+    int JE:1; /* JE/AVER jump instruction exectuted */
+    int INTE:1; /* interruption present */
+    int PUC1:1; /* Channel 1 busy or CPU waiting */
+    int PUC2:1; /* Channel 2 busy */
+    int PUC3:1; /* Channel 3 busy */
+
+    int URPE:1; /*  */
 };
 
 /// Initialize the emulator
@@ -188,5 +216,7 @@ struct pulse_event {
 
 /* Defined in pulse.c: execute pulse events */
 int pulse(struct ge *ge);
+
+int ge_struct_sizeof(void);
 
 #endif /* GE_H */

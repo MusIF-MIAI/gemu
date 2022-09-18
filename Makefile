@@ -1,4 +1,4 @@
-OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o
+OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o console.o
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 
@@ -16,7 +16,15 @@ ge.o : ge.h msl.h msl-timings.h msl-states.h
 msl-timings.o : ge.h msl-timings.h msl-states.h
 msl-commands.o : ge.h msl-commands.h
 
+libge.so : $(OBJS)
+	cc -o libge.so -shared $(OBJS)
+
+
 check : $(TESTS)
 	for i in $(TESTS);do ./$$i;done
-clean :
-	rm $(OBJS)
+
+
+.PHONY: clean
+
+clean:
+	rm -f *.o ge libge.so $(OBJS)
