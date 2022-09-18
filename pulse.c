@@ -7,6 +7,11 @@ static int on_TO00(struct ge *ge) {
 }
 
 static int on_TO10(struct ge *ge) {
+    /* load FI00-FI06 in FA00-FA06 (cpu pag129) */
+    ge->ffFA = ge->ffFI;
+
+    /* load SA register (cpu pag.128) */
+    ge->rSA = ge->kNA;
 	return 0;
 }
 
@@ -23,7 +28,20 @@ static int on_TO19(struct ge *ge) {
 }
 
 static int on_TO20(struct ge *ge) {
-	return 0;
+
+    /* pag 142, pag 126 */
+    ge->rBO = ge->kNO;
+    /* pag. 124, pag 125 */
+    ge->rVO = ge->kNO;
+
+    /* TODO: are there any condition? */
+    /* pag 142 */
+    ge->rRO = 0;
+
+    /* oag 141, pag 125 */
+    ge->kNI = ge->counting_network.output;
+
+    return 0;
 }
 
 static int on_TO25(struct ge *ge) {

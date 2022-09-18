@@ -27,6 +27,17 @@ enum clock {
     MAX_CLOCK
 };
 
+enum console_rotary_pos {
+    ROTARY_NORM = 0,
+};
+
+struct ge_console {
+    enum console_rotary_pos rotary;
+};
+
+struct ge_counting_network {
+    uint16_t output;
+};
 
 /**
  * struct ge
@@ -71,7 +82,14 @@ enum clock {
  *
  * @rSA: Register that drives the MLS and the logic to generate future status
  *       configuration
- *
+ * @ffFI: 7 Flip-Flops containing special conditions which occur during the
+ *      performance of an instruction. Unloaded in @FA in T010
+ * @ffFA: 7 Flip-Flops containing special conditions which occur during the
+ *      performance of an instruction. Loaded from @FI in T010
+ * @AINI: FF It as the meaning of "Program Loading". It is set pressing "LOAD"
+ * and it is reset pressing "CLEAR" or with command CI39 (E0 status alpha)
+ * @counting_network: represent the GE counting network
+ * @console: represent the GE console
  */
 struct ge {
     /* Main clock */
@@ -102,9 +120,9 @@ struct ge {
     uint16_t rL3;
 
     /* Knot temporary values */
-    uint16_t rNO;
-    uint8_t rNA;
-    uint16_t rNI;
+    uint16_t kNO;
+    uint8_t kNA;
+    uint16_t kNI;
 
 
     /* General-purpose */
@@ -128,10 +146,15 @@ struct ge {
     /* MLS/Future state configuration register */
     uint8_t rSA;
 
-    /* Registers for special conditions and exceptions */
-    uint8_t rFI[7];
+    /* Registers for special conditions and exceptions (7bits)*/
+    uint8_t ffFI;
+    uint8_t ffFA;
 
+    uint8_t AINI:1;
     /* Faults: TODO (pp. 139-141) */
+
+    struct ge_console console;
+    struct ge_counting_network counting_network;
 
     /* Memory */
     uint8_t mem[MEM_SIZE];
@@ -150,10 +173,10 @@ int ge_run_cycle(struct ge *ge);
 void ge_clear(struct ge * ge);
 
 /// Emulate the press of the "load" button in the console
-void ge_load(struct ge * ge);
+int ge_load(struct ge * ge, uint8_t *program, uint8_t size);
 
 /// Emulate the press of the "start" button in the console
-void ge_start(struct ge * ge);
+int ge_start(struct ge * ge);
 
 
 typedef int (*on_pulse_cb)(struct ge *);

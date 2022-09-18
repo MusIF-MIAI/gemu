@@ -2,6 +2,7 @@
 
 int main(int argc, char *argv[])
 {
+    uint8_t test_program = 0;
     struct ge ge130;
     int ret;
 
@@ -12,6 +13,7 @@ int main(int argc, char *argv[])
     /* load with memory / and or setup peripherics */
 
     ge_clear(&ge130);
+    ge_load(&ge130, &test_program, 1);
     ge_start(&ge130);
 
     ret = ge_run(&ge130);
