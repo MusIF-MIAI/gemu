@@ -33,6 +33,11 @@ int console_socket_check(struct ge *ge)
     if (ge->ge_console_socket < 0) {
         return -1;
     }
+    ge->console.lamps.RO = ge->rRO;
+    ge->console.lamps.SO = ge->rSO;
+    ge->console.lamps.SA = ge->rSA;
+    ge->console.lamps.FA = ge->rFA & 0x0F;
+
     ret = recvfrom(ge->ge_console_socket, buf, 1024, 0,
                 (struct sockaddr *)&dst, &ssz);
     if (ret > 0) {

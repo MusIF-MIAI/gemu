@@ -19,6 +19,9 @@ AM_VAL = 0
 LP_RO = 0
 LP_SO = 0
 LP_SA = 0
+LP_ADD_REG = 0
+LP_OP_REG = 0
+LP_ALERTS = 0
 SCREEN = 'top'
 CPU_sock = None
 CPU_sock_connected = False
@@ -57,11 +60,13 @@ def statusbar(st):
 
 def CPU_read_status(buf):
     global LP_RO, LP_SO, LP_SA
+    global LP_ADD_REG, LP_OP_REG, LP_ALERTS
     statusbar('msg')
     if (len(buf) != 19):
         statusbar('protocol error')
         return
     LP_RO, LP_SO, LP_SA = struct.unpack("HHH", buf[0:6])
+    LP_ADD_REG, LP_OP_REG, LP_ALERTS = struct.unpack("HHH", buf[6:12])
     statusbar('CPU Synchronized')
      
 
@@ -251,9 +256,10 @@ def draw_front_panel():
     for y in range(23, MAX_Y - 3):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
-    draw_leds(16, 75, LP_SO)
-    draw_leds(20, 75, LP_SA)
+    draw_leds(16, 75, LP_ADD_REG)
+    draw_leds(20, 75, LP_OP_REG)
 
+    # TODO: buttons change colors based on LP_ALERTS
     # Buttons: top row
     for y in range (15, 18):
         for x in range (3, 75):
@@ -342,7 +348,10 @@ def comm_cpu():
             return False
     CPU_sock_connected == True
     statusbar("Connected to CPU.")
-    CPU_sock.send(struct.pack("HHHHHHHHHb", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    try:
+        CPU_sock.send(struct.pack("HHHHHHHHHb", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    except:
+        pass
     try:
         r = CPU_sock.recv(1024)
         if r != None:
@@ -370,7 +379,6 @@ def main(stdscr):
         # Blocking point
         k = scr.getch()
         if k == -1:
-            LP_SO+=1
             comm_cpu()
             continue
             #if (False == comm_cpu()):

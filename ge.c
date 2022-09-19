@@ -6,6 +6,7 @@
 #include "msl.h"
 #include "console_socket.h"
 
+#define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
 #define MAX_PROGRAM_STORAGE_WORDS 129
 static int ge_halted(struct ge *ge)
 {
@@ -122,6 +123,10 @@ int ge_run_cycle(struct ge *ge)
 
         /* Update console socket */
         console_socket_check(ge);
+
+        /* Delay */
+        usleep(CLOCK_PERIOD);
+
     }
 
     if (ge->rSO == old_SO) {
