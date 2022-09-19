@@ -4,6 +4,7 @@ import socket
 import struct
 from curses import wrapper
 import time
+import os
 
 led_off='⚆'
 led_on='⚈'
@@ -15,12 +16,13 @@ sw_down = '┰'
 MS_VAL = 0
 AM_VAL = 0
 
-L1_VAL = 0
-L2_VAL = 0
-L3_VAL = 0
+LP_RO = 0
+LP_SO = 0
+LP_SA = 0
 SCREEN = 'top'
 CPU_sock = None
 CPU_sock_connected = False
+
 
 scr = curses.initscr()
 curses.noecho()
@@ -45,12 +47,24 @@ def statusbar(st):
 
     for x in range(0, MAX_X):
         scr.addch(MAX_Y - 2, x,  ' ', curses.color_pair(cp))
+
     scr.addstr(MAX_Y - 2, 0, st, curses.color_pair(cp))
     x = len(st) + 2
     if (SCREEN == 'front'):
         scr.addstr(MAX_Y - 2, x, "Operator panel. Press [TAB] to switch.", curses.color_pair(cp))
     else:
         scr.addstr(MAX_Y - 2, x, "Diagnostic panel. Press [TAB] to switch.", curses.color_pair(cp))
+
+def CPU_read_status(buf):
+    global LP_RO, LP_SO, LP_SA
+    statusbar('msg')
+    if (len(buf) != 19):
+        statusbar('protocol error')
+        return
+    LP_RO, LP_SO, LP_SA = struct.unpack("HHH", buf[0:6])
+    statusbar('CPU Synchronized')
+     
+
 
 def switch_screen():
     global SCREEN
@@ -167,14 +181,14 @@ def draw_switch_row(pos_y, pos_x, n, value):
         draw_switch(pos_y, pos_x + (i * sw_spacing) + 1, val)
 
 def draw_top_panel():
-    global MS_VAL, AM_VAL, L1_VAL, L2_VAL, L3_VAL
+    global MS_VAL, AM_VAL, LP_RO, LP_SO, LP_SA
     draw_led_labels()
     draw_switch_labels()
 
     # Lights
-    draw_leds(16, 10, L1_VAL)
-    draw_leds(22, 10, L2_VAL)
-    draw_leds(28, 10, L3_VAL)
+    draw_leds(16, 10, LP_RO)
+    draw_leds(22, 10, LP_SO)
+    draw_leds(28, 10, LP_SA)
 
     # Switches
     draw_switch_row(10, 85, 9, MS_VAL)
@@ -224,7 +238,7 @@ def draw_front_labels():
             scr.addstr(20, x, button_labels[i + 9][1], curses.color_pair(4))
 
 def draw_front_panel():
-    global MS_VAL, AM_VAL, L1_VAL, L2_VAL, L3_VAL
+    global MS_VAL, AM_VAL, LP_RO, LP_SO, LP_SA
     for y in range(0, 14):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
@@ -237,8 +251,8 @@ def draw_front_panel():
     for y in range(23, MAX_Y - 3):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
-    draw_leds(16, 75, L2_VAL)
-    draw_leds(20, 75, L3_VAL)
+    draw_leds(16, 75, LP_SO)
+    draw_leds(20, 75, LP_SA)
 
     # Buttons: top row
     for y in range (15, 18):
@@ -311,8 +325,14 @@ def comm_cpu():
     global CPU_sock;
     global CPU_sock_connected;
     if CPU_sock is None:
+        sockname = "/tmp/gemu.console.client"
         CPU_sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         CPU_sock.setblocking(False)
+        try:
+            os.unlink(sockname)
+        except:
+            pass
+        CPU_sock.bind(sockname)
         statusbar("CPU socket created.")
     if CPU_sock_connected == False:
         statusbar("Connecting to CPU...")
@@ -322,11 +342,11 @@ def comm_cpu():
             return False
     CPU_sock_connected == True
     statusbar("Connected to CPU.")
-    CPU_sock.send(struct.pack("HH", 0x00, 0x00))
+    CPU_sock.send(struct.pack("HHHHHHHHHb", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
     try:
         r = CPU_sock.recv(1024)
         if r != None:
-            # TODO: parse ge_console struct
+            CPU_read_status(r)
             return True
     except:
         return False
@@ -337,7 +357,7 @@ def comm_cpu():
 # Curses wrapped function
 def main(stdscr):
     global SCREEN
-    global L2_VAL, L3_VAL
+    global LP_SO, LP_SA
     scr.timeout(100)
     while True:
         if SCREEN == 'top':
@@ -350,9 +370,11 @@ def main(stdscr):
         # Blocking point
         k = scr.getch()
         if k == -1:
-            L2_VAL+=1
-            if (False == comm_cpu()):
-                continue
+            LP_SO+=1
+            comm_cpu()
+            continue
+            #if (False == comm_cpu()):
+            #    continue
         if k == ord('q') or k == ord('Q'):
             break
         if k == ord('\t'):
@@ -362,8 +384,7 @@ def main(stdscr):
         if k == curses.KEY_MOUSE:
             (m_id, mx, my, mz, bstat) = curses.getmouse()
             parse_mouse(m_id, my, mx)
-            L3_VAL += 1;
-            scr.addstr(0, 0, str(mx)+ ' ' + str(my))
+            LP_SA += 1;
         scr.clear()
 
 

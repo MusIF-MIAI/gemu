@@ -27,12 +27,17 @@ int console_socket_init(void)
 int console_socket_check(struct ge *ge)
 {
     char buf[1024];
+    struct sockaddr_un dst;
+    int ret;
+    socklen_t ssz = sizeof(struct sockaddr_un);
     if (ge->ge_console_socket < 0) {
         return -1;
     }
-    if (recv(ge->ge_console_socket, buf, 1024, 0) > 0) {
-        send(ge->ge_console_socket, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0);
+    ret = recvfrom(ge->ge_console_socket, buf, 1024, 0,
+                (struct sockaddr *)&dst, &ssz);
+    if (ret > 0) {
+        sendto(ge->ge_console_socket, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0,
+               (struct sockaddr *)&dst, ssz);
     }
-
 }
 
