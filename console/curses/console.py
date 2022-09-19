@@ -367,7 +367,7 @@ def comm_cpu():
 def main(stdscr):
     global SCREEN
     global LP_SO, LP_SA
-    scr.timeout(100)
+    scr.timeout(20)
     while True:
         if SCREEN == 'top':
             draw_top_panel()
