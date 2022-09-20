@@ -6,7 +6,7 @@ TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 ge : $(OBJS)
 	$(CC) $(CFLAGS) -o ge $(OBJS)
 
-$(TEST) : % : %.o $(filter-out main.o, $(OBJS))
+$(TESTS) : % : %.o $(filter-out main.o, $(OBJS))
 	$(CC) $(CFLAGS) $^ -lcheck -o $@
 
 -include $(OBJS:%.o=%.d)
