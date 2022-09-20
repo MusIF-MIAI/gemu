@@ -16,9 +16,6 @@ ge.o : ge.h msl.h msl-timings.h
 msl-timings.o : ge.h msl-timings.h msl-states.c
 msl-commands.o : ge.h msl-commands.h
 
-libge.so : $(OBJS)
-	cc -o libge.so -shared $(OBJS)
-
 
 check : $(TESTS)
 	for i in $(TESTS);do ./$$i;done
@@ -27,4 +24,4 @@ check : $(TESTS)
 .PHONY: clean
 
 clean:
-	rm -f *.o ge libge.so $(OBJS)
+	rm -f *.o ge $(OBJS)
