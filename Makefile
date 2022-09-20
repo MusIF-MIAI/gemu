@@ -6,10 +6,12 @@ TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 ge : $(OBJS)
 	$(CC) $(CFLAGS) -o ge $(OBJS)
 
+
 $(TESTS) : % : %.o $(filter-out main.o, $(OBJS))
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -lcheck -o $@
 
 -include $(OBJS:%.o=%.d)
+
 
 check : $(TESTS)
 	for i in $(TESTS);do ./$$i;done
@@ -18,4 +20,6 @@ check : $(TESTS)
 .PHONY: clean
 
 clean:
-	rm -f *.d ge $(OBJS)
+	rm -f ge
+	rm -f $(OBJS) $(OBJS:%.o=%.d)
+	rm -f $(TESTS) $(TESTS:%=%.d)
