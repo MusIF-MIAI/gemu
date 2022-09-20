@@ -11,8 +11,7 @@ struct msl_timing_chart {
 };
 
 struct msl_timing_state {
-    struct msl_timing_chart *chart;
-    int count;
+    const struct msl_timing_chart *chart;
 };
 
 extern struct msl_timing_state msl_timings[0xff];

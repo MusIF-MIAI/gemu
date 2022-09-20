@@ -1,4 +1,4 @@
-OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o console_socket.o
+OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o console_socket.o msl-states.o
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 
@@ -11,7 +11,7 @@ $(TEST) : % : %.o $(filter-out main.o, $(OBJS))
 	$(CC) $(CFLAGS) $^ -lcheck -o $@
 
 main.o : ge.h
-msl.o : ge.h msl.h msl-timings.h msl-states.h
+msl.o : ge.h msl.h msl-timings.h
 ge.o : ge.h msl.h msl-timings.h msl-states.h
 msl-timings.o : ge.h msl-timings.h msl-states.h
 msl-commands.o : ge.h msl-commands.h

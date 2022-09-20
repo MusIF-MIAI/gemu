@@ -7,23 +7,22 @@ struct msl_timing_state* msl_get_state(uint8_t SO)
 {
     struct msl_timing_state *state = &msl_timings[SO];
 
-    return (!state->count || !state->chart)
+    return (!state->chart)
         ? NULL
         : state;
 }
 
 void msl_run_state(struct ge* ge, struct msl_timing_state *state)
 {
-    struct msl_timing_chart *chart;
+    const struct msl_timing_chart *chart;
+    uint32_t i = 0;
 
-    for (int i = 0; i < state->count; i++) {
-        chart = &state->chart[i];
-
+    do {
+        chart = &state->chart[i++];
         if (chart->clock == ge->current_clock) {
             if (chart->condition && !chart->condition(ge))
                 continue;
-
             chart->command(ge);
         }
-    }
+    } while (chart->clock < MAX_CLOCK);
 }
