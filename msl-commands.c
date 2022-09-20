@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "ge.h"
-#include "msl-commands.h"
+
+#ifndef MSL_COMMANDS_INCLUDED_BY_MSL_STATES
+#   error This file should be include by msl-states.c and not compiled directly
+#endif
 
 #define CC { printf("implement command %s\n", __FUNCTION__); }
 
