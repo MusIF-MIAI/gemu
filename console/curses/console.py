@@ -15,6 +15,8 @@ sw_down = '┰'
 
 MS_VAL = 0
 AM_VAL = 0
+BUTTONS_VAL = 0
+ROT_VAL = 9 # RS_NORM
 
 LP_RO = 0
 LP_SO = 0
@@ -68,8 +70,6 @@ def CPU_read_status(buf):
     LP_RO, LP_SO, LP_SA = struct.unpack("HHH", buf[0:6])
     LP_ADD_REG, LP_OP_REG, LP_ALERTS = struct.unpack("HHH", buf[6:12])
     statusbar('CPU Synchronized')
-     
-
 
 def switch_screen():
     global SCREEN
@@ -78,7 +78,6 @@ def switch_screen():
         SCREEN = 'front'
     else:
         SCREEN = 'top'
-
 
 def draw_led_labels():
     y = 8
@@ -141,8 +140,13 @@ def draw_switch_labels():
 
 
 def draw_dial_labels():
+    global ROT_VAL
     dl = [ 'V4', 'L3', 'V3', 'R1-L2', 'V2', 'L1', 'V1', 'V1 SCR', 'V1 LETT', 'NORM', 'PO', 'FI-UR', 'SO', 'FO' ]
-    # TODO
+    # Temporary rotor ascii
+    #
+    scr.addstr(30, 110, dl[ROT_VAL])
+    scr.addstr(30, 100, "<<")
+    scr.addstr(30, 120, ">>")
 
 def draw_leds(pos_y, pos_x, value):
     global SCREEN
@@ -201,13 +205,15 @@ def draw_top_panel():
     draw_switch_row(24, 90, 8, (AM_VAL & 0xFF00) >> 8)
     draw_switch(3,122,True)
 
+    draw_dial_labels()
+
 def draw_front_labels():
     scr.addstr(15, 98, "ADD REG")
-    for x in range(76, MAX_X - 10, 14):
+    for x in range(76, 124, 14):
         scr.addstr(17,x,"8  4  2  1")
 
     scr.addstr(19, 113, "OP.REG")
-    for x in range(104, MAX_X - 10, 14):
+    for x in range(104, 124, 14):
         scr.addstr(21,x,"8  4  2  1")
     scr.addstr(21, 76, "OF NZ IM JE   I  C1 C2 C3")
 
@@ -250,10 +256,10 @@ def draw_front_panel():
     for y in range(14, 23):
         for x in range(0, 2):
             scr.addch(y,x,' ', curses.color_pair(2))
-        for x in range(MAX_X - 2, MAX_X):
+        for x in range(129, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
 
-    for y in range(23, MAX_Y - 3):
+    for y in range(23, MAX_Y - 2):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
     draw_leds(16, 75, LP_ADD_REG)
@@ -283,8 +289,23 @@ def draw_front_panel():
 def parse_mouse(i, y, x):
     global MS_VAL
     global AM_VAL
+    global BUTTONS_VAL
     global SCREEN
+    global ROT_VAL
     if (SCREEN == 'top'):
+        # Temporary rotor
+        #
+        if (y > 28) and (y < 32) and (x >= 100) and (x < 110):
+            ROT_VAL -= 1
+            if (ROT_VAL < 0):
+                ROT_VAL = 0
+            return
+        if (y > 28) and (y < 32)  and (x > 120) and (x < 130):
+            ROT_VAL += 1
+            if (ROT_VAL > 13):
+                ROT_VAL = 13
+            return
+        # End temp rotor
         x0 = 90
         if y < 8:
             return
@@ -318,18 +339,29 @@ def parse_mouse(i, y, x):
             MS_VAL |= (1 << bp)
         else:
             MS_VAL &= ~(1 << bp)
+
     elif SCREEN == 'front':
         if (y < 14) or (y > 22):
             return
-        if (x < 5) or (x > 75):
+        if (x < 3) or (x > 75):
             return
-        # TODO: Clicking buttons in the front panel
-        pass
+        if (y < 18):
+            button_pressed = ((x - 3) // 8)
+        else:
+            button_pressed = ((x - 3) // 8) + 9
+        if (button_pressed == 1 or button_pressed == 10):
+            return
+        if (button_pressed > 1) and (button_pressed < 10):
+            button_pressed -= 1
+        if (button_pressed > 10):
+            button_pressed -= 2
+        BUTTONS_VAL |= (1 << button_pressed)
 
 
 def comm_cpu():
     global CPU_sock;
     global CPU_sock_connected;
+    global MS_VAL, AM_VAL, BUTTONS_VAL, ROT_VAL
     if CPU_sock is None:
         sockname = "/tmp/gemu.console.client"
         CPU_sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -349,7 +381,13 @@ def comm_cpu():
     CPU_sock_connected == True
     statusbar("Connected to CPU.")
     try:
-        CPU_sock.send(struct.pack("HHHHHHHHHb", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        CPU_sock.send(struct.pack("HHHHHHHHHb",
+            0, 0, 0,  # Console lamps, do not set
+            0, 0, 0,  # Front panel lamps
+            MS_VAL, AM_VAL, # Switches
+            BUTTONS_VAL,
+            ROT_VAL))
+
     except:
         pass
     try:
