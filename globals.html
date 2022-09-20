@@ -55,8 +55,10 @@
   </div>
   <div id="navrow4" class="tabs3">
     <ul class="tablist">
+      <li><a href="#index__5F"><span>_</span></a></li>
       <li><a href="#index_b"><span>b</span></a></li>
       <li><a href="#index_c"><span>c</span></a></li>
+      <li><a href="#index_e"><span>e</span></a></li>
       <li><a href="#index_g"><span>g</span></a></li>
       <li><a href="#index_m"><span>m</span></a></li>
       <li><a href="#index_n"><span>n</span></a></li>
@@ -70,6 +72,13 @@
 </div><!-- top -->
 <div class="contents">
 <div class="textblock">Here is a list of all functions, variables, defines, enums, and typedefs with links to the files they belong to:</div>
+
+<h3><a id="index__5F"></a>- _ -</h3><ul>
+<li>__attribute__()
+: <a class="el" href="ge_8h.html#a5b5cdcd829c4544dae44586f03809771">ge.h</a>
+</li>
+</ul>
+
 
 <h3><a id="index_b"></a>- b -</h3><ul>
 <li>BIT
@@ -155,6 +164,9 @@
 <li>clock
 : <a class="el" href="ge_8h.html#af761a67e9d7ce9e23381088b6f2ae893">ge.h</a>
 </li>
+<li>CLOCK_PERIOD
+: <a class="el" href="ge_8c.html#acac8208fe9101dc6e4585600c95bf97f">ge.c</a>
+</li>
 <li>CO00()
 : <a class="el" href="msl-commands_8h.html#ae49f385f3f3cbf6e8b0b21566cd4a1ab">msl-commands.h</a>
 </li>
@@ -182,8 +194,13 @@
 : <a class="el" href="msl-commands_8c.html#ae4cd2f9f1b481181ead6fa3febd15d8b">msl-commands.c</a>
 , <a class="el" href="msl-commands_8h.html#a24f3a1f623c521d5199b607f920e39f2">msl-commands.h</a>
 </li>
-<li>console_rotary_pos
-: <a class="el" href="ge_8h.html#ad252639fa7b11749834519827ee6a404">ge.h</a>
+<li>console_socket_check()
+: <a class="el" href="console__socket_8c.html#a83f0516f39d541cc30e139266b0c0436">console_socket.c</a>
+, <a class="el" href="console__socket_8h.html#a83f0516f39d541cc30e139266b0c0436">console_socket.h</a>
+</li>
+<li>console_socket_init()
+: <a class="el" href="console__socket_8c.html#aa0e1a53441772aaf3eef0a71536e885f">console_socket.c</a>
+, <a class="el" href="console__socket_8h.html#aa0e1a53441772aaf3eef0a71536e885f">console_socket.h</a>
 </li>
 <li>CU00()
 : <a class="el" href="msl-commands_8c.html#ad300c90ced5970ebab4e4336acd671c7">msl-commands.c</a>
@@ -246,6 +263,13 @@
 </ul>
 
 
+<h3><a id="index_e"></a>- e -</h3><ul>
+<li>END_OF_STATUS
+: <a class="el" href="ge_8h.html#af761a67e9d7ce9e23381088b6f2ae893a891cf65dab2d24aa9ca0d90631abda4c">ge.h</a>
+</li>
+</ul>
+
+
 <h3><a id="index_g"></a>- g -</h3><ul>
 <li>ge_clear()
 : <a class="el" href="ge_8c.html#a1f6200d4aba7d2a22bd703cf46fa9570">ge.c</a>
@@ -277,15 +301,16 @@
 : <a class="el" href="ge_8c.html#a166ed003fb32e24ab58861b24546f576">ge.c</a>
 , <a class="el" href="ge_8h.html#a166ed003fb32e24ab58861b24546f576">ge.h</a>
 </li>
+<li>ge_struct_sizeof()
+: <a class="el" href="ge_8c.html#a3279e2050ded98c94e6aef5ba9fe08ea">ge.c</a>
+, <a class="el" href="ge_8h.html#a3279e2050ded98c94e6aef5ba9fe08ea">ge.h</a>
+</li>
 </ul>
 
 
 <h3><a id="index_m"></a>- m -</h3><ul>
 <li>main()
 : <a class="el" href="main_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main.c</a>
-</li>
-<li>MAX_CLOCK
-: <a class="el" href="ge_8h.html#af761a67e9d7ce9e23381088b6f2ae893a07af3c4ee8acbdb18e9b76d949d15e72">ge.h</a>
 </li>
 <li>MAX_PROGRAM_STORAGE_WORDS
 : <a class="el" href="ge_8c.html#a14b6a4e337173df96d1b3efcbd3edb9f">ge.c</a>
@@ -300,6 +325,9 @@
 <li>msl_run_state()
 : <a class="el" href="msl_8c.html#a416fb23759d8949b94cc93c084f82c7a">msl.c</a>
 , <a class="el" href="msl_8h.html#a20ca52b5a63a454d6ae90c5f24538191">msl.h</a>
+</li>
+<li>MSL_STATES_INCLUDED_BY_MSL_TIMINGS
+: <a class="el" href="msl-timings_8c.html#a8f3cbb3bd558919f6bc226013d64fe44">msl-timings.c</a>
 </li>
 <li>msl_timings
 : <a class="el" href="msl-timings_8c.html#a2b443b0eefd90bb224181dc96595594f">msl-timings.c</a>
@@ -382,17 +410,59 @@
 , <a class="el" href="pulse_8c.html#ab23e0aa729b0fff20bf5e3619056dcb4">pulse.c</a>
 </li>
 <li>pulse_cb
-: <a class="el" href="pulse_8c.html#a35c2a74947e3366026d5513bfc7bae7f">pulse.c</a>
+: <a class="el" href="pulse_8c.html#a7d7cd7bf121e7ea2b5da2da55c7b2370">pulse.c</a>
 </li>
 </ul>
 
 
 <h3><a id="index_r"></a>- r -</h3><ul>
+<li>register_switch
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8e">ge.h</a>
+</li>
 <li>RESET_BIT
 : <a class="el" href="msl-commands_8c.html#a58927d169a850c5231716c1dd0c4dc7f">msl-commands.c</a>
 </li>
-<li>ROTARY_NORM
-: <a class="el" href="ge_8h.html#ad252639fa7b11749834519827ee6a404ace1a05098fd14b8b589a6052edf5af93">ge.h</a>
+<li>RS_FI_UR
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea0c4584ce9494c03ce308a52aa186c3e7">ge.h</a>
+</li>
+<li>RS_FO
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8eab3ffdfcbb05afc7cf8b879c711e70b75">ge.h</a>
+</li>
+<li>RS_L1
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea66b442751e4e3e8c43fe79e1bd5d9a2e">ge.h</a>
+</li>
+<li>RS_L3
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea720dc070565aca772f9bd213d62acd11">ge.h</a>
+</li>
+<li>RS_NORM
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea692578d992f331c9dea560cfe2f13267">ge.h</a>
+</li>
+<li>RS_PO
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea5221fa917ca9794b4bf59cdb8269a5f2">ge.h</a>
+</li>
+<li>RS_RI_L2
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea6e4c9e09e543ab27a82c3965344ffc80">ge.h</a>
+</li>
+<li>RS_SO
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea33df497fbc4aad9de26d8f247cf380d4">ge.h</a>
+</li>
+<li>RS_V1
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea5a187286b2a86217976e09eecb38b916">ge.h</a>
+</li>
+<li>RS_V1_LETT
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea58d65a7deb6330ffc47561cf0af2bf28">ge.h</a>
+</li>
+<li>RS_V1_SCR
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea258d0b7208d84ce57f6dee8a5460e797">ge.h</a>
+</li>
+<li>RS_V2
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8eafd781931db69d11eccfd90d238a14cc8">ge.h</a>
+</li>
+<li>RS_V3
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8ea676381d28f85373c4da8e67d1f9855e4">ge.h</a>
+</li>
+<li>RS_V4
+: <a class="el" href="ge_8h.html#a0053c58e53ca0926e3154dc49e843b8eac683db776fbde10a53886a487c9440dc">ge.h</a>
 </li>
 </ul>
 
@@ -401,82 +471,82 @@
 <li>SET_BIT
 : <a class="el" href="msl-commands_8c.html#a23819d66006678fa963632dbd015d567">msl-commands.c</a>
 </li>
+<li>socket_path
+: <a class="el" href="console__socket_8c.html#a69d2a2b27248e6e5117ce529aec88d4c">console_socket.c</a>
+</li>
 <li>state_80
-: <a class="el" href="msl-states_8h.html#a280de52a4d270c1e6a4afe0d96d7fc68">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a2a7a5f59a281b58b86637b34019b2731">msl-states.c</a>
 </li>
 <li>state_80_TI06_CU01()
-: <a class="el" href="msl-states_8h.html#a2e46a3dc3470d17797984d9b5e2e3756">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#ac16f88752e4968aabecd1fc799e3f0d4">msl-states.c</a>
 </li>
 <li>state_80_TI06_CU03()
-: <a class="el" href="msl-states_8h.html#aef38578fcf301cd0c6f86f62ce278232">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a9bcbedfe802b7ad09686af45514087a3">msl-states.c</a>
 </li>
 <li>state_80_TI06_CU05()
-: <a class="el" href="msl-states_8h.html#a6c2c30ab01f50ec0aad6fd8036b454e5">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#accc01eb676b29ba9b9e94c66b2d92e91">msl-states.c</a>
 </li>
 <li>state_E0
-: <a class="el" href="msl-states_8h.html#a2d29ccae785d0db7ff94b0920c0edab0">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a9c0b522edc20ecdc3c49f8fe27635c8b">msl-states.c</a>
 </li>
 <li>state_E0_TI06_CU17()
-: <a class="el" href="msl-states_8h.html#a2817974e7ac8cf85031037d63f96187f">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a6c385cbde03b6d7582c6bc93d716a5f4">msl-states.c</a>
 </li>
 <li>state_E0_TO70_CI60()
-: <a class="el" href="msl-states_8h.html#ab0e46185928f0105af0e3d62616de17f">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a91ba2a375711dc4b8ed5be1926add5ba">msl-states.c</a>
 </li>
 <li>state_E2_E3
-: <a class="el" href="msl-states_8h.html#ad56403c1b336c7b26a0752b49cb49fae">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a37563729ed933579eb8e27802705290f">msl-states.c</a>
 </li>
 <li>state_E2_E3_TI06_CI82()
-: <a class="el" href="msl-states_8h.html#a511224d417052f88763c70bdd8eb1852">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a00cd1aadcd136362d16a5e19331ff1d1">msl-states.c</a>
 </li>
 <li>state_E2_E3_TI06_CU04()
-: <a class="el" href="msl-states_8h.html#a722363eb85561074380962bbe1218575">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#abe4c37c435313423d94acb1449ef5b80">msl-states.c</a>
 </li>
 <li>state_E2_E3_TO80_CI89()
-: <a class="el" href="msl-states_8h.html#ac20e97c2e37529270254b9472604bcbe">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#accae83c286ca9a0a8dd6bc0730cd7ad6">msl-states.c</a>
 </li>
 <li>state_E4
-: <a class="el" href="msl-states_8h.html#ac63fd043f308f90a39c943f7e86780f8">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#ad91b3afd55b5d71c3a86f3c20ba1e58c">msl-states.c</a>
 </li>
 <li>state_E5
-: <a class="el" href="msl-states_8h.html#a6a6b5c6fb36f823177122f7ca8c839a8">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a900728935f7058e690dec6745c5957a1">msl-states.c</a>
 </li>
 <li>state_E5_TI06_CU17()
-: <a class="el" href="msl-states_8h.html#aef145ca69eac19a24cca0fc00294b75b">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#ae2adef85b386e7940ecf916cb45a1094">msl-states.c</a>
 </li>
 <li>state_E5_TO70_CI60()
-: <a class="el" href="msl-states_8h.html#aeff209762a431a3933fbc98eb2802fc0">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a595c7be1fca7fc0e6bf07dd8d5d27a17">msl-states.c</a>
 </li>
 <li>state_E5_TO80_CI31()
-: <a class="el" href="msl-states_8h.html#a6380ccced1374622b36510a73b65c9bf">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#af0ec3ab7e85e6c1dc96121d94468a6e9">msl-states.c</a>
 </li>
 <li>state_E6
-: <a class="el" href="msl-states_8h.html#a06b01cdd93a628c4986cace4529d1da5">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a4e0a2fea67f6b0e5831d4c9c4f601c47">msl-states.c</a>
 </li>
 <li>state_E6_TI06_CU03()
-: <a class="el" href="msl-states_8h.html#a7b298512759ade19aaade1db0139059b">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#adcfe306387f06bba22b168e77137032c">msl-states.c</a>
 </li>
 <li>state_E6_TI06_CU17()
-: <a class="el" href="msl-states_8h.html#a06dc305fa94a0ea43923e46845df8f25">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#aa6997a01bb21dcc4aa5e997b2ba5921b">msl-states.c</a>
 </li>
 <li>state_E6_TO80_CI38()
-: <a class="el" href="msl-states_8h.html#ab0cdbe50cfff3f3b49fba82ab52df659">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a7a67b210579ab6e2663273ded49c5526">msl-states.c</a>
 </li>
 <li>state_E7
-: <a class="el" href="msl-states_8h.html#ac452af95d853895a31b6d456a9baceb3">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a1f06fcddf0f1f814ff024cfbee38dbb9">msl-states.c</a>
 </li>
 <li>state_E7_TI06_CU17()
-: <a class="el" href="msl-states_8h.html#a15d727b3f05e505014131abe6a3f5950">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#a03ceff0014d9f30c34583d211041c9f1">msl-states.c</a>
 </li>
 <li>state_E7_TO80_CI38()
-: <a class="el" href="msl-states_8h.html#ab5faf5922979efa1a5146e965c6bab67">msl-states.h</a>
+: <a class="el" href="msl-states_8c.html#adbea1f95dc9fbb93a9c19281ee04b888">msl-states.c</a>
 </li>
 </ul>
 
 
 <h3><a id="index_t"></a>- t -</h3><ul>
-<li>T
-: <a class="el" href="msl-timings_8c.html#a16a0f7e7053a679c9bf4289b441a2be7">msl-timings.c</a>
-</li>
 <li>TI05
 : <a class="el" href="ge_8h.html#af761a67e9d7ce9e23381088b6f2ae893ad45ca2f538ee490bb7a934a869fc5ae9">ge.h</a>
 </li>
