@@ -113,7 +113,7 @@ int ge_run_cycle(struct ge *ge)
         return 1;
     }
 
-    for(ge->current_clock = TO00; ge->current_clock < MAX_CLOCK; ge->current_clock++) {
+    for(ge->current_clock = TO00; ge->current_clock < END_OF_STATUS; ge->current_clock++) {
 
         /* Execute machine logic for pulse*/
         pulse(ge);

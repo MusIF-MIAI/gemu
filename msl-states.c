@@ -32,7 +32,7 @@ static const struct msl_timing_chart state_80[] = {
     { TI06, CU03, state_80_TI06_CU03 },
     { TI06, CU05, state_80_TI06_CU05 },
     { TI06, CU06, 0 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 
 // Alpha phase
@@ -59,7 +59,7 @@ static const struct msl_timing_chart state_E2_E3[] = {
     { TI06, CU04, state_E2_E3_TI06_CU04 },
     { TI06, CU10, 0 },
     { TI06, CU11, 0 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 
 // to state E4    if FO06 | FO07
@@ -79,7 +79,7 @@ static const struct msl_timing_chart state_E0[] = {
     { TI05, CI05, 0 },
     { TI06, CU02, 0 },
     { TI06, CU17, state_E0_TI06_CU17 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 
 // to state E6
@@ -100,7 +100,7 @@ static const struct msl_timing_chart state_E4[] = {
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 
 // to state E5 if !L207 & (FO07 & FO06)
@@ -122,7 +122,7 @@ static const struct msl_timing_chart state_E6[] = {
     { TI06, CU03, state_E6_TI06_CU03 },
     { TI06, CU10, 0 },
     { TI06, CU17, state_E6_TI06_CU17 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 
 // to state E7
@@ -143,7 +143,7 @@ static const struct msl_timing_chart state_E5[] = {
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 
 // to state 64+65 if !L207
@@ -166,6 +166,6 @@ static const struct msl_timing_chart state_E7[] = {
     { TI06, CU03, 0 },
     { TI06, CU10, 0 },
     { TI06, CU17, state_E7_TI06_CU17 },
-    { MAX_CLOCK, 0 }
+    { END_OF_STATUS, 0, 0 }
 };
 

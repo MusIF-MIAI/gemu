@@ -24,5 +24,5 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
                 continue;
             chart->command(ge);
         }
-    } while (chart->clock < MAX_CLOCK);
+    } while (chart->clock < END_OF_STATUS);
 }

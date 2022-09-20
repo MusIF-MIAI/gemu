@@ -93,7 +93,7 @@ static int on_TI10(struct ge *ge) {
 }
 
 
-static on_pulse_cb pulse_cb[MAX_CLOCK] = {
+static on_pulse_cb pulse_cb[END_OF_STATUS] = {
     on_TO00,
     on_TO10,
     on_TO11,

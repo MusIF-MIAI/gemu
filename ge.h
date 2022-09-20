@@ -24,7 +24,7 @@ enum clock {
     TI05,
     TI06,
     TI10,
-    MAX_CLOCK
+    END_OF_STATUS
 };
 
 enum register_switch {
@@ -187,7 +187,7 @@ struct ge {
     /* Lists of events and operations for all
      * pulses
      */
-    struct pulse_event *on_pulse[MAX_CLOCK];
+    struct pulse_event *on_pulse[END_OF_STATUS];
 
     /* Registers */
 
