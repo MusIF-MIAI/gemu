@@ -122,6 +122,7 @@ int ge_run_cycle(struct ge *ge)
         msl_run_state(ge, state);
 
         /* Update console socket */
+        /* TODO: DELME! This goes in status 00 / 08 */
         console_socket_check(ge);
 
         /* Delay */
