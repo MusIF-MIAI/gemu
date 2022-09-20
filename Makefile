@@ -1,4 +1,5 @@
 OBJS=main.o msl.o ge.o pulse.o msl-timings.o msl-commands.o console_socket.o
+CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 
@@ -10,12 +11,7 @@ ge : $(OBJS)
 $(TEST) : % : %.o $(filter-out main.o, $(OBJS))
 	$(CC) $(CFLAGS) $^ -lcheck -o $@
 
-main.o : ge.h
-msl.o : ge.h msl.h msl-timings.h
-ge.o : ge.h msl.h msl-timings.h 
-msl-timings.o : ge.h msl-timings.h msl-states.c
-msl-commands.o : ge.h msl-commands.h
-
+-include $(OBJS:%.o=%.d)
 
 check : $(TESTS)
 	for i in $(TESTS);do ./$$i;done
@@ -24,4 +20,4 @@ check : $(TESTS)
 .PHONY: clean
 
 clean:
-	rm -f *.o ge $(OBJS)
+	rm -f *.d ge $(OBJS)
