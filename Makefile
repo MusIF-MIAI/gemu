@@ -3,8 +3,6 @@ CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 
-.PHONY : clean
-
 ge : $(OBJS)
 	$(CC) $(CFLAGS) -o ge $(OBJS)
 
