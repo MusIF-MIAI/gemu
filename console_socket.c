@@ -1,6 +1,7 @@
 #include "console_socket.h"
 #include "ge.h"
 #include <fcntl.h>
+#include <string.h>
 
 static const char socket_path[] = "/tmp/gemu.console";
 
@@ -44,5 +45,7 @@ int console_socket_check(struct ge *ge)
         sendto(ge->ge_console_socket, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0,
                (struct sockaddr *)&dst, ssz);
     }
+
+    return 0;
 }
 
