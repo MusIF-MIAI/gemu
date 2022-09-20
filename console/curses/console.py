@@ -170,11 +170,11 @@ def draw_leds(pos_y, pos_x, value):
 
 def draw_switch(pos_y, pos_x, val=False):
     if not val:
-        scr.addch(pos_y, pos_x, sw_down)
-        scr.addch(pos_y + 1, pos_x, '◯')
+        scr.addstr(pos_y, pos_x - 1, '(' + sw_down + ')')
+        scr.addch(pos_y + 1, pos_x, '⚈')
     else:
-        scr.addch(pos_y - 1, pos_x, '◯')
-        scr.addch(pos_y, pos_x, sw_up)
+        scr.addch(pos_y - 1, pos_x, '⚈')
+        scr.addstr(pos_y, pos_x - 1, '(' + sw_up + ')')
 
 def draw_switch_row(pos_y, pos_x, n, value):
     sw_spacing = 5
