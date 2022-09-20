@@ -1,17 +1,21 @@
 #include <stdint.h>
 #include "msl-commands.h"
-#include "msl-states.h"
+#include "msl-timings.h"
+
+#ifndef MSL_STATES_INCLUDED_BY_MSL_TIMINGS
+#   error This file should be include by msl-timings.c and not compiled directly
+#endif
 
 // Initialitiation
 
 // to state E2+E3 if !AINI
 //          C8    if AINI
 
-uint8_t state_80_TI06_CU01(struct ge *ge) { return !ge->AINI; }
-uint8_t state_80_TI06_CU03(struct ge *ge) { return ge->AINI; }
-uint8_t state_80_TI06_CU05(struct ge *ge) { return !ge->AINI; }
+static uint8_t state_80_TI06_CU01(struct ge *ge) { return !ge->AINI; }
+static uint8_t state_80_TI06_CU03(struct ge *ge) { return ge->AINI; }
+static uint8_t state_80_TI06_CU05(struct ge *ge) { return !ge->AINI; }
 
-const struct msl_timing_chart state_80[] = {
+static const struct msl_timing_chart state_80[] = {
     { TO30, CI19, 0 },
     { TO30, CO96, 0 },
     { TO30, CO97, 0 },
@@ -36,11 +40,11 @@ const struct msl_timing_chart state_80[] = {
 // (to state F0 if RINT & !FA06
 //           E0 if !RINT | FA06)
 
-uint8_t state_E2_E3_TO80_CI89(struct ge *ge) { return 0; }
-uint8_t state_E2_E3_TI06_CI82(struct ge *ge) { return 0; }
-uint8_t state_E2_E3_TI06_CU04(struct ge *ge) { return 0; }
+static uint8_t state_E2_E3_TO80_CI89(struct ge *ge) { return 0; }
+static uint8_t state_E2_E3_TI06_CI82(struct ge *ge) { return 0; }
+static uint8_t state_E2_E3_TI06_CU04(struct ge *ge) { return 0; }
 
-const struct msl_timing_chart state_E2_E3[] = {
+static const struct msl_timing_chart state_E2_E3[] = {
     { TO10, CO10, 0 },
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
@@ -61,10 +65,10 @@ const struct msl_timing_chart state_E2_E3[] = {
 // to state E4    if FO06 | FO07
 //          64+65 if !(FO06 | FO07)
 
-uint8_t state_E0_TO70_CI60(struct ge *ge) { return 0; }
-uint8_t state_E0_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E0_TO70_CI60(struct ge *ge) { return 0; }
+static uint8_t state_E0_TI06_CU17(struct ge *ge) { return 1; }
 
-const struct msl_timing_chart state_E0[] = {
+static const struct msl_timing_chart state_E0[] = {
     { TO10, CO12, 0 },
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
@@ -80,11 +84,11 @@ const struct msl_timing_chart state_E0[] = {
 
 // to state E6
 
-uint8_t state_E6_TI06_CU03(struct ge *ge) { return 1; }
-uint8_t state_E6_TI06_CU17(struct ge *ge) { return 1; }
-uint8_t state_E6_TO80_CI38(struct ge *ge) { return 1; }
+static uint8_t state_E6_TI06_CU03(struct ge *ge) { return 1; }
+static uint8_t state_E6_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E6_TO80_CI38(struct ge *ge) { return 1; }
 
-const struct msl_timing_chart state_E4[] = {
+static const struct msl_timing_chart state_E4[] = {
     { TO10, CO10, 0 },
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
@@ -103,7 +107,7 @@ const struct msl_timing_chart state_E4[] = {
 //          ED+EC if L207
 //          64+65 if !L207 & (!FO07 | !FO06)
 
-const struct msl_timing_chart state_E6[] = {
+static const struct msl_timing_chart state_E6[] = {
     { TO10, CO10, 0 },
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
@@ -123,11 +127,11 @@ const struct msl_timing_chart state_E6[] = {
 
 // to state E7
 
-uint8_t state_E5_TI06_CU17(struct ge *ge) { return 1; }
-uint8_t state_E5_TO70_CI60(struct ge *ge) { return 1; }
-uint8_t state_E5_TO80_CI31(struct ge *ge) { return 1; }
+static uint8_t state_E5_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E5_TO70_CI60(struct ge *ge) { return 1; }
+static uint8_t state_E5_TO80_CI31(struct ge *ge) { return 1; }
 
-const struct msl_timing_chart state_E5[] = {
+static const struct msl_timing_chart state_E5[] = {
     { TO10, CO10, 0 },
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },
@@ -145,10 +149,10 @@ const struct msl_timing_chart state_E5[] = {
 // to state 64+65 if !L207
 //          ED+EC if L207
 
-uint8_t state_E7_TO80_CI38(struct ge *ge) { return 1; }
-uint8_t state_E7_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E7_TO80_CI38(struct ge *ge) { return 1; }
+static uint8_t state_E7_TI06_CU17(struct ge *ge) { return 1; }
 
-const struct msl_timing_chart state_E7[] = {
+static const struct msl_timing_chart state_E7[] = {
     { TO10, CO10, 0 },
     { TO10, CO41, 0 },
     { TO25, CO30, 0 },

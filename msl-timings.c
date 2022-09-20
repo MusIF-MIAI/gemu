@@ -1,5 +1,8 @@
 #include "msl-timings.h"
-#include "msl-states.h"
+
+#define MSL_STATES_INCLUDED_BY_MSL_TIMINGS
+#include "msl-states.c"
+#undef MSL_STATES_INCLUDED_BY_MSL_TIMINGS
 
 
 struct msl_timing_state msl_timings[0xff] = {
