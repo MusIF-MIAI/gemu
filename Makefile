@@ -7,7 +7,7 @@ ge : $(OBJS)
 	$(CC) $(CFLAGS) -o ge $(OBJS)
 
 $(TESTS) : % : %.o $(filter-out main.o, $(OBJS))
-	$(CC) $(CFLAGS) $^ -lcheck -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -lcheck -o $@
 
 -include $(OBJS:%.o=%.d)
 
