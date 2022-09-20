@@ -1,4 +1,6 @@
 #include "ge.h"
+#include <stdio.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
@@ -12,10 +14,15 @@ int main(int argc, char *argv[])
 
     /* load with memory / and or setup peripherics */
 
-    ge_clear(&ge130);
-    ge_load(&ge130, &test_program, 1);
-    ge_start(&ge130);
+    while(1) {
+        ge_clear(&ge130);
+        ge_load(&ge130, &test_program, 1);
+        ge_start(&ge130);
 
-    ret = ge_run(&ge130);
+        ret = ge_run(&ge130);
+
+        sleep(1);
+        printf(" *** RESTART *** ");
+    }
     return ret;
 }

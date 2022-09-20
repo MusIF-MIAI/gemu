@@ -4,7 +4,9 @@
 #include <string.h>
 #include "ge.h"
 #include "msl.h"
+#include "console_socket.h"
 
+#define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
 #define MAX_PROGRAM_STORAGE_WORDS 129
 static int ge_halted(struct ge *ge)
 {
@@ -13,6 +15,12 @@ static int ge_halted(struct ge *ge)
 
 int ge_init(struct ge *ge)
 {
+    ge->ge_console_socket = console_socket_init();
+    if (ge->ge_console_socket < 0) {
+        perror("Error creating console socket");
+    } else {
+        printf("Console socket created (fd = %d)\n", ge->ge_console_socket);
+    }
     ge->halted = 1;
     ge->ticks = 0;
     return 0;
@@ -25,6 +33,10 @@ void ge_clear(struct ge *ge)
     // The pressure of the "CLEAR" push button only determines the continuos
     // performance of the "00" status
     ge->rSO = 0;
+
+    /* From 30004122 o/A, sheet 31:
+     * The light is switched off by tle LOFF instruction or by the CLEAR key */
+    ge->operator_call = 0;
 
     // Also clear the emulated memory... what else?!
     memset(ge->mem, 0, sizeof(ge->mem));
@@ -65,6 +77,7 @@ int ge_start(struct ge *ge)
     // With the rotating switch in "NORM" position, after the operation
     // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
     ge->rSO = 0x80;
+    ge->console.rotary = RS_NORM;
 
     ge->halted = 0;
 
@@ -100,12 +113,21 @@ int ge_run_cycle(struct ge *ge)
         return 1;
     }
 
-    for(ge->current_clock = TO00; ge->current_clock < MAX_CLOCK; ge->current_clock++) {
+    for(ge->current_clock = TO00; ge->current_clock < END_OF_STATUS; ge->current_clock++) {
+
         /* Execute machine logic for pulse*/
         pulse(ge);
 
         /* Execute the commands from the timing charts */
         msl_run_state(ge, state);
+
+        /* Update console socket */
+        /* TODO: DELME! This goes in status 00 / 08 */
+        console_socket_check(ge);
+
+        /* Delay */
+        usleep(CLOCK_PERIOD);
+
     }
 
     if (ge->rSO == old_SO) {
@@ -128,4 +150,9 @@ int ge_run(struct ge *ge)
     }
 
     return 0;
+}
+
+int ge_struct_sizeof(void)
+{
+    return sizeof(struct ge);
 }

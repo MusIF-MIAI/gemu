@@ -1,7 +1,9 @@
 #include "msl-timings.h"
-#include "msl-states.h"
 
-#define T(x) { x , sizeof( x ) / sizeof(struct msl_timing_chart) }
+#define MSL_STATES_INCLUDED_BY_MSL_TIMINGS
+#include "msl-states.c"
+#undef MSL_STATES_INCLUDED_BY_MSL_TIMINGS
+
 
 struct msl_timing_state msl_timings[0xff] = {
     /* 00 */ { },
@@ -132,7 +134,7 @@ struct msl_timing_state msl_timings[0xff] = {
     /* 7d */ { },
     /* 7e */ { },
     /* 7f */ { },
-    /* 80 */ T(state_80),
+    /* 80 */ {state_80},
     /* 81 */ { },
     /* 82 */ { },
     /* 83 */ { },
@@ -228,14 +230,14 @@ struct msl_timing_state msl_timings[0xff] = {
     /* dd */ { },
     /* de */ { },
     /* df */ { },
-    /* e0 */ T(state_E0),
+    /* e0 */ {state_E0},
     /* e1 */ { },
-    /* e2 */ T(state_E2_E3),
-    /* e3 */ T(state_E2_E3),
-    /* e4 */ T(state_E4),
-    /* e5 */ T(state_E5),
-    /* e6 */ T(state_E6),
-    /* e7 */ T(state_E7),
+    /* e2 */ {state_E2_E3},
+    /* e3 */ {state_E2_E3},
+    /* e4 */ {state_E4},
+    /* e5 */ {state_E5},
+    /* e6 */ {state_E6},
+    /* e7 */ {state_E7},
     /* e8 */ { },
     /* e9 */ { },
     /* ea */ { },
@@ -261,4 +263,3 @@ struct msl_timing_state msl_timings[0xff] = {
     /* fe */ { },
 };
 
-#undef T
