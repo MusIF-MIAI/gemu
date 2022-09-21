@@ -4,7 +4,7 @@ CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 
 ge : $(OBJS)
-	$(CC) $(CFLAGS) -o ge $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o ge $(OBJS)
 
 
 $(TESTS) : % : %.o $(filter-out main.o, $(OBJS))
