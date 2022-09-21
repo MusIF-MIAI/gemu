@@ -112,6 +112,7 @@ struct __attribute__((packed)) ge_console {
             B_LOAD_1_2:1,
             B_EMERGEN_OFF:1,
             B_STANDBY:1,
+            __padding:1,
             B_MEM_CHECK:1,
             B_CLEAR:1,
             B_LOAD:1,
