@@ -1,23 +1,16 @@
 OBJS=main.o msl.o ge.o pulse.o msl-timings.o console_socket.o
+CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))
 
-.PHONY : clean
-
 ge : $(OBJS)
-	$(CC) $(CFLAGS) -o ge $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o ge $(OBJS)
 
-$(TEST) : % : %.o $(filter-out main.o, $(OBJS))
-	$(CC) $(CFLAGS) $^ -lcheck -o $@
 
-main.o : ge.h
-msl.o : ge.h msl.h msl-timings.h
-ge.o : ge.h msl.h msl-timings.h 
-msl-timings.o : ge.h msl-timings.h msl-states.c
-msl-commands.o : ge.h msl-commands.h
+$(TESTS) : % : %.o $(filter-out main.o, $(OBJS))
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -lcheck -o $@
 
-libge.so : $(OBJS)
-	cc -o libge.so -shared $(OBJS)
+-include $(OBJS:%.o=%.d)
 
 
 check : $(TESTS)
@@ -27,4 +20,6 @@ check : $(TESTS)
 .PHONY: clean
 
 clean:
-	rm -f *.o ge libge.so $(OBJS)
+	rm -f ge
+	rm -f $(OBJS) $(OBJS:%.o=%.d)
+	rm -f $(TESTS) $(TESTS:%=%.d)
