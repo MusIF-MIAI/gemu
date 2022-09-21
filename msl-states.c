@@ -1,6 +1,9 @@
 #include <stdint.h>
-#include "msl-commands.h"
 #include "msl-timings.h"
+
+#define MSL_COMMANDS_INCLUDED_BY_MSL_STATES
+#include "msl-commands.c"
+#undef MSL_COMMANDS_INCLUDED_BY_MSL_STATES
 
 #ifndef MSL_STATES_INCLUDED_BY_MSL_TIMINGS
 #   error This file should be include by msl-timings.c and not compiled directly
