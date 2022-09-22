@@ -155,10 +155,10 @@ def switch_screen():
         SCREEN = 'top'
 
 def draw_lamp_labels():
-    y = 8
+    y = 12
     # fuse
     scr.addch(y, 20, '⬢')
-    scr.addstr(y + 1, 19, 'Fuse')
+    scr.addstr(y, 22, 'F1')
     y = 16
     # first line
     scr.addstr(y - 1, 9, "┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓ ┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓")
@@ -185,7 +185,7 @@ def draw_lamp_labels():
     scr.addstr(y + 1, 37, '07 06 05 04 03 02 01 00')
     scr.addstr(y + 2, 37, '\_____________________/')
     scr.addstr(y + 3, 48, 'SA')
-    scr.addstr(y + 1, 11, '04 03 02 01')
+    scr.addstr(y + 1, 11, 'B4 B3 B2 B1')
 
 def draw_switch_labels():
     scr.addstr(1, 118, "LAMPS ON")
