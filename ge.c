@@ -22,6 +22,8 @@ int ge_init(struct ge *ge)
         printf("Console socket created (fd = %d)\n", ge->ge_console_socket);
     }
     ge->halted = 1;
+    ge->console.lamps.LP_POWER_ON = 1;
+    ge->console.lamps.LP_HALT = 1;
     ge->ticks = 0;
     return 0;
 }
@@ -80,6 +82,7 @@ int ge_start(struct ge *ge)
     ge->console.rotary = RS_NORM;
 
     ge->halted = 0;
+    ge->console.lamps.LP_HALT = 0;
 
     return 0;
 }

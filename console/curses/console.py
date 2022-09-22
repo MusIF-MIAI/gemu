@@ -5,13 +5,54 @@ import struct
 from curses import wrapper
 import time
 import os
+import sys
 
-led_off='⚆'
-led_on='⚈'
-led_spacing = 3
+lamp_off='⚆'
+lamp_on='⚈'
+lamp_spacing = 3
 
 sw_up = '┸'
 sw_down = '┰'
+button_labels = [
+        ['', 'AC ON',''],
+        ['DC ALRT','', 'POW OFF'],
+        ['POWER','ON', ''],
+        ['MAINT.', 'ON', ''],
+        ['', 'SW 1',''],
+        ['', 'SW 2',''],
+        ['STEP','BY','STEP',],
+        ['LOAD 1','', 'LOAD 2'],
+
+        ['EMERGEN', 'OFF', ''],
+        ['','STANDBY',''],
+        ['','',''],
+        ['MEM CHK', '', 'INV ADD'],
+        ['', 'CLEAR',''],
+        ['', 'LOAD',''],
+        ['HALT','', 'START'],
+        ['OPER.','CALL', '']
+        ]
+
+button_pins = [
+        [ 3, 3, 3 ],
+        [ 0, -1, 1],
+        [ 3, 3, 3],
+        [ 4, 4, 4],
+        [ 7, 7, 7],
+        [ 8, 8, 8],
+        [ 9, 9, 9],
+        [11, -1, 12],
+
+        [-2, -2, -2],
+        [2,  2,  2],
+        [ -1, -1, -1],
+        [5, -1, 6],
+        [-2, -2, -2],
+        [-2, -2, -2],
+        [10, -2, -2],
+        [13, 13, 13],
+        ]
+
 
 MS_VAL = 0
 AM_VAL = 0
@@ -37,11 +78,45 @@ curses.mousemask(1)
 scr.keypad(True)
 curses.curs_set(0)
 curses.start_color()
-led_colorpair = curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-chassis_colorpair = curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLUE)
-button_red_colorpair = curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_RED)
-button_white_colorpair = curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+if not curses.has_colors():
+    print("Please use a terminal that can set colors!")
+    sys.exit(1)
+# Colors
+curses.init_color(9, 400, 400, 400)
+lamp_off_colorpair = curses.init_pair(5,curses.COLOR_BLACK, 9)
+curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLUE)
+curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_RED)
+curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
+curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+curses.init_pair(7, curses.COLOR_BLACK, curses.COLOR_CYAN)
 MAX_Y,MAX_X = scr.getmaxyx()
+clr_off = curses.color_pair(5)
+clr_white = curses.color_pair(4)
+clr_red = curses.color_pair(3)
+clr_yellow = curses.color_pair(6)
+clr_blue = curses.color_pair(7)
+button_colors = [
+        [ clr_red, clr_red, clr_red ],
+        [ clr_red, clr_off, clr_yellow ],
+        [ clr_yellow, clr_yellow, clr_yellow ],
+        [ clr_red, clr_red, clr_red ],
+        [ clr_white, clr_white, clr_white],
+        [ clr_white, clr_white, clr_white],
+        [ clr_white, clr_white, clr_white],
+        [ clr_white, clr_off, clr_white],
+
+        [ clr_red, clr_red, clr_red ],
+        [ clr_blue, clr_blue, clr_blue ],
+        [ clr_off, clr_off, clr_off ],
+        [ clr_red, clr_off, clr_red ],
+        [ clr_white, clr_white, clr_white],
+        [ clr_white, clr_white, clr_white],
+        [ clr_white, clr_off, clr_white],
+        [ clr_blue, clr_blue, clr_blue ]
+        ]
+
 
 def statusbar(st):
     global SCREEN
@@ -79,11 +154,11 @@ def switch_screen():
     else:
         SCREEN = 'top'
 
-def draw_led_labels():
-    y = 8
+def draw_lamp_labels():
+    y = 12
     # fuse
     scr.addch(y, 20, '⬢')
-    scr.addstr(y + 1, 19, 'Fuse')
+    scr.addstr(y, 22, 'F1')
     y = 16
     # first line
     scr.addstr(y - 1, 9, "┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓ ┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓")
@@ -110,10 +185,9 @@ def draw_led_labels():
     scr.addstr(y + 1, 37, '07 06 05 04 03 02 01 00')
     scr.addstr(y + 2, 37, '\_____________________/')
     scr.addstr(y + 3, 48, 'SA')
-    scr.addstr(y + 1, 11, '04 03 02 01')
+    scr.addstr(y + 1, 11, 'B4 B3 B2 B1')
 
 def draw_switch_labels():
-
     scr.addstr(1, 118, "LAMPS ON")
     scr.addstr(5, 117, "LAMPS OFF")
 
@@ -148,11 +222,11 @@ def draw_dial_labels():
     scr.addstr(30, 100, "<<")
     scr.addstr(30, 120, ">>")
 
-def draw_leds(pos_y, pos_x, value):
+def draw_lamps(pos_y, pos_x, value):
     global SCREEN
     n = 16
-    xval = pos_x + ((led_spacing * n) - 6) // 2
-    for i, x in enumerate(range(pos_x, pos_x + (led_spacing * n), led_spacing)):
+    xval = pos_x + ((lamp_spacing * n) - 6) // 2
+    for i, x in enumerate(range(pos_x, pos_x + (lamp_spacing * n), lamp_spacing)):
         off = 1
 
         if SCREEN == 'top':
@@ -167,10 +241,10 @@ def draw_leds(pos_y, pos_x, value):
                 off = 3
 
         if (value >> (n - (i + 1))) % 2:
-            val = led_on
-            scr.addch(pos_y, x + off, led_on, curses.color_pair(1))
+            val = lamp_on
+            scr.addch(pos_y, x + off, lamp_on, curses.color_pair(1))
         else:
-            scr.addch(pos_y, x + off, led_off, curses.color_pair(1))
+            scr.addch(pos_y, x + off, lamp_off, curses.color_pair(1))
 
 def draw_switch(pos_y, pos_x, val=False):
     if not val:
@@ -191,13 +265,13 @@ def draw_switch_row(pos_y, pos_x, n, value):
 
 def draw_top_panel():
     global MS_VAL, AM_VAL, LP_RO, LP_SO, LP_SA
-    draw_led_labels()
+    draw_lamp_labels()
     draw_switch_labels()
 
     # Lights
-    draw_leds(16, 10, LP_RO)
-    draw_leds(22, 10, LP_SO)
-    draw_leds(28, 10, LP_SA)
+    draw_lamps(16, 10, LP_RO)
+    draw_lamps(22, 10, LP_SO)
+    draw_lamps(28, 10, LP_SA)
 
     # Switches
     draw_switch_row(10, 85, 9, MS_VAL)
@@ -208,6 +282,7 @@ def draw_top_panel():
     draw_dial_labels()
 
 def draw_front_labels():
+    global LP_ALERTS
     scr.addstr(15, 98, "ADD REG")
     for x in range(76, 124, 14):
         scr.addstr(17,x,"8  4  2  1")
@@ -217,39 +292,35 @@ def draw_front_labels():
         scr.addstr(21,x,"8  4  2  1")
     scr.addstr(21, 76, "OF NZ IM JE   I  C1 C2 C3")
 
-    button_labels = [
-            ['AC ON',''],
-            ['',''],
-            ['DC ALRT','POW OFF'],
-            ['POWER', 'ON'],
-            ['MAINT.', 'ON'],
-            ['SW 1',''],
-            ['SW 2',''],
-            ['STEP BY','STEP'],
-            ['LOAD 1', 'LOAD 2'],
-            ['EMERGEN', 'OFF'],
-            ['',''],
-            ['STANDBY',''],
-            ['',''],
-            ['MEM CHK', 'INV ADD'],
-            ['CLEAR',''],
-            ['LOAD',''],
-            ['HALT','START'],
-            ['OPER.','CALL']
-            ]
-    for i,x in enumerate(range(3, 69, 8)):
-        scr.addstr(15, x, button_labels[i][0], curses.color_pair(4))
-        scr.addstr(16, x, button_labels[i][1], curses.color_pair(4))
-    for i,x in enumerate(range(3, 69, 8)):
-        if (i == 0):
-            scr.addstr(19, x, button_labels[i + 9][0], curses.color_pair(3))
-            scr.addstr(20, x, button_labels[i + 9][1], curses.color_pair(3))
-        else:
-            scr.addstr(19, x, button_labels[i + 9][0], curses.color_pair(4))
-            scr.addstr(20, x, button_labels[i + 9][1], curses.color_pair(4))
+
+    for x in range(3, 69, 8):
+        i = (x - 3) // 8
+        if (i == 1):
+            continue
+        if (i > 1):
+            i -= 1
+        wires = button_pins[i]
+        for j,w in enumerate(wires):
+            if w == -2 or (w != -1 and (LP_ALERTS & (1 << w)) != 0):
+                scr.addstr(15 + j, x, button_labels[i][j], button_colors[i][j])
+            else:
+                scr.addstr(15 + j, x, button_labels[i][j], clr_off)
+
+    for x in range(3, 69, 8):
+        i = (x - 3) // 8 + 8
+        if (i == 9):
+            continue
+        if (i > 9):
+            i -= 1
+        wires = button_pins[i]
+        for j,w in enumerate(wires):
+            if w == -2 or (w != -1 and (LP_ALERTS & (1 << w)) != 0):
+                scr.addstr(19 + j, x, button_labels[i][j], button_colors[i][j])
+            else:
+                scr.addstr(19 + j, x, button_labels[i][j], clr_off)
 
 def draw_front_panel():
-    global MS_VAL, AM_VAL, LP_RO, LP_SO, LP_SA
+    global MS_VAL, AM_VAL, LP_RO, LP_SO, LP_SA, LP_ALERTS
     for y in range(0, 14):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
@@ -262,27 +333,48 @@ def draw_front_panel():
     for y in range(23, MAX_Y - 2):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
-    draw_leds(16, 75, LP_ADD_REG)
-    draw_leds(20, 75, LP_OP_REG)
+    draw_lamps(16, 75, LP_ADD_REG)
+    draw_lamps(20, 75, LP_OP_REG)
 
-    # TODO: buttons change colors based on LP_ALERTS
     # Buttons: top row
+    j = 0
     for y in range (15, 18):
         for x in range (3, 75):
+            ii = (x - 3) // 8
+            if (ii > 1):
+                i = ii - 1
+            else:
+                i = ii
             if (x - 2) % 8 == 0:
                 scr.addch(y,x,' ')
+                continue
+            wires = button_pins[i]
+            w = wires[j]
+            if w == -2 or ((w != -1) and (ii != 1) and (LP_ALERTS & (1 << w) != 0)):
+                clr = button_colors[i][j]
             else:
-                scr.addch(y,x,' ', curses.color_pair(4))
+                clr = clr_off
+            scr.addch(y, x, ' ', clr)
+        j += 1
     # Buttons: bottom row
+    j = 0
     for y in range (19, 22):
-        for x in range (3, 75):
+        for x in (range (3, 75)):
+            ii = (x - 3) // 8
+            if (ii > 1):
+                ii -= 1
+            i = ii + 8
             if (x - 2) % 8 == 0:
                 scr.addch(y,x,' ')
+                continue
+            wires = button_pins[i]
+            w = wires[j]
+            if w == -2 or ((w != -1) and (ii != 1) and (LP_ALERTS & (1 << w) != 0)):
+                clr = button_colors[i][j]
             else:
-                if (x < 10):
-                    scr.addch(y,x,' ', curses.color_pair(3))
-                else:
-                    scr.addch(y,x,' ', curses.color_pair(4))
+                clr = clr_off
+            scr.addch(y,x, ' ', clr)
+        j += 1
     draw_front_labels()
 
 
@@ -404,7 +496,7 @@ def comm_cpu():
 # Curses wrapped function
 def main(stdscr):
     global SCREEN
-    global LP_SO, LP_SA
+    global LP_SO, LP_SA, LP_ALERTS
     scr.timeout(20)
     while True:
         if SCREEN == 'top':
@@ -430,7 +522,8 @@ def main(stdscr):
         if k == curses.KEY_MOUSE:
             (m_id, mx, my, mz, bstat) = curses.getmouse()
             parse_mouse(m_id, my, mx)
-            LP_SA += 1;
+            # Test
+            LP_ALERTS += 1;
         scr.clear()
 
 
