@@ -7,9 +7,9 @@ import time
 import os
 import sys
 
-led_off='⚆'
-led_on='⚈'
-led_spacing = 3
+lamp_off='⚆'
+lamp_on='⚈'
+lamp_spacing = 3
 
 sw_up = '┸'
 sw_down = '┰'
@@ -154,7 +154,7 @@ def switch_screen():
     else:
         SCREEN = 'top'
 
-def draw_led_labels():
+def draw_lamp_labels():
     y = 8
     # fuse
     scr.addch(y, 20, '⬢')
@@ -188,7 +188,6 @@ def draw_led_labels():
     scr.addstr(y + 1, 11, '04 03 02 01')
 
 def draw_switch_labels():
-
     scr.addstr(1, 118, "LAMPS ON")
     scr.addstr(5, 117, "LAMPS OFF")
 
@@ -223,11 +222,11 @@ def draw_dial_labels():
     scr.addstr(30, 100, "<<")
     scr.addstr(30, 120, ">>")
 
-def draw_leds(pos_y, pos_x, value):
+def draw_lamps(pos_y, pos_x, value):
     global SCREEN
     n = 16
-    xval = pos_x + ((led_spacing * n) - 6) // 2
-    for i, x in enumerate(range(pos_x, pos_x + (led_spacing * n), led_spacing)):
+    xval = pos_x + ((lamp_spacing * n) - 6) // 2
+    for i, x in enumerate(range(pos_x, pos_x + (lamp_spacing * n), lamp_spacing)):
         off = 1
 
         if SCREEN == 'top':
@@ -242,10 +241,10 @@ def draw_leds(pos_y, pos_x, value):
                 off = 3
 
         if (value >> (n - (i + 1))) % 2:
-            val = led_on
-            scr.addch(pos_y, x + off, led_on, curses.color_pair(1))
+            val = lamp_on
+            scr.addch(pos_y, x + off, lamp_on, curses.color_pair(1))
         else:
-            scr.addch(pos_y, x + off, led_off, curses.color_pair(1))
+            scr.addch(pos_y, x + off, lamp_off, curses.color_pair(1))
 
 def draw_switch(pos_y, pos_x, val=False):
     if not val:
@@ -266,13 +265,13 @@ def draw_switch_row(pos_y, pos_x, n, value):
 
 def draw_top_panel():
     global MS_VAL, AM_VAL, LP_RO, LP_SO, LP_SA
-    draw_led_labels()
+    draw_lamp_labels()
     draw_switch_labels()
 
     # Lights
-    draw_leds(16, 10, LP_RO)
-    draw_leds(22, 10, LP_SO)
-    draw_leds(28, 10, LP_SA)
+    draw_lamps(16, 10, LP_RO)
+    draw_lamps(22, 10, LP_SO)
+    draw_lamps(28, 10, LP_SA)
 
     # Switches
     draw_switch_row(10, 85, 9, MS_VAL)
@@ -334,8 +333,8 @@ def draw_front_panel():
     for y in range(23, MAX_Y - 2):
         for x in range(0, MAX_X):
             scr.addch(y,x,' ', curses.color_pair(2))
-    draw_leds(16, 75, LP_ADD_REG)
-    draw_leds(20, 75, LP_OP_REG)
+    draw_lamps(16, 75, LP_ADD_REG)
+    draw_lamps(20, 75, LP_OP_REG)
 
     # Buttons: top row
     j = 0
@@ -365,10 +364,10 @@ def draw_front_panel():
             if (ii > 1):
                 ii -= 1
             i = ii + 8
-            wires = button_pins[i]
             if (x - 2) % 8 == 0:
                 scr.addch(y,x,' ')
                 continue
+            wires = button_pins[i]
             w = wires[j]
             if w == -2 or ((w != -1) and (ii != 1) and (LP_ALERTS & (1 << w) != 0)):
                 clr = button_colors[i][j]
