@@ -2,11 +2,13 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "ge.h"
 #include "msl.h"
 #include "console_socket.h"
+#include "peripherical.h"
 
-#define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
+#define CLOCK_PERIOD 14000 /* in usec, intervaln between pulse lines */
 #define MAX_PROGRAM_STORAGE_WORDS 129
 static int ge_halted(struct ge *ge)
 {
@@ -15,12 +17,7 @@ static int ge_halted(struct ge *ge)
 
 int ge_init(struct ge *ge)
 {
-    ge->ge_console_socket = console_socket_init();
-    if (ge->ge_console_socket < 0) {
-        perror("Error creating console socket");
-    } else {
-        printf("Console socket created (fd = %d)\n", ge->ge_console_socket);
-    }
+    memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
     ge->console.lamps.LP_POWER_ON = 1;
     ge->console.lamps.LP_HALT = 1;

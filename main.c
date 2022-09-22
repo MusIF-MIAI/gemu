@@ -1,6 +1,7 @@
-#include "ge.h"
 #include <stdio.h>
 #include <unistd.h>
+#include "ge.h"
+#include "console_socket.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,6 +10,10 @@ int main(int argc, char *argv[])
     int ret;
 
     ret = ge_init(&ge130);
+    if (ret != 0)
+        return ret;
+
+    ret = console_socket_register(&ge130);
     if (ret != 0)
         return ret;
 
@@ -24,5 +29,6 @@ int main(int argc, char *argv[])
         sleep(1);
         printf(" *** RESTART *** ");
     }
+    ge_deinit(&ge130);
     return ret;
 }

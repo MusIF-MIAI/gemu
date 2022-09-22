@@ -243,7 +243,6 @@ struct ge {
     uint8_t rFA;
 
     struct ge_console console;
-    int ge_console_socket;
     struct ge_counting_network counting_network;
 
     /* Memory */
