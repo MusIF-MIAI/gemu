@@ -125,6 +125,9 @@ struct __attribute__((packed)) ge_console {
 
 struct ge_counting_network {
     uint16_t output;
+    struct cmds {
+        uint8_t from_zero:1;
+    } cmds;
 };
 
 /**
