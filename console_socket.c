@@ -36,7 +36,7 @@ static int console_socket_init(struct ge *ge, void *ctx)
 }
 
 
-static int console_socket_check(struct ge *ge, void *ctx)
+int console_socket_check(struct ge *ge, void *ctx)
 {
     char buf[1024];
     struct sockaddr_un dst;
