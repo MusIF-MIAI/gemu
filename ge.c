@@ -2,11 +2,13 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "ge.h"
 #include "msl.h"
 #include "console_socket.h"
+#include "peripherical.h"
 
-#define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
+#define CLOCK_PERIOD 14000 /* in usec, intervaln between pulse lines */
 #define MAX_PROGRAM_STORAGE_WORDS 129
 static int ge_halted(struct ge *ge)
 {
@@ -15,12 +17,7 @@ static int ge_halted(struct ge *ge)
 
 int ge_init(struct ge *ge)
 {
-    ge->ge_console_socket = console_socket_init();
-    if (ge->ge_console_socket < 0) {
-        perror("Error creating console socket");
-    } else {
-        printf("Console socket created (fd = %d)\n", ge->ge_console_socket);
-    }
+    memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
     ge->console.lamps.LP_POWER_ON = 1;
     ge->console.lamps.LP_HALT = 1;
@@ -103,6 +100,7 @@ static void ge_print_well_known_states(uint8_t state) {
 int ge_run_cycle(struct ge *ge)
 {
     struct msl_timing_state *state;
+    int r;
 
     int old_SO = ge->rSO;
 
@@ -116,17 +114,21 @@ int ge_run_cycle(struct ge *ge)
         return 1;
     }
 
+    r = ge_peri_on_clock(ge);
+    if (r != 0)
+        return r;
+
     for(ge->current_clock = TO00; ge->current_clock < END_OF_STATUS; ge->current_clock++) {
 
         /* Execute machine logic for pulse*/
         pulse(ge);
 
+        r = ge_peri_on_pulses(ge);
+        if (r != 0)
+            return r;
+
         /* Execute the commands from the timing charts */
         msl_run_state(ge, state);
-
-        /* Update console socket */
-        /* TODO: DELME! This goes in status 00 / 08 */
-        console_socket_check(ge);
 
         /* Delay */
         usleep(CLOCK_PERIOD);
@@ -158,4 +160,13 @@ int ge_run(struct ge *ge)
 int ge_struct_sizeof(void)
 {
     return sizeof(struct ge);
+}
+
+/**
+ * ge_deinit() - deinit GE emulator
+ */
+int ge_deinit(struct ge *ge)
+{
+    ge_peri_deinit(ge);
+    return 0;
 }

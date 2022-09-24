@@ -255,7 +255,6 @@ struct ge {
     uint8_t rFA;
 
     struct ge_console console;
-    int ge_console_socket;
     struct ge_counting_network counting_network;
 
     /* Memory */
@@ -274,10 +273,14 @@ struct ge {
     int PUC3:1; /* Channel 3 busy */
 
     int URPE:1; /*  */
+
+    struct ge_peri *peri;
 };
 
 /// Initialize the emulator
 int ge_init(struct ge *ge);
+
+int ge_deinit(struct ge *ge);
 
 /// Run the emulator
 int ge_run(struct ge *ge);
@@ -306,5 +309,18 @@ struct pulse_event {
 int pulse(struct ge *ge);
 
 int ge_struct_sizeof(void);
+
+/**
+ */
+struct ge_peri {
+    struct ge_peri *next;
+    int (*init)(struct ge*, void*);
+    int (*on_pulse)(struct ge*, void*);
+    int (*on_clock)(struct ge*, void*);
+    int (*deinit)(struct ge*, void*);
+    void *ctx;
+};
+
+int ge_register_peri(struct ge *ge, struct ge_peri *p);
 
 #endif /* GE_H */
