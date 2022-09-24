@@ -13,7 +13,7 @@
 
 /* uses manual notation */
 /* [ 4 | 3 | 2 | 1 ] for 16 bits and [ 2 | 1 ] for 8 bits*/
-#define NIBBLE_MASK(X) (0xffff << ((X-1)*4))
+#define NIBBLE_MASK(X) (0xf << ((X-1)*4))
 
 /* Commands To Load The Registers */
 /* ------------------------------ */
