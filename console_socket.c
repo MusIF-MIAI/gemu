@@ -36,29 +36,35 @@ static int console_socket_init(struct ge *ge, void *ctx)
 }
 
 
-static int console_socket_check(struct ge *ge, void *ctx)
+int console_socket_check(struct ge *ge, void *ctx)
 {
     char buf[1024];
     struct sockaddr_un dst;
     int ret;
+    int sd = console_socket_fd;
+    struct ge_console temp;
     socklen_t ssz = sizeof(struct sockaddr_un);
     (void)ctx;
     if (console_socket_fd < 0) {
         return -1;
     }
-    ge->console.lamps.RO = ge->rRO;
-    ge->console.lamps.SO = ge->rSO;
-    ge->console.lamps.SA = ge->rSA;
-    ge->console.lamps.FA = ge->rFA & 0x0F;
 
-    ret = recvfrom(console_socket_fd, buf, 1024, 0,
-                (struct sockaddr *)&dst, &ssz);
-    if (ret > 0) {
-        printf("DEBUG: doing check\n");
-        sendto(console_socket_fd, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0,
-               (struct sockaddr *)&dst, ssz);
-    }
-
+    do {
+        ret = recvfrom(sd, &temp, sizeof(struct ge_console), 0,
+                    (struct sockaddr *)&dst, &ssz);
+        if (ret == sizeof(struct ge_console)) {
+            memcpy(&ge->console, &temp, sizeof(struct ge_console));
+            memset(&ge->console.lamps, 0, sizeof(struct console_lamp));
+            ge->console.lamps.LP_POWER_ON = 1;
+            ge->console.lamps.LP_HALT = ge->halted;
+            ge->console.lamps.RO = ge->rRO;
+            ge->console.lamps.SO = ge->rSO;
+            ge->console.lamps.SA = ge->rSA;
+            ge->console.lamps.FA = ge->rFA & 0x0F;
+        }
+    } while (ret != -1);
+    sendto(sd, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0,
+            (struct sockaddr *)&dst, ssz);
     return 0;
 }
 

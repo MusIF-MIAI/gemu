@@ -137,13 +137,14 @@ def statusbar(st):
 
 def CPU_read_status(buf):
     global LP_RO, LP_SO, LP_SA
-    global LP_ADD_REG, LP_OP_REG, LP_ALERTS
+    global LP_ADD_REG, LP_OP_REG, LP_ALERTS, BUTTONS_VAL
     statusbar('msg')
     if (len(buf) != 19):
         statusbar('protocol error')
         return
     LP_RO, LP_SO, LP_SA = struct.unpack("HHH", buf[0:6])
     LP_ADD_REG, LP_OP_REG, LP_ALERTS = struct.unpack("HHH", buf[6:12])
+    BUTTONS_VAL ^= struct.unpack("H", buf[16:18])[0]
     statusbar('CPU Synchronized')
 
 def switch_screen():
@@ -522,8 +523,6 @@ def main(stdscr):
         if k == curses.KEY_MOUSE:
             (m_id, mx, my, mz, bstat) = curses.getmouse()
             parse_mouse(m_id, my, mx)
-            # Test
-            LP_ALERTS += 1;
         scr.clear()
 
 
