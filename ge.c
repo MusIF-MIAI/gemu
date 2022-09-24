@@ -19,28 +19,38 @@ int ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
-    ge->console.lamps.LP_POWER_ON = 1;
-    ge->console.lamps.LP_HALT = 1;
     ge->ticks = 0;
     return 0;
+}
+
+int ge_halt(struct ge *ge)
+{
+    if ((ge->halted == 0) && (ge->console.buttons.B_HALT_START)) {
+        ge->halted = 1;
+        printf("HALTED\n");
+    }
 }
 
 /// Emulate the press of the "clear" button in the console
 void ge_clear(struct ge *ge)
 {
-    // From 14023130-0, sheet 5:
-    // The pressure of the "CLEAR" push button only determines the continuos
-    // performance of the "00" status
-    ge->rSO = 0;
+    if (ge->console.buttons.B_CLEAR) {
+        // From 14023130-0, sheet 5:
+        // The pressure of the "CLEAR" push button only determines the continuos
+        // performance of the "00" status
+        ge->rSO = 0;
 
-    /* From 30004122 o/A, sheet 31:
-     * The light is switched off by tle LOFF instruction or by the CLEAR key */
-    ge->operator_call = 0;
+        /* From 30004122 o/A, sheet 31:
+         * The light is switched off by tle LOFF instruction or by the CLEAR key */
+        ge->operator_call = 0;
 
-    // Also clear the emulated memory... what else?!
-    memset(ge->mem, 0, sizeof(ge->mem));
+        // Also clear the emulated memory... what else?!
+        memset(ge->mem, 0, sizeof(ge->mem));
 
-    ge->AINI = 0;
+        ge->AINI = 0;
+
+        printf("CLEAR\n");
+    }
 }
 
 /// Emulate the press of the "load" button in the console
@@ -49,38 +59,44 @@ int ge_load(struct ge *ge, uint8_t *program, uint8_t size)
     if (program == NULL && size != 0)
         return -1;
 
-    /* When pressing LOAD button, AINI is set. If AINI is set, the state 80
-     * (initialitiation) goes to state c8, starting the loading of the program
-     * (of max 129 words) from one of the peripherc unit. */
+    if (ge->console.buttons.B_LOAD) {
 
-    /* set AINI FF to 1 (pag. 96)*/
-    ge->AINI = 1;
-    if (program != NULL) {
-        if (size > MAX_PROGRAM_STORAGE_WORDS)
-            size = MAX_PROGRAM_STORAGE_WORDS;
+        /* When pressing LOAD button, AINI is set. If AINI is set, the state 80
+         * (initialitiation) goes to state c8, starting the loading of the program
+         * (of max 129 words) from one of the peripherc unit. */
 
-        /* simulate the loading for now */
-        memcpy(ge->mem, program, size);
+        /* set AINI FF to 1 (pag. 96)*/
+        ge->AINI = 1;
+        if (program != NULL) {
+            if (size > MAX_PROGRAM_STORAGE_WORDS)
+                size = MAX_PROGRAM_STORAGE_WORDS;
 
-        /* I'm supposing that the AINI signal is resetted after loading */
-        ge->AINI = 0;
+            /* simulate the loading for now */
+            memcpy(ge->mem, program, size);
+
+            /* I'm supposing that the AINI signal is resetted after loading */
+            ge->AINI = 0;
+        }
+        printf("LOAD\n");
     }
-
     return 0;
 }
 
 /// Emulate the press of the "start" button in the console
 int ge_start(struct ge *ge)
 {
-    // From 14023130-0, sheet 5:
-    // With the rotating switch in "NORM" position, after the operation
-    // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
-    ge->rSO = 0x80;
-    ge->console.rotary = RS_NORM;
-
-    ge->halted = 0;
-    ge->console.lamps.LP_HALT = 0;
-
+    if ((ge->console.buttons.B_HALT_START) && (ge->halted)) {
+        // From 14023130-0, sheet 5:
+        // With the rotating switch in "NORM" position, after the operation
+        // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
+        if (ge->console.rotary != RS_NORM) {
+            printf("Console switch not in NORM position.\n");
+            return 0;
+        }
+        ge->rSO = 0x80;
+    
+        ge->halted = 0;
+    }
     return 0;
 }
 

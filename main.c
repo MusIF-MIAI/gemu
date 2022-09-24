@@ -20,14 +20,17 @@ int main(int argc, char *argv[])
     /* load with memory / and or setup peripherics */
 
     while(1) {
+        console_socket_check(&ge130);
         ge_clear(&ge130);
         ge_load(&ge130, &test_program, 1);
         ge_start(&ge130);
 
-        ret = ge_run(&ge130);
+        if (!ge130.halted)
+            ret = ge_run(&ge130);
 
+        ge_halt(&ge130);
         sleep(1);
-        printf(" *** RESTART *** ");
+        printf(" *** RESTART *** \n");
     }
     ge_deinit(&ge130);
     return ret;

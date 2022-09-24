@@ -273,8 +273,8 @@ struct ge {
     int PUC3:1; /* Channel 3 busy */
 
     int URPE:1; /*  */
-
     struct ge_peri *peri;
+    
 };
 
 /// Initialize the emulator
@@ -296,6 +296,7 @@ int ge_load(struct ge * ge, uint8_t *program, uint8_t size);
 
 /// Emulate the press of the "start" button in the console
 int ge_start(struct ge * ge);
+int ge_halt(struct ge *ge);
 
 
 typedef int (*on_pulse_cb)(struct ge *);
