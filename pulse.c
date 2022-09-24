@@ -38,9 +38,6 @@ static int on_TO20(struct ge *ge) {
     /* pag 142 */
     ge->rRO = 0;
 
-    /* oag 141, pag 125 */
-    ge->kNI = ge->counting_network.output;
-
     return 0;
 }
 
