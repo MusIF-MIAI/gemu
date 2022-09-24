@@ -22,4 +22,5 @@ check : $(TESTS)
 clean:
 	rm -f ge
 	rm -f $(OBJS) $(OBJS:%.o=%.d)
-	rm -f $(TESTS) $(TESTS:%=%.d)
+	rm -f $(TESTS) $(TESTS:%=%.d) $(TESTS:%=%.o)
+

@@ -9,6 +9,10 @@
 #   error This file should be include by msl-timings.c and not compiled directly
 #endif
 
+#define PER 0x9E
+#define PERI 0x9C
+#define HLT 0x0A
+
 // Initialitiation
 
 // to state E2+E3 if !AINI
@@ -43,9 +47,17 @@ static const struct msl_timing_chart state_80[] = {
 // (to state F0 if RINT & !FA06
 //           E0 if !RINT | FA06)
 
-static uint8_t state_E2_E3_TO80_CI89(struct ge *ge) { return 0; }
-static uint8_t state_E2_E3_TI06_CI82(struct ge *ge) { return 0; }
-static uint8_t state_E2_E3_TI06_CU04(struct ge *ge) { return 0; }
+static uint8_t state_E2_E3_TO80_CI89(struct ge *ge) {
+    /* (deltaRO = HTL + ASIN(ATOC+!ADIR)) */
+    if (ge->rRO == HLT)
+        return 1;
+    return 0;
+}
+static uint8_t state_E2_E3_TI06_CI82(struct ge *ge) { return ge->rRO == PER; }
+static uint8_t state_E2_E3_TI06_CU04(struct ge *ge)
+{
+    return ge->RINT && !(ge->ffFA & (1<<6));
+}
 
 static const struct msl_timing_chart state_E2_E3[] = {
     { TO10, CO10, 0 },

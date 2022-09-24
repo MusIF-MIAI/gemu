@@ -13,7 +13,7 @@
 
 /* uses manual notation */
 /* [ 4 | 3 | 2 | 1 ] for 16 bits and [ 2 | 1 ] for 8 bits*/
-#define NIBBLE_MASK(X) (0xffff << ((X-1)*4))
+#define NIBBLE_MASK(X) (0xf << ((X-1)*4))
 
 /* Commands To Load The Registers */
 /* ------------------------------ */
@@ -30,8 +30,8 @@ static void CI08(struct ge* ge) { ge->rFO = (uint8_t)ge->kNI; }
 /* NO Knot Selection Commands */
 /* -------------------------- */
 
-static void CO10(struct ge* ge) CC
-static void CO12(struct ge* ge) CC
+static void CO10(struct ge* ge) { ge->kNO = ge->rPO;}
+static void CO12(struct ge* ge) { ge->kNO = ge->rV2;}
 
 static void CI12(struct ge* ge) CC
 
@@ -47,8 +47,7 @@ static void CI19(struct ge* ge)
 /* VO, BO, RO Loading Commands */
 /* --------------------------- */
 
-static void CO30(struct ge* ge) CC
-
+static void CO30(struct ge* ge) { ge->rRO = ge->mem[ge->rVO]; }
 static void CI32(struct ge* ge)
 {
     /* NO43 -> RO */
@@ -56,12 +55,12 @@ static void CI32(struct ge* ge)
 }
 
 static void CI38(struct ge *ge) CC
-static void CI39(struct ge *ge) CC
+static void CI39(struct ge *ge) { ge->AVER = 0; }
 
 /* Count And Arithmetical Unit Commands */
 /* ------------------------------------ */
 
-static void CO41(struct ge* ge) CC
+ static void CO41(struct ge* ge) { ge->counting_network.cmds.from_zero = 1; };
 
 
 /* NI Knot Selection Commands */
@@ -80,9 +79,15 @@ static void CI63(struct ge *ge) CC
 static void CI64(struct ge *ge) CC
 static void CI65(struct ge *ge) CC
 static void CI66(struct ge *ge) CC
-static void CI67(struct ge *ge) CC
+static void CI67(struct ge *ge)
+{
+    /* this should inhibit couting network to drive NI */
+    ge->kNI &= ~NIBBLE_MASK(1);
+    ge->kNI |= (ge->rRO & NIBBLE_MASK(1));
+}
+
 static void CI68(struct ge *ge) CC
-static void CI69(struct ge *ge) CC
+static void CI69(struct ge *ge) { ge->ALTO = 1; }
 
 /* Commands To Set And Reset FF Of Condition */
 /* ----------------------------------------- */
@@ -91,7 +96,7 @@ static void CI76(struct ge* ge) { SET_BIT(ge->ffFI, 6); }
 static void CI80(struct ge* ge) { RESET_BIT(ge->ffFI, 0); }
 static void CI81(struct ge* ge) { RESET_BIT(ge->ffFI, 1); }
 static void CI82(struct ge* ge) { RESET_BIT(ge->ffFI, 2); }
-static void CI83(struct ge* ge) CC
+static void CI83(struct ge* ge) { RESET_BIT(ge->ffFI, 3); }
 static void CI89(struct ge* ge) CC
 
 /* Commands To Force In NO Knot */

@@ -125,6 +125,9 @@ struct __attribute__((packed)) ge_console {
 
 struct ge_counting_network {
     uint16_t output;
+    struct cmds {
+        uint8_t from_zero:1;
+    } cmds;
 };
 
 /**
@@ -176,6 +179,10 @@ struct ge_counting_network {
  *      performance of an instruction. Loaded from @FI in T010
  * @AINI: FF It as the meaning of "Program Loading". It is set pressing "LOAD"
  * and it is reset pressing "CLEAR" or with command CI39 (E0 status alpha)
+ * @ALTO: FF Alto
+ * @AVER: FF AVER
+ * @ADIR: FF ADIR (disable step-by-step (pag. 97))
+ * @RINT
  * @counting_network: represent the GE counting network
  * @console: represent the GE console
  */
@@ -239,6 +246,11 @@ struct ge {
     uint8_t ffFA;
 
     uint8_t AINI:1;
+    uint8_t ALTO:1;
+    uint8_t AVER:1;
+    uint8_t ADIR:1;
+    uint8_t RINT:1;
+
     /* Faults: TODO (pp. 139-141) */
     uint8_t rFA;
 
