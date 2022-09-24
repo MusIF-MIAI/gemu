@@ -68,6 +68,8 @@ Data Structures</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpulse__event.html">pulse_event</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__peri.html">ge_peri</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
@@ -137,6 +139,8 @@ Functions</h2></td></tr>
 <tr class="memitem:a6d8c95145aa404b162e6ea81a85a4efc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a6d8c95145aa404b162e6ea81a85a4efc">ge_init</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="memdesc:a6d8c95145aa404b162e6ea81a85a4efc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the emulator.  <a href="ge_8h.html#a6d8c95145aa404b162e6ea81a85a4efc">More...</a><br /></td></tr>
 <tr class="separator:a6d8c95145aa404b162e6ea81a85a4efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a0f32b2788f4daa9d26b9028d69fdf5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a0a0f32b2788f4daa9d26b9028d69fdf5">ge_deinit</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a0a0f32b2788f4daa9d26b9028d69fdf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35618476cde0eb1eddfb20e0af752094"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a35618476cde0eb1eddfb20e0af752094">ge_run</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="memdesc:a35618476cde0eb1eddfb20e0af752094"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the emulator.  <a href="ge_8h.html#a35618476cde0eb1eddfb20e0af752094">More...</a><br /></td></tr>
 <tr class="separator:a35618476cde0eb1eddfb20e0af752094"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,6 +160,8 @@ Functions</h2></td></tr>
 <tr class="separator:ab23e0aa729b0fff20bf5e3619056dcb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3279e2050ded98c94e6aef5ba9fe08ea"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a3279e2050ded98c94e6aef5ba9fe08ea">ge_struct_sizeof</a> (void)</td></tr>
 <tr class="separator:a3279e2050ded98c94e6aef5ba9fe08ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad24be10fe84efc6d115dc762ecd18f84"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#ad24be10fe84efc6d115dc762ecd18f84">ge_register_peri</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structge__peri.html">ge_peri</a> *p)</td></tr>
+<tr class="separator:ad24be10fe84efc6d115dc762ecd18f84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a2dcf8c45f945dd0c4301a94700f2112c"></a>
@@ -187,7 +193,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00298">298</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00301">301</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -300,7 +306,28 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "clear" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00032">32</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00029">29</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+
+</div>
+</div>
+<a id="a0a0f32b2788f4daa9d26b9028d69fdf5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a0f32b2788f4daa9d26b9028d69fdf5">&#9670;&nbsp;</a></span>ge_deinit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ge_deinit </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p><a class="el" href="ge_8c.html#a0a0f32b2788f4daa9d26b9028d69fdf5">ge_deinit()</a> - deinit GE emulator </p>
+
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00168">168</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -322,7 +349,7 @@ Functions</h2></td></tr>
 
 <p>Initialize the emulator. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00016">16</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00018">18</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -360,7 +387,37 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00050">50</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00047">47</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+
+</div>
+</div>
+<a id="ad24be10fe84efc6d115dc762ecd18f84"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad24be10fe84efc6d115dc762ecd18f84">&#9670;&nbsp;</a></span>ge_register_peri()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ge_register_peri </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct <a class="el" href="structge__peri.html">ge_peri</a> *&#160;</td>
+          <td class="paramname"><em>p</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="peripherical_8c_source.html#l00055">55</a> of file <a class="el" href="peripherical_8c_source.html">peripherical.c</a>.</p>
 
 </div>
 </div>
@@ -382,7 +439,7 @@ Functions</h2></td></tr>
 
 <p>Run the emulator. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00144">144</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00146">146</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -404,7 +461,7 @@ Functions</h2></td></tr>
 
 <p>Run a sigle cycle (all GE "mastri" clock periods) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00103">103</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00100">100</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -426,7 +483,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "start" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00076">76</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00073">73</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -446,7 +503,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00158">158</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00160">160</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>

@@ -119,8 +119,6 @@ Data Fields</h2></td></tr>
 <tr class="separator:a0a0c9b09deb02333f1091a39dc9b04bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e540d6d7f0081525e0c380064781e13"><td class="memItemLeft" align="right" valign="top">struct ge_console&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a6e540d6d7f0081525e0c380064781e13">console</a></td></tr>
 <tr class="separator:a6e540d6d7f0081525e0c380064781e13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9823a9f5466009f245118e11302c1e3c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a9823a9f5466009f245118e11302c1e3c">ge_console_socket</a></td></tr>
-<tr class="separator:a9823a9f5466009f245118e11302c1e3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51723c7b97ff4771a2ece3539a77bba5"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structge__counting__network.html">ge_counting_network</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a51723c7b97ff4771a2ece3539a77bba5">counting_network</a></td></tr>
 <tr class="separator:a51723c7b97ff4771a2ece3539a77bba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78c69e787972fdd3686486854b46d460"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a> [<a class="el" href="ge_8h.html#a2dcf8c45f945dd0c4301a94700f2112c">MEM_SIZE</a>]</td></tr>
@@ -145,6 +143,8 @@ Data Fields</h2></td></tr>
 <tr class="separator:aaab49f5c8b240da84b483b2f8b87cd26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2e720c44868e5d5c939e458a1ff26b8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#ad2e720c44868e5d5c939e458a1ff26b8">URPE</a>:1</td></tr>
 <tr class="separator:ad2e720c44868e5d5c939e458a1ff26b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8e99d5e7e9bd26d3e926159445da103"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structge__peri.html">ge_peri</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#aa8e99d5e7e9bd26d3e926159445da103">peri</a></td></tr>
+<tr class="separator:aa8e99d5e7e9bd26d3e926159445da103"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>struct ge</p>
@@ -252,7 +252,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00259">259</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00258">258</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -304,22 +304,6 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a id="a9823a9f5466009f245118e11302c1e3c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9823a9f5466009f245118e11302c1e3c">&#9670;&nbsp;</a></span>ge_console_socket</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int ge_console_socket</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00258">258</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
-
-</div>
-</div>
 <a id="a4fcbdec563a8d3d944b4c591190ad53a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4fcbdec563a8d3d944b4c591190ad53a">&#9670;&nbsp;</a></span>halted</h2>
 
@@ -348,7 +332,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00271">271</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00270">270</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -364,7 +348,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00270">270</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00269">269</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -380,7 +364,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00268">268</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00267">267</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -396,7 +380,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00269">269</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00268">268</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -460,7 +444,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00262">262</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00261">261</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -492,7 +476,23 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00266">266</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00265">265</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+
+</div>
+</div>
+<a id="aa8e99d5e7e9bd26d3e926159445da103"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa8e99d5e7e9bd26d3e926159445da103">&#9670;&nbsp;</a></span>peri</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structge__peri.html">ge_peri</a>* peri</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00277">277</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -508,7 +508,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00272">272</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00271">271</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -524,7 +524,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00273">273</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00272">272</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -540,7 +540,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00274">274</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00273">273</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -844,7 +844,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00265">265</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00264">264</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -876,7 +876,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00276">276</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00275">275</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>

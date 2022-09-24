@@ -51,20 +51,14 @@
 <a href="console__socket_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#ifndef CONSOLE_SOCKET_H</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor">#define CONSOLE_SOCKET_H</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160; </div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &lt;sys/socket.h&gt;</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;sys/un.h&gt;</span></div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &lt;unistd.h&gt;</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="ge_8h.html">ge.h</a>&quot;</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160; </div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="keywordtype">int</span> <a class="code" href="console__socket_8h.html#ae7b4982022417205e5b17713799b24f5">console_socket_register</a>(<span class="keyword">struct</span> <a class="code" href="structge.html">ge</a> *<a class="code" href="structge.html">ge</a>);</div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160; </div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="keyword">struct </span><a class="code" href="structge.html">ge</a>;</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160; </div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="keywordtype">int</span> <a class="code" href="console__socket_8h.html#aa0e1a53441772aaf3eef0a71536e885f">console_socket_init</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keywordtype">int</span> <a class="code" href="console__socket_8h.html#a83f0516f39d541cc30e139266b0c0436">console_socket_check</a>(<span class="keyword">struct</span> <a class="code" href="structge.html">ge</a> *<a class="code" href="structge.html">ge</a>);</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160; </div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
-<div class="ttc" id="aconsole__socket_8h_html_aa0e1a53441772aaf3eef0a71536e885f"><div class="ttname"><a href="console__socket_8h.html#aa0e1a53441772aaf3eef0a71536e885f">console_socket_init</a></div><div class="ttdeci">int console_socket_init(void)</div><div class="ttdef"><b>Definition:</b> <a href="console__socket_8c_source.html#l00008">console_socket.c:8</a></div></div>
-<div class="ttc" id="aconsole__socket_8h_html_a83f0516f39d541cc30e139266b0c0436"><div class="ttname"><a href="console__socket_8h.html#a83f0516f39d541cc30e139266b0c0436">console_socket_check</a></div><div class="ttdeci">int console_socket_check(struct ge *ge)</div><div class="ttdef"><b>Definition:</b> <a href="console__socket_8c_source.html#l00028">console_socket.c:28</a></div></div>
+<div class="ttc" id="age_8h_html"><div class="ttname"><a href="ge_8h.html">ge.h</a></div></div>
+<div class="ttc" id="aconsole__socket_8h_html_ae7b4982022417205e5b17713799b24f5"><div class="ttname"><a href="console__socket_8h.html#ae7b4982022417205e5b17713799b24f5">console_socket_register</a></div><div class="ttdeci">int console_socket_register(struct ge *ge)</div><div class="ttdef"><b>Definition:</b> <a href="console__socket_8c_source.html#l00070">console_socket.c:70</a></div></div>
 <div class="ttc" id="astructge_html"><div class="ttname"><a href="structge.html">ge</a></div><div class="ttdef"><b>Definition:</b> <a href="ge_8h_source.html#l00189">ge.h:189</a></div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

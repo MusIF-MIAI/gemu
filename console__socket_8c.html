@@ -51,34 +51,121 @@
 <div class="title">/home/runner/work/gemu/gemu/console_socket.c File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="console__socket_8h_source.html">console_socket.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="ge_8h_source.html">ge.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;sys/socket.h&gt;</code><br />
+<code>#include &lt;sys/un.h&gt;</code><br />
+<code>#include &lt;unistd.h&gt;</code><br />
 <code>#include &lt;fcntl.h&gt;</code><br />
 <code>#include &lt;string.h&gt;</code><br />
+<code>#include &lt;stdio.h&gt;</code><br />
+<code>#include &lt;stdlib.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="console__socket_8h_source.html">console_socket.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="ge_8h_source.html">ge.h</a>&quot;</code><br />
 </div>
 <p><a href="console__socket_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:aa0e1a53441772aaf3eef0a71536e885f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#aa0e1a53441772aaf3eef0a71536e885f">console_socket_init</a> (void)</td></tr>
-<tr class="separator:aa0e1a53441772aaf3eef0a71536e885f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a83f0516f39d541cc30e139266b0c0436"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a83f0516f39d541cc30e139266b0c0436">console_socket_check</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a83f0516f39d541cc30e139266b0c0436"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cda96516e5d1064aa546e26b1accb10"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *ctx)</td></tr>
+<tr class="separator:a9cda96516e5d1064aa546e26b1accb10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f550b5f0bed24d71ad66b50e71875eb"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *ctx)</td></tr>
+<tr class="separator:a5f550b5f0bed24d71ad66b50e71875eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7b4982022417205e5b17713799b24f5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#ae7b4982022417205e5b17713799b24f5">console_socket_register</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:ae7b4982022417205e5b17713799b24f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:a69d2a2b27248e6e5117ce529aec88d4c"><td class="memItemLeft" align="right" valign="top">static const char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a69d2a2b27248e6e5117ce529aec88d4c">socket_path</a> [] = &quot;/tmp/gemu.console&quot;</td></tr>
 <tr class="separator:a69d2a2b27248e6e5117ce529aec88d4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a111b3a5b44da0ca35941f55661036fc3"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a111b3a5b44da0ca35941f55661036fc3">console_socket_fd</a> = -1</td></tr>
+<tr class="separator:a111b3a5b44da0ca35941f55661036fc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad79e8fa1788f02276e61d34544247352"><td class="memItemLeft" align="right" valign="top">static struct <a class="el" href="structge__peri.html">ge_peri</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#ad79e8fa1788f02276e61d34544247352">console_socket</a></td></tr>
+<tr class="separator:ad79e8fa1788f02276e61d34544247352"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a83f0516f39d541cc30e139266b0c0436"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a83f0516f39d541cc30e139266b0c0436">&#9670;&nbsp;</a></span>console_socket_check()</h2>
+<a id="a5f550b5f0bed24d71ad66b50e71875eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f550b5f0bed24d71ad66b50e71875eb">&#9670;&nbsp;</a></span>console_socket_check()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int console_socket_check </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00039">39</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="a9cda96516e5d1064aa546e26b1accb10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cda96516e5d1064aa546e26b1accb10">&#9670;&nbsp;</a></span>console_socket_init()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int console_socket_init </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00015">15</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="ae7b4982022417205e5b17713799b24f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae7b4982022417205e5b17713799b24f5">&#9670;&nbsp;</a></span>console_socket_register()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int console_socket_check </td>
+          <td class="memname">int console_socket_register </td>
           <td>(</td>
           <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
           <td class="paramname"><em>ge</em></td><td>)</td>
@@ -87,31 +174,63 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00028">28</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
-
-</div>
-</div>
-<a id="aa0e1a53441772aaf3eef0a71536e885f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa0e1a53441772aaf3eef0a71536e885f">&#9670;&nbsp;</a></span>console_socket_init()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int console_socket_init </td>
-          <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00008">8</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00070">70</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
+<a id="ad79e8fa1788f02276e61d34544247352"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad79e8fa1788f02276e61d34544247352">&#9670;&nbsp;</a></span>console_socket</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structge__peri.html">ge_peri</a> console_socket</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= {</div>
+<div class="line">    .init = <a class="code" href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a>,</div>
+<div class="line">    .on_pulse = <a class="code" href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a>,</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00065">65</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="a111b3a5b44da0ca35941f55661036fc3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a111b3a5b44da0ca35941f55661036fc3">&#9670;&nbsp;</a></span>console_socket_fd</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int console_socket_fd = -1</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00013">13</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
 <a id="a69d2a2b27248e6e5117ce529aec88d4c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a69d2a2b27248e6e5117ce529aec88d4c">&#9670;&nbsp;</a></span>socket_path</h2>
 
@@ -132,11 +251,13 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00006">6</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00012">12</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
 </div><!-- contents -->
+<div class="ttc" id="aconsole__socket_8c_html_a5f550b5f0bed24d71ad66b50e71875eb"><div class="ttname"><a href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a></div><div class="ttdeci">static int console_socket_check(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition:</b> <a href="console__socket_8c_source.html#l00039">console_socket.c:39</a></div></div>
+<div class="ttc" id="aconsole__socket_8c_html_a9cda96516e5d1064aa546e26b1accb10"><div class="ttname"><a href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a></div><div class="ttdeci">static int console_socket_init(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition:</b> <a href="console__socket_8c_source.html#l00015">console_socket.c:15</a></div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">
