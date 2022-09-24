@@ -50,6 +50,10 @@ static int on_TO30(struct ge *ge) {
 }
 
 static int on_TO40(struct ge *ge) {
+    /* stub */
+    if (ge->counting_network.cmds.from_zero) {
+        ge->kNI = ge->rBO + 1;
+    }
 	return 0;
 }
 
