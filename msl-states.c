@@ -184,3 +184,67 @@ static const struct msl_timing_chart state_E7[] = {
     { END_OF_STATUS, 0, 0 }
 };
 
+/* Beta Phase */
+/* ---------- */
+
+static uint8_t state_64_65_TO10_CO10(struct ge *ge) {
+    /* JC + JS1 + JS2 + JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO20_CI87(struct ge *ge) {
+    /* LON + LOLL */
+    return 0;
+}
+
+static uint8_t state_64_65_TO20_CI77(struct ge *ge) {
+    /* INS */
+    return 0;
+}
+
+static uint8_t state_64_65_TO30_CI12(struct ge *ge) {
+    /* JC + JS1 + JS2 + JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO40_CO01(struct ge *ge) {
+    /* JC + JS1 + JS2 + JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO60_CO35(struct ge *ge) {
+    /* JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO70_CI78(struct ge *ge) {
+    /* ENS */
+    return 0;
+}
+
+static uint8_t state_64_65_TO89_CI88(struct ge *ge) {
+    /* LOFF */
+    return 0;
+}
+
+static uint8_t state_64_65_TI05_CI00(struct ge *ge) {
+    /* AVER * (JC + JS1 + JS2 + JIE) */
+    return 0;
+}
+
+static const struct msl_timing_chart state_64_65[] = {
+    { TO10, CO10, state_64_65_TO10_CO10 },
+    { TO20, CI87, state_64_65_TO20_CI87 },
+    { TO20, CI77, state_64_65_TO20_CI77 },
+    { TO30, CI12, state_64_65_TO30_CI12 },
+    { TO40, CO01, state_64_65_TO40_CO01 },
+    { TO60, CO35, state_64_65_TO60_CO35 },
+    { TO65, CO49, 0 },
+    { TO70, CI78, state_64_65_TO70_CI78 },
+    { TO89, CI88, state_64_65_TO89_CI88 },
+    { TI05, CI00, state_64_65_TI05_CI00 },
+    { TI06, CU01, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, 0 },
+    { TI06, CU12, 0 },
+};
