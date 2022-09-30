@@ -13,6 +13,10 @@
 #define PERI 0x9C
 #define HLT 0x0A
 
+static const uint8_t bit(unsigned int x, unsigned int bit) {
+    return !!(x & (1 << bit));
+}
+
 // Initialitiation
 
 // to state E2+E3 if !AINI
@@ -80,8 +84,9 @@ static const struct msl_timing_chart state_E2_E3[] = {
 // to state E4    if FO06 | FO07
 //          64+65 if !(FO06 | FO07)
 
-static uint8_t state_E0_TO70_CI60(struct ge *ge) { return 0; }
-static uint8_t state_E0_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E0_TI06_CU17(struct ge *ge) {
+    return !(bit(ge->rFO, 6) || bit(ge->rFO, 7));
+}
 
 static const struct msl_timing_chart state_E0[] = {
     { TO10, CO12, 0 },
@@ -99,9 +104,7 @@ static const struct msl_timing_chart state_E0[] = {
 
 // to state E6
 
-static uint8_t state_E6_TI06_CU03(struct ge *ge) { return 1; }
-static uint8_t state_E6_TI06_CU17(struct ge *ge) { return 1; }
-static uint8_t state_E6_TO80_CI38(struct ge *ge) { return 1; }
+static uint8_t state_E4_TO70_CI60(struct ge *ge) { return 0; }
 
 static const struct msl_timing_chart state_E4[] = {
     { TO10, CO10, 0 },
@@ -111,7 +114,7 @@ static const struct msl_timing_chart state_E4[] = {
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO70, CI65, 0 },
-    { TO70, CI60, state_E0_TO70_CI60 },
+    { TO70, CI60, state_E4_TO70_CI60 },
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0 },
@@ -121,6 +124,14 @@ static const struct msl_timing_chart state_E4[] = {
 // to state E5 if !L207 & (FO07 & FO06)
 //          ED+EC if L207
 //          64+65 if !L207 & (!FO07 | !FO06)
+
+static uint8_t state_E6_TO80_CI38(struct ge *ge) { /* DO01? */ return 0; }
+static uint8_t state_E6_TI06_CU03(struct ge *ge) { return bit(ge->rL2, 7); }
+
+static uint8_t state_E6_TI06_CU17(struct ge *ge) {
+    return (!bit(ge->rL2, 7) &&
+            (!bit(ge->rFO, 7) || !bit(ge->rFO, 6)));
+}
 
 static const struct msl_timing_chart state_E6[] = {
     { TO10, CO10, 0 },
@@ -135,7 +146,11 @@ static const struct msl_timing_chart state_E6[] = {
     { TI05, CI02, 0 },
     { TI06, CU00, 0 },
     { TI06, CU03, state_E6_TI06_CU03 },
-    { TI06, CU10, 0 },
+
+    /* in the manual this is CU10, but it maybe a mistake.. there's no way to reach
+     * the alpha states if we don't reset this bit 1 instead of bit 0 */
+    { TI06, CU11, 0 },
+
     { TI06, CU17, state_E6_TI06_CU17 },
     { END_OF_STATUS, 0, 0 }
 };

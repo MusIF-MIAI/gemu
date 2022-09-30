@@ -30,7 +30,8 @@ static void CI02(struct ge* ge) { CO02(ge); }
 static void CI03(struct ge* ge) { CO03(ge); }
 static void CI04(struct ge* ge) { CO04(ge); }
 static void CI05(struct ge* ge) { ge->rL1 = ge->kNI; }
-static void CI06(struct ge* ge) CC
+static void CI06(struct ge* ge) { ge->rL2 = ge->kNI & 0x00ff; }
+
 static void CI08(struct ge* ge) { ge->rFO = (uint8_t)ge->kNI; }
 
 /* NO Knot Selection Commands */
@@ -62,7 +63,7 @@ static void CI32(struct ge* ge)
     ge->rRO = ge->kNO >> 8;
 }
 
-static void CI38(struct ge *ge) CC
+static void CI38(struct ge *ge) { ge->AVER = ge->ALTO; }
 static void CI39(struct ge *ge) { ge->AVER = 0; }
 
 /* Count And Arithmetical Unit Commands */
@@ -79,7 +80,12 @@ static void CO49(struct ge* ge) {
 /* NI Knot Selection Commands */
 /* -------------------------- */
 
-static void CI60(struct ge *ge) CC
+static void CI60(struct ge *ge)
+{
+    ge->kNI &= ~NIBBLE_MASK(4);
+    ge->kNI |= (ge->rRO & NIBBLE_MASK(2));
+}
+
 static void CI61(struct ge *ge) CC
 
 static void CI62(struct ge *ge)
@@ -90,7 +96,13 @@ static void CI62(struct ge *ge)
 
 static void CI63(struct ge *ge) CC
 static void CI64(struct ge *ge) CC
-static void CI65(struct ge *ge) CC
+
+static void CI65(struct ge *ge)
+{
+    ge->kNI &= ~NIBBLE_MASK(3);
+    ge->kNI |= (ge->rRO & NIBBLE_MASK(1));
+}
+
 static void CI66(struct ge *ge) CC
 static void CI67(struct ge *ge)
 {
