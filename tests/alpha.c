@@ -22,11 +22,13 @@ START_TEST(alpha_state)
     r = ge_start(&g);
     ck_assert_int_eq(r, 0);
     ck_assert_uint_eq(g.rSO, 0x80);
+    ck_assert_uint_eq(g.rPO, 0x0000);
     ge_run_cycle(&g);
     ck_assert(g.rSO == 0xe2 || g.rSO == 0xe3);
     ge_run_cycle(&g);
     ck_assert(g.rSO == 0xe0);
     ge_run_cycle(&g);
+    ck_assert_uint_eq(g.rPO, 0x0002);
     ck_assert_int_eq(g.rFO, NOP2_OPCODE);
     ck_assert_int_eq(g.rL1 & 0xFF, 0xAA);
     ck_assert(g.rSO == 0x64 || g.rSO == 0x65);
@@ -37,7 +39,7 @@ Suite * init_suite(void)
     Suite *s;
     TCase *tc_core;
 
-    s = suite_create("INITIALITIAION");
+    s = suite_create("ALPHA");
 
     /* Core test case */
     tc_core = tcase_create("alpha_state");
