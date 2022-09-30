@@ -249,6 +249,7 @@ struct ge {
 
     uint8_t AINI:1;
     uint8_t ALTO:1;
+    uint8_t ALAM:1;
     uint8_t AVER:1;
     uint8_t ADIR:1;
     uint8_t RINT:1;
@@ -275,6 +276,7 @@ struct ge {
     int PUC3:1; /* Channel 3 busy */
 
     int URPE:1; /*  */
+    int URPU:1; /*  */
 
     struct ge_peri *peri;
 };
