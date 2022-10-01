@@ -10,7 +10,7 @@ ge : main.o $(GE_OBJS)
 -include $(OBJS:%.o=%.d)
 
 tests/tests : tests/tests.o $(GE_OBJS) $(TEST_OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ tests/tests.o $(GE_OBJS) $(TEST_OBJS) -lcheck
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ tests/tests.o $(GE_OBJS) $(TEST_OBJS) -lcheck -lsubunit -lm
 
 .PHONY: clean
 
