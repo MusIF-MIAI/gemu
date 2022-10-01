@@ -247,4 +247,5 @@ static const struct msl_timing_chart state_64_65[] = {
     { TI06, CU10, 0 },
     { TI06, CU07, 0 },
     { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 }
 };
