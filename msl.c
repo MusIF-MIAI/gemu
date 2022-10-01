@@ -5,6 +5,16 @@
 #include "msl-timings.h"
 #include "log.h"
 
+static const char *clock_name(enum clock c)
+{
+    switch (c) {
+        #define X(name) case name : return #name ;
+        ENUMERATE_CLOCKS
+        #undef X
+    }
+
+    return "";
+}
 struct msl_timing_state* msl_get_state(uint8_t SO)
 {
     struct msl_timing_state *state = &msl_timings[SO];
@@ -24,10 +34,10 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
         if (chart->clock == ge->current_clock) {
             if (chart->condition) {
                 if (!chart->condition(ge)) {
-                    ge_log(LOG_CONDS, "  time %02d - condition false\n", ge->current_clock);
+                    ge_log(LOG_CONDS, "  time %-4s - condition false\n", clock_name(ge->current_clock));
                     continue;
                 }
-                ge_log(LOG_CONDS, "  time %02d - condition true\n", ge->current_clock);
+                ge_log(LOG_CONDS, "  time %-4s - condition true\n", clock_name(ge->current_clock));
             }
             chart->command(ge);
         }
