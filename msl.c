@@ -1,7 +1,9 @@
 #include <stdint.h>
+#include <stdio.h>
 
 #include "msl.h"
 #include "msl-timings.h"
+#include "log.h"
 
 struct msl_timing_state* msl_get_state(uint8_t SO)
 {
@@ -20,8 +22,13 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
     do {
         chart = &state->chart[i++];
         if (chart->clock == ge->current_clock) {
-            if (chart->condition && !chart->condition(ge))
-                continue;
+            if (chart->condition) {
+                if (!chart->condition(ge)) {
+                    ge_log(LOG_CONDS, "  time %02d - condition false\n", ge->current_clock);
+                    continue;
+                }
+                ge_log(LOG_CONDS, "  time %02d - condition true\n", ge->current_clock);
+            }
             chart->command(ge);
         }
     } while (chart->clock < END_OF_STATUS);

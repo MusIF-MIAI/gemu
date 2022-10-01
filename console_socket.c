@@ -3,11 +3,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "console_socket.h"
 #include "ge.h"
+#include "log.h"
 
 static const char socket_path[] = "/tmp/gemu.console";
 static int console_socket_fd = -1;
@@ -54,7 +54,7 @@ static int console_socket_check(struct ge *ge, void *ctx)
     ret = recvfrom(console_socket_fd, buf, 1024, 0,
                 (struct sockaddr *)&dst, &ssz);
     if (ret > 0) {
-        printf("DEBUG: doing check\n");
+        ge_log(LOG_DEBUG, "doing check\n");
         sendto(console_socket_fd, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0,
                (struct sockaddr *)&dst, ssz);
     }

@@ -1,15 +1,16 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include "ge.h"
 #include "msl.h"
 #include "console_socket.h"
 #include "peripherical.h"
+#include "log.h"
 
 #define CLOCK_PERIOD 14000 /* in usec, intervaln between pulse lines */
 #define MAX_PROGRAM_STORAGE_WORDS 129
+
 static int ge_halted(struct ge *ge)
 {
     return ge->halted;
@@ -85,16 +86,31 @@ int ge_start(struct ge *ge)
 }
 
 static void ge_print_well_known_states(uint8_t state) {
+    const char *name;
     switch (state) {
-        case 0x00: printf("\nState 00 - Display sequence\n\n"); break;
-        case 0x08: printf("\nState 08 - Forcing sequence\n\n"); break;
+        case 0x00: name = "- Display sequence"; break;
+        case 0x08: name = "- Forcing sequence"; break;
         case 0x64:
-        case 0x65: printf("\nState 64+65 - Beta Phase\n\n"); break;
-        case 0x80: printf("\nState 80 - Initialitiation\n\n"); break;
+        case 0x65: name = "- Beta Phase"; break;
+        case 0x80: name = "- Initialitiation"; break;
         case 0xE2:
-        case 0xE3: printf("\nState E2+E3 - Alpha Phase\n\n"); break;
-        case 0xF0: printf("\nState F0 - Interruption\n\n"); break;
+        case 0xE3: name = "- Alpha Phase"; break;
+        case 0xF0: name = "- Interruption"; break;
+        default:   name = "";
     }
+
+    ge_log(LOG_STATES, "Running state %02x %s\n", state, name);
+}
+
+void ge_print_registers(struct ge *ge)
+{
+    ge_log(LOG_REGS,
+           "SO: %02x - PO: %04x - RO: %04x - "
+           "V1: %04x  V2: %04x  V3: %04x  V4: %04x - "
+           "L1: %04x  L2: %04x L3 : %04x\n",
+           ge->rSO, ge->rPO, ge->rRO,
+           ge->rV1, ge->rV2, ge->rV3, ge->rV4,
+           ge->rL1, ge->rL2, ge->rL3);
 }
 
 int ge_run_cycle(struct ge *ge)
@@ -105,12 +121,11 @@ int ge_run_cycle(struct ge *ge)
     int old_SO = ge->rSO;
 
     ge_print_well_known_states(ge->rSO);
-    printf("Running state %02X\n", ge->rSO);
 
     state = msl_get_state(ge->rSO);
 
     if (!state) {
-        printf("no timing charts found for state %02X\n", ge->rSO);
+        ge_log(LOG_ERR, "no timing charts found for state %02X\n", ge->rSO);
         return 1;
     }
 
@@ -135,8 +150,10 @@ int ge_run_cycle(struct ge *ge)
 
     }
 
+    ge_print_registers(ge);
+
     if (ge->rSO == old_SO) {
-        printf("State register SO did not change during an entire cycle, stopping emulation\n");
+        ge_log(LOG_ERR, "State register SO did not change during an entire cycle, stopping emulation\n");
         return 1;
     }
 

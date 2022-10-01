@@ -1,7 +1,6 @@
 #ifndef MSL_TIMINGS_H
 #define MSL_TIMINGS_H
 
-#include <stdio.h>
 #include "ge.h"
 
 struct msl_timing_chart {

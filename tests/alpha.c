@@ -119,23 +119,18 @@ START_TEST(pm_instruction_to_alpha)
     ck_assert_int_eq(r, 0);
     ck_assert_uint_eq(g.rSO, 0x80);
 
-    ge_print_registers(&g);
     ge_run_cycle(&g);
     ck_assert(g.rSO == 0xe2 || g.rSO == 0xe3);
 
-    ge_print_registers(&g);
     ge_run_cycle(&g);
     ck_assert(g.rSO == 0xe0);
 
-    ge_print_registers(&g);
     ge_run_cycle(&g);
     ck_assert_uint_eq(g.rSO, 0xe4);
 
-    ge_print_registers(&g);
     ge_run_cycle(&g);
     ck_assert_uint_eq(g.rSO, 0xe6);
 
-    ge_print_registers(&g);
     ge_run_cycle(&g);
     ck_assert(g.rSO == 0x64 || g.rSO == 0x65);
 

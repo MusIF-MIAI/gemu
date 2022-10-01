@@ -1,11 +1,11 @@
-#include <stdio.h>
 #include "ge.h"
+#include "log.h"
 
 #ifndef MSL_COMMANDS_INCLUDED_BY_MSL_STATES
 #   error This file should be include by msl-states.c and not compiled directly
 #endif
 
-#define CC { printf("implement command %s\n", __FUNCTION__); }
+#define CC { ge_log(LOG_ERR, "implement command %s\n", __FUNCTION__); }
 
 #define BIT(X) (1 << X)
 #define SET_BIT(R, X) (R = (R | BIT(X)))
@@ -46,7 +46,7 @@ static void CI19(struct ge* ge)
 {
     /* TODO: not sure if this is correct */
     if (ge->console.rotary != RS_NORM) {
-        printf("Forcing not yet impelemented\n");
+        ge_log(LOG_ERR, "Forcing not yet impelemented\n");
         ge->halted = 1;
     }
 }
