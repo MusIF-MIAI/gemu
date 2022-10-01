@@ -1,9 +1,4 @@
-#include <check.h>
-
-#include "../ge.h"
-
-#define NOP2_OPCODE 0x07
-#define HLT_OPCODE  0x0A
+#include "tests.h"
 
 START_TEST(p_instruction_to_alpha)
 {
@@ -142,7 +137,7 @@ START_TEST(pm_instruction_to_alpha)
     ck_assert_uint_eq(g.rL2, arg1);
 }
 
-Suite * init_suite(void)
+Suite *init_alpha_suite(void)
 {
     Suite *s;
     TCase *tc_core;
@@ -161,19 +156,3 @@ Suite * init_suite(void)
 
     return s;
 }
-
-int main(void)
-{
-    int number_failed;
-    Suite *s;
-    SRunner *sr;
-
-    s = init_suite();
-    sr = srunner_create(s);
-
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return (number_failed == 0) ? 0 : -1;
-}
-
