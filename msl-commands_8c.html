@@ -51,56 +51,90 @@
 <div class="title">/home/runner/work/gemu/gemu/msl-commands.c File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;stdio.h&gt;</code><br />
-<code>#include &quot;<a class="el" href="ge_8h_source.html">ge.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="ge_8h_source.html">ge.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="log_8h_source.html">log.h</a>&quot;</code><br />
 </div>
 <p><a href="msl-commands_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a78d126676907aa89a0adbfbef8282585"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a>&#160;&#160;&#160;{ printf(&quot;implement command %s\n&quot;, __FUNCTION__); }</td></tr>
+<tr class="memitem:a78d126676907aa89a0adbfbef8282585"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a>&#160;&#160;&#160;{ <a class="el" href="log_8h.html#a9b5e38cb5e54b901428ed6790736df95">ge_log</a>(<a class="el" href="log_8h.html#a6b8f8e01c909fba9f31c0ac6beb0cf1fa0b4d9ad891dde7ae8deeb1704195858c">LOG_ERR</a>, &quot;implement command %s\n&quot;, __FUNCTION__); }</td></tr>
 <tr class="separator:a78d126676907aa89a0adbfbef8282585"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9374d9bd55e09857c4bf40e2f294435"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(X)&#160;&#160;&#160;(1 &lt;&lt; X)</td></tr>
+<tr class="memitem:aa9374d9bd55e09857c4bf40e2f294435"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)&#160;&#160;&#160;(1 &lt;&lt; <a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)</td></tr>
 <tr class="separator:aa9374d9bd55e09857c4bf40e2f294435"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23819d66006678fa963632dbd015d567"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a23819d66006678fa963632dbd015d567">SET_BIT</a>(R,  X)&#160;&#160;&#160;(R = (R | <a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(X)))</td></tr>
+<tr class="memitem:a23819d66006678fa963632dbd015d567"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a23819d66006678fa963632dbd015d567">SET_BIT</a>(R,  <a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)&#160;&#160;&#160;(R = (R | <a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)))</td></tr>
 <tr class="separator:a23819d66006678fa963632dbd015d567"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a58927d169a850c5231716c1dd0c4dc7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a58927d169a850c5231716c1dd0c4dc7f">RESET_BIT</a>(R,  X)&#160;&#160;&#160;(R = (R &amp; ~<a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(X)))</td></tr>
+<tr class="memitem:a58927d169a850c5231716c1dd0c4dc7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a58927d169a850c5231716c1dd0c4dc7f">RESET_BIT</a>(R,  <a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)&#160;&#160;&#160;(R = (R &amp; ~<a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)))</td></tr>
 <tr class="separator:a58927d169a850c5231716c1dd0c4dc7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae93d37197c95decd9f8f6a62afc485f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aae93d37197c95decd9f8f6a62afc485f">NIBBLE_MASK</a>(X)&#160;&#160;&#160;(0xf &lt;&lt; ((X-1)*4))</td></tr>
+<tr class="memitem:aae93d37197c95decd9f8f6a62afc485f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aae93d37197c95decd9f8f6a62afc485f">NIBBLE_MASK</a>(<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)&#160;&#160;&#160;(0xf &lt;&lt; ((<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>-1)*4))</td></tr>
 <tr class="separator:aae93d37197c95decd9f8f6a62afc485f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a1d66f5463e475f49a1384a655f3a25b9"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a1d66f5463e475f49a1384a655f3a25b9">CO00</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:a1d66f5463e475f49a1384a655f3a25b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4057d17097280e0b329c5da953522d45"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a4057d17097280e0b329c5da953522d45">CO01</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a4057d17097280e0b329c5da953522d45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8de83cb77ce9b80475a5145ed2574d8"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#af8de83cb77ce9b80475a5145ed2574d8">CO02</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:af8de83cb77ce9b80475a5145ed2574d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac851aa19acbbd9b6047d96f2b3efb63"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aac851aa19acbbd9b6047d96f2b3efb63">CI01</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI02(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI05(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:aac851aa19acbbd9b6047d96f2b3efb63"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c97a3f59cb663857e7080fa4fe22692"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a5c97a3f59cb663857e7080fa4fe22692">CI06</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI08(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a5c97a3f59cb663857e7080fa4fe22692"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47fae13f30bf7169a27374864c507527"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a47fae13f30bf7169a27374864c507527">CO03</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a47fae13f30bf7169a27374864c507527"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a131582b39835d01b070b6a6aaa74c951"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a131582b39835d01b070b6a6aaa74c951">CO04</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a131582b39835d01b070b6a6aaa74c951"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8201489d7dc946e73a9d557453c9225"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ac8201489d7dc946e73a9d557453c9225">CI00</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:ac8201489d7dc946e73a9d557453c9225"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe8b8361b8353c7aeec346e1809b471b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#afe8b8361b8353c7aeec346e1809b471b">CI01</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:afe8b8361b8353c7aeec346e1809b471b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05408972088df4a37b43358742a3747c"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a05408972088df4a37b43358742a3747c">CI02</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a05408972088df4a37b43358742a3747c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa537cab59d26f75f61fc18279af4e4b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aaa537cab59d26f75f61fc18279af4e4b">CI03</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:aaa537cab59d26f75f61fc18279af4e4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d5215a5b858ace5b7df16a8379fc70a"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a8d5215a5b858ace5b7df16a8379fc70a">CI04</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a8d5215a5b858ace5b7df16a8379fc70a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74d5c50b9f29fd034cb0b16ec11b7bab"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a74d5c50b9f29fd034cb0b16ec11b7bab">CI05</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a74d5c50b9f29fd034cb0b16ec11b7bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42ff38958720b628930365d7f413ef65"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a42ff38958720b628930365d7f413ef65">CI06</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a42ff38958720b628930365d7f413ef65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a098ceb0ee90aa0668d43d9103a49eb90"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a098ceb0ee90aa0668d43d9103a49eb90">CI08</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a098ceb0ee90aa0668d43d9103a49eb90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad62703752e4ff26258562874b1caac3f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ad62703752e4ff26258562874b1caac3f">CO10</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:ad62703752e4ff26258562874b1caac3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3a5e1663529154e54a9c02aa8face49"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ab3a5e1663529154e54a9c02aa8face49">CO12</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:ab3a5e1663529154e54a9c02aa8face49"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10a416e53ca11e9658444f0d07576ff6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a10a416e53ca11e9658444f0d07576ff6">CI12</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI19(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a10a416e53ca11e9658444f0d07576ff6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af619a51a039c1f5034d4774a70e8f86a"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#af619a51a039c1f5034d4774a70e8f86a">CI12</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:af619a51a039c1f5034d4774a70e8f86a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26f01ad52e80ebe6e5fa5b697ee02532"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a26f01ad52e80ebe6e5fa5b697ee02532">CI19</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a26f01ad52e80ebe6e5fa5b697ee02532"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbcf56d7e7a77931abada10803f51b35"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#abbcf56d7e7a77931abada10803f51b35">CO30</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:abbcf56d7e7a77931abada10803f51b35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cf42a6ed3805c1c852c70f39facf19d"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a2cf42a6ed3805c1c852c70f39facf19d">CO35</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a2cf42a6ed3805c1c852c70f39facf19d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43b47934f58071dcb99f1e561356821f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a43b47934f58071dcb99f1e561356821f">CI32</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:a43b47934f58071dcb99f1e561356821f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5dadb291eb875fa879de5d22b6f6ba1"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ac5dadb291eb875fa879de5d22b6f6ba1">CI38</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI39(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:ac5dadb291eb875fa879de5d22b6f6ba1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9f25ccb1479da0771bcfb2776654dae"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aa9f25ccb1479da0771bcfb2776654dae">CI38</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:aa9f25ccb1479da0771bcfb2776654dae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1113d7a136c1c824526a684514765eaa"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a1113d7a136c1c824526a684514765eaa">CI39</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a1113d7a136c1c824526a684514765eaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace8e50f60eb920478f1925adba1b9fc1"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ace8e50f60eb920478f1925adba1b9fc1">CO41</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:ace8e50f60eb920478f1925adba1b9fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4140df8d97fc63f66840c06d5b1f7703"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a4140df8d97fc63f66840c06d5b1f7703">CI60</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI61(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI62(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a4140df8d97fc63f66840c06d5b1f7703"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8549e67c36df840ba149a4517bd1fa15"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a8549e67c36df840ba149a4517bd1fa15">CI63</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI64(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI65(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI66(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI67(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a8549e67c36df840ba149a4517bd1fa15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12ac26cf2eca1e0bedc365bbf31ee195"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a12ac26cf2eca1e0bedc365bbf31ee195">CO49</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a12ac26cf2eca1e0bedc365bbf31ee195"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e37f55b3831df8eef63b617486e7457"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a5e37f55b3831df8eef63b617486e7457">CI60</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a5e37f55b3831df8eef63b617486e7457"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab43d8206a76d272ff684a2d795acd909"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ab43d8206a76d272ff684a2d795acd909">CI61</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI62(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:ab43d8206a76d272ff684a2d795acd909"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e339baa0788cacc6d438def2094a0f6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a2e339baa0788cacc6d438def2094a0f6">CI63</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI64(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI65(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a2e339baa0788cacc6d438def2094a0f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad83a78625879d31557c7648b6de8dca6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ad83a78625879d31557c7648b6de8dca6">CI66</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI67(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:ad83a78625879d31557c7648b6de8dca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af538466dcaece0096993ec7366348682"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#af538466dcaece0096993ec7366348682">CI68</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CI69(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:af538466dcaece0096993ec7366348682"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae27fd2c0a5723dc7d8d71e8a4df677ab"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ae27fd2c0a5723dc7d8d71e8a4df677ab">CI76</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:ae27fd2c0a5723dc7d8d71e8a4df677ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaca01f1f55aac845a82f9cd5313bc16f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aaca01f1f55aac845a82f9cd5313bc16f">CI77</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:aaca01f1f55aac845a82f9cd5313bc16f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af85c988e9d99a449e868fc519cdda480"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#af85c988e9d99a449e868fc519cdda480">CI78</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:af85c988e9d99a449e868fc519cdda480"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a138575db08b4ba083cd373391c6752"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a5a138575db08b4ba083cd373391c6752">CI80</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:a5a138575db08b4ba083cd373391c6752"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c6bfe487f0a613f1218d8397d13837c"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a5c6bfe487f0a613f1218d8397d13837c">CI81</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
@@ -109,8 +143,14 @@ Functions</h2></td></tr>
 <tr class="separator:a76d00f6d3e3e86db1090dbff6db4fa33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91d431c30f23d203aef8a174b975e1e6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a91d431c30f23d203aef8a174b975e1e6">CI83</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:a91d431c30f23d203aef8a174b975e1e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a394a175d17dfc13fb4d1dc9637e69495"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a394a175d17dfc13fb4d1dc9637e69495">CI89</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO90(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO91(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO92(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO93(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO94(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO95(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO96(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a394a175d17dfc13fb4d1dc9637e69495"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7dca537d67fe95d7575c76576d429d3"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#ab7dca537d67fe95d7575c76576d429d3">CI87</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:ab7dca537d67fe95d7575c76576d429d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a904be10fc82bdf7e787052cc3ccc108b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a904be10fc82bdf7e787052cc3ccc108b">CI88</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a904be10fc82bdf7e787052cc3ccc108b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa256be4bdaaae7fee8933b345827295b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#aa256be4bdaaae7fee8933b345827295b">CI89</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:aa256be4bdaaae7fee8933b345827295b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50ff6a8b1caf9b941ea3ec21102924fa"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a50ff6a8b1caf9b941ea3ec21102924fa">CO90</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO91(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO92(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO93(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO94(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO95(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>) <a class="el" href="msl-commands_8c.html#a78d126676907aa89a0adbfbef8282585">CC</a> static void CO96(struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:a50ff6a8b1caf9b941ea3ec21102924fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbb5da449f3cc4fbea691985ff443453"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#abbb5da449f3cc4fbea691985ff443453">CO97</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:abbb5da449f3cc4fbea691985ff443453"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b465d92ba12fa7830cc7765a3f862bc"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl-commands_8c.html#a2b465d92ba12fa7830cc7765a3f862bc">CU00</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
@@ -157,8 +197,8 @@ Functions</h2></td></tr>
           <td class="memname">#define BIT</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">X</td><td>)</td>
-          <td>&#160;&#160;&#160;(1 &lt;&lt; X)</td>
+          <td class="paramname"><a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a></td><td>)</td>
+          <td>&#160;&#160;&#160;(1 &lt;&lt; <a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -174,7 +214,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define CC&#160;&#160;&#160;{ printf(&quot;implement command %s\n&quot;, __FUNCTION__); }</td>
+          <td class="memname">#define CC&#160;&#160;&#160;{ <a class="el" href="log_8h.html#a9b5e38cb5e54b901428ed6790736df95">ge_log</a>(<a class="el" href="log_8h.html#a6b8f8e01c909fba9f31c0ac6beb0cf1fa0b4d9ad891dde7ae8deeb1704195858c">LOG_ERR</a>, &quot;implement command %s\n&quot;, __FUNCTION__); }</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -193,8 +233,8 @@ Functions</h2></td></tr>
           <td class="memname">#define NIBBLE_MASK</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">X</td><td>)</td>
-          <td>&#160;&#160;&#160;(0xf &lt;&lt; ((X-1)*4))</td>
+          <td class="paramname"><a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a></td><td>)</td>
+          <td>&#160;&#160;&#160;(0xf &lt;&lt; ((<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>-1)*4))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -219,12 +259,12 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">X&#160;</td>
+          <td class="paramname"><a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>&#160;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td>&#160;&#160;&#160;(R = (R &amp; ~<a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(X)))</td>
+          <td></td><td>&#160;&#160;&#160;(R = (R &amp; ~<a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -249,12 +289,12 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">X&#160;</td>
+          <td class="paramname"><a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>&#160;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td>&#160;&#160;&#160;(R = (R | <a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(X)))</td>
+          <td></td><td>&#160;&#160;&#160;(R = (R | <a class="el" href="msl-commands_8c.html#aa9374d9bd55e09857c4bf40e2f294435">BIT</a>(<a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>)))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -264,8 +304,36 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="aac851aa19acbbd9b6047d96f2b3efb63"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac851aa19acbbd9b6047d96f2b3efb63">&#9670;&nbsp;</a></span>CI01()</h2>
+<a id="ac8201489d7dc946e73a9d557453c9225"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8201489d7dc946e73a9d557453c9225">&#9670;&nbsp;</a></span>CI00()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI00 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00027">27</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="afe8b8361b8353c7aeec346e1809b471b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe8b8361b8353c7aeec346e1809b471b">&#9670;&nbsp;</a></span>CI01()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -288,12 +356,124 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00024">24</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00028">28</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
-<a id="a5c97a3f59cb663857e7080fa4fe22692"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c97a3f59cb663857e7080fa4fe22692">&#9670;&nbsp;</a></span>CI06()</h2>
+<a id="a05408972088df4a37b43358742a3747c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05408972088df4a37b43358742a3747c">&#9670;&nbsp;</a></span>CI02()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI02 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00029">29</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="aaa537cab59d26f75f61fc18279af4e4b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa537cab59d26f75f61fc18279af4e4b">&#9670;&nbsp;</a></span>CI03()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI03 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00030">30</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a8d5215a5b858ace5b7df16a8379fc70a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d5215a5b858ace5b7df16a8379fc70a">&#9670;&nbsp;</a></span>CI04()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI04 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00031">31</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a74d5c50b9f29fd034cb0b16ec11b7bab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a74d5c50b9f29fd034cb0b16ec11b7bab">&#9670;&nbsp;</a></span>CI05()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI05 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00032">32</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a42ff38958720b628930365d7f413ef65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42ff38958720b628930365d7f413ef65">&#9670;&nbsp;</a></span>CI06()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -316,12 +496,40 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00027">27</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00033">33</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
-<a id="a10a416e53ca11e9658444f0d07576ff6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a10a416e53ca11e9658444f0d07576ff6">&#9670;&nbsp;</a></span>CI12()</h2>
+<a id="a098ceb0ee90aa0668d43d9103a49eb90"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a098ceb0ee90aa0668d43d9103a49eb90">&#9670;&nbsp;</a></span>CI08()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI08 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00035">35</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="af619a51a039c1f5034d4774a70e8f86a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af619a51a039c1f5034d4774a70e8f86a">&#9670;&nbsp;</a></span>CI12()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -344,7 +552,35 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00036">36</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00043">43</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a26f01ad52e80ebe6e5fa5b697ee02532"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26f01ad52e80ebe6e5fa5b697ee02532">&#9670;&nbsp;</a></span>CI19()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI19 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00045">45</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -372,12 +608,12 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00051">51</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00060">60</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
-<a id="ac5dadb291eb875fa879de5d22b6f6ba1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac5dadb291eb875fa879de5d22b6f6ba1">&#9670;&nbsp;</a></span>CI38()</h2>
+<a id="aa9f25ccb1479da0771bcfb2776654dae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9f25ccb1479da0771bcfb2776654dae">&#9670;&nbsp;</a></span>CI38()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -400,12 +636,40 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00057">57</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00066">66</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
-<a id="a4140df8d97fc63f66840c06d5b1f7703"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4140df8d97fc63f66840c06d5b1f7703">&#9670;&nbsp;</a></span>CI60()</h2>
+<a id="a1113d7a136c1c824526a684514765eaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1113d7a136c1c824526a684514765eaa">&#9670;&nbsp;</a></span>CI39()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI39 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00067">67</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a5e37f55b3831df8eef63b617486e7457"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e37f55b3831df8eef63b617486e7457">&#9670;&nbsp;</a></span>CI60()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -428,12 +692,40 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00069">69</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00083">83</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
-<a id="a8549e67c36df840ba149a4517bd1fa15"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8549e67c36df840ba149a4517bd1fa15">&#9670;&nbsp;</a></span>CI63()</h2>
+<a id="ab43d8206a76d272ff684a2d795acd909"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab43d8206a76d272ff684a2d795acd909">&#9670;&nbsp;</a></span>CI61()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI61 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00089">89</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a2e339baa0788cacc6d438def2094a0f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e339baa0788cacc6d438def2094a0f6">&#9670;&nbsp;</a></span>CI63()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -456,7 +748,35 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00078">78</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00097">97</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="ad83a78625879d31557c7648b6de8dca6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad83a78625879d31557c7648b6de8dca6">&#9670;&nbsp;</a></span>CI66()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI66 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00106">106</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -484,7 +804,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00089">89</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00114">114</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -512,7 +832,63 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00095">95</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00120">120</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="aaca01f1f55aac845a82f9cd5313bc16f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaca01f1f55aac845a82f9cd5313bc16f">&#9670;&nbsp;</a></span>CI77()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI77 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00121">121</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="af85c988e9d99a449e868fc519cdda480"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af85c988e9d99a449e868fc519cdda480">&#9670;&nbsp;</a></span>CI78()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI78 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00122">122</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -540,7 +916,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00096">96</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00123">123</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -568,7 +944,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00097">97</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00124">124</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -596,7 +972,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00098">98</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00125">125</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -624,12 +1000,68 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00099">99</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00126">126</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
-<a id="a394a175d17dfc13fb4d1dc9637e69495"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a394a175d17dfc13fb4d1dc9637e69495">&#9670;&nbsp;</a></span>CI89()</h2>
+<a id="ab7dca537d67fe95d7575c76576d429d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7dca537d67fe95d7575c76576d429d3">&#9670;&nbsp;</a></span>CI87()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI87 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00127">127</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a904be10fc82bdf7e787052cc3ccc108b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a904be10fc82bdf7e787052cc3ccc108b">&#9670;&nbsp;</a></span>CI88()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CI88 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00128">128</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="aa256be4bdaaae7fee8933b345827295b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa256be4bdaaae7fee8933b345827295b">&#9670;&nbsp;</a></span>CI89()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -652,7 +1084,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00100">100</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00129">129</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -684,6 +1116,34 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a4057d17097280e0b329c5da953522d45"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4057d17097280e0b329c5da953522d45">&#9670;&nbsp;</a></span>CO01()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CO01 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00022">22</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
 <a id="af8de83cb77ce9b80475a5145ed2574d8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af8de83cb77ce9b80475a5145ed2574d8">&#9670;&nbsp;</a></span>CO02()</h2>
 
@@ -708,7 +1168,63 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00022">22</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00023">23</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a47fae13f30bf7169a27374864c507527"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47fae13f30bf7169a27374864c507527">&#9670;&nbsp;</a></span>CO03()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CO03 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00024">24</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a131582b39835d01b070b6a6aaa74c951"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a131582b39835d01b070b6a6aaa74c951">&#9670;&nbsp;</a></span>CO04()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CO04 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00025">25</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -736,7 +1252,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00033">33</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00040">40</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -764,7 +1280,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00034">34</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00041">41</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -792,7 +1308,35 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00050">50</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00057">57</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a2cf42a6ed3805c1c852c70f39facf19d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2cf42a6ed3805c1c852c70f39facf19d">&#9670;&nbsp;</a></span>CO35()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CO35 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00058">58</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -820,7 +1364,63 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00063">63</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00072">72</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a12ac26cf2eca1e0bedc365bbf31ee195"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12ac26cf2eca1e0bedc365bbf31ee195">&#9670;&nbsp;</a></span>CO49()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CO49 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00073">73</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+
+</div>
+</div>
+<a id="a50ff6a8b1caf9b941ea3ec21102924fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50ff6a8b1caf9b941ea3ec21102924fa">&#9670;&nbsp;</a></span>CO90()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void CO90 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00134">134</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -848,7 +1448,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00112">112</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00141">141</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -876,7 +1476,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00123">123</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00152">152</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -904,7 +1504,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00124">124</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00153">153</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -932,7 +1532,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00125">125</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00154">154</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -960,7 +1560,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00126">126</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00155">155</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -988,7 +1588,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00127">127</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00156">156</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1016,7 +1616,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00128">128</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00157">157</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1044,7 +1644,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00129">129</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00158">158</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1072,7 +1672,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00130">130</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00159">159</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1100,7 +1700,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00133">133</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00162">162</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1128,7 +1728,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00134">134</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00163">163</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1156,7 +1756,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00135">135</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00164">164</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1184,7 +1784,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00136">136</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00165">165</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1212,7 +1812,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00137">137</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00166">166</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1240,7 +1840,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00138">138</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00167">167</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1268,7 +1868,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00139">139</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00168">168</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>
@@ -1296,7 +1896,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00140">140</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-commands_8c_source.html#l00169">169</a> of file <a class="el" href="msl-commands_8c_source.html">msl-commands.c</a>.</p>
 
 </div>
 </div>

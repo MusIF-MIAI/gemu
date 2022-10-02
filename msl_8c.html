@@ -45,25 +45,82 @@
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">/home/runner/work/gemu/gemu/msl.c File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="msl_8h_source.html">msl.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="log_8h_source.html">log.h</a>&quot;</code><br />
 </div>
 <p><a href="msl_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a826edd40636cbaa44266b97c8c6a4fa3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8c.html#a826edd40636cbaa44266b97c8c6a4fa3">X</a>(name)&#160;&#160;&#160;case name : return #name ;</td></tr>
+<tr class="separator:a826edd40636cbaa44266b97c8c6a4fa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ad759f9aa3e26066e3034ce02b2f66103"><td class="memItemLeft" align="right" valign="top">static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8c.html#ad759f9aa3e26066e3034ce02b2f66103">clock_name</a> (enum <a class="el" href="ge_8h.html#af761a67e9d7ce9e23381088b6f2ae893">clock</a> c)</td></tr>
+<tr class="separator:ad759f9aa3e26066e3034ce02b2f66103"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a66cc24632814170652d6233105c9a964"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8c.html#a66cc24632814170652d6233105c9a964">msl_get_state</a> (uint8_t SO)</td></tr>
 <tr class="separator:a66cc24632814170652d6233105c9a964"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a416fb23759d8949b94cc93c084f82c7a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8c.html#a416fb23759d8949b94cc93c084f82c7a">msl_run_state</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *state)</td></tr>
 <tr class="separator:a416fb23759d8949b94cc93c084f82c7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a826edd40636cbaa44266b97c8c6a4fa3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a826edd40636cbaa44266b97c8c6a4fa3">&#9670;&nbsp;</a></span>X</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define X</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">name</td><td>)</td>
+          <td>&#160;&#160;&#160;case name : return #name ;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="ad759f9aa3e26066e3034ce02b2f66103"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad759f9aa3e26066e3034ce02b2f66103">&#9670;&nbsp;</a></span>clock_name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static const char* clock_name </td>
+          <td>(</td>
+          <td class="paramtype">enum <a class="el" href="ge_8h.html#af761a67e9d7ce9e23381088b6f2ae893">clock</a>&#160;</td>
+          <td class="paramname"><em>c</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00008">8</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
+
+</div>
+</div>
 <a id="a66cc24632814170652d6233105c9a964"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a66cc24632814170652d6233105c9a964">&#9670;&nbsp;</a></span>msl_get_state()</h2>
 
@@ -80,7 +137,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00006">6</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00018">18</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
 
 </div>
 </div>
@@ -110,7 +167,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00015">15</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00027">27</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
 
 </div>
 </div>
