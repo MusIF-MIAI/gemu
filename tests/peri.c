@@ -1,6 +1,4 @@
-#include <check.h>
-
-#include "../ge.h"
+#include "tests.h"
 
 struct peri_ctx {
     int test_init;
@@ -99,7 +97,7 @@ START_TEST(peri_null)
     ck_assert_int_eq(r, 0);
 }
 
-Suite * init_suite(void)
+Suite *init_peri_suite(void)
 {
     Suite *s;
     TCase *tc_core;
@@ -116,19 +114,3 @@ Suite * init_suite(void)
 
     return s;
 }
-
-int main(void)
-{
-    int number_failed;
-    Suite *s;
-    SRunner *sr;
-
-    s = init_suite();
-    sr = srunner_create(s);
-
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return (number_failed == 0) ? 0 : -1;
-}
-

@@ -1,0 +1,24 @@
+name: Run tests
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Compile and run tests
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install check
+        run: sudo apt install check
+
+      - name: Compile executable
+        run: make
+
+      - name: Compile tests
+        run: make tests/tests
+
+      - name: Run Tests
+        run: tests/tests
+          

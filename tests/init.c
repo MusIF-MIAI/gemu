@@ -1,6 +1,4 @@
-#include <check.h>
-
-#include "../ge.h"
+#include "tests.h"
 
 START_TEST(initialitiation_state)
 {
@@ -22,7 +20,7 @@ START_TEST(initialitiation_state)
     ck_assert_uint_eq(g.rSO, 0xc8);
 }
 
-Suite * init_suite(void)
+Suite *init_init_suite(void)
 {
     Suite *s;
     TCase *tc_core;
@@ -38,19 +36,3 @@ Suite * init_suite(void)
 
     return s;
 }
-
-int main(void)
-{
-    int number_failed;
-    Suite *s;
-    SRunner *sr;
-
-    s = init_suite();
-    sr = srunner_create(s);
-
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return (number_failed == 0) ? 0 : -1;
-}
-
