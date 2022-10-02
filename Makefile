@@ -1,4 +1,4 @@
-OBJS=main.o msl.o ge.o pulse.o msl-timings.o console_socket.o peripherical.o
+OBJS=main.o msl.o ge.o pulse.o msl-timings.o console_socket.o peripherical.o log.o
 CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%,$(wildcard tests/*.c))

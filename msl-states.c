@@ -13,6 +13,10 @@
 #define PERI 0x9C
 #define HLT 0x0A
 
+static const uint8_t bit(unsigned int x, unsigned int bit) {
+    return !!(x & (1 << bit));
+}
+
 // Initialitiation
 
 // to state E2+E3 if !AINI
@@ -80,8 +84,9 @@ static const struct msl_timing_chart state_E2_E3[] = {
 // to state E4    if FO06 | FO07
 //          64+65 if !(FO06 | FO07)
 
-static uint8_t state_E0_TO70_CI60(struct ge *ge) { return 0; }
-static uint8_t state_E0_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E0_TI06_CU17(struct ge *ge) {
+    return !(bit(ge->rFO, 6) || bit(ge->rFO, 7));
+}
 
 static const struct msl_timing_chart state_E0[] = {
     { TO10, CO12, 0 },
@@ -99,9 +104,7 @@ static const struct msl_timing_chart state_E0[] = {
 
 // to state E6
 
-static uint8_t state_E6_TI06_CU03(struct ge *ge) { return 1; }
-static uint8_t state_E6_TI06_CU17(struct ge *ge) { return 1; }
-static uint8_t state_E6_TO80_CI38(struct ge *ge) { return 1; }
+static uint8_t state_E4_TO70_CI60(struct ge *ge) { return 0; }
 
 static const struct msl_timing_chart state_E4[] = {
     { TO10, CO10, 0 },
@@ -111,7 +114,7 @@ static const struct msl_timing_chart state_E4[] = {
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO70, CI65, 0 },
-    { TO70, CI60, state_E0_TO70_CI60 },
+    { TO70, CI60, state_E4_TO70_CI60 },
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0 },
@@ -121,6 +124,14 @@ static const struct msl_timing_chart state_E4[] = {
 // to state E5 if !L207 & (FO07 & FO06)
 //          ED+EC if L207
 //          64+65 if !L207 & (!FO07 | !FO06)
+
+static uint8_t state_E6_TO80_CI38(struct ge *ge) { /* DO01? */ return 0; }
+static uint8_t state_E6_TI06_CU03(struct ge *ge) { return bit(ge->rL2, 7); }
+
+static uint8_t state_E6_TI06_CU17(struct ge *ge) {
+    return (!bit(ge->rL2, 7) &&
+            (!bit(ge->rFO, 7) || !bit(ge->rFO, 6)));
+}
 
 static const struct msl_timing_chart state_E6[] = {
     { TO10, CO10, 0 },
@@ -135,7 +146,11 @@ static const struct msl_timing_chart state_E6[] = {
     { TI05, CI02, 0 },
     { TI06, CU00, 0 },
     { TI06, CU03, state_E6_TI06_CU03 },
-    { TI06, CU10, 0 },
+
+    /* in the manual this is CU10, but it maybe a mistake.. there's no way to reach
+     * the alpha states if we don't reset this bit 1 instead of bit 0 */
+    { TI06, CU11, 0 },
+
     { TI06, CU17, state_E6_TI06_CU17 },
     { END_OF_STATUS, 0, 0 }
 };
@@ -184,3 +199,68 @@ static const struct msl_timing_chart state_E7[] = {
     { END_OF_STATUS, 0, 0 }
 };
 
+/* Beta Phase */
+/* ---------- */
+
+static uint8_t state_64_65_TO10_CO10(struct ge *ge) {
+    /* JC + JS1 + JS2 + JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO20_CI87(struct ge *ge) {
+    /* LON + LOLL */
+    return 0;
+}
+
+static uint8_t state_64_65_TO20_CI77(struct ge *ge) {
+    /* INS */
+    return 0;
+}
+
+static uint8_t state_64_65_TO30_CI12(struct ge *ge) {
+    /* JC + JS1 + JS2 + JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO40_CO01(struct ge *ge) {
+    /* JC + JS1 + JS2 + JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO60_CO35(struct ge *ge) {
+    /* JIE */
+    return 0;
+}
+
+static uint8_t state_64_65_TO70_CI78(struct ge *ge) {
+    /* ENS */
+    return 0;
+}
+
+static uint8_t state_64_65_TO89_CI88(struct ge *ge) {
+    /* LOFF */
+    return 0;
+}
+
+static uint8_t state_64_65_TI05_CI00(struct ge *ge) {
+    /* AVER * (JC + JS1 + JS2 + JIE) */
+    return 0;
+}
+
+static const struct msl_timing_chart state_64_65[] = {
+    { TO10, CO10, state_64_65_TO10_CO10 },
+    { TO20, CI87, state_64_65_TO20_CI87 },
+    { TO20, CI77, state_64_65_TO20_CI77 },
+    { TO30, CI12, state_64_65_TO30_CI12 },
+    { TO40, CO01, state_64_65_TO40_CO01 },
+    { TO60, CO35, state_64_65_TO60_CO35 },
+    { TO65, CO49, 0 },
+    { TO70, CI78, state_64_65_TO70_CI78 },
+    { TO89, CI88, state_64_65_TO89_CI88 },
+    { TI05, CI00, state_64_65_TI05_CI00 },
+    { TI06, CU01, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, 0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 }
+};

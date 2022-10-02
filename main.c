@@ -2,12 +2,15 @@
 #include <unistd.h>
 #include "ge.h"
 #include "console_socket.h"
+#include "log.h"
 
 int main(int argc, char *argv[])
 {
     uint8_t test_program = 0;
     struct ge ge130;
     int ret;
+
+    ge_log_set_active_types(~(LOG_CONDS | LOG_STATES));
 
     ret = ge_init(&ge130);
     if (ret != 0)

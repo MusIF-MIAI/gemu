@@ -5,26 +5,33 @@
 
 #define MEM_SIZE 65536
 
+#define ENUMERATE_CLOCKS \
+    X(TO00) \
+    X(TO10) \
+    X(TO11) \
+    X(TO15) \
+    X(TO19) \
+    X(TO20) \
+    X(TO25) \
+    X(TO30) \
+    X(TO40) \
+    X(TO50) \
+    X(TO60) \
+    X(TO64) \
+    X(TO65) \
+    X(TO70) \
+    X(TO80) \
+    X(TO89) \
+    X(TO90) \
+    X(TI05) \
+    X(TI06) \
+    X(TI10) \
+    X(END_OF_STATUS)
+
 enum clock {
-    TO00 = 0,
-    TO10,
-    TO11,
-    TO15,
-    TO19,
-    TO20,
-    TO25,
-    TO30,
-    TO40,
-    TO50,
-    TO64,
-    TO70,
-    TO80,
-    TO89,
-    TO90,
-    TI05,
-    TI06,
-    TI10,
-    END_OF_STATUS
+    #define X(name) name ,
+    ENUMERATE_CLOCKS
+    #undef X
 };
 
 enum register_switch {
@@ -247,6 +254,7 @@ struct ge {
 
     uint8_t AINI:1;
     uint8_t ALTO:1;
+    uint8_t ALAM:1;
     uint8_t AVER:1;
     uint8_t ADIR:1;
     uint8_t RINT:1;
@@ -273,6 +281,7 @@ struct ge {
     int PUC3:1; /* Channel 3 busy */
 
     int URPE:1; /*  */
+    int URPU:1; /*  */
 
     struct ge_peri *peri;
 };

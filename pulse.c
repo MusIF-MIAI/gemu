@@ -58,10 +58,20 @@ static int on_TO40(struct ge *ge) {
 }
 
 static int on_TO50(struct ge *ge) {
+    /* timing chart js1-js2-jie-ecc, fo. 32 */
+    ge->rBO = ge->kNO;
 	return 0;
 }
 
+static int on_TO60(struct ge *ge) {
+    return 0;
+}
+
 static int on_TO64(struct ge *ge) {
+    return 0;
+}
+
+static int on_TO65(struct ge *ge) {
 	return 0;
 }
 
@@ -105,14 +115,16 @@ static on_pulse_cb pulse_cb[END_OF_STATUS] = {
     on_TO30,
     on_TO40,
     on_TO50,
+    on_TO60,
     on_TO64,
+    on_TO65,
     on_TO70,
     on_TO80,
     on_TO89,
     on_TO90,
     on_TI05,
     on_TI06,
-    on_TI10
+    on_TI10,
 };
 
 
