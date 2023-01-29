@@ -53,79 +53,79 @@ enum register_switch {
 
 struct __attribute__((packed)) ge_console {
     struct __attribute__((packed)) console_lamp {
-        uint16_t RO:9,
-                _pad0:3,
-                UR:1,
-                _pad1:3;    /* RO 9 LSbits  + UR at bit 12 */
+        uint16_t RO:9;
+        uint16_t _pad0:3;
+        uint16_t UR:1;
+        uint16_t _pad1:3;    /* RO 9 LSbits  + UR at bit 12 */
 
-        uint16_t SO:8,
-                 _pad2:4,
-                 FA:4;      /* SO 8 bits  + FA bits 12-15 */
+        uint16_t SO:8;
+        uint16_t _pad2:4;
+        uint16_t FA:4;      /* SO 8 bits  + FA bits 12-15 */
 
-        uint16_t SA:8,
-                 _pad3:4,
-                 B:4;       /* SA 8 bits  + B bits 12-15 */
+        uint16_t SA:8;
+        uint16_t _pad3:4;
+        uint16_t B:4;       /* SA 8 bits  + B bits 12-15 */
 
         uint16_t ADD_reg;   /* 4 nibbles ADD REG - front panel */
-        uint16_t OP_reg:8,
-                 C3:1,
-                 C2:1,
-                 C1:1,
-                 I:1,
-                 JE:1,
-                 IM:1,
-                 NZ:1,
-                 OF:1;
-        uint16_t
-            LP_DC_ALERT:1,       /* red */
-            LP_POWER_OFF:1,      /* yellow */
-            LP_STAND_BY:1,       /* blue */
-            LP_POWER_ON:1,       /* yellow */
-            LP_MAINTENANCE_ON:1, /* red */
-            LP_MEM_CHECK:1,      /* red */
-            LP_INV_ADD:1,        /* red */
-            LP_SWITCH_1:1,       /* white */
-            LP_SWITCH_2:1,       /* white */
-            LP_STEP_BY_STEP:1,   /* white */
-            LP_HALT:1,           /* white */
-            LP_LOAD_1:1,         /* white */
-            LP_LOAD_2:1,         /* white */
-            LP_OPERATOR_CALL:1;  /* blue */
+        uint16_t OP_reg:8;
+        uint16_t C3:1;
+        uint16_t C2:1;
+        uint16_t C1:1;
+        uint16_t I:1;
+        uint16_t JE:1;
+        uint16_t IM:1;
+        uint16_t NZ:1;
+        uint16_t OF:1;
+
+        uint16_t LP_DC_ALERT:1;       /* red */
+        uint16_t LP_POWER_OFF:1;      /* yellow */
+        uint16_t LP_STAND_BY:1;       /* blue */
+        uint16_t LP_POWER_ON:1;       /* yellow */
+        uint16_t LP_MAINTENANCE_ON:1; /* red */
+        uint16_t LP_MEM_CHECK:1;      /* red */
+        uint16_t LP_INV_ADD:1;        /* red */
+        uint16_t LP_SWITCH_1:1;       /* white */
+        uint16_t LP_SWITCH_2:1;       /* white */
+        uint16_t LP_STEP_BY_STEP:1;   /* white */
+        uint16_t LP_HALT:1;           /* white */
+        uint16_t LP_LOAD_1:1;         /* white */
+        uint16_t LP_LOAD_2:1;         /* white */
+        uint16_t LP_OPERATOR_CALL:1;  /* blue */
     } lamps;
 
     struct __attribute__((packed)) console_switch {
-        uint16_t PAPA:1,
-                 PATE:1,
-                 RICI:1,
-                 ACOV:1,
-                 ACON:1,
-                 INAR:1,
-                 INCE:1,
-                 SITE:1,
-                 lamps_on:1,
-                 _padding:6;
+        uint16_t PAPA:1;
+        uint16_t PATE:1;
+        uint16_t RICI:1;
+        uint16_t ACOV:1;
+        uint16_t ACON:1;
+        uint16_t INAR:1;
+        uint16_t INCE:1;
+        uint16_t SITE:1;
+        uint16_t lamps_on:1;
+        uint16_t _pad0:6;
         uint16_t AM;
     } switches;
 
     struct __attribute__((packed)) console_button {
-        uint16_t
-            B_AC_ON:1,
-            B_DC_ALERT:1,
-            B_POWER_ON:1,
-            B_MAINTENANCE_ON:1,
-            B_SWITCH_1:1,
-            B_SWITCH_2:1,
-            B_STEP_BY_STEP:1,
-            B_LOAD_1_2:1,
-            B_EMERGEN_OFF:1,
-            B_STANDBY:1,
-            __padding:1,
-            B_MEM_CHECK:1,
-            B_CLEAR:1,
-            B_LOAD:1,
-            B_HALT_START:1,
-            B_OPER_CALL:1;
+        uint16_t B_AC_ON:1;
+        uint16_t B_DC_ALERT:1;
+        uint16_t B_POWER_ON:1;
+        uint16_t B_MAINTENANCE_ON:1;
+        uint16_t B_SWITCH_1:1;
+        uint16_t B_SWITCH_2:1;
+        uint16_t B_STEP_BY_STEP:1;
+        uint16_t B_LOAD_1_2:1;
+        uint16_t B_EMERGEN_OFF:1;
+        uint16_t B_STANDBY:1;
+        uint16_t _pad0:1;
+        uint16_t B_MEM_CHECK:1;
+        uint16_t B_CLEAR:1;
+        uint16_t B_LOAD:1;
+        uint16_t B_HALT_START:1;
+        uint16_t B_OPER_CALL:1;
     } buttons;
+
     uint8_t rotary;
 };
 
@@ -272,6 +272,8 @@ struct ge {
      */
     uint8_t ffFA;
 
+    uint8_t rFA;    ///< Faults (pp. 139-141)
+
     /**
      * Program Loading
      *
@@ -286,27 +288,24 @@ struct ge {
     uint8_t ADIR:1; ///< Disable step-by-step (pag. 97)
     uint8_t RINT:1;
 
-    uint8_t rFA;    ///< Faults (pp. 139-141)
+    uint8_t JS1:1;  ///< Console jump condition 1
+    uint8_t JS2:1;  ///< Console jump condition 2
+    uint8_t JE:1;   ///< JE/AVER jump instruction exectuted
+    uint8_t INTE:1; ///< Interruption present
+    uint8_t PUC1:1; ///< Channel 1 busy or CPU waiting
+    uint8_t PUC2:1; ///< Channel 2 busy
+    uint8_t PUC3:1; ///< Channel 3 busy
 
-    struct ge_console console;
-    struct ge_counting_network counting_network;
+    uint8_t URPE:1;
+    uint8_t URPU:1;
+
+    uint8_t step_by_step:1;  ///< Step by step execution @todo replace with signal name
+    uint8_t operator_call:1; ///< Operator call @todo replace with signal name
 
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
-    int step_by_step:1;    ///< Step by step execution @todo replace with signal name
-    int operator_call:1;   ///< Operator call @todo replace with signal name
-
-    int JS1:1;      ///< Console jump condition 1
-    int JS2:1;      ///< Console jump condition 2
-    int JE:1;       ///< JE/AVER jump instruction exectuted
-    int INTE:1;     ///< Interruption present
-    int PUC1:1;     ///< Channel 1 busy or CPU waiting
-    int PUC2:1;     ///< Channel 2 busy
-    int PUC3:1;     ///< Channel 3 busy
-
-    int URPE:1;
-    int URPU:1;
-
+    struct ge_console console;
+    struct ge_counting_network counting_network;
     struct ge_peri *peri;
 };
 
