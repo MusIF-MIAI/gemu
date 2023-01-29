@@ -4,3 +4,4 @@
 ge
 *.xcodeproj/**
 tags
+docs/html/**
