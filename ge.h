@@ -146,6 +146,7 @@ struct ge {
     enum clock current_clock;
     uint64_t ticks;
     uint8_t halted;
+    uint8_t realtime;
 
     /* Lists of events and operations for all
      * pulses

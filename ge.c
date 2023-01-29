@@ -142,9 +142,10 @@ int ge_run_cycle(struct ge *ge)
         /* Execute the commands from the timing charts */
         msl_run_state(ge, state);
 
-        /* Delay */
-        usleep(CLOCK_PERIOD);
-
+        if (ge->realtime) {
+            /* Delay */
+            usleep(CLOCK_PERIOD);
+        }
     }
 
     ge_print_registers(ge);
