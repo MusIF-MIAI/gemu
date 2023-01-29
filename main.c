@@ -20,18 +20,22 @@ int main(int argc, char *argv[])
     if (ret != 0)
         return ret;
 
-    /* load with memory / and or setup peripherics */
-
     while(1) {
+        /* load with memory / and or setup peripherics */
         ge_clear(&ge130);
         ge_load(&ge130, &test_program, 1);
         ge_start(&ge130);
 
-        ret = ge_run(&ge130);
+        while (!ge130.halted || ret != 0) {
+            /* Delay */
+            usleep(CLOCK_PERIOD);
+            ret = ge_run_pulse(&ge130);
+        }
 
-        sleep(1);
         printf(" *** RESTART *** ");
+        sleep(1);
     }
+
     ge_deinit(&ge130);
     return ret;
 }

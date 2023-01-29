@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
 #define MEM_SIZE 65536
 
 #define ENUMERATE_CLOCKS \
@@ -145,7 +146,14 @@ struct ge {
     /* Main clock */
     enum clock current_clock;
     uint8_t halted;
-    uint8_t realtime;
+
+    /**
+     * SO at the start of the pulse
+     *
+     * Used to stop the machine when we do not change state after a cycle,
+     * for debuggiong reasons.
+     */
+    int old_SO;
 
     /* Lists of events and operations for all
      * pulses
@@ -317,7 +325,10 @@ int ge_deinit(struct ge *ge);
 /// Run the emulator
 int ge_run(struct ge *ge);
 
-/// Run a sigle cycle (all GE "mastri" clock periods)
+/// Run a single pulse (i.e. a single GE "mastri" clock periods)
+int ge_run_pulse(struct ge *ge);
+
+/// Run all GE "mastri" clock periods until next clock cycle
 int ge_run_cycle(struct ge *ge);
 
 /// Emulate the press of the "clear" button in the console

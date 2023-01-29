@@ -8,13 +8,7 @@
 #include "peripherical.h"
 #include "log.h"
 
-#define CLOCK_PERIOD 14000 /* in usec, intervaln between pulse lines */
 #define MAX_PROGRAM_STORAGE_WORDS 129
-
-static int ge_halted(struct ge *ge)
-{
-    return ge->halted;
-}
 
 int ge_init(struct ge *ge)
 {
@@ -109,63 +103,76 @@ void ge_print_registers(struct ge *ge)
            ge->rL1, ge->rL2, ge->rL3);
 }
 
-int ge_run_cycle(struct ge *ge)
+
+void ge_clock_increment(struct ge* ge)
 {
-    struct msl_timing_state *state;
+    ge->current_clock++;
+    if (ge->current_clock == END_OF_STATUS)
+        ge->current_clock = TO00;
+}
+
+uint8_t ge_clock_is_first(struct ge* ge)
+{
+    return ge->current_clock == TO00;
+}
+
+uint8_t ge_clock_is_last(struct ge* ge)
+{
+    return ge->current_clock == (END_OF_STATUS - 1);
+}
+
+int ge_run_pulse(struct ge *ge)
+{
     int r;
 
-    int old_SO = ge->rSO;
-
-    ge_print_well_known_states(ge->rSO);
-
-    state = msl_get_state(ge->rSO);
+    struct msl_timing_state *state = msl_get_state(ge->rSO);
 
     if (!state) {
         ge_log(LOG_ERR, "no timing charts found for state %02X\n", ge->rSO);
         return 1;
     }
 
-    r = ge_peri_on_clock(ge);
+    if (ge_clock_is_first(ge)) {
+        ge->old_SO = ge->rSO;
+
+        ge_print_well_known_states(ge->rSO);
+
+        r = ge_peri_on_clock(ge);
+        if (r != 0)
+            return r;
+    }
+
+    /* Execute common pulse machine logic */
+    pulse(ge);
+
+    /* Execute peripherals pulse callbacks */
+    r = ge_peri_on_pulses(ge);
     if (r != 0)
         return r;
 
-    for(ge->current_clock = TO00; ge->current_clock < END_OF_STATUS; ge->current_clock++) {
+    /* Execute the commands from the timing charts */
+    msl_run_state(ge, state);
 
-        /* Execute machine logic for pulse*/
-        pulse(ge);
+    if (ge_clock_is_last(ge)) {
+        ge_print_registers(ge);
 
-        r = ge_peri_on_pulses(ge);
-        if (r != 0)
-            return r;
-
-        /* Execute the commands from the timing charts */
-        msl_run_state(ge, state);
-
-        if (ge->realtime) {
-            /* Delay */
-            usleep(CLOCK_PERIOD);
+        if (ge->rSO == ge->old_SO) {
+            ge_log(LOG_ERR, "State register SO did not change during an entire cycle, stopping emulation\n");
+            return 1;
         }
     }
 
-    ge_print_registers(ge);
-
-    if (ge->rSO == old_SO) {
-        ge_log(LOG_ERR, "State register SO did not change during an entire cycle, stopping emulation\n");
-        return 1;
-    }
-
+    ge_clock_increment(ge);
     return 0;
 }
 
-int ge_run(struct ge *ge)
+int ge_run_cycle(struct ge *ge)
 {
-    int r;
-
-    while (!ge_halted(ge)) {
-        r = ge_run_cycle(ge);
-        if (r != 0)
+    do {
+        int r = ge_run_pulse(ge);
+        if (r)
             return r;
-    }
+    } while (!ge_clock_is_first(ge));
 
     return 0;
 }
