@@ -2,6 +2,8 @@
 *.o
 *.d
 ge
+tests/tests
+
 *.xcodeproj/**
 tags
 docs/html/**
