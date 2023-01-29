@@ -144,7 +144,6 @@ struct ge_counting_network {
 struct ge {
     /* Main clock */
     enum clock current_clock;
-    uint64_t ticks;
     uint8_t halted;
     uint8_t realtime;
 

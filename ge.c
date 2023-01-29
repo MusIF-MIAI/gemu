@@ -22,7 +22,6 @@ int ge_init(struct ge *ge)
     ge->halted = 1;
     ge->console.lamps.LP_POWER_ON = 1;
     ge->console.lamps.LP_HALT = 1;
-    ge->ticks = 0;
     return 0;
 }
 
@@ -166,7 +165,6 @@ int ge_run(struct ge *ge)
         r = ge_run_cycle(ge);
         if (r != 0)
             return r;
-        ge->ticks++;
     }
 
     return 0;
