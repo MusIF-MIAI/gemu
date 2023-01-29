@@ -26,7 +26,6 @@ int ge_init(struct ge *ge)
     return 0;
 }
 
-/// Emulate the press of the "clear" button in the console
 void ge_clear(struct ge *ge)
 {
     // From 14023130-0, sheet 5:
@@ -44,7 +43,6 @@ void ge_clear(struct ge *ge)
     ge->AINI = 0;
 }
 
-/// Emulate the press of the "load" button in the console
 int ge_load(struct ge *ge, uint8_t *program, uint8_t size)
 {
     if (program == NULL && size != 0)
@@ -70,7 +68,6 @@ int ge_load(struct ge *ge, uint8_t *program, uint8_t size)
     return 0;
 }
 
-/// Emulate the press of the "start" button in the console
 int ge_start(struct ge *ge)
 {
     // From 14023130-0, sheet 5:
@@ -179,9 +176,6 @@ int ge_struct_sizeof(void)
     return sizeof(struct ge);
 }
 
-/**
- * ge_deinit() - deinit GE emulator
- */
 int ge_deinit(struct ge *ge)
 {
     ge_peri_deinit(ge);

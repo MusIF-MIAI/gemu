@@ -15,6 +15,7 @@ static const char *clock_name(enum clock c)
 
     return "";
 }
+
 struct msl_timing_state* msl_get_state(uint8_t SO)
 {
     struct msl_timing_state *state = &msl_timings[SO];

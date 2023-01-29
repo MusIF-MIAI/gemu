@@ -138,60 +138,8 @@ struct ge_counting_network {
 };
 
 /**
- * struct ge
- *
- * @rPO: the program address regitster, i.e. the register used
- * to scan the positions of the memory in which the program instructions are
- * recorded. (p.118).
- * @rV1: the addresser for the first operand.
- * @rV2: the addresser for the second operand.
- * @rV3: the addresser for external instructions using channel 3
- * @rV4: the addresser for external instructions using channel 2
- * @rRI: 8-bit register used to store the photodisc codes.
- * @rL1: 16-bit used to store the length of the operands or for
- * information in transit
- * @rL2: 8-bit auxiliary register
- * @rL3: 16-bit register containing the length of operands involving
- * channel 3
- * @rNO: Knot driven by P0, V1, V2, V4, L1, R1, V3 and L3.
- *       In addition, the NO knot contains:
- *          - the forcings from program
- *          - the signals of forcing from console (AM switches)
- *
- * @rRO: multi-function 8+1 bit register that store the read signal from memory
- *      (e.g. the result of transfer command MEM).
- * @rV0: 16-bit register which is loaded in TO20 from NO, used to address memory
- *       for read and write operations.
- * @rBO: 16-bit register used to drive the UA (aka ALU) and used to visualize the
- *       content of other registers on the operating panel of the console
- * @rNI: Knot driven by counting network, or by the UA to store the result of the
- *       operation. UA may store MSB or LSB depending on the operation.
- * @rFO: 8-bit register storing the function code of the instruction being
- *       executed.
- *
- * @rSO: the main sequencer of the processor. It is used to establish the sequence
- *       for all the phases of program loading, fetching (phase alpha), executing
- *       (phase beta)
- *
- * @rSI: 4-bit sequencer used for data xechange with peripheral units through
- *       channel 2
- *
- * @rNA: Knot driven by SO or SI. Content is stored to SA.
- *
- * @rSA: Register that drives the MLS and the logic to generate future status
- *       configuration
- * @ffFI: 7 Flip-Flops containing special conditions which occur during the
- *      performance of an instruction. Unloaded in @FA in T010
- * @ffFA: 7 Flip-Flops containing special conditions which occur during the
- *      performance of an instruction. Loaded from @FI in T010
- * @AINI: FF It as the meaning of "Program Loading". It is set pressing "LOAD"
- * and it is reset pressing "CLEAR" or with command CI39 (E0 status alpha)
- * @ALTO: FF Alto
- * @AVER: FF AVER
- * @ADIR: FF ADIR (disable step-by-step (pag. 97))
- * @RINT
- * @counting_network: represent the GE counting network
- * @console: represent the GE console
+ * The entire state of the emulated system, including registers, memory,
+ * peripherals and timings.
  */
 struct ge {
     /* Main clock */
@@ -204,84 +152,159 @@ struct ge {
      */
     struct pulse_event *on_pulse[END_OF_STATUS];
 
-    /* Registers */
-
-    /* Program addresser */
+    /**
+     * Program addresser.
+     *
+     * The register used to scan the positions of the memory in which
+     * the program instructions are recorded. (p.118).
+     */
     uint16_t rPO;
-    /* Argument addresser */
-    uint16_t rV1;
-    uint16_t rV2;
-    uint16_t rV3;
-    uint16_t rV4;
 
-    /* Photoprint register */
+    uint16_t rV1; ///< Addresser for the first operand
+    uint16_t rV2; ///< Addresser for the second operand
+    uint16_t rV3; ///< Addresser for external instructions using channel 3
+    uint16_t rV4; ///< Addresser for external instructions using channel 2
+
+    /**
+     * Photoprint register
+     * 8-bit register used to store the photodisc codes.
+     */
     uint8_t rRI;
 
+    /**
+     * Length of the operand
+     *
+     * 16-bit used to store the length of the operands or for information in
+     * transit.
+     */
     uint16_t rL1;
-    uint8_t rL2;
-    uint16_t rL3;
+    uint8_t  rL2; ///< Auxiliary register
+    uint16_t rL3; ///< Length of operands involving channel 3
 
-    /* Knot temporary values */
+    /**
+     * Knot driven by P0, V1, V2, V4, L1, R1, V3 and L3.
+     *
+     * In addition, the NO knot contains:
+     *   - the forcings from program
+     *   - the signals of forcing from console (AM switches)
+     */
     uint16_t kNO;
+
+    /**
+     * Knot driven by SO or SI. Content is stored to SA.
+     */
     uint8_t kNA;
+
+    /**
+     * Knot driven by counting network, or by the UA to store the result of the
+     * operation. UA may store MSB or LSB depending on the operation.
+     */
     uint16_t kNI;
 
+    /**
+     * Multipurpose 8+1 bit register
+     *
+     * Stores the read signal from memory (e.g. the result of transfer command MEM).
+     */
+    uint16_t rRO;
 
-    /* General-purpose */
-    uint16_t rRO;        /* length: 9 bits, using uint16_t */
-
-    /* Default memory addresser, automatically loaded from NO*/
+    /**
+     * Default memory addresser
+     *
+     * 16-bit register which is loaded in TO20 from NO, used to address memory for
+     * read and write operations.
+     */
     uint16_t rVO;
 
-    /* Default operator, automatically loaded from NO */
+    /**
+     * Default operator
+     *
+     * 16-bit register automatically loaded from NO, used to drive the UA (aka ALU)
+     * and used to visualize the content of other registers on the operating panel of
+     * the console
+     */
     uint16_t rBO;
 
-    /* Current function code (opcode) */
+    /**
+     * Current function code
+     *
+     * 8-bit register storing the function code of the instruction being executed.
+     */
     uint8_t rFO;
 
-    /* Main sequencer */
+    /**
+     * Main sequencer
+     *
+     * It is used to establish the sequence for all the phases of program loading,
+     * fetching (phase alpha), executing (phase beta)
+     */
     uint8_t rSO;
 
-    /* Sequencer for the peripheral unit */
-    uint8_t rSI; /* Four bits, using uint8_t */
+    /**
+     * Peripheral unit sequencer
+     *
+     * 4-bit sequencer used for data xechange with peripheral units through channel 2
+     */
+    uint8_t rSI;
 
-    /* MLS/Future state configuration register */
+    /**
+     * Future state configuration
+     *
+     * Register that drives the MLS and the logic to generate future status
+     * configuration
+     */
     uint8_t rSA;
 
-    /* Registers for special conditions and exceptions (7bits)*/
+    /**
+     * Special conditions register 1
+     *
+     * 7 Flip-Flops containing special conditions which occur during the performance
+     * of an instruction. Unloaded in #ffFA in T010
+     */
     uint8_t ffFI;
+
+    /**
+     * Special conditions register 1
+     *
+     * 7 Flip-Flops containing special conditions which occur during the performance
+     * of an instruction. Loaded from #ffFI in T010
+     */
     uint8_t ffFA;
 
+    /**
+     * Program Loading
+     *
+     * Set by pressing the "LOAD" button of the console, and it is reset by pressing
+     * "CLEAR", or with the command CI39 (in the alpha phase of the E0 state).
+     */
     uint8_t AINI:1;
     uint8_t ALTO:1;
     uint8_t ALAM:1;
     uint8_t AVER:1;
-    uint8_t ADIR:1;
+
+    uint8_t ADIR:1; ///< Disable step-by-step (pag. 97)
     uint8_t RINT:1;
 
-    /* Faults: TODO (pp. 139-141) */
-    uint8_t rFA;
+    uint8_t rFA;    ///< Faults (pp. 139-141)
 
     struct ge_console console;
     struct ge_counting_network counting_network;
 
-    /* Memory */
-    uint8_t mem[MEM_SIZE];
+    uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
+    int step_by_step:1;    ///< Step by step execution @todo replace with signal name
+    int operator_call:1;   ///< Operator call @todo replace with signal name
 
-    int step_by_step:1; /* XXX: replace with signal name */
-    int operator_call:1; /* XXX: replace with signal name */
+    int JS1:1;      ///< Console jump condition 1
+    int JS2:1;      ///< Console jump condition 2
+    int JE:1;       ///< JE/AVER jump instruction exectuted
+    int INTE:1;     ///< Interruption present
+    int PUC1:1;     ///< Channel 1 busy or CPU waiting
+    int PUC2:1;     ///< Channel 2 busy
+    int PUC3:1;     ///< Channel 3 busy
 
-    int JS1:1; /* console jump condition */
-    int JS2:1; /* console jump condition */
-    int JE:1; /* JE/AVER jump instruction exectuted */
-    int INTE:1; /* interruption present */
-    int PUC1:1; /* Channel 1 busy or CPU waiting */
-    int PUC2:1; /* Channel 2 busy */
-    int PUC3:1; /* Channel 3 busy */
-
-    int URPE:1; /*  */
-    int URPU:1; /*  */
+    int URPE:1;
+    int URPU:1;
 
     struct ge_peri *peri;
 };
@@ -289,6 +312,7 @@ struct ge {
 /// Initialize the emulator
 int ge_init(struct ge *ge);
 
+/// Deinitialize the emulator
 int ge_deinit(struct ge *ge);
 
 /// Run the emulator
@@ -319,8 +343,6 @@ int pulse(struct ge *ge);
 
 int ge_struct_sizeof(void);
 
-/**
- */
 struct ge_peri {
     struct ge_peri *next;
     int (*init)(struct ge*, void*);
