@@ -1,6 +1,7 @@
 *~
 *.o
 *.d
+libge.a
 ge
 tests/tests
 
