@@ -9,7 +9,7 @@ enum ge_console_register_selector {
     RS_V4,
     RS_L3,
     RS_V3,
-    RS_RI_L2,
+    RS_R1_L2,
     RS_V2,
     RS_L1,
     RS_V1,
@@ -103,5 +103,9 @@ struct PACKED ge_console {
     struct ge_console_buttons buttons;
     enum ge_console_register_selector rotary;
 };
+
+struct ge;
+
+void ge_console_set_register_selector(struct ge*, enum ge_console_register_selector);
 
 #endif

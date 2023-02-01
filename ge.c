@@ -16,6 +16,9 @@ int ge_init(struct ge *ge)
     ge->halted = 1;
     ge->console.lamps.POWER_ON = 1;
     ge->console.lamps.HALT = 1;
+
+    ge_console_set_register_selector(ge, RS_NORM);
+
     return 0;
 }
 

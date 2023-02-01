@@ -211,6 +211,21 @@ struct ge {
     uint8_t URPE:1;
     uint8_t URPU:1;
 
+    uint8_t AF10:1; ///< Console register selector V4
+    uint8_t AF20:1; ///< Console register selector L3
+    uint8_t AF21:1; ///< Console register selector L1
+    uint8_t AF30:1; ///< Console register selector V3
+    uint8_t AF31:1; ///< Console register selector V1
+    uint8_t AF32:1; ///< Console register selector NORM
+    uint8_t AF40:1; ///< Console register selector R1 - L2
+    uint8_t AF41:1; ///< Console register selector V1 - SCR
+    uint8_t AF42:1; ///< Console register selector PO
+    uint8_t AF43:1; ///< Console register selector SO
+    uint8_t AF50:1; ///< Console register selector V2
+    uint8_t AF51:1; ///< Console register selector V1 - LETT
+    uint8_t AF52:1; ///< Console register selector FI - UR
+    uint8_t AF53:1; ///< Console register selector FO
+
     uint8_t step_by_step:1;  ///< Step by step execution @todo replace with signal name
     uint8_t operator_call:1; ///< Operator call @todo replace with signal name
 
@@ -247,7 +262,6 @@ int ge_load(struct ge * ge);
 
 /// Emulate the press of the "start" button in the console
 int ge_start(struct ge * ge);
-
 
 typedef int (*on_pulse_cb)(struct ge *);
 
