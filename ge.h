@@ -237,7 +237,7 @@ struct ge {
 };
 
 /// Initialize the emulator
-int ge_init(struct ge *ge);
+void ge_init(struct ge *ge);
 
 /// Deinitialize the emulator
 int ge_deinit(struct ge *ge);

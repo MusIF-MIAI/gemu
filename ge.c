@@ -10,15 +10,13 @@
 
 #define MAX_PROGRAM_STORAGE_WORDS 129
 
-int ge_init(struct ge *ge)
+void ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
     ge->powered = 1;
 
     ge_console_set_rotary(ge, RS_NORM);
-
-    return 0;
 }
 
 void ge_clear(struct ge *ge)

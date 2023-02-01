@@ -10,9 +10,7 @@ UTEST(beta_phase, execute_nop)
     struct ge g;
     int r;
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
-
+    ge_init(&g);
     ge_clear(&g);
 
     r = ge_load_program(&g, mem, sizeof(mem));

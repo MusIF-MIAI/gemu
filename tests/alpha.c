@@ -12,11 +12,10 @@ UTEST(alpha_phase, p_instruction_to_alpha)
     int r;
 
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
-
+    ge_init(&g);
     ge_clear(&g);
     ASSERT_TRUE(g.AINI == 0);
+
     r = ge_load_program(&g, mem, sizeof(mem));
     ASSERT_EQ(r, 0);
     ASSERT_TRUE(g.AINI == 0);
@@ -44,10 +43,9 @@ UTEST(alpha_phase, test_int)
     struct ge g;
     int r;
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
-
+    ge_init(&g);
     ge_clear(&g);
+
     r = ge_load_program(&g, mem, sizeof(mem));
     ASSERT_EQ(r, 0);
 
@@ -74,9 +72,7 @@ UTEST(alpha_phase, test_hlt)
     struct ge g;
     int r;
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
-
+    ge_init(&g);
     ge_clear(&g);
 
     r = ge_load_program(&g, mem, sizeof(mem));
@@ -108,9 +104,7 @@ UTEST(alpha_phase, pm_instruction_to_alpha)
     struct ge g;
     int r;
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
-
+    ge_init(&g);
     ge_clear(&g);
 
     r = ge_load_program(&g, mem, sizeof(mem));

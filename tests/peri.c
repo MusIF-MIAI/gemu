@@ -54,8 +54,7 @@ UTEST(peripheral, peri)
     p.deinit = &peri_test_deinit;
     p.ctx = &ctx;
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
+    ge_init(&g);
 
     r = ge_register_peri(&g, &p);
     ASSERT_EQ(r, 0);
@@ -85,8 +84,7 @@ UTEST(peripheral, peri_null)
     p.deinit = NULL;
     p.ctx = NULL;
 
-    r = ge_init(&g);
-    ASSERT_EQ(r, 0);
+    ge_init(&g);
 
     r = ge_register_peri(&g, &p);
     ASSERT_EQ(r, 0);
