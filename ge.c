@@ -36,27 +36,27 @@ void ge_clear(struct ge *ge)
     ge->AINI = 0;
 }
 
-int ge_load(struct ge *ge, uint8_t *program, uint8_t size)
+int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
 {
     if (program == NULL && size != 0)
         return -1;
 
+    if (size > MAX_PROGRAM_STORAGE_WORDS)
+        size = MAX_PROGRAM_STORAGE_WORDS;
+
+    /* simulate the loading for now */
+    memcpy(ge->mem, program, size);
+    return 0;
+}
+
+int ge_load(struct ge *ge)
+{
     /* When pressing LOAD button, AINI is set. If AINI is set, the state 80
      * (initialitiation) goes to state c8, starting the loading of the program
      * (of max 129 words) from one of the peripherc unit. */
 
-    /* set AINI FF to 1 (pag. 96)*/
+    /* set AINI FF to 1 (pag. 96) */
     ge->AINI = 1;
-    if (program != NULL) {
-        if (size > MAX_PROGRAM_STORAGE_WORDS)
-            size = MAX_PROGRAM_STORAGE_WORDS;
-
-        /* simulate the loading for now */
-        memcpy(ge->mem, program, size);
-
-        /* I'm supposing that the AINI signal is resetted after loading */
-        ge->AINI = 0;
-    }
 
     return 0;
 }

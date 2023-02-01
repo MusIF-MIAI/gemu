@@ -322,6 +322,9 @@ int ge_init(struct ge *ge);
 /// Deinitialize the emulator
 int ge_deinit(struct ge *ge);
 
+/// Copy a program at the start of memory
+int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size);
+
 /// Run the emulator
 int ge_run(struct ge *ge);
 
@@ -335,7 +338,7 @@ int ge_run_cycle(struct ge *ge);
 void ge_clear(struct ge * ge);
 
 /// Emulate the press of the "load" button in the console
-int ge_load(struct ge * ge, uint8_t *program, uint8_t size);
+int ge_load(struct ge * ge);
 
 /// Emulate the press of the "start" button in the console
 int ge_start(struct ge * ge);

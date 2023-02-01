@@ -15,7 +15,7 @@ UTEST(beta_phase, execute_nop)
 
     ge_clear(&g);
 
-    r = ge_load(&g, mem, sizeof(mem));
+    r = ge_load_program(&g, mem, sizeof(mem));
     r = ge_start(&g);
     ASSERT_EQ(r, 0);
 

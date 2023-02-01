@@ -12,7 +12,7 @@ UTEST(initialitiation, initialitiation_state)
 
     ge_clear(&g);
     ASSERT_TRUE(g.AINI == 0);
-    r = ge_load(&g, NULL, 0);
+    r = ge_load(&g);
     ASSERT_EQ(r, 0);
     ASSERT_TRUE(g.AINI == 1);
     r = ge_start(&g);
