@@ -52,7 +52,7 @@ int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
     return 0;
 }
 
-int ge_load(struct ge *ge)
+void ge_load(struct ge *ge)
 {
     /* When pressing LOAD button, AINI is set. If AINI is set, the state 80
      * (initialitiation) goes to state c8, starting the loading of the program
@@ -60,11 +60,9 @@ int ge_load(struct ge *ge)
 
     /* set AINI FF to 1 (pag. 96) */
     ge->AINI = 1;
-
-    return 0;
 }
 
-int ge_start(struct ge *ge)
+void ge_start(struct ge *ge)
 {
     // From 14023130-0, sheet 5:
     // With the rotating switch in "NORM" position, after the operation
@@ -74,8 +72,6 @@ int ge_start(struct ge *ge)
 
     ge->halted = 0;
     ge->console.lamps.HALT = 0;
-
-    return 0;
 }
 
 static void ge_print_well_known_states(uint8_t state) {

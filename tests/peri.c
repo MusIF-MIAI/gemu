@@ -61,8 +61,8 @@ UTEST(peripheral, peri)
     ASSERT_EQ(r, 0);
     ASSERT_EQ(ctx.test_init, 1);
 
-    r = ge_start(&g);
-    ASSERT_EQ(r, 0);
+    ge_start(&g);
+
     ge_run_cycle(&g);
     ASSERT_EQ(ctx.test_clocks, 1);
     ASSERT_EQ(ctx.test_pulses, END_OF_STATUS);
@@ -91,8 +91,7 @@ UTEST(peripheral, peri_null)
     r = ge_register_peri(&g, &p);
     ASSERT_EQ(r, 0);
 
-    r = ge_start(&g);
-    ASSERT_EQ(r, 0);
+    ge_start(&g);
     ge_run_cycle(&g);
 
     r = ge_deinit(&g);

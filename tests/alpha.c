@@ -20,14 +20,17 @@ UTEST(alpha_phase, p_instruction_to_alpha)
     r = ge_load_program(&g, mem, sizeof(mem));
     ASSERT_EQ(r, 0);
     ASSERT_TRUE(g.AINI == 0);
-    r = ge_start(&g);
-    ASSERT_EQ(r, 0);
+
+    ge_start(&g);
     ASSERT_EQ(g.rSO, 0x80);
     ASSERT_EQ(g.rPO, 0x0000);
+
     ge_run_cycle(&g);
     ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+
     ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0xe0);
+
     ge_run_cycle(&g);
     ASSERT_EQ(g.rPO, 0x0002);
     ASSERT_EQ(g.rFO, NOP2_OPCODE);
@@ -48,8 +51,7 @@ UTEST(alpha_phase, test_int)
     r = ge_load_program(&g, mem, sizeof(mem));
     ASSERT_EQ(r, 0);
 
-    r = ge_start(&g);
-    ASSERT_EQ(r, 0);
+    ge_start(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);
@@ -80,8 +82,7 @@ UTEST(alpha_phase, test_hlt)
     r = ge_load_program(&g, mem, sizeof(mem));
     ASSERT_EQ(r, 0);
 
-    r = ge_start(&g);
-    ASSERT_EQ(r, 0);
+    ge_start(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);
@@ -115,8 +116,7 @@ UTEST(alpha_phase, pm_instruction_to_alpha)
     r = ge_load_program(&g, mem, sizeof(mem));
     ASSERT_EQ(r, 0);
 
-    r = ge_start(&g);
-    ASSERT_EQ(r, 0);
+    ge_start(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);
