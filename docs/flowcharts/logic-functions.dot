@@ -1,0 +1,24 @@
+// UCE 460 - 140231300 (fo. 12) - Logic functions
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> 6465
+    6465  -> 6062
+    6062  -> 5052 
+    5052  -> 4042
+    4042  -> cond1
+    cond1 -> E2E3  [ label = "yes" ]
+    cond1 -> 6062  [ label = "no" ]
+    
+    start [ shape = none ; label = "AMR CMR SMR STR LR" ]
+    4042  [ shape = record ; label = "40|42" ]
+    5052  [ shape = record ; label = "50|52" ]
+    6062  [ shape = record ; label = "60|62" ]
+    6465  [ shape = record ; label = "64|65" ]
+    E2E3  [ shape = record ; label = "E2|E3" ]
+    
+    cond1 [ shape = diamond ; label = "L1_2 = 1^i"]
+}
+

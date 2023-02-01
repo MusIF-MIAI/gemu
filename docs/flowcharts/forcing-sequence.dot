@@ -1,0 +1,14 @@
+// UCE 460 - 140231302 (fo. 6) - Forcing Sequence
+    
+digraph G {
+
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    
+    start -> 08
+    08    -> 00
+    
+    start [ shape = none ; label = "[START] with switch in forcing position"]
+}
+

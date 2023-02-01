@@ -1,0 +1,47 @@
+// UCE 460 - 140231300 (fo. 16) - External sequence - Channel 3 input data transfer phase
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> 01
+    
+    01    -> cond1
+    cond1 -> cond3 [ label = "no"  ]
+    cond1 -> cond2 [ label = "yes" ]
+    
+    cond3 -> cond4 [ label = "no"  ]
+    cond3 -> cond5 [ label = "yes" ]
+    
+    cond4 -> note  [ label = "yes" ]
+    cond4 -> note2 [ label = "no"  ]
+    note  -> cond3 
+    
+    cond2 -> note3 [ label = "yes" ]
+    cond2 -> cond6 [ label = "no" ]
+    
+    note3 -> cond1
+
+    cond6 -> cond7 [ label = "no"  ]
+    cond6 -> cond5 [ label = "yes" ]
+    
+    cond7 -> note3 [ label = "yes" ]
+    cond7 -> B8    [ label = "no" ]
+    
+    cond5 -> 01 [ label = "yes" ]
+    cond5 -> 01 [ label = "no" ]
+    
+    start [ shape = none ; label = "Data transfer" ]
+    note  [ shape = none ; label = "Performs can2,\ncan3 statuses" ]
+    note2 [ shape = none ; label = "Yielding to internal program by SO -> SA,\nCan 3 preempts internal opetaion" ]
+    note3 [ shape = none ; label = "Performs can1,\ncan2 statuses" ]
+
+    cond1 [ shape = diamond ; label = "Can 1 is operating?"]
+    cond2 [ shape = diamond ; label = "Can 1"]
+    cond3 [ shape = diamond ; label = "Can 3"]
+    cond4 [ shape = diamond ; label = "Can 2"]
+    cond5 [ shape = diamond ; label = "RUSC"]
+    cond6 [ shape = diamond ; label = "Can 3"]
+    cond7 [ shape = diamond ; label = "Can 2"]
+}
+

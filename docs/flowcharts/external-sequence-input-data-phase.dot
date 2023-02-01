@@ -1,0 +1,28 @@
+// UCE 460 - 140231301 (fo. 15) - External sequence - Channel 1 input data transfer phase
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> B9
+    B9    -> cond1
+    cond1 -> B1    [ label = "no"  ]
+    cond1 -> cond2 [ label = "yes" ]
+    
+    B1 -> cond2
+    cond2 -> B9    [ label = "yes" ]
+    cond2 -> cond3 [ label = "no"  ]
+    
+    cond3 -> B8    [ label = "no"  ]
+    cond3 -> note  [ label = "yes" ]
+    note  -> cond2
+    
+    start [ shape = none ; label = "Input data transfer" ]
+    note  [ shape = none ; label = "Performs can2,\ncan3 statuses" ]
+    
+    cond1 [ shape = diamond ; label = "L204"]
+    cond2 [ shape = diamond ; label = "Can 1"]
+    cond3 [ shape = diamond ; label = "Can 2, 3"]
+
+}
+
