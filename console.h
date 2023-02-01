@@ -106,6 +106,8 @@ struct PACKED ge_console {
 
 struct ge;
 
+void ge_fill_console_data(struct ge*, struct ge_console*);
 void ge_console_set_register_selector(struct ge*, enum ge_console_register_selector);
+enum ge_console_register_selector ge_console_get_register_selector(struct ge *ge);
 
 #endif

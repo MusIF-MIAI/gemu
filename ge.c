@@ -14,8 +14,7 @@ int ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
-    ge->console.lamps.POWER_ON = 1;
-    ge->console.lamps.HALT = 1;
+    ge->powered = 1;
 
     ge_console_set_register_selector(ge, RS_NORM);
 
@@ -68,10 +67,7 @@ void ge_start(struct ge *ge)
     // With the rotating switch in "NORM" position, after the operation
     // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
     ge->rSO = 0x80;
-    ge->console.rotary = RS_NORM;
-
     ge->halted = 0;
-    ge->console.lamps.HALT = 0;
 }
 
 static void ge_print_well_known_states(uint8_t state) {

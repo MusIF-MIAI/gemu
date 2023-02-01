@@ -45,7 +45,9 @@ static void CI12(struct ge* ge) { CO12(ge); }
 static void CI19(struct ge* ge)
 {
     /* TODO: not sure if this is correct */
-    if (ge->console.rotary != RS_NORM) {
+    enum ge_console_register_selector reg = ge_console_get_register_selector(ge);
+
+    if (reg != RS_NORM) {
         ge_log(LOG_ERR, "Forcing not yet impelemented\n");
         ge->halted = 1;
     }

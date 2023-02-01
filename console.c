@@ -1,6 +1,35 @@
 #include "console.h"
 #include "ge.h"
 
+void ge_fill_console_data(struct ge* ge, struct ge_console *console)
+{
+    console->lamps.POWER_ON = ge->powered;
+    console->lamps.HALT = ge->halted;
+
+    console->rotary = ge_console_get_register_selector(ge);
+}
+
+enum ge_console_register_selector
+ge_console_get_register_selector(struct ge *ge)
+{
+    if (ge->AF10) return RS_V4;
+    if (ge->AF20) return RS_L3;
+    if (ge->AF21) return RS_L1;
+    if (ge->AF30) return RS_V3;
+    if (ge->AF31) return RS_V1;
+    if (ge->AF32) return RS_NORM;
+    if (ge->AF40) return RS_R1_L2;
+    if (ge->AF41) return RS_V1_SCR;
+    if (ge->AF42) return RS_PO;
+    if (ge->AF43) return RS_SO;
+    if (ge->AF50) return RS_V2;
+    if (ge->AF51) return RS_V1_LETT;
+    if (ge->AF52) return RS_FI_UR;
+    if (ge->AF53) return RS_FO;
+
+    return RS_NORM;
+}
+
 void ge_console_set_register_selector(
     struct ge *ge,
     enum ge_console_register_selector selector

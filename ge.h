@@ -51,6 +51,7 @@ struct ge {
     /* Main clock */
     enum clock current_clock;
     uint8_t halted;
+    uint8_t powered;
 
     /**
      * SO at the start of the pulse
@@ -231,7 +232,6 @@ struct ge {
 
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
-    struct ge_console console;
     struct ge_counting_network counting_network;
     struct ge_peri *peri;
 };
