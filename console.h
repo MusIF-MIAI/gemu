@@ -5,7 +5,7 @@
 
 #define PACKED __attribute__((packed))
 
-enum ge_console_register_selector {
+enum ge_console_rotary {
     RS_V4,
     RS_L3,
     RS_V3,
@@ -98,16 +98,16 @@ struct PACKED ge_console_buttons {
 
 
 struct PACKED ge_console {
-    struct ge_console_lamps lamps;
+    struct ge_console_lamps    lamps;
     struct ge_console_switches switches;
-    struct ge_console_buttons buttons;
-    enum ge_console_register_selector rotary;
+    struct ge_console_buttons  buttons;
+    enum   ge_console_rotary   rotary;
 };
 
 struct ge;
 
 void ge_fill_console_data(struct ge*, struct ge_console*);
-void ge_console_set_register_selector(struct ge*, enum ge_console_register_selector);
-enum ge_console_register_selector ge_console_get_register_selector(struct ge *ge);
+void ge_console_set_rotary(struct ge*, enum ge_console_rotary);
+enum ge_console_rotary ge_console_get_rotary(struct ge *ge);
 
 #endif

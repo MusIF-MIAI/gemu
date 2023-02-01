@@ -16,7 +16,7 @@ int ge_init(struct ge *ge)
     ge->halted = 1;
     ge->powered = 1;
 
-    ge_console_set_register_selector(ge, RS_NORM);
+    ge_console_set_rotary(ge, RS_NORM);
 
     return 0;
 }

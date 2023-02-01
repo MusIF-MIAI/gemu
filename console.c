@@ -6,11 +6,10 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.POWER_ON = ge->powered;
     console->lamps.HALT = ge->halted;
 
-    console->rotary = ge_console_get_register_selector(ge);
+    console->rotary = ge_console_get_rotary(ge);
 }
 
-enum ge_console_register_selector
-ge_console_get_register_selector(struct ge *ge)
+enum ge_console_rotary ge_console_get_rotary(struct ge *ge)
 {
     if (ge->AF10) return RS_V4;
     if (ge->AF20) return RS_L3;
@@ -30,10 +29,8 @@ ge_console_get_register_selector(struct ge *ge)
     return RS_NORM;
 }
 
-void ge_console_set_register_selector(
-    struct ge *ge,
-    enum ge_console_register_selector selector
-) {
+void ge_console_set_rotary(struct ge *ge, enum ge_console_rotary selector)
+{
     ge->AF10 = selector == RS_V4;
     ge->AF20 = selector == RS_L3;
     ge->AF21 = selector == RS_L1;
