@@ -51,7 +51,7 @@ static int console_socket_check(struct ge *ge, void *ctx)
     ge->console.lamps.RO = ge->rRO;
     ge->console.lamps.SO = ge->rSO;
     ge->console.lamps.SA = ge->rSA;
-    ge->console.lamps.FA = ge->rFA & 0x0F;
+    ge->console.lamps.FA = ge->ffFA & 0x0F;
 
     ret = recvfrom(console_socket_fd, buf, 1024, 0,
                 (struct sockaddr *)&dst, &ssz);

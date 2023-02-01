@@ -177,14 +177,14 @@ struct ge {
     uint8_t ffFI;
 
     /**
-     * Special conditions register 1
+     * Special conditions register 2
      *
      * 7 Flip-Flops containing special conditions which occur during the performance
-     * of an instruction. Loaded from #ffFI in T010
+     * of an instruction. Loaded from #ffFI in T010.
+     *
+     * Faults (from pp. 139-141)
      */
     uint8_t ffFA;
-
-    uint8_t rFA;    ///< Faults (pp. 139-141)
 
     /**
      * Program Loading
