@@ -40,9 +40,11 @@ static int console_socket_check(struct ge *ge, void *ctx)
 {
     char buf[1024];
     struct sockaddr_un dst;
-    int ret;
+    ssize_t ret;
+
     socklen_t ssz = sizeof(struct sockaddr_un);
     (void)ctx;
+
     if (console_socket_fd < 0) {
         return -1;
     }
