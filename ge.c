@@ -14,8 +14,8 @@ int ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
-    ge->console.lamps.LP_POWER_ON = 1;
-    ge->console.lamps.LP_HALT = 1;
+    ge->console.lamps.POWER_ON = 1;
+    ge->console.lamps.HALT = 1;
     return 0;
 }
 
@@ -70,7 +70,7 @@ int ge_start(struct ge *ge)
     ge->console.rotary = RS_NORM;
 
     ge->halted = 0;
-    ge->console.lamps.LP_HALT = 0;
+    ge->console.lamps.HALT = 0;
 
     return 0;
 }
