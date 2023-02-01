@@ -34,5 +34,5 @@ void ge_log(ge_log_type type, const char *format, ...)
     vsnprintf(line, sizeof(line), format, args);
     va_end (args);
 
-    printf(" %-6s ]  %s", log_type_name(type), line);
+    printf("  %-6s  ]    %s", log_type_name(type), line);
 }
