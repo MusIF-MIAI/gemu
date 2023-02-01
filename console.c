@@ -5,6 +5,7 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
 {
     console->lamps.POWER_ON = ge->powered;
     console->lamps.HALT = ge->halted;
+    console->lamps.OPERATOR_CALL = ge->operator_call;
 
     console->rotary = ge_console_get_rotary(ge);
 }
