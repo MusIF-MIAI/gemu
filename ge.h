@@ -2,6 +2,7 @@
 #define GE_H
 
 #include <stdint.h>
+#include "opcodes.h"
 #include "console.h"
 
 #define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */

@@ -2,8 +2,6 @@
 
 #include "../ge.h"
 
-#define NOP2_OPCODE 0x07
-
 UTEST(beta_phase, execute_nop)
 {
     uint8_t mem[2] = {NOP2_OPCODE, 0xAA};

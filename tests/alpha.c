@@ -2,9 +2,6 @@
 
 #include "../ge.h"
 
-#define NOP2_OPCODE 0x07
-#define HLT_OPCODE  0x0A
-
 UTEST(alpha_phase, p_instruction_to_alpha)
 {
     uint8_t mem[2] = {NOP2_OPCODE, 0xAA};
