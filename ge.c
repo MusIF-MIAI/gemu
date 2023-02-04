@@ -89,10 +89,10 @@ static void ge_print_well_known_states(uint8_t state) {
 void ge_print_registers(struct ge *ge)
 {
     ge_log(LOG_REGS,
-           "SO: %02x - PO: %04x - RO: %04x - "
+           "SO: %02x - PO: %04x - RO: %04x - FO: %04x  -  "
            "V1: %04x  V2: %04x  V3: %04x  V4: %04x - "
            "L1: %04x  L2: %04x L3 : %04x\n",
-           ge->rSO, ge->rPO, ge->rRO,
+           ge->rSO, ge->rPO, ge->rRO, ge->rFO,
            ge->rV1, ge->rV2, ge->rV3, ge->rV4,
            ge->rL1, ge->rL2, ge->rL3);
 }
