@@ -195,6 +195,15 @@ struct ge {
      */
     uint8_t AINI:1;
     uint8_t ALTO:1;
+
+    /**
+     * Operator Call
+     *
+     * It commands the switching on of the "Operator call" lamp. It is set with
+     * CI87 issued by the LON and LOLL instructions.
+     * It is reset with CI88 issued by the LOFF instruction, or by pressing the
+     * "CLEAR" button (cpu fo. 96).
+     */
     uint8_t ALAM:1;
     uint8_t AVER:1;
 
@@ -228,8 +237,6 @@ struct ge {
     uint8_t AF53:1; ///< Console register selector FO
 
     uint8_t step_by_step:1;  ///< Step by step execution @todo replace with signal name
-    uint8_t operator_call:1; ///< Operator call @todo replace with signal name
-
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
     struct ge_counting_network counting_network;

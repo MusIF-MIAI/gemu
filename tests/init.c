@@ -14,7 +14,7 @@ UTEST(initialitiation, pressing_clear)
     ge_clear(&g);
     ASSERT_EQ(g.rSO, 0);
     ASSERT_FALSE(g.AINI);
-    ASSERT_FALSE(g.operator_call);
+    ASSERT_FALSE(g.ALAM);
 }
 
 UTEST(initialitiation, pressing_clear_start)
@@ -25,7 +25,7 @@ UTEST(initialitiation, pressing_clear_start)
     ge_clear(&g);
     ASSERT_EQ(g.rSO, 0);
     ASSERT_FALSE(g.AINI);
-    ASSERT_FALSE(g.operator_call);
+    ASSERT_FALSE(g.ALAM);
 
     ge_start(&g);
     ASSERT_EQ(g.rSO, 0x80);
@@ -43,7 +43,7 @@ UTEST(initialitiation, pressing_clear_load_start)
     ge_clear(&g);
     ASSERT_EQ(g.rSO, 0);
     ASSERT_FALSE(g.AINI);
-    ASSERT_FALSE(g.operator_call);
+    ASSERT_FALSE(g.ALAM);
 
     ge_load(&g);
     ASSERT_TRUE(g.AINI);

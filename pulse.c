@@ -29,13 +29,14 @@ static int on_TO19(struct ge *ge) {
 
 static int on_TO20(struct ge *ge) {
 
-    /* pag 142, pag 126 */
+    /* cpu fo. 142, 126 */
     ge->rBO = ge->kNO;
-    /* pag. 124, pag 125 */
+
+    /* cpu fo. 124, 125 */
     ge->rVO = ge->kNO;
 
     /* TODO: are there any condition? */
-    /* pag 142 */
+    /* cpu fo. 142 */
     ge->rRO = 0;
 
     return 0;
@@ -58,7 +59,8 @@ static int on_TO40(struct ge *ge) {
 }
 
 static int on_TO50(struct ge *ge) {
-    /* timing chart js1-js2-jie-ecc, fo. 32 */
+    /* timing chart js1-js2-jie-ecc, fo. 32,
+     * also, display, fo. 17 */
     ge->rBO = ge->kNO;
 	return 0;
 }

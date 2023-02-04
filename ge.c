@@ -28,7 +28,7 @@ void ge_clear(struct ge *ge)
 
     /* From 30004122 o/A, sheet 31:
      * The light is switched off by tle LOFF instruction or by the CLEAR key */
-    ge->operator_call = 0;
+    ge->ALAM = 0;
 
     // Also clear the emulated memory... what else?!
     memset(ge->mem, 0, sizeof(ge->mem));
