@@ -215,7 +215,7 @@ static uint8_t state_64_65_TO20_CI87(struct ge *ge) {
 
 static uint8_t state_64_65_TO20_CI77(struct ge *ge) {
     /* INS */
-    return 0;
+    return ge->rFO == INS_OPCODE && ge->rL1 == INS_2NDCHAR;
 }
 
 static uint8_t state_64_65_TO30_CI12(struct ge *ge) {
@@ -235,7 +235,7 @@ static uint8_t state_64_65_TO60_CO35(struct ge *ge) {
 
 static uint8_t state_64_65_TO70_CI78(struct ge *ge) {
     /* ENS */
-    return 0;
+    return ge->rFO == ENS_OPCODE && ge->rL1 == ENS_2NDCHAR;
 }
 
 static uint8_t state_64_65_TO89_CI88(struct ge *ge) {
