@@ -202,62 +202,48 @@ static const struct msl_timing_chart state_E7[] = {
 /* Beta Phase */
 /* ---------- */
 
-static uint8_t state_64_65_TO10_CO10(struct ge *ge) {
-    /* JC + JS1 + JS2 + JIE */
-    return 0;
+static uint8_t jc_js1_js2_jie(struct ge *ge) {
+    return ((ge->rFO == JC_OPCODE) ||
+            (ge->rFO == JS1_OPCODE && ge->rL1 == JS1_2NDCHAR) ||
+            (ge->rFO == JS2_OPCODE && ge->rL1 == JS2_2NDCHAR) ||
+            (ge->rFO == JIE_OPCODE && ge->rL1 == JIE_2NDCHAR));
 }
 
-static uint8_t state_64_65_TO20_CI87(struct ge *ge) {
-    /* LON + LOLL */
+static uint8_t lon_loll(struct ge *ge) {
     return ((ge->rFO == LON_OPCODE && ge->rL1 == LON_2NDCHAR) ||
-            (ge->rFO == LOFF_OPCODE && ge->rL1 == LOFF_2NDCHAR));
+            (ge->rFO == LOLL_OPCODE && ge->rL1 == LOLL_OPCODE));
 }
 
-static uint8_t state_64_65_TO20_CI77(struct ge *ge) {
-    /* INS */
+static uint8_t ins(struct ge *ge) {
     return ge->rFO == INS_OPCODE && ge->rL1 == INS_2NDCHAR;
 }
 
-static uint8_t state_64_65_TO30_CI12(struct ge *ge) {
-    /* JC + JS1 + JS2 + JIE */
-    return 0;
+static uint8_t jie(struct ge *ge) {
+    return ge->rFO == JIE_OPCODE && ge->rL1 == JIE_2NDCHAR;
 }
 
-static uint8_t state_64_65_TO40_CO01(struct ge *ge) {
-    /* JC + JS1 + JS2 + JIE */
-    return 0;
-}
-
-static uint8_t state_64_65_TO60_CO35(struct ge *ge) {
-    /* JIE */
-    return 0;
-}
-
-static uint8_t state_64_65_TO70_CI78(struct ge *ge) {
-    /* ENS */
+static uint8_t ens(struct ge *ge) {
     return ge->rFO == ENS_OPCODE && ge->rL1 == ENS_2NDCHAR;
 }
 
-static uint8_t state_64_65_TO89_CI88(struct ge *ge) {
-    /* LOFF */
+static uint8_t loff(struct ge *ge) {
     return ge->rFO == LOFF_OPCODE && ge->rL1 == LOFF_2NDCHAR;
 }
 
 static uint8_t state_64_65_TI05_CI00(struct ge *ge) {
-    /* AVER * (JC + JS1 + JS2 + JIE) */
-    return 0;
+    return ge->AVER && jc_js1_js2_jie(ge);
 }
 
 static const struct msl_timing_chart state_64_65[] = {
-    { TO10, CO10, state_64_65_TO10_CO10 },
-    { TO20, CI87, state_64_65_TO20_CI87 },
-    { TO20, CI77, state_64_65_TO20_CI77 },
-    { TO30, CI12, state_64_65_TO30_CI12 },
-    { TO40, CO01, state_64_65_TO40_CO01 },
-    { TO60, CO35, state_64_65_TO60_CO35 },
+    { TO10, CO10, jc_js1_js2_jie },
+    { TO20, CI87, lon_loll },
+    { TO20, CI77, ins },
+    { TO30, CI12, jc_js1_js2_jie },
+    { TO40, CO01, jc_js1_js2_jie },
+    { TO60, CO35, jie },
     { TO65, CO49, 0 },
-    { TO70, CI78, state_64_65_TO70_CI78 },
-    { TO89, CI88, state_64_65_TO89_CI88 },
+    { TO70, CI78, ens },
+    { TO89, CI88, loff },
     { TI05, CI00, state_64_65_TI05_CI00 },
     { TI06, CU01, 0 },
     { TI06, CU10, 0 },
