@@ -131,8 +131,16 @@ static void CI80(struct ge* ge) { RESET_BIT(ge->ffFI, 0); }
 static void CI81(struct ge* ge) { RESET_BIT(ge->ffFI, 1); }
 static void CI82(struct ge* ge) { RESET_BIT(ge->ffFI, 2); }
 static void CI83(struct ge* ge) { RESET_BIT(ge->ffFI, 3); }
-static void CI87(struct ge* ge) { ge->ALAM = 1; }
-static void CI88(struct ge* ge) { ge->ALAM = 0; }
+static void CI87(struct ge* ge) {
+    ge->ALAM = 1;
+    ge->PODI = 1; /* should PODI be set here? */
+}
+
+static void CI88(struct ge* ge) {
+    ge->ALAM = 0;
+    ge->PODI = 0; /* should PODI be set here? */
+}
+
 static void CI89(struct ge* ge) { ge->ALTO = 1; }
 
 /* Commands To Force In NO Knot */

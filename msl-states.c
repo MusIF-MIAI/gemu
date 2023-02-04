@@ -209,7 +209,8 @@ static uint8_t state_64_65_TO10_CO10(struct ge *ge) {
 
 static uint8_t state_64_65_TO20_CI87(struct ge *ge) {
     /* LON + LOLL */
-    return 0;
+    return ((ge->rFO == LON_OPCODE && ge->rL1 == LON_2NDCHAR) ||
+            (ge->rFO == LOFF_OPCODE && ge->rL1 == LOFF_2NDCHAR));
 }
 
 static uint8_t state_64_65_TO20_CI77(struct ge *ge) {
@@ -239,7 +240,7 @@ static uint8_t state_64_65_TO70_CI78(struct ge *ge) {
 
 static uint8_t state_64_65_TO89_CI88(struct ge *ge) {
     /* LOFF */
-    return 0;
+    return ge->rFO == LOFF_OPCODE && ge->rL1 == LOFF_2NDCHAR;
 }
 
 static uint8_t state_64_65_TI05_CI00(struct ge *ge) {
