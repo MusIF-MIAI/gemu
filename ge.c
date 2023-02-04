@@ -25,9 +25,6 @@ void ge_clear(struct ge *ge)
      * performance of the "00" status (flowcharts fo. 5) */
     ge->rSO = 0;
 
-    /* Also clear the emulated memory... what else?! */
-    memset(ge->mem, 0, sizeof(ge->mem));
-
     /* From Chapter 6.4 "Logic for the timing and for the panel" (cpu fo. 96, 97) */
 
     ge->AINI = 0;
