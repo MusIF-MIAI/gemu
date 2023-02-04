@@ -6,7 +6,7 @@
 
 
 struct msl_timing_state msl_timings[0xff] = {
-    /* 00 */ { },
+    /* 00 */ {state_00},
     /* 01 */ { },
     /* 02 */ { },
     /* 03 */ { },

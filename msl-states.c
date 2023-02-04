@@ -264,3 +264,32 @@ static const struct msl_timing_chart state_64_65[] = {
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 }
 };
+
+/* Display */
+/* ------- */
+
+static uint8_t state_00_TO10_CO10(struct ge *ge) { return ge->AF32 || ge->AF42; }
+static uint8_t state_00_TO10_CO11(struct ge *ge) { return ge->AF31 || ge->AF41 || ge->AF51; }
+static uint8_t state_00_TO10_CO12(struct ge *ge) { return ge->AF50; }
+static uint8_t state_00_TO10_CO13(struct ge *ge) { return ge->AF30; }
+static uint8_t state_00_TO10_CO14(struct ge *ge) { return ge->AF10; }
+static uint8_t state_00_TO30_CI15(struct ge *ge) { return !ge->AF20 && !ge->AF40; }
+static uint8_t state_00_TO30_CI17(struct ge *ge) { return ge->AF20; }
+static uint8_t state_00_TO30_CI21(struct ge *ge) { return ge->AF40; }
+static uint8_t state_00_TO30_CI16(struct ge *ge) { return ge->AF40; }
+static uint8_t state_00_TO50_CI33(struct ge *ge) { return !ge->AF20 && !ge->AF21 && !ge->AF40;; }
+
+static const struct msl_timing_chart state_00[] = {
+    { TO10, CO10, state_00_TO10_CO10 },
+    { TO10, CO11, state_00_TO10_CO11 },
+    { TO10, CO12, state_00_TO10_CO12 },
+    { TO10, CO13, state_00_TO10_CO13 },
+    { TO10, CO14, state_00_TO10_CO14 },
+    { TO30, CI15, state_00_TO30_CI15 },
+    { TO30, CI17, state_00_TO30_CI17 },
+    { TO30, CI21, state_00_TO30_CI21 },
+    { TO30, CI16, state_00_TO30_CI16 },
+    { TO50, CI33, state_00_TO50_CI33 },
+    { TI06, CU07, 0 },
+    { END_OF_STATUS, 0, 0 }
+};
