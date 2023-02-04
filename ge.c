@@ -21,19 +21,24 @@ void ge_init(struct ge *ge)
 
 void ge_clear(struct ge *ge)
 {
-    // From 14023130-0, sheet 5:
-    // The pressure of the "CLEAR" push button only determines the continuos
-    // performance of the "00" status
+    /* The pressure of the "CLEAR" push button only determines the continuous
+     * performance of the "00" status (flowcharts fo. 5) */
     ge->rSO = 0;
 
-    /* From 30004122 o/A, sheet 31:
-     * The light is switched off by tle LOFF instruction or by the CLEAR key */
-    ge->ALAM = 0;
-
-    // Also clear the emulated memory... what else?!
+    /* Also clear the emulated memory... what else?! */
     memset(ge->mem, 0, sizeof(ge->mem));
 
+    /* From Chapter 6.4 "Logic for the timing and for the panel" (cpu fo. 96, 97) */
+
     ge->AINI = 0;
+    ge->ALAM = 0;
+    ge->PODI = 0;
+    ge->ADIR = 0;
+    ge->ACIC = 1;
+
+    /* After the powering on of the machine the timing starts pressing the
+     * "Clear" switch (cpu fo. 99). */
+    ge->halted = 0;
 }
 
 int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
@@ -65,7 +70,6 @@ void ge_start(struct ge *ge)
     // With the rotating switch in "NORM" position, after the operation
     // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
     ge->rSO = 0x80;
-    ge->halted = 0;
 }
 
 static void ge_print_well_known_states(uint8_t state) {

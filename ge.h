@@ -197,6 +197,35 @@ struct ge {
     uint8_t ALTO:1;
 
     /**
+     * Slow delay line
+     *
+     * Increases the delay line cycle by about 130ns. It is set together with
+     * ALAM by the LOLL diagnostic instruction (cpu fo. 96).
+     */
+    uint8_t PODI:1;
+
+    /**
+     * Recycle delay line
+     *
+     * Initially is set by "CLEAR", after that it is reset cyclicly. The reset
+     * pulse is  TO10, the normal setting pulse is TO90 if a LOLL instruction
+     * has not been performed, in this case it is set by TI05, with a delay
+     * of about 130ns. (cpu fo. 96).
+     *
+     * NOTE: documentation differs at cpu fo. 99 that states:
+     *
+     * The ACIC1 FF is reset by the TO10 pulse and it is set by the TO901 with
+     * the condition PODIB == 1.
+     *
+     * PODI is the FF which stores the LOLL diagnostic instruction performance
+     * causing an increase of the cycle of about 130 ns.
+     *
+     * In fact, if PODIB == 0 the recycling occurs with the pulse TI05 instead
+     * of TO90.
+     */
+    uint8_t ACIC:1;
+
+    /**
      * Operator Call
      *
      * It commands the switching on of the "Operator call" lamp. It is set with
@@ -205,9 +234,26 @@ struct ge {
      * "CLEAR" button (cpu fo. 96).
      */
     uint8_t ALAM:1;
+
+    /**
+     * Jump Condition Verified
+     *
+     * Reset in the E0 status of the alpha phase, together with AINI, with the
+     * CI39 command (cpu fo. 96).
+     *
+     * Set in the E6 status of the alpha phase of the jump instructions (CI38)
+     * if signal DC16 (verified condition) is present (cpu fo. 96).
+     */
     uint8_t AVER:1;
 
-    uint8_t ADIR:1; ///< Disable step-by-step (pag. 97)
+    /**
+     * Disable Step By Step
+     *
+     * Set with CI77 by the INS instruction, reset with CI78 issued by ENS, or
+     * with "CLEAR" (cpu fo. 97).
+     */
+    uint8_t ADIR:1;
+
     uint8_t RINT:1;
 
     uint8_t JS1:1;  ///< Console jump condition 1
