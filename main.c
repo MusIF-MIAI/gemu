@@ -12,9 +12,7 @@ int main(int argc, char *argv[])
 
     ge_log_set_active_types(~(LOG_CONDS | LOG_STATES));
 
-    ret = ge_init(&ge130);
-    if (ret != 0)
-        return ret;
+    ge_init(&ge130);
 
     ret = console_socket_register(&ge130);
     if (ret != 0)
@@ -23,7 +21,6 @@ int main(int argc, char *argv[])
     while(1) {
         /* load with memory / and or setup peripherics */
         ge_clear(&ge130);
-        ge_load(&ge130, &test_program, 1);
         ge_start(&ge130);
 
         while (!ge130.halted || ret != 0) {
