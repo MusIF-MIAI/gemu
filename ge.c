@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "ge.h"
+#include "signals.h"
 #include "msl.h"
 #include "console_socket.h"
 #include "peripherical.h"
@@ -20,12 +21,6 @@ void ge_init(struct ge *ge)
 
 void ge_clear(struct ge *ge)
 {
-    /* The pressure of the "CLEAR" push button only determines the continuous
-     * performance of the "00" status (flowcharts fo. 5) */
-    ge->rSO = 0;
-
-    /* From Chapter 6.4 "Logic for the timing and for the panel" (cpu fo. 96, 97) */
-
     ge->AINI = 0;
     ge->ALAM = 0;
     ge->PODI = 0;
@@ -73,12 +68,9 @@ void ge_load(struct ge *ge)
 
 void ge_start(struct ge *ge)
 {
-    // From 14023130-0, sheet 5:
-    // With the rotating switch in "NORM" position, after the operation
-    // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
-
-    // TODO: this should be forced using the ARES flip flop?! how
-    ge->rSO = 0x80;
+    /* according to the cpu documents, we should set the flipflop ARES here to
+     * implement the initial loading of 80 into SO, however with the current
+     * implementation it's not needed */
 
     ge->ALTO = 0; /* cpu fo. 97 */
 }
@@ -143,19 +135,9 @@ uint8_t ge_clock_is_last(struct ge* ge)
 int ge_run_pulse(struct ge *ge)
 {
     int r;
-
-    struct msl_timing_state *state = msl_get_state(ge->rSO);
-
-    if (!state) {
-        ge_log(LOG_ERR, "no timing charts found for state %02X\n", ge->rSO);
-        return 1;
-    }
+    struct msl_timing_state *state;
 
     if (ge_clock_is_first(ge)) {
-        ge->old_SO = ge->rSO;
-
-        ge_print_well_known_states(ge->rSO);
-
         r = ge_peri_on_clock(ge);
         if (r != 0)
             return r;
@@ -170,15 +152,22 @@ int ge_run_pulse(struct ge *ge)
         return r;
 
     /* Execute the commands from the timing charts */
+    state =  msl_get_state(ge->rSA);
+
+    /* The state to execute gets loaded in SA at TO10 */
+    if (ge->current_clock == TO10)
+        ge_print_well_known_states(ge->rSA);
+
+    if (!state) {
+        ge_log(LOG_ERR, "no timing charts found for state %02X\n", ge->rSA);
+        return 1;
+    }
+
     msl_run_state(ge, state);
+    ge_print_registers(ge);
 
     if (ge_clock_is_last(ge)) {
-        ge_print_registers(ge);
-
-        if (ge->rSO == ge->old_SO) {
-            ge_log(LOG_ERR, "State register SO did not change during an entire cycle, stopping emulation\n");
-            return 1;
-        }
+        fsn_last_clock(ge);
     }
 
     ge_clock_increment(ge);

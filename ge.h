@@ -73,14 +73,6 @@ struct ge {
     uint8_t halted;
     uint8_t powered;
 
-    /**
-     * SO at the start of the pulse
-     *
-     * Used to stop the machine when we do not change state after a cycle,
-     * for debuggiong reasons.
-     */
-    int old_SO;
-
     /* Lists of events and operations for all
      * pulses
      */
