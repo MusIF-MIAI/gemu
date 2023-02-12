@@ -13,14 +13,27 @@ static const uint8_t bit(unsigned int x, unsigned int bit) {
     return !!(x & (1 << bit));
 }
 
-// Initialitiation
+/* Common Conditions */
+/* ----------------- */
+
+static uint8_t not_RO00(struct ge *ge) { return !bit(ge->rRO, 0); }
+static uint8_t not_RO01(struct ge *ge) { return !bit(ge->rRO, 1); }
+static uint8_t not_RO02(struct ge *ge) { return !bit(ge->rRO, 2); }
+static uint8_t not_RO03(struct ge *ge) { return !bit(ge->rRO, 3); }
+static uint8_t not_RO04(struct ge *ge) { return !bit(ge->rRO, 4); }
+static uint8_t not_RO05(struct ge *ge) { return !bit(ge->rRO, 5); }
+static uint8_t not_RO06(struct ge *ge) { return !bit(ge->rRO, 6); }
+static uint8_t not_RO07(struct ge *ge) { return !bit(ge->rRO, 7); }
+
+
+/* Initialitiation */
+/* --------------- */
 
 // to state E2+E3 if !AINI
 //          C8    if AINI
 
-static uint8_t state_80_TI06_CU01(struct ge *ge) { return !ge->AINI; }
-static uint8_t state_80_TI06_CU03(struct ge *ge) { return ge->AINI; }
-static uint8_t state_80_TI06_CU05(struct ge *ge) { return !ge->AINI; }
+static uint8_t AINI(struct ge *ge) { return ge->AINI; }
+static uint8_t not_AINI(struct ge *ge) { return !AINI(ge); }
 
 static const struct msl_timing_chart state_80[] = {
     { TO30, CI19, 0 },
@@ -35,9 +48,9 @@ static const struct msl_timing_chart state_80[] = {
     { TI06, CI80, 0 },
     { TI06, CI81, 0 },
     { TI06, CI82, 0 },
-    { TI06, CU01, state_80_TI06_CU01 },
-    { TI06, CU03, state_80_TI06_CU03 },
-    { TI06, CU05, state_80_TI06_CU05 },
+    { TI06, CU01, not_AINI },
+    { TI06, CU03, AINI },
+    { TI06, CU05, not_AINI },
     { TI06, CU06, 0 },
     { END_OF_STATUS, 0, 0 }
 };
@@ -48,7 +61,7 @@ static const struct msl_timing_chart state_80[] = {
 //           E0 if !RINT | FA06)
 
 static uint8_t state_E2_E3_TO80_CI89(struct ge *ge) {
-    /* (deltaRO = HTL + ASIN(ATOC+!ADIR)) */
+    /* (deltaRO = HLT + ASIN(ATOC+!ADIR)) */
     return ge->rRO == HLT_OPCODE;
 }
 
@@ -57,7 +70,7 @@ static uint8_t state_E2_E3_TI06_CI82(struct ge *ge) {
 }
 
 static uint8_t state_E2_E3_TI06_CU04(struct ge *ge) {
-    return ge->RINT && !(ge->ffFA & (1<<6));
+    return ge->RINT && !bit(ge->ffFA, 6);
 }
 
 static const struct msl_timing_chart state_E2_E3[] = {
@@ -154,10 +167,6 @@ static const struct msl_timing_chart state_E6[] = {
 
 // to state E7
 
-static uint8_t state_E5_TI06_CU17(struct ge *ge) { return 1; }
-static uint8_t state_E5_TO70_CI60(struct ge *ge) { return 1; }
-static uint8_t state_E5_TO80_CI31(struct ge *ge) { return 1; }
-
 static const struct msl_timing_chart state_E5[] = {
     { TO10, CO10, 0 },
     { TO10, CO41, 0 },
@@ -166,7 +175,7 @@ static const struct msl_timing_chart state_E5[] = {
     { TO70, CI67, 0 },
     { TO70, CI62, 0 },
     { TO70, CI65, 0 },
-    { TO70, CI60, state_E5_TO70_CI60 },
+    { TO70, CI60, not_RO07 },
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0 },
@@ -176,8 +185,12 @@ static const struct msl_timing_chart state_E5[] = {
 // to state 64+65 if !L207
 //          ED+EC if L207
 
-static uint8_t state_E7_TO80_CI38(struct ge *ge) { return 1; }
-static uint8_t state_E7_TI06_CU17(struct ge *ge) { return 1; }
+static uint8_t state_E7_TO80_CI38(struct ge *ge) { return 1; /* DO01 ?!? */ }
+static uint8_t state_E7_TI06_CU03(struct ge *ge) { return bit(ge->rL2, 7); }
+
+static uint8_t state_E7_TI06_CU17(struct ge *ge) {
+    return bit(ge->rL2, 7) && (bit(ge->rFO, 7) || bit(ge->rFO, 6));
+}
 
 static const struct msl_timing_chart state_E7[] = {
     { TO10, CO10, 0 },
@@ -190,7 +203,7 @@ static const struct msl_timing_chart state_E7[] = {
     { TO80, CI38, state_E7_TO80_CI38 },
     { TI05, CI02, 0 },
     { TI06, CU00, 0 },
-    { TI06, CU03, 0 },
+    { TI06, CU03, state_E7_TI06_CU03 },
     { TI06, CU10, 0 },
     { TI06, CU17, state_E7_TI06_CU17 },
     { END_OF_STATUS, 0, 0 }
@@ -252,52 +265,43 @@ static const struct msl_timing_chart state_64_65[] = {
 /* Display */
 /* ------- */
 
-static uint8_t AF10(struct ge *ge) { return ge->register_selector == RS_V4; }
-static uint8_t AF20(struct ge *ge) { return ge->register_selector == RS_L3; }
-static uint8_t AF21(struct ge *ge) { return ge->register_selector == RS_L1; }
-static uint8_t AF30(struct ge *ge) { return ge->register_selector == RS_V3; }
-static uint8_t AF31(struct ge *ge) { return ge->register_selector == RS_V1; }
-static uint8_t AF32(struct ge *ge) { return ge->register_selector == RS_NORM; }
-static uint8_t AF40(struct ge *ge) { return ge->register_selector == RS_R1_L2; }
-static uint8_t AF41(struct ge *ge) { return ge->register_selector == RS_V1_SCR; }
-static uint8_t AF42(struct ge *ge) { return ge->register_selector == RS_PO; }
-static uint8_t AF43(struct ge *ge) { return ge->register_selector == RS_SO; }
-static uint8_t AF50(struct ge *ge) { return ge->register_selector == RS_V2; }
+static uint8_t AF10(struct ge *ge) { return ge->register_selector == RS_V4;      }
+static uint8_t AF20(struct ge *ge) { return ge->register_selector == RS_L3;      }
+static uint8_t AF21(struct ge *ge) { return ge->register_selector == RS_L1;      }
+static uint8_t AF30(struct ge *ge) { return ge->register_selector == RS_V3;      }
+static uint8_t AF31(struct ge *ge) { return ge->register_selector == RS_V1;      }
+static uint8_t AF32(struct ge *ge) { return ge->register_selector == RS_NORM;    }
+static uint8_t AF40(struct ge *ge) { return ge->register_selector == RS_R1_L2;   }
+static uint8_t AF41(struct ge *ge) { return ge->register_selector == RS_V1_SCR;  }
+static uint8_t AF42(struct ge *ge) { return ge->register_selector == RS_PO;      }
+static uint8_t AF43(struct ge *ge) { return ge->register_selector == RS_SO;      }
+static uint8_t AF50(struct ge *ge) { return ge->register_selector == RS_V2;      }
 static uint8_t AF51(struct ge *ge) { return ge->register_selector == RS_V1_LETT; }
-static uint8_t AF52(struct ge *ge) { return ge->register_selector == RS_FI_UR; }
-static uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_FO; }
+static uint8_t AF52(struct ge *ge) { return ge->register_selector == RS_FI_UR;   }
+static uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_FO;      }
 
-static uint8_t AF32_or_AF42(struct ge *ge) { return AF32(ge) || AF42(ge); }
-static uint8_t AF31_or_AF41_or_AF51(struct ge *ge) { return AF31(ge) || AF41(ge) || AF51(ge); }
-static uint8_t not_AF20_and_not_AF40(struct ge *ge) { return !AF20(ge) && !AF40(ge); }
-static uint8_t not_AF20_and_not_AF21_and_not_AF40(struct ge *ge) { return !AF20(ge) && !AF21(ge) && !AF40(ge);}
+static uint8_t state_80_TO10_CO10(struct ge *ge) { return AF32(ge) || AF42(ge); }
+static uint8_t state_80_TO10_CO11(struct ge *ge) { return AF31(ge) || AF41(ge) || AF51(ge); }
+static uint8_t state_80_TO30_CI15(struct ge *ge) { return !AF20(ge) && !AF40(ge); }
+static uint8_t state_80_TO50_CI33(struct ge *ge) { return !AF20(ge) && !AF21(ge) && !AF40(ge);}
 
 static const struct msl_timing_chart state_00[] = {
-    { TO10, CO10, AF32_or_AF42 },
-    { TO10, CO11, AF31_or_AF41_or_AF51 },
+    { TO10, CO10, state_80_TO10_CO10 },
+    { TO10, CO11, state_80_TO10_CO11 },
     { TO10, CO12, AF50 },
     { TO10, CO13, AF30 },
     { TO10, CO14, AF10 },
-    { TO30, CI15, not_AF20_and_not_AF40 },
+    { TO30, CI15, state_80_TO30_CI15 },
     { TO30, CI17, AF20 },
     { TO30, CI21, AF40 },
     { TO30, CI16, AF40 },
-    { TO50, CI33, not_AF20_and_not_AF21_and_not_AF40 },
+    { TO50, CI33, state_80_TO50_CI33 },
     { TI06, CU07, 0 },
     { END_OF_STATUS, 0, 0 }
 };
 
 /* Forcing */
 /* ------- */
-
-static uint8_t not_RO00(struct ge *ge) { return !bit(ge->rRO, 0); }
-static uint8_t not_RO01(struct ge *ge) { return !bit(ge->rRO, 1); }
-static uint8_t not_RO02(struct ge *ge) { return !bit(ge->rRO, 2); }
-static uint8_t not_RO03(struct ge *ge) { return !bit(ge->rRO, 3); }
-static uint8_t not_RO04(struct ge *ge) { return !bit(ge->rRO, 4); }
-static uint8_t not_RO05(struct ge *ge) { return !bit(ge->rRO, 5); }
-static uint8_t not_RO06(struct ge *ge) { return !bit(ge->rRO, 6); }
-static uint8_t not_RO07(struct ge *ge) { return !bit(ge->rRO, 7); }
 
 static uint8_t AF52_not_RO00(struct ge *ge) { return AF52(ge) && not_RO00(ge); }
 static uint8_t AF52_not_RO01(struct ge *ge) { return AF52(ge) && not_RO01(ge); }
@@ -357,7 +361,6 @@ static const struct msl_timing_chart state_08[] = {
     { TI06, CU05, 0 },
     { TI06, CU06, 0 },
     { TI06, CU07, 0 },
-
     { TI06, CU10, not_RO00 }, /* fo. 21 */
     { TI06, CU11, not_RO01 },
     { TI06, CU12, not_RO02 },
@@ -366,6 +369,5 @@ static const struct msl_timing_chart state_08[] = {
     { TI06, CU15, not_RO05 },
     { TI06, CU16, not_RO06 },
     { TI06, CU17, not_RO07 },
-
     { END_OF_STATUS, 0, 0 }
 };
