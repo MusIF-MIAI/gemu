@@ -252,28 +252,120 @@ static const struct msl_timing_chart state_64_65[] = {
 /* Display */
 /* ------- */
 
-static uint8_t state_00_TO10_CO10(struct ge *ge) { return ge->AF32 || ge->AF42; }
-static uint8_t state_00_TO10_CO11(struct ge *ge) { return ge->AF31 || ge->AF41 || ge->AF51; }
-static uint8_t state_00_TO10_CO12(struct ge *ge) { return ge->AF50; }
-static uint8_t state_00_TO10_CO13(struct ge *ge) { return ge->AF30; }
-static uint8_t state_00_TO10_CO14(struct ge *ge) { return ge->AF10; }
-static uint8_t state_00_TO30_CI15(struct ge *ge) { return !ge->AF20 && !ge->AF40; }
-static uint8_t state_00_TO30_CI17(struct ge *ge) { return ge->AF20; }
-static uint8_t state_00_TO30_CI21(struct ge *ge) { return ge->AF40; }
-static uint8_t state_00_TO30_CI16(struct ge *ge) { return ge->AF40; }
-static uint8_t state_00_TO50_CI33(struct ge *ge) { return !ge->AF20 && !ge->AF21 && !ge->AF40;; }
+static uint8_t AF10(struct ge *ge) { return ge->register_selector == RS_V4; }
+static uint8_t AF20(struct ge *ge) { return ge->register_selector == RS_L3; }
+static uint8_t AF21(struct ge *ge) { return ge->register_selector == RS_L1; }
+static uint8_t AF30(struct ge *ge) { return ge->register_selector == RS_V3; }
+static uint8_t AF31(struct ge *ge) { return ge->register_selector == RS_V1; }
+static uint8_t AF32(struct ge *ge) { return ge->register_selector == RS_NORM; }
+static uint8_t AF40(struct ge *ge) { return ge->register_selector == RS_R1_L2; }
+static uint8_t AF41(struct ge *ge) { return ge->register_selector == RS_V1_SCR; }
+static uint8_t AF42(struct ge *ge) { return ge->register_selector == RS_PO; }
+static uint8_t AF43(struct ge *ge) { return ge->register_selector == RS_SO; }
+static uint8_t AF50(struct ge *ge) { return ge->register_selector == RS_V2; }
+static uint8_t AF51(struct ge *ge) { return ge->register_selector == RS_V1_LETT; }
+static uint8_t AF52(struct ge *ge) { return ge->register_selector == RS_FI_UR; }
+static uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_FO; }
+
+static uint8_t AF32_or_AF42(struct ge *ge) { return AF32(ge) || AF42(ge); }
+static uint8_t AF31_or_AF41_or_AF51(struct ge *ge) { return AF31(ge) || AF41(ge) || AF51(ge); }
+static uint8_t not_AF20_and_not_AF40(struct ge *ge) { return !AF20(ge) && !AF40(ge); }
+static uint8_t not_AF20_and_not_AF21_and_not_AF40(struct ge *ge) { return !AF20(ge) && !AF21(ge) && !AF40(ge);}
 
 static const struct msl_timing_chart state_00[] = {
-    { TO10, CO10, state_00_TO10_CO10 },
-    { TO10, CO11, state_00_TO10_CO11 },
-    { TO10, CO12, state_00_TO10_CO12 },
-    { TO10, CO13, state_00_TO10_CO13 },
-    { TO10, CO14, state_00_TO10_CO14 },
-    { TO30, CI15, state_00_TO30_CI15 },
-    { TO30, CI17, state_00_TO30_CI17 },
-    { TO30, CI21, state_00_TO30_CI21 },
-    { TO30, CI16, state_00_TO30_CI16 },
-    { TO50, CI33, state_00_TO50_CI33 },
+    { TO10, CO10, AF32_or_AF42 },
+    { TO10, CO11, AF31_or_AF41_or_AF51 },
+    { TO10, CO12, AF50 },
+    { TO10, CO13, AF30 },
+    { TO10, CO14, AF10 },
+    { TO30, CI15, not_AF20_and_not_AF40 },
+    { TO30, CI17, AF20 },
+    { TO30, CI21, AF40 },
+    { TO30, CI16, AF40 },
+    { TO50, CI33, not_AF20_and_not_AF21_and_not_AF40 },
     { TI06, CU07, 0 },
+    { END_OF_STATUS, 0, 0 }
+};
+
+/* Forcing */
+/* ------- */
+
+static uint8_t not_RO00(struct ge *ge) { return !bit(ge->rRO, 0); }
+static uint8_t not_RO01(struct ge *ge) { return !bit(ge->rRO, 1); }
+static uint8_t not_RO02(struct ge *ge) { return !bit(ge->rRO, 2); }
+static uint8_t not_RO03(struct ge *ge) { return !bit(ge->rRO, 3); }
+static uint8_t not_RO04(struct ge *ge) { return !bit(ge->rRO, 4); }
+static uint8_t not_RO05(struct ge *ge) { return !bit(ge->rRO, 5); }
+static uint8_t not_RO06(struct ge *ge) { return !bit(ge->rRO, 6); }
+static uint8_t not_RO07(struct ge *ge) { return !bit(ge->rRO, 7); }
+
+static uint8_t AF52_not_RO00(struct ge *ge) { return AF52(ge) && not_RO00(ge); }
+static uint8_t AF52_not_RO01(struct ge *ge) { return AF52(ge) && not_RO01(ge); }
+static uint8_t AF52_not_RO02(struct ge *ge) { return AF52(ge) && not_RO02(ge); }
+static uint8_t AF52_not_RO03(struct ge *ge) { return AF52(ge) && not_RO03(ge); }
+static uint8_t AF52_not_RO04(struct ge *ge) { return AF52(ge) && not_RO04(ge); }
+static uint8_t AF52_not_RO05(struct ge *ge) { return AF52(ge) && not_RO05(ge); }
+static uint8_t AF52_not_RO06(struct ge *ge) { return AF52(ge) && not_RO06(ge); }
+static uint8_t AF52_not_RO07(struct ge *ge) { return AF52(ge) && not_RO07(ge); }
+
+static const struct msl_timing_chart state_08[] = {
+    { TO10, CO11, AF41 }, /* fo. 18 */
+    { TO10, CO11, AF51 },
+    { TO10, CO41, 0 },
+    { TO25, CO30, AF51 },
+    { TO25, CO31, AF41 },
+    { TO30, CI20, 0 },
+    { TO40, CO01, AF41 },
+    { TO40, CO01, AF51 },
+    { TO50, CO48, AF52 },
+    /* NO -> BO */
+    { TO50, CI33, AF41 },
+    { TO50, CI33, AF43 },
+    { TO64, CO49, AF52_not_RO07 },
+    { TO70, CI62, AF51 },
+    { TO70, CI67, AF51 }, /* fo. 19 */
+    { TI05, CI04, AF10 },
+    { TI05, CI02, AF50 },
+    { TI05, CI05, AF21 },
+    { TI05, CI05, AF51 },
+    { TI05, CI01, AF31 },
+    { TI05, CI00, AF42 },
+    { TI05, CI08, AF53 },
+    { TI06, CI07, AF20 },
+    { TI06, CI03, AF30 },
+    { TI06, CI06, AF40 },
+    { TI06, CI09, AF40 },
+    { TI06, CI70, AF52 },
+    { TI06, CI71, AF52 },
+    { TI06, CI72, AF52 },
+    { TI06, CI73, AF52 }, /* fo. 20 */
+    { TI06, CI74, AF52 },
+    { TI06, CI75, AF52 },
+    { TI06, CI76, AF52 },
+    { TI06, CI80, AF52_not_RO00 },
+    { TI06, CI81, AF52_not_RO01 },
+    { TI06, CI82, AF52_not_RO02 },
+    { TI06, CI83, AF52_not_RO03 },
+    { TI06, CI84, AF52_not_RO04 },
+    { TI06, CI85, AF52_not_RO05 },
+    { TI06, CI86, AF52_not_RO06 },
+    { TI06, CU00, 0 },
+    { TI06, CU01, 0 },
+    { TI06, CU02, 0 },
+    { TI06, CU03, 0 },
+    { TI06, CU04, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU06, 0 },
+    { TI06, CU07, 0 },
+
+    { TI06, CU10, not_RO00 }, /* fo. 21 */
+    { TI06, CU11, not_RO01 },
+    { TI06, CU12, not_RO02 },
+    { TI06, CU13, not_RO03 },
+    { TI06, CU14, not_RO04 },
+    { TI06, CU15, not_RO05 },
+    { TI06, CU16, not_RO06 },
+    { TI06, CU17, not_RO07 },
+
     { END_OF_STATUS, 0, 0 }
 };

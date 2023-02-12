@@ -33,8 +33,9 @@ static void CI03(struct ge* ge) { CO03(ge); }
 static void CI04(struct ge* ge) { CO04(ge); }
 static void CI05(struct ge* ge) { ge->rL1 = ge->kNI; }
 static void CI06(struct ge* ge) { ge->rL2 = ge->kNI & 0x00ff; }
-
-static void CI08(struct ge* ge) { ge->rFO = (uint8_t)ge->kNI; }
+static void CI07(struct ge* ge) { ge->rL3 = ge->kNI; }
+static void CI08(struct ge* ge) { ge->rFO = ge->kNI & 0x00ff; }
+static void CI09(struct ge* ge) { ge->rRI = (ge->kNI & 0xff00) >> 8; }
 
 /* NO Knot Selection Commands */
 /* -------------------------- */
@@ -59,6 +60,10 @@ static void CI19(struct ge* ge)
     }
 }
 
+static void CI20(struct ge* ge) {
+    /* TODO: AM -> NO */
+}
+
 static void CI21(struct ge* ge) { ge->kNO = (ge->kNO & 0xff00) | ge->rRI; }
 
 
@@ -66,22 +71,37 @@ static void CI21(struct ge* ge) { ge->kNO = (ge->kNO & 0xff00) | ge->rRI; }
 /* --------------------------- */
 
 static void CO30(struct ge* ge) { ge->rRO = ge->mem[ge->rVO]; }
+static void CO31(struct ge* ge) { ge->mem[ge->rVO] = ge->rRO; }
 static void CO35(struct ge* ge) { /* "reset int. error"? (cpu fo. 105) */ }
 
 static void CI32(struct ge* ge) { ge->rRO = ge->kNO >> 8; }
 static void CI33(struct ge* ge) { ge->rRO = ge->kNI & 0x00ff; }
-static void CI38(struct ge *ge) {
-    /* enable set of aver & alto (cpu fo. 105) */
+static void CI38(struct ge *ge)
+{
+    /* Enable set of aver & alto (cpu fo. 105) */
     ge->AVER = evaluate_aver(ge);
     ge->ALTO = ge->ALTO;
 }
 
-static void CI39(struct ge *ge) { ge->AVER = 0; }
+static void CI39(struct ge *ge)
+{
+    /* Reset AVER, it also resets the FF AINI and PUC1 (cpu fo. 105) */
+    ge->AVER = 0;
+    ge->AINI = 0;
+    ge->PUC1 = 0;
+}
 
 /* Count And Arithmetical Unit Commands */
 /* ------------------------------------ */
 
 static void CO41(struct ge* ge) { ge->counting_network.cmds.from_zero = 1; };
+static void CO48(struct ge* ge)
+{
+    /* most probably incorrect, "set urpe/urpu" (cpu fo. 106) */
+    ge->URPE = 1;
+    ge->URPU = 1;
+}
+
 static void CO49(struct ge* ge) {
     /* most probably incorrect, "reset urpe/urpu" (cpu fo. 106) */
     ge->URPE = 0;
@@ -129,6 +149,12 @@ static void CI69(struct ge *ge) { ge->ALTO = 1; }
 /* Commands To Set And Reset FF Of Condition */
 /* ----------------------------------------- */
 
+static void CI70(struct ge* ge) { SET_BIT(ge->ffFI, 0); }
+static void CI71(struct ge* ge) { SET_BIT(ge->ffFI, 1); }
+static void CI72(struct ge* ge) { SET_BIT(ge->ffFI, 2); }
+static void CI73(struct ge* ge) { SET_BIT(ge->ffFI, 3); }
+static void CI74(struct ge* ge) { SET_BIT(ge->ffFI, 4); }
+static void CI75(struct ge* ge) { SET_BIT(ge->ffFI, 5); }
 static void CI76(struct ge* ge) { SET_BIT(ge->ffFI, 6); }
 static void CI77(struct ge* ge) { ge->ADIR = 1; }
 static void CI78(struct ge* ge) { ge->ADIR = 0; }
@@ -136,6 +162,10 @@ static void CI80(struct ge* ge) { RESET_BIT(ge->ffFI, 0); }
 static void CI81(struct ge* ge) { RESET_BIT(ge->ffFI, 1); }
 static void CI82(struct ge* ge) { RESET_BIT(ge->ffFI, 2); }
 static void CI83(struct ge* ge) { RESET_BIT(ge->ffFI, 3); }
+static void CI84(struct ge* ge) { RESET_BIT(ge->ffFI, 4); }
+static void CI85(struct ge* ge) { RESET_BIT(ge->ffFI, 5); }
+static void CI86(struct ge* ge) { RESET_BIT(ge->ffFI, 6); }
+
 static void CI87(struct ge* ge) {
     ge->ALAM = 1;
     ge->PODI = 1; /* should PODI be set here? */
