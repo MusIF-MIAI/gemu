@@ -15,8 +15,7 @@ void ge_init(struct ge *ge)
     memset(ge, 0, sizeof(*ge));
     ge->halted = 1;
     ge->powered = 1;
-
-    ge_console_set_rotary(ge, RS_NORM);
+    ge->register_selector = RS_NORM;
 }
 
 void ge_clear(struct ge *ge)

@@ -107,7 +107,5 @@ struct PACKED ge_console {
 struct ge;
 
 void ge_fill_console_data(struct ge*, struct ge_console*);
-void ge_console_set_rotary(struct ge*, enum ge_console_rotary);
-enum ge_console_rotary ge_console_get_rotary(struct ge *ge);
 
 #endif
