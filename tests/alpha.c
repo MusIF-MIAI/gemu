@@ -18,6 +18,9 @@ UTEST(alpha_phase, p_instruction_to_alpha)
     ASSERT_TRUE(g.AINI == 0);
 
     ge_start(&g);
+    ASSERT_EQ(g.rSO, 0x00);
+
+    ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0x80);
     ASSERT_EQ(g.rPO, 0x0000);
 
@@ -47,6 +50,8 @@ UTEST(alpha_phase, test_int)
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
+
+    ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);
@@ -76,6 +81,8 @@ UTEST(alpha_phase, test_hlt)
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
+
+    ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);
@@ -108,6 +115,8 @@ UTEST(alpha_phase, pm_instruction_to_alpha)
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
+
+    ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);

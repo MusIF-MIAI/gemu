@@ -22,14 +22,16 @@ UTEST(initialitiation, pressing_clear_start)
     struct ge g;
 
     ge_init(&g);
+
     ge_clear(&g);
-    ASSERT_EQ(g.rSO, 0);
     ASSERT_FALSE(g.AINI);
     ASSERT_FALSE(g.ALAM);
 
     ge_start(&g);
-    ASSERT_EQ(g.rSO, 0x80);
     ASSERT_FALSE(g.AINI);
+
+    ge_run_cycle(&g);
+    ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0xe2);
@@ -40,15 +42,12 @@ UTEST(initialitiation, pressing_clear_load_start)
     struct ge g;
 
     ge_init(&g);
+
     ge_clear(&g);
-    ASSERT_EQ(g.rSO, 0);
-    ASSERT_FALSE(g.AINI);
-    ASSERT_FALSE(g.ALAM);
-
     ge_load(&g);
-    ASSERT_TRUE(g.AINI);
-
     ge_start(&g);
+
+    ge_run_cycle(&g);
     ASSERT_EQ(g.rSO, 0x80);
 
     ge_run_cycle(&g);

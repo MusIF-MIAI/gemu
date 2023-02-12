@@ -16,6 +16,10 @@ UTEST(beta_phase, execute_nop)
 
     ge_start(&g);
 
+    /* Display */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0x80);
+
     /* Initialisation */
     ge_run_cycle(&g);
     ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
@@ -42,7 +46,12 @@ UTEST(beta_phase, execute_lon_loff) {
 
     ge_init(&g);
     ge_load_program(&g, mem, sizeof(mem));
+
+    ge_clear(&g);
     ge_start(&g);
+
+    /* Display */
+    ge_run_cycle(&g);
 
     /* Initialisation */
     ge_run_cycle(&g);
@@ -96,7 +105,10 @@ UTEST(beta_phase, execute_ins_ens) {
 
     ge_init(&g);
     ge_load_program(&g, mem, sizeof(mem));
+    ge_clear(&g);
     ge_start(&g);
+
+    ge_run_cycle(&g);
 
     /* Initialisation */
     ge_run_cycle(&g);
