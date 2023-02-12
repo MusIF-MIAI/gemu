@@ -35,6 +35,10 @@ void ge_clear(struct ge *ge)
     /* After the powering on of the machine the timing starts pressing the
      * "Clear" switch (cpu fo. 99). */
     ge->halted = 0;
+
+    /* (One of) the possible set conditions (is): or with
+     * CLEAR and.. (cpu fo. 98) */
+    ge->ALTO = 0;
 }
 
 int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
@@ -65,7 +69,11 @@ void ge_start(struct ge *ge)
     // From 14023130-0, sheet 5:
     // With the rotating switch in "NORM" position, after the operation
     // "CLEAR-LOAD-START" or "CLEAR-START", the 80 status is performed.
+
+    // TODO: this should be forced using the ARES flip flop?! how
     ge->rSO = 0x80;
+
+    ge->ALTO = 0; /* cpu fo. 97 */
 }
 
 static void ge_print_well_known_states(uint8_t state) {

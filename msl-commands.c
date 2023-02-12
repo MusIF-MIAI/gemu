@@ -80,7 +80,15 @@ static void CI38(struct ge *ge)
 {
     /* Enable set of aver & alto (cpu fo. 105) */
     ge->AVER = evaluate_aver(ge);
-    ge->ALTO = ge->ALTO;
+
+    /* (One) possible (ALTO) set condition (is): the ACOV or ACON
+     * switches are insterted, an the related condition is verified
+     * (cpu fo. 98) */
+    if (ge->AVER && ge->console_switches.ACOV)
+        ge->ALTO = 1;
+
+    if (!ge->AVER && ge->console_switches.ACON)
+        ge->ALTO = 1;
 }
 
 static void CI39(struct ge *ge)
