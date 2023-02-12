@@ -107,6 +107,21 @@ struct ge {
 
     /**
      * Knot driven by SO or SI. Content is stored to SA.
+     *
+     * Driven
+     *  - by the SO register when the work cycle has been attributed to the
+     *    CPU or to channel 1, if the rotary switch is the "central" position
+     *    (AF326=1)
+     *  - by the SI register (less four significant bits) when the cycle has
+     *    been attributed to channel 2
+     *
+     * Additionally, individual bits might be set
+     *  - NA00: forced to 1 when the work cycle is attributed to channel 1 or
+     *    channel 3
+     *  - NA03: forced to 1 when the work cycle has been attributed to the CPU
+     *    and the rotary switch is not in the "central" position (AF32C = 1))
+     *
+     * Stored in SA register during T010. (cpu fo. 128)
      */
     uint8_t kNA;
 
@@ -150,15 +165,39 @@ struct ge {
     /**
      * Main sequencer
      *
-     * It is used to establish the sequence for all the phases of program loading,
-     * fetching (phase alpha), executing (phase beta)
+     * Drives the kNA knot when the cycle has been attributed to the CPU or
+     * channel 1.
+     *
+     * It is used to establish the sequence for:
+     *  - alpha phase for all internal and external instructions
+     *  - beta phase of internal instructions
+     *  - organisation phase (general beta) of external instructions
+     *  - program loading
+     *
+     * Loaded from the future status network when signal SOC01 is activated,
+     * provided the RICI key is not active, in the following cases:
+     *  - the FF ARES has been set thru "CLEAR". This causes the machine to
+     *    execute the status 00, and setting of SO07 using CU07, this will
+     *    set the configuration of SO to 80.
+     *  - the rotary switch is in forcing of SO. When a cycle is attributed
+     *    to the CPU pressing "START", the AM00-07 keys are forced in SO.
+     *  - at the end of a cycle attributed to the CPU, when the rotary switch
+     *    is in normal position, the future status network is stored in SO.
+     *  (cpu fo. 127)
      */
     uint8_t rSO;
 
     /**
      * Peripheral unit sequencer
      *
-     * 4-bit sequencer used for data xechange with peripheral units through channel 2
+     * 4-bit sequencer used for data xechange with peripheral units through
+     * channel 2.
+     *
+     * Drives the kNA knot when the cycle has been attributed to channel 2.
+     *
+     * Loaded with the first 4 bits of the future status network
+     *  - after the execution of a channel 2 cycle
+     *  - when forcing a status in SI using CU20 (DC status of general beta phase)
      */
     uint8_t rSI;
 
@@ -195,6 +234,13 @@ struct ge {
      * "CLEAR", or with the command CI39 (in the alpha phase of the E0 state).
      */
     uint8_t AINI:1;
+
+    /**
+     * Stops internal cycles
+     *
+     * If set, stops the performance of the internal processing cycles, without
+     * stopping the timing generation (cpu fo. 98).
+     */
     uint8_t ALTO:1;
 
     /**
@@ -261,9 +307,41 @@ struct ge {
     uint8_t JS2:1;  ///< Console jump condition 2
     uint8_t JE:1;   ///< JE/AVER jump instruction exectuted
     uint8_t INTE:1; ///< Interruption present
-    uint8_t PUC1:1; ///< Channel 1 busy or CPU waiting
-    uint8_t PUC2:1; ///< Channel 2 busy
-    uint8_t PUC3:1; ///< Channel 3 busy
+
+    /**
+     * Selection Channel 1
+     *
+     * Used during the general B phasef o rcommand forwarding or condition
+     * examination.
+     * Unconditionally set by command CE02 which enables the channel selection
+     * even if the interested  channels are 2 or 3.
+     * When a character transfer in output has been initiated with channel 1,
+     * signal PAP4A resets PUC1 at the start of the transper phase, when the
+     * first transfer is done from RO in to RA (CE00) unless signal PAR21 had
+     * already absolved this function. (cpu fo. 235)
+     */
+    uint8_t PUC1:1;
+
+    /**
+     * Channel 1 in transfer
+     *
+     * (cpu fo. 236)
+     */
+    uint8_t RASI:1;
+
+    /**
+     * Channel 2 in transfer
+     *
+     * (cpu fo. 236)
+     */
+    uint8_t PUC2:1;
+
+    /**
+     * Channel 3 in transfer
+     *
+     * (cpu fo. 236)
+     */
+    uint8_t PUC3:1;
 
     uint8_t URPE:1;
     uint8_t URPU:1;

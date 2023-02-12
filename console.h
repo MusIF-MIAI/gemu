@@ -63,17 +63,90 @@ struct PACKED ge_console_lamps {
     uint16_t OPERATOR_CALL:1;  /* blue */
 };
 
+/**
+ * Console switches
+ *
+ * Represents the switches and levers of the console's maintenance panel.
+ */
 struct PACKED ge_console_switches {
+    /**
+     * Step By Step execution
+     *
+     * Step by step eecution of microsequences of the cpu, after
+     * each step is performed, without interfering with the transfers
+     * of a peripheral unit.
+     *
+     * START starts the execution of a step.
+     */
     uint16_t PAPA:1;
+
+    /**
+     * Stop after a cycle
+     *
+     * Stops the timing after every cycle of the delay line.
+     * START starts the timing for a cycle.
+     */
     uint16_t PATE:1;
+
+    /**
+     * Disables next status
+     *
+     * Disables the execution of commands loading the next status, allowing
+     * to repeat its execution.
+     */
     uint16_t RICI:1;
+
+    /**
+     * Stops on jump condition verified
+     *
+     * Stops the machine when a jump condition is verified at the end of
+     * reading the jump instruction
+     */
     uint16_t ACOV:1;
+
+    /**
+     * Stops on jump condition not verified
+     *
+     * Stops the machine when a jump condition is not verified at the end of
+     * reading the jump instruction
+     */
     uint16_t ACON:1;
+
+    /**
+     * Do not stop on memory error
+     *
+     * Inhibits the stopping should there be a check error reading from memory.
+     * or the memory be addressed at a non-existing address.
+     */
     uint16_t INAR:1;
+
+    /**
+     * Do not error-correct external units input
+     *
+     * Inhibits the correction of the check bit for the character arriving from
+     * external units.
+     * When forcing in storage from the console, this switch causes AM08 to be
+     * stored ad an odd parity bit.
+     */
     uint16_t INCE:1;
+
+    /**
+     * Don't wait for external unit availability
+     *
+     * When it is inserted, the central processor will not wait for the
+     * availabiltiy or the triggers from the external unit, allowing the
+     * program to evolve normally.
+     */
     uint16_t SITE:1;
+
     uint16_t lamps_on:1;
     uint16_t _pad_0:6;
+
+    /**
+     * Forcing bits
+     *
+     * The AM register forced by the console switches.
+     */
     uint16_t AM;
 };
 
