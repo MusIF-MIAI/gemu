@@ -397,7 +397,7 @@ void ge_load(struct ge * ge);
 /// Emulate the press of the "start" button in the console
 void ge_start(struct ge * ge);
 
-typedef int (*on_pulse_cb)(struct ge *);
+typedef void (*on_pulse_cb)(struct ge *);
 
 struct pulse_event {
     on_pulse_cb cb;
@@ -405,7 +405,7 @@ struct pulse_event {
 };
 
 /* Defined in pulse.c: execute pulse events */
-int pulse(struct ge *ge);
+void pulse(struct ge *ge);
 
 int ge_struct_sizeof(void);
 

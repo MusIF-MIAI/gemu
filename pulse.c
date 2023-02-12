@@ -2,30 +2,18 @@
 #include <stdlib.h>
 #include "ge.h"
 
-static int on_TO00(struct ge *ge) {
-	return 0;
-}
+static void on_TO00(struct ge *ge) {}
 
-static int on_TO10(struct ge *ge) {
+static void on_TO10(struct ge *ge) {
     ge->ffFA = ge->ffFI; /* cpu fo. 129  */
     ge->rSA  = ge->kNA;  /* cpu fo. 128 */
-
-	return 0;
 }
 
-static int on_TO11(struct ge *ge) {
-	return 0;
-}
+static void on_TO11(struct ge *ge) {}
+static void on_TO15(struct ge *ge) {}
+static void on_TO19(struct ge *ge) {}
 
-static int on_TO15(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO19(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO20(struct ge *ge) {
+static void on_TO20(struct ge *ge) {
     ge->rBO = ge->kNO; /* cpu fo. 142, 126 */
     ge->rVO = ge->kNO; /* cpu fo. 124, 125 */
 
@@ -33,80 +21,45 @@ static int on_TO20(struct ge *ge) {
 
     /* TODO: are there any condition? */
     ge->rRO = 0;       /* cpu fo. 142 */
-
-    return 0;
 }
 
-static int on_TO25(struct ge *ge) {
-	return 0;
-}
+static void on_TO25(struct ge *ge) {}
+static void on_TO30(struct ge *ge) {}
 
-static int on_TO30(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO40(struct ge *ge) {
+static void on_TO40(struct ge *ge) {
     /* stub */
     if (ge->counting_network.cmds.from_zero) {
         ge->kNI = ge->rBO + 1;
     }
-	return 0;
 }
 
-static int on_TO50(struct ge *ge) {
+static void on_TO50(struct ge *ge) {
     /* timing chart js1-js2-jie-ecc, fo. 32,
      * also, display, fo. 17 */
     ge->rBO = ge->kNO;
-	return 0;
 }
 
-static int on_TO60(struct ge *ge) {
-    return 0;
-}
+static void on_TO60(struct ge *ge) {}
+static void on_TO64(struct ge *ge) {}
+static void on_TO65(struct ge *ge) {}
+static void on_TO70(struct ge *ge) {}
+static void on_TO80(struct ge *ge) {}
+static void on_TO89(struct ge *ge) {}
 
-static int on_TO64(struct ge *ge) {
-    return 0;
-}
-
-static int on_TO65(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO70(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO80(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO89(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO90(struct ge *ge) {
+static void on_TO90(struct ge *ge) {
     /* TODO: check if ! is correct: PODIB should be PODI negated */
     if (!ge->PODI)
         ge->ACIC = 1;  /* cpu fo. 99 */
-	return 0;
 }
 
-static int on_TI05(struct ge *ge) {
+static void on_TI05(struct ge *ge) {
     /* TODO: check if ! is correct: PODIB should be PODI negated */
     if (ge->PODI)
         ge->ACIC = 1;  /* cpu fo. 99 */
-
-	return 0;
 }
 
-static int on_TI06(struct ge *ge) {
-	return 0;
-}
-
-static int on_TI10(struct ge *ge) {
-	return 0;
-}
-
+static void on_TI06(struct ge *ge) {}
+static void on_TI10(struct ge *ge) {}
 
 static on_pulse_cb pulse_cb[END_OF_STATUS] = {
     on_TO00,
@@ -132,10 +85,9 @@ static on_pulse_cb pulse_cb[END_OF_STATUS] = {
 };
 
 
-int pulse(struct ge *ge)
+void pulse(struct ge *ge)
 {
     if (pulse_cb[ge->current_clock]) {
-        return pulse_cb[ge->current_clock](ge);
+        pulse_cb[ge->current_clock](ge);
     }
-    return 0;
 }
