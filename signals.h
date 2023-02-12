@@ -177,7 +177,7 @@ static inline uint16_t NO_knot(struct ge *ge)
  *
  * Stored in SA register during T010. (cpu fo. 128)
  */
-static inline uint8_t NA(struct ge *ge) {
+static inline uint8_t NA_knot(struct ge *ge) {
     uint8_t na = 0;
 
     if (RES0(ge) || RIUC(ge))

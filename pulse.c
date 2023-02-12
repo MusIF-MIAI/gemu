@@ -25,7 +25,7 @@ static void on_TO00(struct ge *ge) {
 
 static void on_TO10(struct ge *ge) {
     ge->ffFA = ge->ffFI; /* cpu fo. 129  */
-    ge->rSA  = NA(ge);  /* cpu fo. 128 */
+    ge->rSA  = NA_knot(ge); /* cpu fo. 128 */
 
     /* save SA to emulate the future state network */
     ge->future_state = ge->rSA;
@@ -41,10 +41,10 @@ static void on_TO20(struct ge *ge) {
     ge->rBO = NO_knot(ge); /* cpu fo. 142, 126 */
     ge->rVO = NO_knot(ge); /* cpu fo. 124, 125 */
 
-    ge->ACIC = 0;        /* cpu fo. 99  */
+    ge->ACIC = 0; /* cpu fo. 99  */
 
     /* TODO: are there any condition?   */
-    ge->rRO = 0;         /* cpu fo. 142 */
+    ge->rRO = 0;  /* cpu fo. 142 */
 }
 
 static void on_TO25(struct ge *ge) {}
