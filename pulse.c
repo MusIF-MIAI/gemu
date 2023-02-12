@@ -7,11 +7,9 @@ static int on_TO00(struct ge *ge) {
 }
 
 static int on_TO10(struct ge *ge) {
-    /* load FI00-FI06 in FA00-FA06 (cpu pag129) */
-    ge->ffFA = ge->ffFI;
+    ge->ffFA = ge->ffFI; /* cpu fo. 129  */
+    ge->rSA  = ge->kNA;  /* cpu fo. 128 */
 
-    /* load SA register (cpu pag.128) */
-    ge->rSA = ge->kNA;
 	return 0;
 }
 
@@ -28,16 +26,13 @@ static int on_TO19(struct ge *ge) {
 }
 
 static int on_TO20(struct ge *ge) {
+    ge->rBO = ge->kNO; /* cpu fo. 142, 126 */
+    ge->rVO = ge->kNO; /* cpu fo. 124, 125 */
 
-    /* cpu fo. 142, 126 */
-    ge->rBO = ge->kNO;
-
-    /* cpu fo. 124, 125 */
-    ge->rVO = ge->kNO;
+    ge->ACIC = 0;      /* cpu fo. 99 */
 
     /* TODO: are there any condition? */
-    /* cpu fo. 142 */
-    ge->rRO = 0;
+    ge->rRO = 0;       /* cpu fo. 142 */
 
     return 0;
 }
@@ -90,10 +85,17 @@ static int on_TO89(struct ge *ge) {
 }
 
 static int on_TO90(struct ge *ge) {
+    /* TODO: check if ! is correct: PODIB should be PODI negated */
+    if (!ge->PODI)
+        ge->ACIC = 1;  /* cpu fo. 99 */
 	return 0;
 }
 
 static int on_TI05(struct ge *ge) {
+    /* TODO: check if ! is correct: PODIB should be PODI negated */
+    if (ge->PODI)
+        ge->ACIC = 1;  /* cpu fo. 99 */
+
 	return 0;
 }
 
