@@ -178,11 +178,6 @@ int ge_run_cycle(struct ge *ge)
     return 0;
 }
 
-int ge_struct_sizeof(void)
-{
-    return sizeof(struct ge);
-}
-
 int ge_deinit(struct ge *ge)
 {
     ge_peri_deinit(ge);

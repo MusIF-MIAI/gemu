@@ -407,8 +407,6 @@ struct pulse_event {
 /* Defined in pulse.c: execute pulse events */
 void pulse(struct ge *ge);
 
-int ge_struct_sizeof(void);
-
 struct ge_peri {
     struct ge_peri *next;
     int (*init)(struct ge*, void*);
