@@ -493,4 +493,11 @@ struct ge_peri {
 
 int ge_register_peri(struct ge *ge, struct ge_peri *p);
 
+/**
+ * The clock period name name
+ *
+ * Returns the string destribing the clock period
+ */
+const char *ge_clock_name(enum clock c);
+
 #endif /* GE_H */

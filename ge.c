@@ -100,6 +100,17 @@ static void ge_print_well_known_states(uint8_t state) {
     ge_log(LOG_STATES, "Running state %02x %s\n", state, name);
 }
 
+const char *ge_clock_name(enum clock c)
+{
+    switch (c) {
+        #define X(name) case name : return #name ;
+        ENUMERATE_CLOCKS
+        #undef X
+    }
+
+    return "";
+}
+
 void ge_print_registers(struct ge *ge)
 {
     ge_log(LOG_REGS,
