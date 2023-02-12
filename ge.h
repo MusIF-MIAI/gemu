@@ -441,6 +441,14 @@ struct ge {
     uint8_t RIA3:1;
 
     /**
+     * Future state
+     *
+     * Ad-hoc logic, at the end of the cycle contains the result
+     * of the future state network.
+     */
+    uint8_t future_state;
+
+    /**
      * The current state of the console register rotary switch
      */
     enum ge_console_rotary register_selector;
@@ -504,6 +512,15 @@ struct ge_peri {
 };
 
 int ge_register_peri(struct ge *ge, struct ge_peri *p);
+
+/**
+ * Commit the future state
+ *
+ * Transfers the results of the future state network in the
+ * various selectors. For now it's an ad hoc behaviour, not
+ * described in detail in the currently available docs.
+ */
+void fsn_last_clock(struct ge *ge);
 
 /**
  * The clock period name name

@@ -188,21 +188,21 @@ static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
 /* ---------------------- */
 
 /* Set S0 */
-static void CU00(struct ge* ge) { SET_BIT(ge->rSO, 0); }
-static void CU01(struct ge* ge) { SET_BIT(ge->rSO, 1); }
-static void CU02(struct ge* ge) { SET_BIT(ge->rSO, 2); }
-static void CU03(struct ge* ge) { SET_BIT(ge->rSO, 3); }
-static void CU04(struct ge* ge) { SET_BIT(ge->rSO, 4); }
-static void CU05(struct ge* ge) { SET_BIT(ge->rSO, 5); }
-static void CU06(struct ge* ge) { SET_BIT(ge->rSO, 6); }
-static void CU07(struct ge* ge) { SET_BIT(ge->rSO, 7); }
+static void CU00(struct ge* ge) { SET_BIT(ge->future_state, 0); }
+static void CU01(struct ge* ge) { SET_BIT(ge->future_state, 1); }
+static void CU02(struct ge* ge) { SET_BIT(ge->future_state, 2); }
+static void CU03(struct ge* ge) { SET_BIT(ge->future_state, 3); }
+static void CU04(struct ge* ge) { SET_BIT(ge->future_state, 4); }
+static void CU05(struct ge* ge) { SET_BIT(ge->future_state, 5); }
+static void CU06(struct ge* ge) { SET_BIT(ge->future_state, 6); }
+static void CU07(struct ge* ge) { SET_BIT(ge->future_state, 7); }
 
 /* Reset S0 */
-static void CU10(struct ge* ge) { RESET_BIT(ge->rSO, 0); }
-static void CU11(struct ge* ge) { RESET_BIT(ge->rSO, 1); }
-static void CU12(struct ge* ge) { RESET_BIT(ge->rSO, 2); }
-static void CU13(struct ge* ge) { RESET_BIT(ge->rSO, 3); }
-static void CU14(struct ge* ge) { RESET_BIT(ge->rSO, 4); }
-static void CU15(struct ge* ge) { RESET_BIT(ge->rSO, 5); }
-static void CU16(struct ge* ge) { RESET_BIT(ge->rSO, 6); }
-static void CU17(struct ge* ge) { RESET_BIT(ge->rSO, 7); }
+static void CU10(struct ge* ge) { RESET_BIT(ge->future_state, 0); }
+static void CU11(struct ge* ge) { RESET_BIT(ge->future_state, 1); }
+static void CU12(struct ge* ge) { RESET_BIT(ge->future_state, 2); }
+static void CU13(struct ge* ge) { RESET_BIT(ge->future_state, 3); }
+static void CU14(struct ge* ge) { RESET_BIT(ge->future_state, 4); }
+static void CU15(struct ge* ge) { RESET_BIT(ge->future_state, 5); }
+static void CU16(struct ge* ge) { RESET_BIT(ge->future_state, 6); }
+static void CU17(struct ge* ge) { RESET_BIT(ge->future_state, 7); }

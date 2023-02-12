@@ -201,3 +201,21 @@ int ge_deinit(struct ge *ge)
     ge_peri_deinit(ge);
     return 0;
 }
+
+void fsn_last_clock(struct ge *ge)
+{
+    /* at the end of a cycle attributed to the CPU, provided RICI
+     * is not active and the rotary switch is in normal position,
+     * the future status network is stored in SO. (cpu fo. 127) */
+    if (ge->RIA0 && !ge->console_switches.RICI) {
+        ge_log(LOG_STATES, "last clock cpu, %02x in SO\n", ge->future_state);
+        ge->rSO = ge->future_state;
+    }
+
+    /* after thre execution of a channel 2 cycle, load the first
+     * 4 bits of the future status network in SI. */
+    if (ge->RIA2) {
+        ge_log(LOG_STATES, "last clock ch2, %02x in SI\n", ge->future_state);
+        ge->rSI = ge->future_state;
+    }
+}

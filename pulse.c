@@ -11,11 +11,19 @@ static void on_TO00(struct ge *ge) {
     ge->RIA3 = ge->RC03;
 
     /* TODO: a "counter" with RAMO, RAMI should condition RIA0 */
+
+
+    ge_log(LOG_STATES, "TO00 cycle attribution - ALTO: %d RC00: %d RC01: %d RC02: %d RC03: %d\n", ge->ALTO, ge->RC00, ge->RC01, ge->RC02, ge->RC03);
+    ge_log(LOG_STATES, "TO00 cycle attribution - RIA0: %d RESI: %d RIA2: %d RIA3: %d\n", ge->RIA0, ge->RESI, ge->RIA2, ge->RIA3);
+    ge_log(LOG_STATES, "TO00 cycle attribution - RIUC: %d RES0: %d RES2: %d RES3: %d\n", RIUC(ge), RES0(ge), RES2(ge), RES3(ge));
 }
 
 static void on_TO10(struct ge *ge) {
     ge->ffFA = ge->ffFI; /* cpu fo. 129  */
     ge->rSA  = NA(ge);  /* cpu fo. 128 */
+
+    /* save SA to emulate the future state network */
+    ge->future_state = ge->rSA;
 
     /* TODO: a "counter" with RAMO, RAMI should count (cpu fo. 115) */
 }
