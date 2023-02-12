@@ -17,9 +17,12 @@ typedef uint8_t ge_log_type;
 enum ge_log_types {
     LOG_ERR    = 0x01, ///< Emulator unrecoverable condition
     LOG_DEBUG  = 0x02, ///< General detailed debug information
-    LOG_REGS   = 0x04, ///< Register trace
+    LOG_REGS   = 0x04, ///< Register trace per cycle
     LOG_STATES = 0x08, ///< State trace
     LOG_CONDS  = 0x10, ///< MSL conditions trace
+    LOG_REGS_V = 0x20, ///< Register trace per pulse
+    LOG_FUTURE = 0x40, ///< Future state network debug
+    LOG_CYCLE  = 0x80, ///< Cycle attribution debug
 };
 
 /**
@@ -40,5 +43,13 @@ void ge_log_set_active_types(ge_log_type types);
  * @param format The printf-style format for the log message
  */
 void ge_log(ge_log_type type, const char *format, ...);
+
+/**
+ * Check if a log type is enabled
+ *
+ * @param type The type to check
+ * @returns    true if the logtype mask is enabled
+ */
+uint8_t ge_log_enabled(ge_log_type type);
 
 #endif /* LOG_H */

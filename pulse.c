@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "ge.h"
 #include "signals.h"
+#include "log.h"
 
 static void on_TO00(struct ge *ge) {
     /* cpu fo. 115 */
@@ -12,10 +13,14 @@ static void on_TO00(struct ge *ge) {
 
     /* TODO: a "counter" with RAMO, RAMI should condition RIA0 */
 
+    ge_log(LOG_CYCLE, "  async: RC00: %d RC01: %d RC02: %d RC03: %d ALTO: %d\n",
+           ge->RC00, ge->RC01, ge->RC02, ge->RC03, ge->ALTO);
 
-    ge_log(LOG_STATES, "TO00 cycle attribution - ALTO: %d RC00: %d RC01: %d RC02: %d RC03: %d\n", ge->ALTO, ge->RC00, ge->RC01, ge->RC02, ge->RC03);
-    ge_log(LOG_STATES, "TO00 cycle attribution - RIA0: %d RESI: %d RIA2: %d RIA3: %d\n", ge->RIA0, ge->RESI, ge->RIA2, ge->RIA3);
-    ge_log(LOG_STATES, "TO00 cycle attribution - RIUC: %d RES0: %d RES2: %d RES3: %d\n", RIUC(ge), RES0(ge), RES2(ge), RES3(ge));
+    ge_log(LOG_CYCLE, "  sync:  RIA0: %d RESI: %d RIA2: %d RIA3: %d\n",
+           ge->RIA0, ge->RESI, ge->RIA2, ge->RIA3);
+
+    ge_log(LOG_CYCLE, "      -> RIUC: %d RES0: %d RES2: %d RES3: %d\n",
+           RIUC(ge), RES0(ge), RES2(ge), RES3(ge));
 }
 
 static void on_TO10(struct ge *ge) {

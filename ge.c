@@ -103,17 +103,30 @@ const char *ge_clock_name(enum clock c)
     return "";
 }
 
-void ge_print_registers(struct ge *ge)
+void ge_print_registers_nonverbose(struct ge *ge)
 {
+    if (ge_log_enabled(LOG_REGS_V)) return;
     ge_log(LOG_REGS,
-           "SO: %02x - PO: %04x - RO: %04x - FO: %04x  -  "
+           "SO: %02x SA: %02x - PO: %04x - RO: %04x - FO: %04x  -  "
            "V1: %04x  V2: %04x  V3: %04x  V4: %04x - "
            "L1: %04x  L2: %04x L3 : %04x\n",
-           ge->rSO, ge->rPO, ge->rRO, ge->rFO,
+           ge->rSO, ge->rSA, ge->rPO, ge->rRO, ge->rFO,
            ge->rV1, ge->rV2, ge->rV3, ge->rV4,
            ge->rL1, ge->rL2, ge->rL3);
 }
 
+void ge_print_registers_verbose(struct ge *ge)
+{
+    ge_log(LOG_REGS_V,
+           "%s:  "
+           "SO: %02x SA: %02x - PO: %04x - RO: %04x - FO: %04x  -  "
+           "V1: %04x  V2: %04x  V3: %04x  V4: %04x - "
+           "L1: %04x  L2: %04x L3 : %04x\n",
+           ge_clock_name(ge->current_clock),
+           ge->rSO, ge->rSA, ge->rPO, ge->rRO, ge->rFO,
+           ge->rV1, ge->rV2, ge->rV3, ge->rV4,
+           ge->rL1, ge->rL2, ge->rL3);
+}
 
 void ge_clock_increment(struct ge* ge)
 {
@@ -143,6 +156,8 @@ int ge_run_pulse(struct ge *ge)
             return r;
     }
 
+    ge_print_registers_verbose(ge);
+
     /* Execute common pulse machine logic */
     pulse(ge);
 
@@ -164,10 +179,10 @@ int ge_run_pulse(struct ge *ge)
     }
 
     msl_run_state(ge, state);
-    ge_print_registers(ge);
 
     if (ge_clock_is_last(ge)) {
         fsn_last_clock(ge);
+        ge_print_registers_nonverbose(ge);
     }
 
     ge_clock_increment(ge);
@@ -197,14 +212,14 @@ void fsn_last_clock(struct ge *ge)
      * is not active and the rotary switch is in normal position,
      * the future status network is stored in SO. (cpu fo. 127) */
     if (ge->RIA0 && !ge->console_switches.RICI) {
-        ge_log(LOG_STATES, "last clock cpu, %02x in SO\n", ge->future_state);
+        ge_log(LOG_FUTURE, "last clock cpu, %02x in SO\n", ge->future_state);
         ge->rSO = ge->future_state;
     }
 
     /* after thre execution of a channel 2 cycle, load the first
      * 4 bits of the future status network in SI. */
     if (ge->RIA2) {
-        ge_log(LOG_STATES, "last clock ch2, %02x in SI\n", ge->future_state);
+        ge_log(LOG_FUTURE, "last clock ch2, %02x in SI\n", ge->future_state);
         ge->rSI = ge->future_state;
     }
 }
