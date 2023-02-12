@@ -227,6 +227,13 @@ struct ge {
      */
     uint8_t ffFA;
 
+    /* Those two store which work channel the present cycle as been attributed to
+     * (cpu fo. 130).
+     * When setting RETO, if PAPA switch is set, rotary is neither in normal, nor
+     * in position 8 to store in memory, should set ALTO */
+    uint8_t ffRETO:1;
+    uint8_t ffRET2:1;
+
     /**
      * Program Loading
      *
