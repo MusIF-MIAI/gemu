@@ -2,11 +2,21 @@
 #include <stdlib.h>
 #include "ge.h"
 
-static void on_TO00(struct ge *ge) {}
+static void on_TO00(struct ge *ge) {
+    /* cpu fo. 115 */
+    ge->RIA0 = ge->RC00 && !ge->ALTO;
+    ge->RESI = ge->RC01;
+    ge->RIA2 = ge->RC02;
+    ge->RIA3 = ge->RC03;
+
+    /* TODO: a "counter" with RAMO, RAMI should condition RIA0 */
+}
 
 static void on_TO10(struct ge *ge) {
     ge->ffFA = ge->ffFI; /* cpu fo. 129  */
     ge->rSA  = ge->kNA;  /* cpu fo. 128 */
+
+    /* TODO: a "counter" with RAMO, RAMI should count (cpu fo. 115) */
 }
 
 static void on_TO11(struct ge *ge) {}

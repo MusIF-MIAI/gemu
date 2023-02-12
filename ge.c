@@ -33,12 +33,19 @@ void ge_clear(struct ge *ge)
     ge->ACIC = 1;
 
     /* After the powering on of the machine the timing starts pressing the
-     * "Clear" switch (cpu fo. 99). */
+     * "CLEAR" switch (cpu fo. 99). */
     ge->halted = 0;
 
     /* (One of) the possible set conditions (is): or with
-     * CLEAR and.. (cpu fo. 98) */
+     * "CLEAR" and.. (cpu fo. 98) */
     ge->ALTO = 0;
+
+    /* By pressing "CLEAR" tje FF RC01, RC02, RC03 are reset and the FF
+     * RC00 is set. (cpu fo. 115) */
+    ge->RC00 = 1;
+    ge->RC01 = 0;
+    ge->RC02 = 0;
+    ge->RC03 = 0;
 }
 
 int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)

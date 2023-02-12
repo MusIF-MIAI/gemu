@@ -353,6 +353,101 @@ struct ge {
     uint8_t URPE:1;
     uint8_t URPU:1;
 
+    /* Cycle Attribution Logic */
+    /* ----------------------- */
+
+    /* Asyncronous flip flops */
+
+    /**
+     * Asynchronous CPU Cycle Request
+     *
+     * It is reset with CE18 (enable RIAP) while a cycle is performed
+     * for the CPU (RIUC=1). The CPU is thus waiting for the external
+     * triggers of the command received.
+     * It is set by the clear signal (CAGUF=0) with the signal of
+     * command received by the peripheral unit (RBII1=1) with the
+     * insertion of the SITE key which frees the waitings (RAITI=1)
+     * and finally with the disselection of channel 1 (PU16 = 0)
+     * (cpu fo. 114).
+     */
+    uint8_t RC00:1;
+
+    /**
+     * Asynchronous Channel 1 Cycle Request
+     *
+     * It is set with the OR of the channel 1 request triggers (RAI01)
+     * if the executing instruction is not over (RIVEF=1).
+     * Also, when the SITE key is inserted during a during a transfer of
+     * channel 1 (RAISI2=1).
+     * It is reset during a cycle of channel 1 with CE18 (enable RIAP),
+     * or at the end of a transfer on channel 1
+     * (cpu fo. 114)
+     */
+    uint8_t RC01:1;
+
+    /**
+     * Asynchronous Channel 2 Cycle Request
+     *
+     * It is set with the trigger LU08 from the integrated reader, or
+     * when the SITE key is inserted (RAITI1=1) during the transfers
+     * on channel 2.
+     *
+     * Request from printer do not act on RC02, but are derived from it
+     * with an OR (RIMZA).
+     *
+     * It is reset during a cycle of channel 2 with CE18 (enable RIAP),
+     * or at the end of a transfer on channel 2 (cpu fo. 114).
+     */
+    uint8_t RC02:1;
+
+    /**
+     * Asynchronous Channel 3 Cycle Request
+     *
+     * It is set with the OR of the cycle request triggers relative to
+     * channel 3 (RA301=1) if the executing instruction is not over
+     * (RIVAF=1) and additional performances of the GE-130 are enabled
+     * (FUL4F=1).
+     *
+     * It is reset during a cycle of channel 3 with CE18 (enable RIAP),
+     * also, it is reset when the SITE key is inserted (RAITI=1) during
+     * a data transfer on channel 3 (RES36=1), or at the end of transfer
+     * on channel 3 (PIC32=0) (cpu fo. 114).
+     */
+    uint8_t RC03:1;
+
+    /**
+     * Synchronous CPU Cycle Request
+     *
+     * Is conditioned by the signals ALTOF and RAM02.
+     *
+     * When the FF ALTOF is reset, the cycle requests from the CPU are
+     * not serverd, therefore the internal calculation is stopped.
+     * This counter consists of the FF RAMO and RAMI and counts with
+     * the pulse TO10.
+     */
+    uint8_t RIA0:1;
+
+    /**
+     * Synchronous Channel 1 Cycle Request
+     *
+     * Transfered from RC01 at pulse TO00 (cpu fo. 114).
+     */
+    uint8_t RESI:1;
+
+    /**
+     * Synchronous Channel 2 Cycle Request
+     *
+     * Transfered from RC02 at pulse TO00 (cpu fo. 114).
+     */
+    uint8_t RIA2:1;
+
+    /**
+     * Synchronous Channel 3 Cycle Request
+     *
+     * Transfered from RC03 at pulse TO00 (cpu fo. 114).
+     */
+    uint8_t RIA3:1;
+
     /**
      * The current state of the console register rotary switch
      */
