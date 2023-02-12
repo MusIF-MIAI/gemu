@@ -44,6 +44,25 @@ struct ge_counting_network {
     } cmds;
 };
 
+struct ge_knot_no {
+    uint8_t forcings;
+
+    enum {
+        KNOT_PO_IN_NO,
+        KNOT_V1_IN_NO,
+        KNOT_V2_IN_NO,
+        KNOT_V3_IN_NO,
+        KNOT_V4_IN_NO,
+        KNOT_L1_IN_NO,
+        KNOT_L2_IN_NO,
+        KNOT_L3_IN_NO,
+        KNOT_FORCE_IN_NO_21,
+        KNOT_FORCE_IN_NO_43,
+        KNOT_AM_IN_NO,
+        KNOT_RI_IN_NO_43,
+    } cmd;
+};
+
 /**
  * The entire state of the emulated system, including registers, memory,
  * peripherals and timings.
@@ -96,14 +115,7 @@ struct ge {
     uint8_t  rL2; ///< Auxiliary register
     uint16_t rL3; ///< Length of operands involving channel 3
 
-    /**
-     * Knot driven by P0, V1, V2, V4, L1, R1, V3 and L3.
-     *
-     * In addition, the NO knot contains:
-     *   - the forcings from program
-     *   - the signals of forcing from console (AM switches)
-     */
-    uint16_t kNO;
+    struct ge_knot_no kNO;
 
     /**
      * Knot driven by counting network, or by the UA to store the result of the

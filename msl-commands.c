@@ -32,31 +32,20 @@ static void CI09(struct ge* ge) { ge->rRI = (ge->kNI & 0xff00) >> 8; }
 /* NO Knot Selection Commands */
 /* -------------------------- */
 
-static void CO10(struct ge* ge) { ge->kNO = ge->rPO; }
-static void CO11(struct ge* ge) { ge->kNO = ge->rV1; }
-static void CO12(struct ge* ge) { ge->kNO = ge->rV2; }
-static void CO13(struct ge* ge) { ge->kNO = ge->rV3; }
-static void CO14(struct ge* ge) { ge->kNO = ge->rV4; }
-static void CO16(struct ge* ge) { ge->kNO = ge->rL2; }
+static void CO10(struct ge* ge) { ge->kNO.cmd = KNOT_PO_IN_NO; }
+static void CO11(struct ge* ge) { ge->kNO.cmd = KNOT_V1_IN_NO; }
+static void CO12(struct ge* ge) { ge->kNO.cmd = KNOT_V2_IN_NO; }
+static void CO13(struct ge* ge) { ge->kNO.cmd = KNOT_V3_IN_NO; }
+static void CO14(struct ge* ge) { ge->kNO.cmd = KNOT_V4_IN_NO; }
+static void CO16(struct ge* ge) { ge->kNO.cmd = KNOT_L2_IN_NO; }
 
-static void CI12(struct ge* ge) { CO12(ge); }
-static void CI15(struct ge* ge) { ge->kNO = ge->rL1; }
-static void CI16(struct ge* ge) { CO16(ge); }
-static void CI17(struct ge* ge) { ge->kNO = ge->rL3; }
-static void CI19(struct ge* ge)
-{
-    /* TODO: not sure if this is correct */
-    if (ge->register_selector != RS_NORM) {
-        ge_log(LOG_ERR, "Forcing not yet impelemented\n");
-        ge->halted = 1;
-    }
-}
-
-static void CI20(struct ge* ge) {
-    /* TODO: AM -> NO */
-}
-
-static void CI21(struct ge* ge) { ge->kNO = (ge->kNO & 0xff00) | ge->rRI; }
+static void CI12(struct ge* ge) { CO12(ge);                          }
+static void CI15(struct ge* ge) { ge->kNO.cmd = KNOT_L1_IN_NO;       }
+static void CI16(struct ge* ge) { CO16(ge);                          }
+static void CI17(struct ge* ge) { ge->kNO.cmd = KNOT_L3_IN_NO;       }
+static void CI19(struct ge* ge) { ge->kNO.cmd = KNOT_FORCE_IN_NO_21; }
+static void CI20(struct ge* ge) { ge->kNO.cmd = KNOT_AM_IN_NO;       }
+static void CI21(struct ge* ge) { ge->kNO.cmd = KNOT_RI_IN_NO_43;    }
 
 
 /* VO, BO, RO Loading Commands */
@@ -66,7 +55,7 @@ static void CO30(struct ge* ge) { ge->rRO = ge->mem[ge->rVO]; }
 static void CO31(struct ge* ge) { ge->mem[ge->rVO] = ge->rRO; }
 static void CO35(struct ge* ge) { /* "reset int. error"? (cpu fo. 105) */ }
 
-static void CI32(struct ge* ge) { ge->rRO = ge->kNO >> 8; }
+static void CI32(struct ge* ge) { ge->rRO = NO_knot(ge) >> 8; }
 static void CI33(struct ge* ge) { ge->rRO = ge->kNI & 0x00ff; }
 static void CI38(struct ge *ge)
 {
@@ -187,8 +176,8 @@ static void CO92(struct ge *ge) CC
 static void CO93(struct ge *ge) CC
 static void CO94(struct ge *ge) CC
 static void CO95(struct ge *ge) CC
-static void CO96(struct ge *ge) { SET_BIT(ge->kNO, 6); }
-static void CO97(struct ge *ge) { SET_BIT(ge->kNO, 7); }
+static void CO96(struct ge *ge) { SET_BIT(ge->kNO.forcings, 6); }
+static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
 
 /* Commands For External Operations */
 /* -------------------------------- */

@@ -135,6 +135,31 @@ static inline uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_F
  */
 
 /**
+ * Knot driven by P0, V1, V2, V4, L1, R1, V3 and L3.
+ *
+ * In addition, the NO knot contains:
+ *   - the forcings from program
+ *   - the signals of forcing from console (AM switches)
+ */
+static inline uint16_t NO_knot(struct ge *ge)
+{
+    switch (ge->kNO.cmd) {
+        case KNOT_PO_IN_NO:       return ge->rPO;
+        case KNOT_V1_IN_NO:       return ge->rV1;
+        case KNOT_V2_IN_NO:       return ge->rV2;
+        case KNOT_V3_IN_NO:       return ge->rV3;
+        case KNOT_V4_IN_NO:       return ge->rV4;
+        case KNOT_L1_IN_NO:       return ge->rL1;
+        case KNOT_L2_IN_NO:       return ge->rL2;
+        case KNOT_L3_IN_NO:       return ge->rL3;
+        case KNOT_FORCE_IN_NO_21: return ge->kNO.forcings;
+        case KNOT_FORCE_IN_NO_43: return ge->kNO.forcings << 8;
+        case KNOT_AM_IN_NO:       return ge->console_switches.AM;
+        case KNOT_RI_IN_NO_43:    return ge->rRI << 8;
+    }
+}
+
+/**
  * Knot driven by SO or SI. Content is stored to SA.
  *
  * Driven

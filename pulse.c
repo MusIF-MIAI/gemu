@@ -25,13 +25,13 @@ static void on_TO15(struct ge *ge) {}
 static void on_TO19(struct ge *ge) {}
 
 static void on_TO20(struct ge *ge) {
-    ge->rBO = ge->kNO; /* cpu fo. 142, 126 */
-    ge->rVO = ge->kNO; /* cpu fo. 124, 125 */
+    ge->rBO = NO_knot(ge); /* cpu fo. 142, 126 */
+    ge->rVO = NO_knot(ge); /* cpu fo. 124, 125 */
 
-    ge->ACIC = 0;      /* cpu fo. 99 */
+    ge->ACIC = 0;        /* cpu fo. 99  */
 
-    /* TODO: are there any condition? */
-    ge->rRO = 0;       /* cpu fo. 142 */
+    /* TODO: are there any condition?   */
+    ge->rRO = 0;         /* cpu fo. 142 */
 }
 
 static void on_TO25(struct ge *ge) {}
@@ -47,7 +47,7 @@ static void on_TO40(struct ge *ge) {
 static void on_TO50(struct ge *ge) {
     /* timing chart js1-js2-jie-ecc, fo. 32,
      * also, display, fo. 17 */
-    ge->rBO = ge->kNO;
+    ge->rBO = NO_knot(ge);
 }
 
 static void on_TO60(struct ge *ge) {}
