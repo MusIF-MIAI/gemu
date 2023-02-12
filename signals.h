@@ -31,7 +31,10 @@ static inline uint8_t RES0(struct ge *ge) {
  */
 static inline uint8_t RES2(struct ge *ge) {
     /* cpu fo. 116 */
-    return !ge->RIA3 & !ge->RESI & !ge->RIA2;
+    /* maybe this equation is incorrect in manual? it's
+     * documented as `!RIA2`, but it seems it should not
+     * be negated. */
+    return !ge->RIA3 & !ge->RESI & ge->RIA2;
 }
 
 /**
