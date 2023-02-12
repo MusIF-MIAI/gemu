@@ -25,3 +25,11 @@ clean:
 	rm -f $(OBJS) $(OBJS:%.o=%.d)
 	rm -f $(TESTS) $(TESTS:%.o=%.d)
 
+.PHONY: docs
+docs:
+	cd docs ; doxygen
+
+.PHONY: open-docs
+open-docs: docs
+	open docs/html/index.html
+
