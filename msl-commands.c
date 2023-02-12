@@ -1,21 +1,13 @@
 #include "ge.h"
 #include "log.h"
+#include "bit.h"
+#include "signals.h"
 
 #ifndef MSL_COMMANDS_INCLUDED_BY_MSL_STATES
 #   error This file should be include by msl-states.c and not compiled directly
 #endif
 
 #define CC { ge_log(LOG_ERR, "implement command %s\n", __FUNCTION__); }
-
-#define BIT(X) (1 << X)
-#define SET_BIT(R, X) (R = (R | BIT(X)))
-#define RESET_BIT(R, X) (R = (R & ~BIT(X)))
-
-/* uses manual notation */
-/* [ 4 | 3 | 2 | 1 ] for 16 bits and [ 2 | 1 ] for 8 bits*/
-#define NIBBLE_MASK(X) (0xf << ((X-1)*4))
-
-uint8_t evaluate_aver(struct ge *ge);
 
 /* Commands To Load The Registers */
 /* ------------------------------ */
@@ -79,7 +71,7 @@ static void CI33(struct ge* ge) { ge->rRO = ge->kNI & 0x00ff; }
 static void CI38(struct ge *ge)
 {
     /* Enable set of aver & alto (cpu fo. 105) */
-    ge->AVER = evaluate_aver(ge);
+    ge->AVER = verified_condition(ge);
 
     /* (One) possible (ALTO) set condition (is): the ACOV or ACON
      * switches are insterted, an the related condition is verified
@@ -225,27 +217,3 @@ static void CU14(struct ge* ge) { RESET_BIT(ge->rSO, 4); }
 static void CU15(struct ge* ge) { RESET_BIT(ge->rSO, 5); }
 static void CU16(struct ge* ge) { RESET_BIT(ge->rSO, 6); }
 static void CU17(struct ge* ge) { RESET_BIT(ge->rSO, 7); }
-
-/* Helpers */
-/* ------- */
-
-uint8_t evaluate_aver(struct ge *ge) {
-    /* cpu fo 56, 57 */
-    uint8_t M = ge->rL1;
-    uint8_t M7 = !!(M & BIT(7));
-    uint8_t M6 = !!(M & BIT(6));
-    uint8_t M5 = !!(M & BIT(5));
-    uint8_t M4 = !!(M & BIT(4));
-
-    uint8_t FA5 = !!(ge->ffFA & BIT(5));
-    uint8_t FA4 = !!(ge->ffFA & BIT(4));
-
-    return (((ge->rFO == JC_OPCODE) &&
-             ((M7 && !FA4 && !FA5) ||
-              (M6 && !FA4 &&  FA5) ||
-              (M5 &&  FA4 && !FA5) ||
-              (M4 &&  FA4 &&  FA5))) ||
-            (ge->rFO == JS1_OPCODE && ge->rL1 == JS1_2NDCHAR && ge->JS1) ||
-            (ge->rFO == JS2_OPCODE && ge->rL1 == JS2_2NDCHAR && ge->JS2) ||
-            0);
-}
