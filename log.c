@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static ge_log_type active_log_types = ~LOG_CONDS;
+static ge_log_type active_log_types = ~(LOG_CONDS | LOG_STATES);
 
 static const char *log_type_name(ge_log_type type)
 {

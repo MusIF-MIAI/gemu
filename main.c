@@ -10,8 +10,6 @@ int main(int argc, char *argv[])
     struct ge ge130;
     int ret;
 
-    ge_log_set_active_types(~(LOG_CONDS | LOG_STATES));
-
     ge_init(&ge130);
 
     ret = console_socket_register(&ge130);
