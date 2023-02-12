@@ -106,26 +106,6 @@ struct ge {
     uint16_t kNO;
 
     /**
-     * Knot driven by SO or SI. Content is stored to SA.
-     *
-     * Driven
-     *  - by the SO register when the work cycle has been attributed to the
-     *    CPU or to channel 1, if the rotary switch is the "central" position
-     *    (AF326=1)
-     *  - by the SI register (less four significant bits) when the cycle has
-     *    been attributed to channel 2
-     *
-     * Additionally, individual bits might be set
-     *  - NA00: forced to 1 when the work cycle is attributed to channel 1 or
-     *    channel 3
-     *  - NA03: forced to 1 when the work cycle has been attributed to the CPU
-     *    and the rotary switch is not in the "central" position (AF32C = 1))
-     *
-     * Stored in SA register during T010. (cpu fo. 128)
-     */
-    uint8_t kNA;
-
-    /**
      * Knot driven by counting network, or by the UA to store the result of the
      * operation. UA may store MSB or LSB depending on the operation.
      */
@@ -165,7 +145,7 @@ struct ge {
     /**
      * Main sequencer
      *
-     * Drives the kNA knot when the cycle has been attributed to the CPU or
+     * Drives the NA knot when the cycle has been attributed to the CPU or
      * channel 1.
      *
      * It is used to establish the sequence for:
@@ -193,7 +173,7 @@ struct ge {
      * 4-bit sequencer used for data xechange with peripheral units through
      * channel 2.
      *
-     * Drives the kNA knot when the cycle has been attributed to channel 2.
+     * Drives the NA knot when the cycle has been attributed to channel 2.
      *
      * Loaded with the first 4 bits of the future status network
      *  - after the execution of a channel 2 cycle

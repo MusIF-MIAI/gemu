@@ -11,8 +11,45 @@
 
 #include <stdint.h>
 #include "bit.h"
+#include "ge.h"
 
-struct ge;
+/**
+ * @defgroup priority-network Cycle attribution priority network
+ * @{
+ */
+
+/**
+ * Cycle assigned to channel 1
+ */
+static inline uint8_t RES0(struct ge *ge) {
+    /* cpu fo. 116 */
+    return ge->RESI;
+}
+
+/**
+ * Cycle assigned to channel 2
+ */
+static inline uint8_t RES2(struct ge *ge) {
+    /* cpu fo. 116 */
+    return !ge->RIA3 & !ge->RESI & !ge->RIA2;
+}
+
+/**
+ * Cycle assigned to channel 3
+ */
+static inline uint8_t RES3(struct ge *ge) {
+    /* cpu fo. 115 */
+    return ge->RIA3 & !ge->RESI;
+}
+
+/**
+ * Cycle assigned to CPU
+ */
+static inline uint8_t RIUC(struct ge *ge) {
+    return ge->RIA0 & !ge->RESI & !ge->RIA3 & !ge->RIA2;
+}
+
+/** @} */
 
 /**
  * DC16 - Jump Condition Verified
@@ -87,6 +124,49 @@ static inline uint8_t AF52(struct ge *ge) { return ge->register_selector == RS_F
 
 /** Selected register FO */
 static inline uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_FO;      }
+/** @} */
+
+/**
+ * @defgroup knots Knots
+ * @{
+ */
+
+/**
+ * Knot driven by SO or SI. Content is stored to SA.
+ *
+ * Driven
+ *  - by the SO register when the work cycle has been attributed to the
+ *    CPU or to channel 1, if the rotary switch is the "central" position
+ *    (AF326=1)
+ *  - by the SI register (less four significant bits) when the cycle has
+ *    been attributed to channel 2
+ *
+ * Additionally, individual bits might be set
+ *  - NA00: forced to 1 when the work cycle is attributed to channel 1 or
+ *    channel 3
+ *  - NA03: forced to 1 when the work cycle has been attributed to the CPU
+ *    and the rotary switch is not in the "central" position (AF32C = 1))
+ *
+ * Stored in SA register during T010. (cpu fo. 128)
+ */
+static inline uint8_t NA(struct ge *ge) {
+    uint8_t na = 0;
+
+    if (RES0(ge) || RIUC(ge))
+        na = ge->rSO;
+
+    if (RES2(ge))
+        na = ge->rSI & 0x0f;
+
+    if (RES0(ge) || RES3(ge))
+        na = na | 0x01;
+
+    if (RIUC(ge) && !AF32(ge))
+        na = na | 0x08;
+
+    return na;
+}
+
 /** @} */
 
 

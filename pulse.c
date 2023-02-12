@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "ge.h"
+#include "signals.h"
 
 static void on_TO00(struct ge *ge) {
     /* cpu fo. 115 */
@@ -14,7 +15,7 @@ static void on_TO00(struct ge *ge) {
 
 static void on_TO10(struct ge *ge) {
     ge->ffFA = ge->ffFI; /* cpu fo. 129  */
-    ge->rSA  = ge->kNA;  /* cpu fo. 128 */
+    ge->rSA  = NA(ge);  /* cpu fo. 128 */
 
     /* TODO: a "counter" with RAMO, RAMI should count (cpu fo. 115) */
 }
