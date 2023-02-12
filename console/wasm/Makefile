@@ -1,11 +1,12 @@
 CC=emcc
 AR=emar
 
-CFLAGS=-I../..
+CFLAGS=-I../.. -s EXPORTED_RUNTIME_METHODS=["callMain"]
+
 LIBGE=../../libge.a
 
 main: main.o $(LIBGE)
-	$(CC) -o $@.html $^ $(LIBGE)
+	$(CC) $(CFLAGS) -o $@.mjs $^ $(LIBGE)
 
 .PHONY: $(LIBGE)
 $(LIBGE):
@@ -14,4 +15,8 @@ $(LIBGE):
 
 .PHONY: clean
 clean:
-	rm -f main.o main.js main.wasm main.html
+	rm -f main.o main.js main.wasm main.mjs
+
+.PHONY: docker
+docker:
+	docker run --rm -v $(shell pwd)/../../:/src emscripten/emsdk make -C console/wasm

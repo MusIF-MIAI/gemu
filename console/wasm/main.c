@@ -9,9 +9,7 @@ int main() {
     ge_clear(ge);
     ge_start(ge);
 
-    for (int i = 0; i < 10000; i++) {
-        ge_run_pulse(ge);
-    }
+    ge_run_pulse(ge);
 
     return 0;
 }

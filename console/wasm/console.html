@@ -3,7 +3,7 @@ body {
   background: #111;
   color: #eee;
   font-family: Futura;
-  font-size: 10pt;
+  font-size: 8pt;
 }
 
 #verticalcontainer {
@@ -12,8 +12,7 @@ body {
 }
 
 .horizontal-strut {
-  /* border: 1px solid fuchsia; */
-  height: 3em;
+  height: 1.8em;
   flex-grow: 1;
 
   box-shadow: inset 1px 1px 1px #727272, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -22,7 +21,7 @@ body {
 }
 
 .strut-blue {
-    box-shadow: inset 2px 2px 2px #0f1d28, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 2px 2px 2px #0f1d28, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
   border-radius: 2px 2px 1px 1px;
   background: #5a7bb3;
   padding: 1em;
@@ -35,7 +34,7 @@ body {
 }
 
 .vertical-strut {
-  width: 5em;
+  width: 3em;
   box-shadow: inset 1px 1px 1px #555555, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
   border-radius: 2px 2px 1px 1px;
   background: #262323;
@@ -56,7 +55,7 @@ body {
 }
 
 .switch {
-  margin: 0.1em;
+  margin-bottom: 0.3em;
   text-align: center;
 }
 
@@ -227,7 +226,7 @@ body {
 	position: relative;
 	border-radius: 3.5em;
 	box-shadow: 0 0 0.5em rgba(255,255,255,0.2);
-    font-size: 4px;
+  font-size: 0.22em;
 }
 
 .fancyswitch2 label {
@@ -580,6 +579,14 @@ padding: 1px;
   position: relative;
 }
 
+.knob > svg {
+  width: 15em; 
+  height: 15em; 
+  user-select: none; 
+  outline: none; 
+  --rot: 20deg;
+}
+
 .dial {
   position: absolute;
   top: 0px;
@@ -595,7 +602,7 @@ padding: 1px;
 :root {
   --angle: calc(350deg / 20);
   --phase: calc(350deg / 20 * 6);
-  --radius: 12em;
+  --radius: 10em;
 }
 
 .dial_label {
@@ -606,7 +613,7 @@ padding: 1px;
 .dial_label_text {  
   position: absolute;
   border-bottom: 1px solid white;
-  padding-bottom: 0.3em;  
+  padding-bottom: em;  
   transform: translate(-50%, -50%);
   width: 4em;
 }
@@ -650,21 +657,30 @@ padding: 1px;
 .dial_label:nth-child(13) .dial_label_text  { transform: rotateZ(calc(-12 * var(--angle) - var(--phase))); }
 .dial_label:nth-child(14) .dial_label_text  { transform: rotateZ(calc(-13 * var(--angle) - var(--phase))); }
 
-
 /*
-
-
-
 .dial {
   position: relative;
   transform: translate(var(--radius), var(--radius));
   width: calc(var(--radius) * 2);
   height: calc(var(--radius) * 2);
 }
-
-
 */
 
+.log {
+  box-shadow: inset 1px 1px 1px #181818, inset 0 -2px 1px #727272, 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 2px 2px 1px 1px;
+  height: 10em;
+  background: #111;
+  font-family: "Courier";
+  font-size: 1.5em;
+  margin-top: 0px;
+  padding: 0.5em;
+  overflow: auto;
+}
+
+.log p {
+  margin: 0px;
+}
 
 </style>
 
@@ -680,7 +696,7 @@ padding: 1px;
               <div id=main_switches></div>
               <div id=rotary>
                 <div class=knob>
-                  <svg version="1.1" viewBox="-16 -16 32 32" style="width: 20em; height: 20em; user-select: none; outline: none; --rot: 20deg;">
+                  <svg version="1.1" viewBox="-16 -16 32 32">
                     <defs>
                         <linearGradient id="shape-fill" x1="0" x2="0" y1="0" y2="1">
                             <stop offset="0%" stop-color="rgb(80, 80, 81)"/>
@@ -747,7 +763,11 @@ padding: 1px;
         <div class="vertical-strut strut-right"></div>    
     </div>
     <div class="horizontal-strut strut-bottom"></div>
-    <div class=strut-blue></div>
+    <div class=strut-blue>
+      <div class=log id=log_box>
+
+      </div>
+    </div>
     <div class=strut-blue>
         <div class=bottom-panel>
             <div class=buttons>
@@ -822,7 +842,6 @@ padding: 1px;
 
 
 <script>
-
 function makeDiv(className) {
     const sw = document.createElement("div")
     sw.className = className
@@ -903,6 +922,7 @@ function makeFancySwitch2(id) {
     `
     return div;
 }
+
 /* - */
 
 const switchesOther = ["site", "ince", "inar", "stoc", "acon", "acov", "rici", "pate", "papa"]
@@ -977,5 +997,27 @@ allLedDivs
 
 allSwitchesDivs
     .forEach(i => main_switches.appendChild(i))
+
+</script>
+<script type="module">
+
+import { default as GE_Module } from './main.mjs'
+
+function log_add(text) {
+  const p = document.createElement("p")
+  p.innerText = text
+  log_box.appendChild(p)
+}
+
+async function load_wasm() {
+  log_add("GEMU 130 -- A funny experiment")
+  const conf = {
+    print: log_add
+  }
+
+  const module = GE_Module(conf)
+}
+
+load_wasm()
 
 </script>
