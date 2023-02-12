@@ -273,6 +273,10 @@ struct ge {
      */
     enum ge_console_rotary register_selector;
 
+    /**
+     * The current state of the console switches
+     */
+    struct ge_console_switches console_switches;
 
     uint8_t step_by_step:1;  ///< Step by step execution @todo replace with signal name
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system

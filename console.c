@@ -8,4 +8,5 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.OPERATOR_CALL = ge->ALAM;
 
     console->rotary = ge->register_selector;
+    console->switches = ge->console_switches;
 }
