@@ -216,10 +216,24 @@ void fsn_last_clock(struct ge *ge)
         ge->rSO = ge->future_state;
     }
 
-    /* after thre execution of a channel 2 cycle, load the first
-     * 4 bits of the future status network in SI. */
+    /* after the end of a cpu work cycle, (ALTO / ALS71=1) is set if
+     * the PAPA switch is inserted, or if the rotary switch is neither
+     * in the normal position, nor in position 8 for recording in
+     * memory ALSOA=0) (cpu fo. 98)
+     */
+    uint8_t is_papa = ge->console_switches.PAPA;
+    uint8_t is_norm = ge->register_selector == RS_NORM;
+    uint8_t is_scr  = ge->register_selector == RS_V1_SCR;
+    ge_log(LOG_FUTURE, "    papa: %d, norm: %d, scr: %d ==> %d\n", is_papa, is_norm, is_scr, ge->RIA0 && (is_papa || !(is_norm || is_scr)));
+
+    if (ge->RIA0 && (is_papa || !(is_norm || is_scr)))
+        ge->ALTO = 1;
+
+    /* after the execution of a channel 2 cycle, load the first
+     * 4 bits of the future status network in SI. (cpu fo. 127) */
     if (ge->RIA2) {
         ge_log(LOG_FUTURE, "last clock ch2, %02x in SI\n", ge->future_state);
         ge->rSI = ge->future_state;
     }
+
 }
