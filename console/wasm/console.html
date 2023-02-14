@@ -1148,7 +1148,7 @@ document.set_lamp = function(lamp, val) {
 document.set_switches = function() {
   console.log(am_from_switches())
   if (!module) return;
-  module._set_switches(am_from_switches())
+  module._set_switches(flags_from_switches(), am_from_switches())
 }
 
 const rotary_positions = [
@@ -1162,6 +1162,7 @@ document.set_dial = function(e) {
   const pos = rotary_positions.indexOf(e)
   if (e == -1) return;
   set_knob_position(pos)
+  module._set_register_selector(pos);
 }
 
 log_add("Loading emulator")

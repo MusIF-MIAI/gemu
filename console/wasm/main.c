@@ -124,22 +124,24 @@ void EMSCRIPTEN_KEEPALIVE press_start() { ge_start(ge); send_console(); }
 
 void EMSCRIPTEN_KEEPALIVE set_switches(int flags, int am) {
     struct ge_console_switches switches;
-    switches.SITE = BIT(flags, 8);
-    switches.INCE = BIT(flags, 7);
-    switches.INAR = BIT(flags, 6);
-    switches.STOC = BIT(flags, 5);
+    switches.SITE = BIT(flags, 0);
+    switches.INCE = BIT(flags, 1);
+    switches.INAR = BIT(flags, 2);
+    switches.STOC = BIT(flags, 3);
     switches.ACON = BIT(flags, 4);
-    switches.ACOV = BIT(flags, 3);
-    switches.RICI = BIT(flags, 2);
-    switches.PATE = BIT(flags, 1);
-    switches.PAPA = BIT(flags, 0);
+    switches.ACOV = BIT(flags, 5);
+    switches.RICI = BIT(flags, 6);
+    switches.PATE = BIT(flags, 7);
+    switches.PAPA = BIT(flags, 8);
     switches.AM = am;
 
     ge_set_console_switches(ge, &switches);
+    send_console();
 }
 
 void EMSCRIPTEN_KEEPALIVE set_register_selector(int s) {
     ge_set_console_rotary(ge, s);
+    send_console();
 }
 
 void em_main_loop() {
