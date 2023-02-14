@@ -121,6 +121,11 @@ struct PACKED ge_console_switches {
     uint16_t INAR:1;
 
     /**
+     *
+     */
+    uint16_t STOC:1;
+
+    /**
      * Do not error-correct external units input
      *
      * Inhibits the correction of the check bit for the character arriving from
@@ -180,5 +185,7 @@ struct PACKED ge_console {
 struct ge;
 
 void ge_fill_console_data(struct ge*, struct ge_console*);
+void ge_set_console_switches(struct ge*, struct ge_console_switches*);
+void ge_set_console_rotary(struct ge *, enum ge_console_rotary);
 
 #endif

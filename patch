@@ -1,0 +1,214 @@
+diff --git a/ge.h b/ge.h
+index 34d1cbc..164f4b9 100644
+--- a/ge.h
++++ b/ge.h
+@@ -44,25 +44,6 @@ struct ge_counting_network {
+     } cmds;
+ };
+ 
+-struct ge_knot_no {
+-    uint8_t forcings;
+-
+-    enum {
+-        KNOT_PO_IN_NO,
+-        KNOT_V1_IN_NO,
+-        KNOT_V2_IN_NO,
+-        KNOT_V3_IN_NO,
+-        KNOT_V4_IN_NO,
+-        KNOT_L1_IN_NO,
+-        KNOT_L2_IN_NO,
+-        KNOT_L3_IN_NO,
+-        KNOT_FORCINGS_IN_NO_21,
+-        KNOT_FORCINGS_IN_NO_43,
+-        KNOT_AM_IN_NO,
+-        KNOT_RI_IN_NO_43,
+-    } cmd;
+-};
+-
+ /**
+  * The entire state of the emulated system, including registers, memory,
+  * peripherals and timings.
+@@ -115,7 +96,14 @@ struct ge {
+     uint8_t  rL2; ///< Auxiliary register
+     uint16_t rL3; ///< Length of operands involving channel 3
+ 
+-    struct ge_knot_no kNO;
++    /**
++     * Knot driven by P0, V1, V2, V4, L1, R1, V3 and L3.
++     *
++     * In addition, the NO knot contains:
++     *   - the forcings from program
++     *   - the signals of forcing from console (AM switches)
++     */
++    uint16_t kNO;
+ 
+     /**
+      * Knot driven by counting network, or by the UA to store the result of the
+diff --git a/msl-commands.c b/msl-commands.c
+index 17c3495..493be9d 100644
+--- a/msl-commands.c
++++ b/msl-commands.c
+@@ -32,20 +32,31 @@ static void CI09(struct ge* ge) { ge->rRI = (ge->kNI & 0xff00) >> 8; }
+ /* NO Knot Selection Commands */
+ /* -------------------------- */
+ 
+-static void CO10(struct ge* ge) { ge_log(LOG_STATES, "set KNOT_PO_IN_NO\n"); ge->kNO.cmd = KNOT_PO_IN_NO; }
+-static void CO11(struct ge* ge) { ge_log(LOG_STATES, "set KNOT_V1_IN_NO\n"); ge->kNO.cmd = KNOT_V1_IN_NO; }
+-static void CO12(struct ge* ge) { ge_log(LOG_STATES, "set KNOT_V2_IN_NO\n"); ge->kNO.cmd = KNOT_V2_IN_NO; }
+-static void CO13(struct ge* ge) { ge_log(LOG_STATES, "set KNOT_V3_IN_NO\n"); ge->kNO.cmd = KNOT_V3_IN_NO; }
+-static void CO14(struct ge* ge) { ge_log(LOG_STATES, "set KNOT_V4_IN_NO\n"); ge->kNO.cmd = KNOT_V4_IN_NO; }
+-static void CO16(struct ge* ge) { ge_log(LOG_STATES, "set KNOT_L2_IN_NO\n"); ge->kNO.cmd = KNOT_L2_IN_NO; }
++static void CO10(struct ge* ge) { ge->kNO = ge->rPO; }
++static void CO11(struct ge* ge) { ge->kNO = ge->rV1; }
++static void CO12(struct ge* ge) { ge->kNO = ge->rV2; }
++static void CO13(struct ge* ge) { ge->kNO = ge->rV3; }
++static void CO14(struct ge* ge) { ge->kNO = ge->rV4; }
++static void CO16(struct ge* ge) { ge->kNO = ge->rL2; }
+ 
+ static void CI12(struct ge* ge) { CO12(ge); }
+-static void CI15(struct ge* ge) { ge_log(LOG_STATES, "KNOT_L1_IN_NO\n"); ge->kNO.cmd = KNOT_L1_IN_NO; }
++static void CI15(struct ge* ge) { ge->kNO = ge->rL1; }
+ static void CI16(struct ge* ge) { CO16(ge); }
+-static void CI17(struct ge* ge) { ge_log(LOG_STATES, "KNOT_L3_IN_NO\n"); ge->kNO.cmd = KNOT_L3_IN_NO;    }
+-static void CI19(struct ge* ge) { ge_log(LOG_STATES, "KNOT_FORCINGS_IN_NO_21\n"); ge->kNO.cmd = KNOT_FORCINGS_IN_NO_21; }
+-static void CI20(struct ge* ge) { ge_log(LOG_STATES, "KNOT_AM_IN_NO\n"); ge->kNO.cmd = KNOT_AM_IN_NO;    }
+-static void CI21(struct ge* ge) { ge_log(LOG_STATES, "KNOT_RI_IN_NO_43\n"); ge->kNO.cmd = KNOT_RI_IN_NO_43; }
++static void CI17(struct ge* ge) { ge->kNO = ge->rL3; }
++static void CI19(struct ge* ge)
++{
++    /* TODO: not sure if this is correct */
++    if (ge->register_selector != RS_NORM) {
++        ge_log(LOG_ERR, "Forcing not yet impelemented\n");
++        ge->halted = 1;
++    }
++}
++
++static void CI20(struct ge* ge) {
++    /* TODO: AM -> NO */
++}
++
++static void CI21(struct ge* ge) { ge->kNO = (ge->kNO & 0xff00) | ge->rRI; }
+ 
+ 
+ /* VO, BO, RO Loading Commands */
+@@ -55,7 +66,7 @@ static void CO30(struct ge* ge) { ge->rRO = ge->mem[ge->rVO]; }
+ static void CO31(struct ge* ge) { ge->mem[ge->rVO] = ge->rRO; }
+ static void CO35(struct ge* ge) { /* "reset int. error"? (cpu fo. 105) */ }
+ 
+-static void CI32(struct ge* ge) { ge->rRO = NO_knot(ge) >> 8; }
++static void CI32(struct ge* ge) { ge->rRO = ge->kNO >> 8; }
+ static void CI33(struct ge* ge) { ge->rRO = ge->kNI & 0x00ff; }
+ static void CI38(struct ge *ge)
+ {
+@@ -176,8 +187,8 @@ static void CO92(struct ge *ge) CC
+ static void CO93(struct ge *ge) CC
+ static void CO94(struct ge *ge) CC
+ static void CO95(struct ge *ge) CC
+-static void CO96(struct ge *ge) { SET_BIT(ge->kNO.forcings, 6); }
+-static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
++static void CO96(struct ge *ge) { SET_BIT(ge->kNO, 6); }
++static void CO97(struct ge *ge) { SET_BIT(ge->kNO, 7); }
+ 
+ /* Commands For External Operations */
+ /* -------------------------------- */
+@@ -188,21 +199,21 @@ static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
+ /* ---------------------- */
+ 
+ /* Set S0 */
+-static void CU00(struct ge* ge) { ge_log(LOG_STATES, "fs: set   0\n") ; SET_BIT(ge->future_state, 0); }
+-static void CU01(struct ge* ge) { ge_log(LOG_STATES, "fs: set   1\n") ; SET_BIT(ge->future_state, 1); }
+-static void CU02(struct ge* ge) { ge_log(LOG_STATES, "fs: set   2\n") ; SET_BIT(ge->future_state, 2); }
+-static void CU03(struct ge* ge) { ge_log(LOG_STATES, "fs: set   3\n") ; SET_BIT(ge->future_state, 3); }
+-static void CU04(struct ge* ge) { ge_log(LOG_STATES, "fs: set   4\n") ; SET_BIT(ge->future_state, 4); }
+-static void CU05(struct ge* ge) { ge_log(LOG_STATES, "fs: set   5\n") ; SET_BIT(ge->future_state, 5); }
+-static void CU06(struct ge* ge) { ge_log(LOG_STATES, "fs: set   6\n") ; SET_BIT(ge->future_state, 6); }
+-static void CU07(struct ge* ge) { ge_log(LOG_STATES, "fs: set   7\n") ; SET_BIT(ge->future_state, 7); }
++static void CU00(struct ge* ge) { SET_BIT(ge->rSO, 0); }
++static void CU01(struct ge* ge) { SET_BIT(ge->rSO, 1); }
++static void CU02(struct ge* ge) { SET_BIT(ge->rSO, 2); }
++static void CU03(struct ge* ge) { SET_BIT(ge->rSO, 3); }
++static void CU04(struct ge* ge) { SET_BIT(ge->rSO, 4); }
++static void CU05(struct ge* ge) { SET_BIT(ge->rSO, 5); }
++static void CU06(struct ge* ge) { SET_BIT(ge->rSO, 6); }
++static void CU07(struct ge* ge) { SET_BIT(ge->rSO, 7); }
+ 
+ /* Reset S0 */
+-static void CU10(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 0\n") ; RESET_BIT(ge->future_state, 0); }
+-static void CU11(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 1\n") ; RESET_BIT(ge->future_state, 1); }
+-static void CU12(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 2\n") ; RESET_BIT(ge->future_state, 2); }
+-static void CU13(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 3\n") ; RESET_BIT(ge->future_state, 3); }
+-static void CU14(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 4\n") ; RESET_BIT(ge->future_state, 4); }
+-static void CU15(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 5\n") ; RESET_BIT(ge->future_state, 5); }
+-static void CU16(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 6\n") ; RESET_BIT(ge->future_state, 6); }
+-static void CU17(struct ge* ge) { ge_log(LOG_STATES, "fs: reset 7\n") ; RESET_BIT(ge->future_state, 7); }
++static void CU10(struct ge* ge) { RESET_BIT(ge->rSO, 0); }
++static void CU11(struct ge* ge) { RESET_BIT(ge->rSO, 1); }
++static void CU12(struct ge* ge) { RESET_BIT(ge->rSO, 2); }
++static void CU13(struct ge* ge) { RESET_BIT(ge->rSO, 3); }
++static void CU14(struct ge* ge) { RESET_BIT(ge->rSO, 4); }
++static void CU15(struct ge* ge) { RESET_BIT(ge->rSO, 5); }
++static void CU16(struct ge* ge) { RESET_BIT(ge->rSO, 6); }
++static void CU17(struct ge* ge) { RESET_BIT(ge->rSO, 7); }
+diff --git a/pulse.c b/pulse.c
+index 09f52b9..c818603 100644
+--- a/pulse.c
++++ b/pulse.c
+@@ -35,11 +35,8 @@ static void on_TO15(struct ge *ge) {}
+ static void on_TO19(struct ge *ge) {}
+ 
+ static void on_TO20(struct ge *ge) {
+-    uint16_t n = NO_knot(ge);
+-    ge_log(LOG_STATES, "setting VO from NO %02x\n", n);
+-
+-    ge->rBO = n; // NO_knot(ge); /* cpu fo. 142, 126 */
+-    ge->rVO = n; // NO_knot(ge); /* cpu fo. 124, 125 */
++    ge->rBO = ge->kNO; /* cpu fo. 142, 126 */
++    ge->rVO = ge->kNO; /* cpu fo. 124, 125 */
+ 
+     ge->ACIC = 0;      /* cpu fo. 99 */
+ 
+@@ -61,7 +58,7 @@ static void on_TO40(struct ge *ge) {
+ static void on_TO50(struct ge *ge) {
+     /* timing chart js1-js2-jie-ecc, fo. 32,
+      * also, display, fo. 17 */
+-    ge->rBO = NO_knot(ge);
++    ge->rBO = ge->kNO;
+ }
+ 
+ static void on_TO60(struct ge *ge) {}
+diff --git a/signals.h b/signals.h
+index 46a2875..97bebc5 100644
+--- a/signals.h
++++ b/signals.h
+@@ -135,31 +135,6 @@ static inline uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_F
+  * @{
+  */
+ 
+-/**
+- * Knot driven by P0, V1, V2, V4, L1, R1, V3 and L3.
+- *
+- * In addition, the NO knot contains:
+- *   - the forcings from program
+- *   - the signals of forcing from console (AM switches)
+- */
+-static inline uint16_t NO_knot(struct ge *ge)
+-{
+-    switch (ge->kNO.cmd) {
+-        case KNOT_PO_IN_NO:    ge_log(LOG_STATES, "NO FROM rPO\n"); return ge->rPO;
+-        case KNOT_V1_IN_NO:    ge_log(LOG_STATES, "NO FROM rV1\n"); return ge->rV1;
+-        case KNOT_V2_IN_NO:    ge_log(LOG_STATES, "NO FROM rV2\n"); return ge->rV2;
+-        case KNOT_V3_IN_NO:    ge_log(LOG_STATES, "NO FROM rV3\n"); return ge->rV3;
+-        case KNOT_V4_IN_NO:    ge_log(LOG_STATES, "NO FROM rV4\n"); return ge->rV4;
+-        case KNOT_L1_IN_NO:    ge_log(LOG_STATES, "NO FROM rL1\n"); return ge->rL1;
+-        case KNOT_L2_IN_NO:    ge_log(LOG_STATES, "NO FROM rL2\n"); return ge->rL2;
+-        case KNOT_L3_IN_NO:    ge_log(LOG_STATES, "NO FROM rL3\n"); return ge->rL3;
+-        case KNOT_FORCINGS_IN_NO_21: ge_log(LOG_STATES, "NO FROM FORCINGS 1\n"); return ge->kNO.forcings;
+-        case KNOT_FORCINGS_IN_NO_43: ge_log(LOG_STATES, "NO FROM FORCINGS 2\n"); return ge->kNO.forcings << 8;
+-        case KNOT_AM_IN_NO:    ge_log(LOG_STATES, "NO FROM AM\n"); return ge->console_switches.AM;
+-        case KNOT_RI_IN_NO_43: ge_log(LOG_STATES, "NO FROM RI\n"); return ge->rRI << 8;
+-    }
+-}
+-
+ /**
+  * Knot driven by SO or SI. Content is stored to SA.
+  *
