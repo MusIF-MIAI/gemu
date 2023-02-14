@@ -26,6 +26,7 @@ UTEST(initialitiation, pressing_clear_start)
     ge_clear(&g);
     ASSERT_FALSE(g.AINI);
     ASSERT_FALSE(g.ALAM);
+    ASSERT_TRUE(g.ALTO);
 
     ge_start(&g);
     ASSERT_FALSE(g.AINI);

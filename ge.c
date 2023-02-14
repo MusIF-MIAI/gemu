@@ -33,7 +33,7 @@ void ge_clear(struct ge *ge)
 
     /* (One of) the possible set conditions (is): or with
      * "CLEAR" and.. (cpu fo. 98) */
-    ge->ALTO = 0;
+    ge->ALTO = 1;
 
     /* By pressing "CLEAR" tje FF RC01, RC02, RC03 are reset and the FF
      * RC00 is set. (cpu fo. 115) */
