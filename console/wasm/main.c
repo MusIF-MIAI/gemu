@@ -151,7 +151,7 @@ void em_main_loop() {
 }
 
 int main() {
-    ge_log_set_active_types(LOG_REGS);
+    ge_log_set_active_types(~(LOG_REGS_V | LOG_CONDS));
     ge_init(ge);
 
     send_console();
