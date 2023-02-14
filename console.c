@@ -1,6 +1,7 @@
 #include "console.h"
 #include "ge.h"
 #include "bit.h"
+#include "log.h"
 
 void ge_fill_console_data(struct ge* ge, struct ge_console *console)
 {
@@ -43,10 +44,19 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
 
 void ge_set_console_switches(struct ge *ge, struct ge_console_switches *switches)
 {
+    ge_log(LOG_CONSOLE,
+           "AM: %04x - switches: "
+           "SITE: %d INCE: %d INAR: %d STOC: %d "
+           "ACON: %d ACOV: %d RICI: %d PATE: %d PAPA: %d\n",
+           switches->AM,
+           switches->SITE, switches->INCE, switches->INAR, switches->STOC,
+           switches->ACON, switches->ACOV, switches->RICI, switches->PATE, switches->PAPA);
     ge->console_switches = *switches;
 }
 
+
 void ge_set_console_rotary(struct ge *ge, enum ge_console_rotary rs)
 {
+    ge_log(LOG_CONSOLE, "setting rotary %d\n", rs);
     ge->register_selector = rs;
 }

@@ -15,14 +15,15 @@ typedef int ge_log_type;
  * Log types can be combined by OR.
  */
 enum ge_log_types {
-    LOG_ERR    = 0x01, ///< Emulator unrecoverable condition
-    LOG_DEBUG  = 0x02, ///< General detailed debug information
-    LOG_REGS   = 0x04, ///< Register trace per cycle
-    LOG_STATES = 0x08, ///< State trace
-    LOG_CONDS  = 0x10, ///< MSL conditions trace
-    LOG_REGS_V = 0x20, ///< Register trace per pulse
-    LOG_FUTURE = 0x40, ///< Future state network debug
-    LOG_CYCLE  = 0x80, ///< Cycle attribution debug
+    LOG_ERR     = 0x001, ///< Emulator unrecoverable condition
+    LOG_DEBUG   = 0x002, ///< General detailed debug information
+    LOG_REGS    = 0x004, ///< Register trace per cycle
+    LOG_STATES  = 0x008, ///< State trace
+    LOG_CONDS   = 0x010, ///< MSL conditions trace
+    LOG_REGS_V  = 0x020, ///< Register trace per pulse
+    LOG_FUTURE  = 0x040, ///< Future state network debug
+    LOG_CYCLE   = 0x080, ///< Cycle attribution debug
+    LOG_CONSOLE = 0x100, ///< Console interactions
 };
 
 /**
