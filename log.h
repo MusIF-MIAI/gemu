@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef uint8_t ge_log_type;
+typedef int ge_log_type;
 
 /**
  * Log types from the emulator.
