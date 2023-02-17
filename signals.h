@@ -180,7 +180,7 @@ static inline uint16_t NO_knot(struct ge *ge)
 static inline uint8_t NA_knot(struct ge *ge) {
     uint8_t na = 0;
 
-    if (RES0(ge) || RIUC(ge))
+    if (RES0(ge) || (RIUC(ge) && AF32(ge)))
         na = ge->rSO;
 
     if (RES2(ge))
