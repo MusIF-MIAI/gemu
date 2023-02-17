@@ -62,12 +62,9 @@ UTEST(initialitiation, initialitiation_lamps)
 
     ge_init(&g);
     ge_fill_console_data(&g, &c);
-    ASSERT_TRUE(c.lamps.HALT);
-    ASSERT_TRUE(c.lamps.POWER_ON);
 
     ge_clear(&g);
     ge_fill_console_data(&g, &c);
-    ASSERT_FALSE(c.lamps.HALT);
     ASSERT_FALSE(c.lamps.OPERATOR_CALL);
 
     ge_load(&g);

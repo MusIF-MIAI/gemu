@@ -18,8 +18,7 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
 
     /* operator panel lamps (cpu fo. 33) */
 
-    console->lamps.POWER_ON = ge->powered;
-    console->lamps.HALT = ge->halted;
+    console->lamps.HALT = ge->ALTO;
     console->lamps.OPERATOR_CALL = ge->ALAM;
 
     /* performance conditions (cpu fo. 31, 32) */
