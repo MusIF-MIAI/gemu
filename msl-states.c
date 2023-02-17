@@ -268,16 +268,16 @@ static uint8_t state_80_TO30_CI15(struct ge *ge) { return !AF20(ge) && !AF40(ge)
 static uint8_t state_80_TO50_CI33(struct ge *ge) { return !AF20(ge) && !AF21(ge) && !AF40(ge); }
 
 static const struct msl_timing_chart state_00[] = {
-    { TO10, CO10, state_80_TO10_CO10 },
-    { TO10, CO11, state_80_TO10_CO11 },
-    { TO10, CO12, AF50 },
-    { TO10, CO13, AF30 },
-    { TO10, CO14, AF10 },
-    { TO30, CI15, state_80_TO30_CI15 },
-    { TO30, CI17, AF20 },
-    { TO30, CI21, AF40 },
-    { TO30, CI16, AF40 },
-    { TO50, CI33, state_80_TO50_CI33 },
+    { TO10, CO10, state_80_TO10_CO10 }, /* RS_NORM or RS_PO */
+    { TO10, CO11, state_80_TO10_CO11 }, /* RS_V1 or RS_V1_SCR or RS_V1_LETT */
+    { TO10, CO12, AF50 },               /* RS_V2 */
+    { TO10, CO13, AF30 },               /* RS_V3 */
+    { TO10, CO14, AF10 },               /* RS_V4 */
+    { TO30, CI15, state_80_TO30_CI15 }, /* not RS_L3 and not RS_R1_L2 */
+    { TO30, CI17, AF20 },               /* RES_L3 */
+    { TO30, CI21, AF40 },               /* RS_R1_R2 */
+    { TO30, CI16, AF40 },               /* RS_V1_SCR */
+    { TO50, CI33, state_80_TO50_CI33 }, /* not RS_L3 and not RS_L1 and not RS_R1_L2 */
     { TI06, CU07, 0 },
     { END_OF_STATUS, 0, 0 }
 };
