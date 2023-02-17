@@ -1,56 +1,74 @@
-#include <check.h>
+#include "utest.h"
 
 #include "../ge.h"
+#include "../console.h"
 
-START_TEST(initialitiation_state)
+UTEST(initialitiation, pressing_clear)
 {
     struct ge g;
-    int r;
 
-    r = ge_init(&g);
-    ck_assert_int_eq(r, 0);
+    ge_init(&g);
+    ASSERT_TRUE(g.halted);
+    ASSERT_TRUE(g.powered);
 
     ge_clear(&g);
-    ck_assert_int_eq(g.AINI, 0);
-    r = ge_load(&g, NULL, 0);
-    ck_assert_int_eq(r, 0);
-    ck_assert_int_eq(g.AINI, 1);
-    r = ge_start(&g);
-    ck_assert_int_eq(r, 0);
-    ck_assert_uint_eq(g.rSO, 0x80);
+    ASSERT_EQ(g.rSO, 0);
+    ASSERT_FALSE(g.AINI);
+    ASSERT_FALSE(g.ALAM);
+}
+
+UTEST(initialitiation, pressing_clear_start)
+{
+    struct ge g;
+
+    ge_init(&g);
+
+    ge_clear(&g);
+    ASSERT_FALSE(g.AINI);
+    ASSERT_FALSE(g.ALAM);
+    ASSERT_TRUE(g.ALTO);
+
+    ge_start(&g);
+    ASSERT_FALSE(g.AINI);
+
     ge_run_cycle(&g);
-    ck_assert_uint_eq(g.rSO, 0xc8);
+    ASSERT_EQ(g.rSO, 0x80);
+
+    ge_run_cycle(&g);
+    ASSERT_EQ(g.rSO, 0xe2);
 }
 
-Suite * init_suite(void)
+UTEST(initialitiation, pressing_clear_load_start)
 {
-    Suite *s;
-    TCase *tc_core;
+    struct ge g;
 
-    s = suite_create("INITIALITIAION");
+    ge_init(&g);
 
-    /* Core test case */
-    tc_core = tcase_create("load_c8");
+    ge_clear(&g);
+    ge_load(&g);
+    ge_start(&g);
 
-    tcase_add_test(tc_core, initialitiation_state);
+    ge_run_cycle(&g);
+    ASSERT_EQ(g.rSO, 0x80);
 
-    suite_add_tcase(s, tc_core);
-
-    return s;
+    ge_run_cycle(&g);
+    ASSERT_EQ(g.rSO, 0xc8);
 }
 
-int main(void)
+UTEST(initialitiation, initialitiation_lamps)
 {
-    int number_failed;
-    Suite *s;
-    SRunner *sr;
+    struct ge g;
+    struct ge_console c;
 
-    s = init_suite();
-    sr = srunner_create(s);
+    ge_init(&g);
+    ge_fill_console_data(&g, &c);
 
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return (number_failed == 0) ? 0 : -1;
+    ge_clear(&g);
+    ge_fill_console_data(&g, &c);
+    ASSERT_FALSE(c.lamps.OPERATOR_CALL);
+
+    ge_load(&g);
+    ge_start(&g);
+    ge_fill_console_data(&g, &c);
+    ASSERT_FALSE(c.lamps.HALT);
 }
-

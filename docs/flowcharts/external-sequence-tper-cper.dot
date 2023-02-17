@@ -1,0 +1,60 @@
+// UCE 460 - 140231300 (fo. 14) - External sequence - TPER, CPER
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> CA
+    CA    -> cond1
+    cond1 -> cond2 [ label = "yes" ]
+    cond1 -> A8    [ label = "no"  ]
+    
+    A8    -> A9
+    A9    -> AA
+    AA    -> AB
+    AB    -> cond3
+    cond3 -> B8    [ label = "yes" ]
+    cond3 -> cond4 [ label = "no"  ]
+    
+    cond4 -> 00    [ label = "no"  ]
+    cond4 -> note  [ label = "yes" ]
+    note  -> cond3
+    
+    cond2 -> E2E3  [ label = "yes" ]
+    cond2 -> cond5 [ label = "no"  ]
+    
+    cond5 -> 00    [ label = "no"  ]
+    cond5 -> note1 [ label = "yes" ]
+    
+    note1 -> cond2
+    
+    B8    -> cond6
+    cond6 -> cond7 [ label = "yes" ]
+    cond6 -> cond8 [ label = "no"  ]
+    cond6 -> cond9 [ label = "no"  ]
+    
+    cond8 -> EA    [ label = "yes" ]
+    cond9 -> E2E3  [ label = "yes" ]
+    
+    note2 -> EA 
+    EA -> EB
+    EB -> E2E3
+    
+    start [ shape = none ; label = "TPER, CPER" ]
+    note  [ shape = none ; label = "Performs can2,\ncan3 statuses" ]
+    note1 [ shape = none ; label = "Performs can2,\ncan3 statuses" ]
+    note2 [ shape = none ; label = "SPER" ]
+    
+    E2E3  [ shape = record ; label = "E2|E3" ]
+    
+    cond1 [ shape = diamond ; label = "L207"]
+    cond2 [ shape = diamond ; label = "TE30"]
+    cond3 [ shape = diamond ; label = "TE30"]
+    cond4 [ shape = diamond ; label = "Can 2, 3"]
+    cond5 [ shape = diamond ; label = "Can 2, 3"]
+    cond6 [ shape = diamond ; label = "!DU97 * !DU98"]
+    cond7 [ shape = diamond ; label = "Can 1, 2, 3"]
+    cond8 [ shape = diamond ; label = "DU98"]
+    cond9 [ shape = diamond ; label = "DU97"]
+}
+

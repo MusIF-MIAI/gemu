@@ -1,6 +1,10 @@
 *~
 *.o
 *.d
+libge.a
 ge
+tests/tests
+
 *.xcodeproj/**
 tags
+docs/html/**

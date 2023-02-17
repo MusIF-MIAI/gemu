@@ -1,0 +1,22 @@
+// UCE 460 - 140231301 (fo. 15) - External sequence - Channel 1 output data transfer phase
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> B9
+    B9    -> cond1
+    cond1 -> B9    [ label = "yes" ]
+    cond1 -> cond2 [ label = "no"  ]
+    
+    cond2 -> B8    [ label = "no"  ]
+    cond2 -> note  [ label = "yes" ]
+    note  -> cond1
+    
+    start [ shape = none ; label = "Output data transfer" ]
+    note  [ shape = none ; label = "Performs can2,\ncan3 statuses" ]
+    
+    cond1 [ shape = diamond ; label = "Can 1"]
+    cond2 [ shape = diamond ; label = "Can 2, 3"]
+}
+

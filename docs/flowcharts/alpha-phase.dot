@@ -1,0 +1,49 @@
+// UCE 460 - 14023129 (fo. 4) - Alpha Phase
+    
+digraph G {
+
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+
+    E2E3  -> cond1
+    cond1 -> F0    [ label = "yes" ]
+    cond1 -> E0    [ label = "no"  ]
+
+    E0    -> cond2
+    cond2 -> 6465  [ label = "yes" ]
+    cond2 -> E4    [ label = "no"  ]
+
+    E4    -> E6
+    E6    -> cond3
+
+    cond3 -> EDEC  [ label = "yes" ]
+    cond3 -> cond4 [ label = "no"  ]
+
+    cond4 -> 6465  [ label = "yes" ]
+    cond4 -> E5    [ label = "no"  ]
+
+    E5    -> E7
+    E7    -> cond5
+    cond5 -> 6465  [label = "no" ]
+    cond5 -> EDEC  [label = "yes"]
+    
+    EDEC  -> EFEE
+    EFEE  -> cond6
+    cond6 -> cond7 [ label = "yes"]
+    cond6 -> 6465  [ label = "no"]
+    
+    cond7 -> E5    [ label = "yes" ]
+    cond7 -> unknown [ label = "no" ]
+
+
+    E2E3 [ shape = record ; label = "E2|E3" ]
+    EDEC [ shape = record ; label = "ED|EC" ]
+    6465 [ shape = record ; label = "64|65" ]
+
+    cond1 [ shape = diamond ; label = "INTE" ]
+    cond2 [ shape = diamond ; label = "P type"]
+    cond3 [ shape = diamond ; label = "Modify"]
+    cond4 [ shape = diamond ; label = "PM type"]
+    cond5 [ shape = diamond ; label = "Modify"]
+    cond7 [ shape = diamond ; label = "PMM type"]
+}

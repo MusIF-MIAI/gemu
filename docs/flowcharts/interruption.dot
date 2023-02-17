@@ -1,0 +1,18 @@
+// UCE 460 - 140231301 (fo. 7) - Interruption
+    
+digraph G {
+
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    
+    start -> F0
+    F0 -> D2
+    D2 -> D3
+    D3 -> D0
+    D0 -> D1
+    D1 -> C2
+    
+    start [ shape = none ; label = "[START] with switch in forcing position"]
+}
+

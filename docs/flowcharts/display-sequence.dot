@@ -1,0 +1,18 @@
+// UCE 460 - 14023130 (fo. 5) - Display Sequence
+    
+digraph G {
+
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+
+
+    clear -> 00
+    08    -> 00
+    00    -> cond1
+    cond1 -> 80 [ label = "[CLEAR] - [LOAD] - [START]"]
+    cond1 -> 00 [ label = "[CLEAR]" ]
+
+    clear [ shape = none ; label = "[CLEAR]"]
+    cond1 [ shape = diamond ]
+}
+

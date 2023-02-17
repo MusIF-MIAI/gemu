@@ -1,72 +1,146 @@
-#include <check.h>
+#include "utest.h"
 
 #include "../ge.h"
 
-#define NOP2_OPCODE 0x07
-
-START_TEST(execute_nop)
+UTEST(beta_phase, execute_nop)
 {
     uint8_t mem[2] = {NOP2_OPCODE, 0xAA};
     struct ge g;
     int r;
 
-    r = ge_init(&g);
-    ck_assert_int_eq(r, 0);
-
+    ge_init(&g);
     ge_clear(&g);
 
-    r = ge_load(&g, mem, sizeof(mem));
-    r = ge_start(&g);
-    ck_assert_int_eq(r, 0);
+    r = ge_load_program(&g, mem, sizeof(mem));
+    ASSERT_EQ(r, 0);
+
+    ge_start(&g);
+
+    /* Display */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0x80);
 
     /* Initialisation */
     ge_run_cycle(&g);
-    ck_assert(g.rSO == 0xe2 || g.rSO == 0xe3);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
 
     /* Alpha */
     ge_run_cycle(&g);
-    ck_assert(g.rSO == 0xe0);
+    ASSERT_EQ(g.rSO, 0xe0);
 
     ge_run_cycle(&g);
-    ck_assert(g.rSO == 0x64 || g.rSO == 0x65);
+    ASSERT_TRUE(g.rSO == 0x64 || g.rSO == 0x65);
 
     /* Beta */
-    ck_assert_int_eq(g.rFO, NOP2_OPCODE);
+    ASSERT_EQ(g.rFO, NOP2_OPCODE);
 
     ge_run_cycle(&g);
-    ck_assert(g.rSO == 0xe2 || g.rSO == 0xe3);
-    ck_assert_uint_eq(g.rPO, 0x0002);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+    ASSERT_EQ(g.rPO, 0x0002);
 }
 
-Suite * init_suite(void)
-{
-    Suite *s;
-    TCase *tc_core;
+UTEST(beta_phase, execute_lon_loff) {
+    uint8_t mem[] = { LON_OPCODE, LON_2NDCHAR, LOFF_OPCODE, LOFF_2NDCHAR };
+    struct ge g;
+    struct ge_console c;
 
-    s = suite_create("BETA");
+    ge_init(&g);
+    ge_load_program(&g, mem, sizeof(mem));
 
-    /* Core test case */
-    tc_core = tcase_create("beta phase");
+    ge_clear(&g);
+    ge_start(&g);
 
-    tcase_add_test(tc_core, execute_nop);
+    /* Display */
+    ge_run_cycle(&g);
 
-    suite_add_tcase(s, tc_core);
+    /* Initialisation */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
 
-    return s;
+    /* Lamps */
+    ge_fill_console_data(&g, &c);
+    ASSERT_FALSE(c.lamps.OPERATOR_CALL);
+
+    /* Alpha 1 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0xe0);
+
+    /* Alpha 2 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0x64);
+
+    /* Beta */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.ALAM);
+    ASSERT_TRUE(g.PODI);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+
+    /* Lights */
+    ge_fill_console_data(&g, &c);
+    ASSERT_TRUE(c.lamps.OPERATOR_CALL);
+
+    /* Alpha 1 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0xe0);
+
+    /* Alpha 2 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0x64);
+
+    /* Beta */
+    ge_run_cycle(&g);
+    ASSERT_FALSE(g.ALAM);
+    ASSERT_FALSE(g.PODI);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+
+    /* Lights */
+    ge_fill_console_data(&g, &c);
+    ASSERT_FALSE(c.lamps.OPERATOR_CALL);
 }
 
-int main(void)
-{
-    int number_failed;
-    Suite *s;
-    SRunner *sr;
+UTEST(beta_phase, execute_ins_ens) {
+    uint8_t mem[] = { INS_OPCODE, INS_2NDCHAR, ENS_OPCODE, ENS_2NDCHAR };
+    struct ge g;
+    struct ge_console c;
 
-    s = init_suite();
-    sr = srunner_create(s);
+    ge_init(&g);
+    ge_load_program(&g, mem, sizeof(mem));
+    ge_clear(&g);
+    ge_start(&g);
 
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return (number_failed == 0) ? 0 : -1;
+    ge_run_cycle(&g);
+
+    /* Initialisation */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+
+    /* Lamps */
+    ge_fill_console_data(&g, &c);
+    ASSERT_FALSE(c.lamps.OPERATOR_CALL);
+
+    /* Alpha 1 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0xe0);
+
+    /* Alpha 2 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0x64);
+
+    /* Beta */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.ADIR);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+
+    /* Alpha 1 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0xe0);
+
+    /* Alpha 2 */
+    ge_run_cycle(&g);
+    ASSERT_TRUE(g.rSO == 0x64);
+
+    /* Beta */
+    ge_run_cycle(&g);
+    ASSERT_FALSE(g.ADIR);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
 }
-

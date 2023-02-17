@@ -1,0 +1,14 @@
+// UCE 460 - 140231302 (fo. 9) - Various single instructions
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> 6465
+    6465 -> E2E3
+    
+    start [ shape = none ; label = "JS1 JS2 JIE JC NOP2\nHLT INS ENS LON LOFF LOLL"]
+    6465  [ shape = record ; label = "64|65" ]
+    E2E3  [ shape = record ; label = "E2|E3" ]
+}
+

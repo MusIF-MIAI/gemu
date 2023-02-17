@@ -7,6 +7,7 @@
 
 #include "console_socket.h"
 #include "ge.h"
+#include "console.h"
 #include "log.h"
 
 static const char socket_path[] = "/tmp/gemu.console";
@@ -40,23 +41,25 @@ static int console_socket_check(struct ge *ge, void *ctx)
 {
     char buf[1024];
     struct sockaddr_un dst;
-    int ret;
-    socklen_t ssz = sizeof(struct sockaddr_un);
+    ssize_t ret;
+    socklen_t socket_size = sizeof(struct sockaddr_un);
+    struct ge_console console;
+
     (void)ctx;
+
     if (console_socket_fd < 0) {
         return -1;
     }
-    ge->console.lamps.RO = ge->rRO;
-    ge->console.lamps.SO = ge->rSO;
-    ge->console.lamps.SA = ge->rSA;
-    ge->console.lamps.FA = ge->rFA & 0x0F;
+
+    ge_fill_console_data(ge, &console);
 
     ret = recvfrom(console_socket_fd, buf, 1024, 0,
-                (struct sockaddr *)&dst, &ssz);
+                   (struct sockaddr *)&dst, &socket_size);
     if (ret > 0) {
         ge_log(LOG_DEBUG, "doing check\n");
-        sendto(console_socket_fd, (unsigned char *)(&ge->console), sizeof(struct ge_console), 0,
-               (struct sockaddr *)&dst, ssz);
+        sendto(console_socket_fd, (unsigned char *)(&console),
+               sizeof(struct ge_console), 0, (struct sockaddr *)&dst,
+               socket_size);
     }
 
     return 0;

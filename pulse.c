@@ -1,108 +1,89 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "ge.h"
+#include "signals.h"
+#include "log.h"
 
-static int on_TO00(struct ge *ge) {
-	return 0;
+static void on_TO00(struct ge *ge) {
+    /* cpu fo. 115 */
+    ge->RIA0 = ge->RC00 && !ge->ALTO;
+    ge->RESI = ge->RC01;
+    ge->RIA2 = ge->RC02;
+    ge->RIA3 = ge->RC03;
+
+    /* TODO: a "counter" with RAMO, RAMI should condition RIA0 */
+
+    ge_log(LOG_CYCLE, "  async: RC00: %d RC01: %d RC02: %d RC03: %d ALTO: %d\n",
+           ge->RC00, ge->RC01, ge->RC02, ge->RC03, ge->ALTO);
+
+    ge_log(LOG_CYCLE, "  sync:  RIA0: %d RESI: %d RIA2: %d RIA3: %d\n",
+           ge->RIA0, ge->RESI, ge->RIA2, ge->RIA3);
+
+    ge_log(LOG_CYCLE, "      -> RIUC: %d RES0: %d RES2: %d RES3: %d\n",
+           RIUC(ge), RES0(ge), RES2(ge), RES3(ge));
 }
 
-static int on_TO10(struct ge *ge) {
-    /* load FI00-FI06 in FA00-FA06 (cpu pag129) */
-    ge->ffFA = ge->ffFI;
+static void on_TO10(struct ge *ge) {
+    ge->ffFA = ge->ffFI; /* cpu fo. 129  */
+    ge->rSA  = NA_knot(ge); /* cpu fo. 128 */
 
-    /* load SA register (cpu pag.128) */
-    ge->rSA = ge->kNA;
-	return 0;
+    /* save SA to emulate the future state network */
+    ge->future_state = ge->rSA;
+
+    /* TODO: a "counter" with RAMO, RAMI should count (cpu fo. 115) */
 }
 
-static int on_TO11(struct ge *ge) {
-	return 0;
+static void on_TO11(struct ge *ge) {}
+static void on_TO15(struct ge *ge) {}
+static void on_TO19(struct ge *ge) {}
+
+static void on_TO20(struct ge *ge) {
+    ge->rBO = NO_knot(ge); /* cpu fo. 142, 126 */
+    ge->rVO = NO_knot(ge); /* cpu fo. 124, 125 */
+
+    ge->ACIC = 0; /* cpu fo. 99  */
+
+    /* TODO: are there any condition?   */
+    ge->rRO = 0;  /* cpu fo. 142 */
 }
 
-static int on_TO15(struct ge *ge) {
-	return 0;
-}
+static void on_TO25(struct ge *ge) {}
+static void on_TO30(struct ge *ge) {}
 
-static int on_TO19(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO20(struct ge *ge) {
-
-    /* pag 142, pag 126 */
-    ge->rBO = ge->kNO;
-    /* pag. 124, pag 125 */
-    ge->rVO = ge->kNO;
-
-    /* TODO: are there any condition? */
-    /* pag 142 */
-    ge->rRO = 0;
-
-    return 0;
-}
-
-static int on_TO25(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO30(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO40(struct ge *ge) {
+static void on_TO40(struct ge *ge) {
     /* stub */
     if (ge->counting_network.cmds.from_zero) {
         ge->kNI = ge->rBO + 1;
     }
-	return 0;
 }
 
-static int on_TO50(struct ge *ge) {
-    /* timing chart js1-js2-jie-ecc, fo. 32 */
-    ge->rBO = ge->kNO;
-	return 0;
+static void on_TO50(struct ge *ge) {
+    /* timing chart js1-js2-jie-ecc, fo. 32,
+     * also, display, fo. 17 */
+    ge->rBO = NO_knot(ge);
 }
 
-static int on_TO60(struct ge *ge) {
-    return 0;
+static void on_TO60(struct ge *ge) {}
+static void on_TO64(struct ge *ge) {}
+static void on_TO65(struct ge *ge) {}
+static void on_TO70(struct ge *ge) {}
+static void on_TO80(struct ge *ge) {}
+static void on_TO89(struct ge *ge) {}
+
+static void on_TO90(struct ge *ge) {
+    /* TODO: check if ! is correct: PODIB should be PODI negated */
+    if (!ge->PODI)
+        ge->ACIC = 1;  /* cpu fo. 99 */
 }
 
-static int on_TO64(struct ge *ge) {
-    return 0;
+static void on_TI05(struct ge *ge) {
+    /* TODO: check if ! is correct: PODIB should be PODI negated */
+    if (ge->PODI)
+        ge->ACIC = 1;  /* cpu fo. 99 */
 }
 
-static int on_TO65(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO70(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO80(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO89(struct ge *ge) {
-	return 0;
-}
-
-static int on_TO90(struct ge *ge) {
-	return 0;
-}
-
-static int on_TI05(struct ge *ge) {
-	return 0;
-}
-
-static int on_TI06(struct ge *ge) {
-	return 0;
-}
-
-static int on_TI10(struct ge *ge) {
-	return 0;
-}
-
+static void on_TI06(struct ge *ge) {}
+static void on_TI10(struct ge *ge) {}
 
 static on_pulse_cb pulse_cb[END_OF_STATUS] = {
     on_TO00,
@@ -128,10 +109,9 @@ static on_pulse_cb pulse_cb[END_OF_STATUS] = {
 };
 
 
-int pulse(struct ge *ge)
+void pulse(struct ge *ge)
 {
     if (pulse_cb[ge->current_clock]) {
-        return pulse_cb[ge->current_clock](ge);
+        pulse_cb[ge->current_clock](ge);
     }
-    return 0;
 }

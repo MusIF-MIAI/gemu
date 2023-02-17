@@ -1,0 +1,59 @@
+// UCE 460 - 140231300 (fo. 13) - External sequence - Preliminary
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> 6465
+    6465  -> C8
+    C8    -> D8
+    D8    -> D9
+    D9    -> DA
+    DA    -> DB
+    DB    -> cond1
+    cond1 -> D8    [ label = "yes" ]
+    cond1 -> DC    [ label = "no"  ]
+    
+    DC -> CC
+    CC -> cond3
+    
+    note  -> 80
+    80    -> cond2
+    cond2 -> C8    [ label = "yes" ]
+    cond2 -> E2E3  [ label = "no"  ]
+    
+    6062  -> 5052 
+    5052  -> 4042
+    4042  -> cond1
+    cond1 -> E2E3  [ label = "yes" ]
+    cond1 -> 6062  [ label = "no"  ]
+    
+    cond3 -> E2E3  [ label = "yes" ]
+    cond3 -> cond4 [ label = "no"  ]
+    
+    cond4 -> D8    [ label = "yes, unit busy"]
+    cond4 -> cond5 [ label = "no"  ]
+    
+    cond5 -> CA    [ label = "no"  ]
+    cond5 -> cond6 [ label = "yes" ]
+    
+    cond6 -> E2E3  [ label = "no"  ]
+    cond6 -> EA    [ label = "yes" ]
+    
+    start [ shape = none ; label = "PER - PERI" ]
+    note  [ shape = none ; label = "[CLEAR] [START], or\n [CLEAR] [LOAD] [START]" ]
+    
+    4042  [ shape = record ; label = "40|42" ]
+    5052  [ shape = record ; label = "50|52" ]
+    6062  [ shape = record ; label = "60|62" ]
+    6465  [ shape = record ; label = "64|65" ]
+    E2E3  [ shape = record ; label = "E2|E3" ]
+    
+    cond1 [ shape = diamond ; label = "!FA05 * !FA04"]
+    cond2 [ shape = diamond ; label = "AINI"]
+    cond3 [ shape = diamond ; label = "FA05"]
+    cond4 [ shape = diamond ; label = "FA00"]
+    cond5 [ shape = diamond ; label = "DU96"]
+    cond6 [ shape = diamond ; label = "DU95"]
+}
+

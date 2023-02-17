@@ -1,0 +1,16 @@
+// UCE 460 - 140231302 (fo. 10) - LA JRT sequences
+    
+digraph G {
+    graph [ splines = ortho ]
+    node  [ shape = box ]
+    
+    start -> 6465
+    6465  -> EA
+    EA    -> EB
+    EB    -> E2E3
+    
+    start [ shape = none ; label = "JRT, LA"]
+    6465  [ shape = record ; label = "64|65" ]
+    E2E3  [ shape = record ; label = "E2|E3" ]
+}
+
