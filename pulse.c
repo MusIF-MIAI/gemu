@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ge.h"
 #include "signals.h"
 #include "log.h"
@@ -57,10 +58,16 @@ static void on_TO40(struct ge *ge) {
     }
 }
 
-static void on_TO50(struct ge *ge) {
-    /* timing chart js1-js2-jie-ecc, fo. 32,
-     * also, display, fo. 17 */
-    ge->rBO = NO_knot(ge);
+static void on_TO50(struct ge *ge) {}
+
+static void on_TO50_1(struct ge *ge) {
+    if (!ge->TO50_conditions.did_CI33) {
+        /* timing chart js1-js2-jie-ecc, fo. 32,
+         * also, display, fo. 17 */
+        ge->rBO = NO_knot(ge);
+    }
+
+    memset(&ge->TO50_conditions, 0, sizeof(ge->TO50_conditions));
 }
 
 static void on_TO60(struct ge *ge) {}
@@ -96,6 +103,7 @@ static on_pulse_cb pulse_cb[END_OF_STATUS] = {
     on_TO30,
     on_TO40,
     on_TO50,
+    on_TO50_1,
     on_TO60,
     on_TO64,
     on_TO65,

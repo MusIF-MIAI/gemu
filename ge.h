@@ -19,6 +19,7 @@
     X(TO30) \
     X(TO40) \
     X(TO50) \
+    X(TO50_1) \
     X(TO60) \
     X(TO64) \
     X(TO65) \
@@ -455,6 +456,22 @@ struct ge {
 
     struct ge_counting_network counting_network;
     struct ge_peri *peri;
+
+    /**
+     * Workaround for pulse TO50
+     *
+     * Currently we first run the common machine logic, then the
+     * MSL states. However in certain cases (e.g. display state 00)
+     * the common TO50 implementation is conditioned on the activation
+     * of the MSL TO50...
+     * So, until we figure out a better way of factoring the MSL, let's
+     * store here the conditions for the common machine TO50,
+     * and delay its excecution to a fake TO50-1 clock pulse.
+     */
+    struct {
+        /* state 00 to 50: "if ci33 is absent, transfer NO in BO */
+        uint8_t did_CI33:1;
+    } TO50_conditions;
 };
 
 /// Initialize the emulator
