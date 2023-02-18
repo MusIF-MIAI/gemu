@@ -63,22 +63,22 @@ void send_console() {
     set_lamp("B_2", BIT(console.lamps.B, 2));
     set_lamp("B_3", BIT(console.lamps.B, 3));
 
-    set_lamp("ADD_0", BIT(console.lamps.SA,  0));
-    set_lamp("ADD_1", BIT(console.lamps.SA,  1));
-    set_lamp("ADD_2", BIT(console.lamps.SA,  2));
-    set_lamp("ADD_3", BIT(console.lamps.SA,  3));
-    set_lamp("ADD_4", BIT(console.lamps.SA,  4));
-    set_lamp("ADD_5", BIT(console.lamps.SA,  5));
-    set_lamp("ADD_6", BIT(console.lamps.SA,  6));
-    set_lamp("ADD_7", BIT(console.lamps.SA,  7));
-    set_lamp("ADD_8", BIT(console.lamps.SA,  8));
-    set_lamp("ADD_9", BIT(console.lamps.SA,  9));
-    set_lamp("ADD_A", BIT(console.lamps.SA, 10));
-    set_lamp("ADD_B", BIT(console.lamps.SA, 11));
-    set_lamp("ADD_C", BIT(console.lamps.SA, 12));
-    set_lamp("ADD_D", BIT(console.lamps.SA, 13));
-    set_lamp("ADD_E", BIT(console.lamps.SA, 14));
-    set_lamp("ADD_F", BIT(console.lamps.SA, 15));
+    set_lamp("ADD_0", BIT(console.lamps.ADD_reg,  0));
+    set_lamp("ADD_1", BIT(console.lamps.ADD_reg,  1));
+    set_lamp("ADD_2", BIT(console.lamps.ADD_reg,  2));
+    set_lamp("ADD_3", BIT(console.lamps.ADD_reg,  3));
+    set_lamp("ADD_4", BIT(console.lamps.ADD_reg,  4));
+    set_lamp("ADD_5", BIT(console.lamps.ADD_reg,  5));
+    set_lamp("ADD_6", BIT(console.lamps.ADD_reg,  6));
+    set_lamp("ADD_7", BIT(console.lamps.ADD_reg,  7));
+    set_lamp("ADD_8", BIT(console.lamps.ADD_reg,  8));
+    set_lamp("ADD_9", BIT(console.lamps.ADD_reg,  9));
+    set_lamp("ADD_A", BIT(console.lamps.ADD_reg, 10));
+    set_lamp("ADD_B", BIT(console.lamps.ADD_reg, 11));
+    set_lamp("ADD_C", BIT(console.lamps.ADD_reg, 12));
+    set_lamp("ADD_D", BIT(console.lamps.ADD_reg, 13));
+    set_lamp("ADD_E", BIT(console.lamps.ADD_reg, 14));
+    set_lamp("ADD_F", BIT(console.lamps.ADD_reg, 15));
 
     set_lamp("OP_0", BIT(console.lamps.OP_reg, 0));
     set_lamp("OP_1", BIT(console.lamps.OP_reg, 1));
