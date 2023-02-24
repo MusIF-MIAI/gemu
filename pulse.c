@@ -100,6 +100,9 @@ static void on_TI05(struct ge *ge) {
     /* TODO: check if ! is correct: PODIB should be PODI negated */
     if (ge->PODI)
         ge->ACIC = 1;  /* cpu fo. 99 */
+
+    /* workaround: reset NI with BO assuming there are no second-phase counting network commands */
+    ge->kNI = ge->rBO;
 }
 
 static void on_TI06(struct ge *ge) {}
