@@ -51,8 +51,8 @@ static void CI21(struct ge* ge) { ge->kNO.cmd = KNOT_RI_IN_NO_43;    }
 /* VO, BO, RO Loading Commands */
 /* --------------------------- */
 
-static void CO30(struct ge* ge) { ge->rRO = ge->mem[ge->rVO]; }
-static void CO31(struct ge* ge) { ge->mem[ge->rVO] = ge->rRO; }
+static void CO30(struct ge* ge) { ge->memory_command = MC_READ;  }
+static void CO31(struct ge* ge) { ge->memory_command = MC_WRITE; }
 static void CO35(struct ge* ge) { /* "reset int. error"? (cpu fo. 105) */ }
 
 static void CI32(struct ge* ge) { ge->rRO = NO_knot(ge) >> 8; }

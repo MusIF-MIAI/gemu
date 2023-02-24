@@ -72,7 +72,20 @@ static void on_TO50_1(struct ge *ge) {
 
 static void on_TO60(struct ge *ge) {}
 static void on_TO64(struct ge *ge) {}
-static void on_TO65(struct ge *ge) {}
+
+static void on_TO65(struct ge *ge) {
+    /* the only reference i found for this is the timing diagram
+     * in cpu fo. 145 */
+
+    if (ge->memory_command == MC_READ)
+        ge->rRO = ge->mem[ge->rVO];
+
+    if (ge->memory_command == MC_WRITE)
+        ge->mem[ge->rVO] = ge->rRO;
+
+    ge->memory_command = MC_NONE;
+}
+
 static void on_TO70(struct ge *ge) {}
 static void on_TO80(struct ge *ge) {}
 static void on_TO89(struct ge *ge) {}

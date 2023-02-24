@@ -452,6 +452,13 @@ struct ge {
     struct ge_console_switches console_switches;
 
     uint8_t step_by_step:1;  ///< Step by step execution @todo replace with signal name
+
+    enum {
+        MC_NONE,
+        MC_READ,
+        MC_WRITE,
+    } memory_command;
+
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
     struct ge_counting_network counting_network;
