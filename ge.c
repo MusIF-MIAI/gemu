@@ -107,10 +107,10 @@ void ge_print_registers_nonverbose(struct ge *ge)
 {
     if (ge_log_enabled(LOG_REGS_V)) return;
     ge_log(LOG_REGS,
-           "SO: %02x SA: %02x - PO: %04x - RO: %04x - FO: %04x  -  "
+           "SO: %02x SA: %02x PO: %04x RO: %04x BO: %04x FO: %04x -  "
            "V1: %04x  V2: %04x  V3: %04x  V4: %04x - "
            "L1: %04x  L2: %04x L3 : %04x\n",
-           ge->rSO, ge->rSA, ge->rPO, ge->rRO, ge->rFO,
+           ge->rSO, ge->rSA, ge->rPO, ge->rRO, ge->rBO, ge->rFO,
            ge->rV1, ge->rV2, ge->rV3, ge->rV4,
            ge->rL1, ge->rL2, ge->rL3);
 }
@@ -119,11 +119,13 @@ void ge_print_registers_verbose(struct ge *ge)
 {
     ge_log(LOG_REGS_V,
            "%s:  "
-           "SO: %02x SA: %02x - PO: %04x - RO: %04x - FO: %04x  -  "
+           "SO: %02x SA: %02x PO: %04x RO: %04x BO: %04x FO: %04x  -  "
+           "NO: %02x NI: %02x  -  "
            "V1: %04x  V2: %04x  V3: %04x  V4: %04x - "
            "L1: %04x  L2: %04x L3 : %04x\n",
            ge_clock_name(ge->current_clock),
-           ge->rSO, ge->rSA, ge->rPO, ge->rRO, ge->rFO,
+           ge->rSO, ge->rSA, ge->rPO, ge->rRO, ge->rBO, ge->rFO,
+           NO_knot(ge), ge->kNI,
            ge->rV1, ge->rV2, ge->rV3, ge->rV4,
            ge->rL1, ge->rL2, ge->rL3);
 }
