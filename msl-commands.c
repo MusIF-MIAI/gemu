@@ -58,7 +58,7 @@ static void CO35(struct ge* ge) { /* "reset int. error"? (cpu fo. 105) */ }
 static void CI32(struct ge* ge) { ge->rRO = NO_knot(ge) >> 8; }
 
 static void CI33(struct ge* ge) {
-    ge->rRO = ge->kNI & 0x00ff;
+    ge->rRO = NO_knot(ge) & 0x00ff;
     ge->TO50_conditions.did_CI33 = 1;
 }
 
