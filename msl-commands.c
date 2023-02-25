@@ -12,22 +12,22 @@
 /* Commands To Load The Registers */
 /* ------------------------------ */
 
-static void CO00(struct ge* ge) { ge->rPO = ge->kNI; }
-static void CO01(struct ge* ge) { ge->rV1 = ge->kNI; }
-static void CO02(struct ge* ge) { ge->rV2 = ge->kNI; }
-static void CO03(struct ge* ge) { ge->rV3 = ge->kNI; }
-static void CO04(struct ge* ge) { ge->rV4 = ge->kNI; }
+static void CO00(struct ge* ge) { ge->rPO = NI_knot(ge); }
+static void CO01(struct ge* ge) { ge->rV1 = NI_knot(ge); }
+static void CO02(struct ge* ge) { ge->rV2 = NI_knot(ge); }
+static void CO03(struct ge* ge) { ge->rV3 = NI_knot(ge); }
+static void CO04(struct ge* ge) { ge->rV4 = NI_knot(ge); }
 
 static void CI00(struct ge* ge) { CO00(ge); }
 static void CI01(struct ge* ge) { CO01(ge); }
 static void CI02(struct ge* ge) { CO02(ge); }
 static void CI03(struct ge* ge) { CO03(ge); }
 static void CI04(struct ge* ge) { CO04(ge); }
-static void CI05(struct ge* ge) { ge->rL1 = ge->kNI; }
-static void CI06(struct ge* ge) { ge->rL2 = ge->kNI & 0x00ff; }
-static void CI07(struct ge* ge) { ge->rL3 = ge->kNI; }
-static void CI08(struct ge* ge) { ge->rFO = ge->kNI & 0x00ff; }
-static void CI09(struct ge* ge) { ge->rRI = (ge->kNI & 0xff00) >> 8; }
+static void CI05(struct ge* ge) { ge->rL1 = NI_knot(ge); }
+static void CI06(struct ge* ge) { ge->rL2 = NI_knot(ge) & 0x00ff; }
+static void CI07(struct ge* ge) { ge->rL3 = NI_knot(ge); }
+static void CI08(struct ge* ge) { ge->rFO = (NI_knot(ge) & 0x00ff); }
+static void CI09(struct ge* ge) { ge->rRI = (NI_knot(ge) & 0xff00) >> 8; }
 
 /* NO Knot Selection Commands */
 /* -------------------------- */
@@ -106,39 +106,16 @@ static void CO49(struct ge* ge) {
 /* NI Knot Selection Commands */
 /* -------------------------- */
 
-static void CI60(struct ge *ge)
-{
-    ge->kNI &= ~NIBBLE_MASK(4);
-    ge->kNI |= (ge->rRO & NIBBLE_MASK(2));
-}
-
-static void CI61(struct ge *ge) CC
-
-static void CI62(struct ge *ge)
-{
-    ge->kNI &= ~NIBBLE_MASK(2);
-    ge->kNI |= (ge->rRO & NIBBLE_MASK(2));
-}
-
-static void CI63(struct ge *ge) CC
-static void CI64(struct ge *ge) CC
-
-static void CI65(struct ge *ge)
-{
-    ge->kNI &= ~NIBBLE_MASK(3);
-    ge->kNI |= (ge->rRO & NIBBLE_MASK(1));
-}
-
-static void CI66(struct ge *ge) CC
-static void CI67(struct ge *ge)
-{
-    /* this should inhibit couting network to drive NI */
-    ge->kNI &= ~NIBBLE_MASK(1);
-    ge->kNI |= (ge->rRO & NIBBLE_MASK(1));
-}
-
-static void CI68(struct ge *ge) CC
-static void CI69(struct ge *ge) { ge->ALTO = 1; }
+static void CI60(struct ge *ge) { ge->kNI.ni4 = NS_RO2; }
+static void CI61(struct ge *ge) { ge->kNI.ni3 = NS_RO2; }
+static void CI62(struct ge *ge) { ge->kNI.ni2 = NS_RO2; }
+static void CI63(struct ge *ge) { ge->kNI.ni1 = NS_RO2; }
+static void CI64(struct ge *ge) { ge->kNI.ni4 = NS_RO1; }
+static void CI65(struct ge *ge) { ge->kNI.ni3 = NS_RO1; }
+static void CI66(struct ge *ge) { ge->kNI.ni2 = NS_RO1; }
+static void CI67(struct ge *ge) { ge->kNI.ni1 = NS_RO1; }
+static void CI68(struct ge *ge) { ge->kNI.ni4 = NS_UA2; ge->kNI.ni3 = NS_UA1; }
+static void CI69(struct ge *ge) { ge->kNI.ni2 = NS_UA2; ge->kNI.ni1 = NS_UA1; }
 
 /* Commands To Set And Reset FF Of Condition */
 /* ----------------------------------------- */

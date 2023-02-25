@@ -129,6 +129,15 @@ static inline uint8_t AF52(struct ge *ge) { return ge->register_selector == RS_F
 static inline uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_FO;      }
 /** @} */
 
+static inline uint16_t ge_counting_network_output(struct ge *ge) {
+    if (ge->counting_network.cmds.from_zero) {
+        return ge->rBO + 1;
+    }
+    else {
+        return ge->rBO;
+    }
+}
+
 /**
  * @defgroup knots Knots
  * @{
@@ -195,7 +204,59 @@ static inline uint8_t NA_knot(struct ge *ge) {
     return na;
 }
 
-/** @} */
+static inline uint8_t NI_source(struct ge *ge, enum knot_ni_source source) {
+    uint8_t is_cn = ((ge->kNI.ni1 == NS_CN1) &&
+                     (ge->kNI.ni2 == NS_CN2) &&
+                     (ge->kNI.ni3 == NS_CN3) &&
+                     (ge->kNI.ni4 == NS_CN4));
 
+    uint16_t cn = is_cn ? ge_counting_network_output(ge) : 0;
+
+    switch (source) {
+        case NS_CN1: return (cn & 0x000f) >>  0;
+        case NS_CN2: return (cn & 0x00f0) >>  4;
+        case NS_CN3: return (cn & 0x0f00) >>  8;
+        case NS_CN4: return (cn & 0xf000) >> 12;
+        case NS_RO1: return (ge->rRO & 0x0f) >> 0;
+        case NS_RO2: return (ge->rRO & 0xf0) >> 4;
+        case NS_UA2: return 0;
+        case NS_UA1: return 0;
+    }
+}
+
+/**
+ * NI Knot
+ *
+ * It may be driven by:
+ *  - the outputs of the counting network. This occurs always during the
+ *    1st phase. During the 2nd phase the driving occurs only if the
+ *    corresponding commands of RO in NI and of UA in NI are not present.
+ *
+ *  - the 1st or And part of RO which may be transferred in anyone of the 4
+ *    parts of NI (CI60 - CI67) during the 2nd phase;
+ *
+ *  - the UA output always during the 2nd phase. The UA may drive the 8 most
+ *    significant (CI68) or the 8 less significant (CI69) bits. The same
+ *    commands determine also which part of BO must drive the UA to perform
+ *    the operation.
+ *
+ * The quartets of UA may drive the NI knot only if the corresponding RO
+ * commands in NI are not present. These in fact have the highest priority.
+ * The priority of the various load operations is obtained acting on the
+ * signals generation (cpu fo. 125, 126).
+ */
+static inline uint16_t NI_knot(struct ge *ge) {
+    uint16_t ni1 = NI_source(ge, ge->kNI.ni1);
+    uint16_t ni2 = NI_source(ge, ge->kNI.ni2);
+    uint16_t ni3 = NI_source(ge, ge->kNI.ni3);
+    uint16_t ni4 = NI_source(ge, ge->kNI.ni4);
+
+    return ((ni4 << 12) |
+            (ni3 <<  8) |
+            (ni2 <<  4) |
+            (ni1 <<  0));
+}
+
+/** @} */
 
 #endif

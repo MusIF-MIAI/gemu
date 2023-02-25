@@ -22,6 +22,18 @@ static void on_TO00(struct ge *ge) {
 
     ge_log(LOG_CYCLE, "      -> RIUC: %d RES0: %d RES2: %d RES3: %d\n",
            RIUC(ge), RES0(ge), RES2(ge), RES3(ge));
+
+    /* set NI to output the counting network.
+     * ("this occoursr alwas during the 1st phase", cpu fo.125) */
+
+    ge->kNI.ni1 = NS_CN1;
+    ge->kNI.ni2 = NS_CN2;
+    ge->kNI.ni3 = NS_CN3;
+    ge->kNI.ni4 = NS_CN4;
+
+    /* CO41 used to set from_zero is issued in TO10, so this looks
+     * like a reasonable place to reset this */
+    ge->counting_network.cmds.from_zero = 0;
 }
 
 static void on_TO10(struct ge *ge) {
@@ -54,7 +66,10 @@ static void on_TO30(struct ge *ge) {}
 static void on_TO40(struct ge *ge) {
     /* stub */
     if (ge->counting_network.cmds.from_zero) {
-        ge->kNI = ge->rBO + 1;
+        ge->kNI.ni1 = NS_CN1;
+        ge->kNI.ni2 = NS_CN2;
+        ge->kNI.ni3 = NS_CN3;
+        ge->kNI.ni4 = NS_CN4;
     }
 }
 
@@ -84,6 +99,10 @@ static void on_TO65(struct ge *ge) {
         ge->mem[ge->rVO] = ge->rRO;
 
     ge->memory_command = MC_NONE;
+
+    /* "enables the second phase commands for count selection"
+     * (cpu fo. 142), not sure this is what it means */
+    ge->counting_network.cmds.from_zero = 0;
 }
 
 static void on_TO70(struct ge *ge) {}
@@ -100,9 +119,6 @@ static void on_TI05(struct ge *ge) {
     /* TODO: check if ! is correct: PODIB should be PODI negated */
     if (ge->PODI)
         ge->ACIC = 1;  /* cpu fo. 99 */
-
-    /* workaround: reset NI with BO assuming there are no second-phase counting network commands */
-    ge->kNI = ge->rBO;
 }
 
 static void on_TI06(struct ge *ge) {}

@@ -39,7 +39,6 @@ enum clock {
 };
 
 struct ge_counting_network {
-    uint16_t output;
     struct cmds {
         uint8_t from_zero:1;
     } cmds;
@@ -62,6 +61,24 @@ struct ge_knot_no {
         KNOT_AM_IN_NO,
         KNOT_RI_IN_NO_43,
     } cmd;
+};
+
+enum knot_ni_source {
+    NS_CN1,
+    NS_CN2,
+    NS_CN3,
+    NS_CN4,
+    NS_RO1,
+    NS_RO2,
+    NS_UA2,
+    NS_UA1,
+};
+
+struct ge_knot_ni {
+    enum knot_ni_source ni1;
+    enum knot_ni_source ni2;
+    enum knot_ni_source ni3;
+    enum knot_ni_source ni4;
 };
 
 /**
@@ -114,7 +131,7 @@ struct ge {
      * Knot driven by counting network, or by the UA to store the result of the
      * operation. UA may store MSB or LSB depending on the operation.
      */
-    uint16_t kNI;
+    struct ge_knot_ni kNI;
 
     /**
      * Multipurpose 8+1 bit register
