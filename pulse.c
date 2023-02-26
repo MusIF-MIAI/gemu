@@ -92,11 +92,15 @@ static void on_TO65(struct ge *ge) {
     /* the only reference i found for this is the timing diagram
      * in cpu fo. 145 */
 
-    if (ge->memory_command == MC_READ)
+    if (ge->memory_command == MC_READ) {
         ge->rRO = ge->mem[ge->rVO];
+        ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n", ge->rVO, ge->rRO);
+    }
 
-    if (ge->memory_command == MC_WRITE)
+    if (ge->memory_command == MC_WRITE) {
         ge->mem[ge->rVO] = ge->rRO;
+        ge_log(LOG_STATES, "memory write: mem[VO] = RO = mem[%x] = %x\n", ge->rVO, ge->rRO);
+    }
 
     ge->memory_command = MC_NONE;
 
