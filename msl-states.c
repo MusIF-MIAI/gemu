@@ -237,26 +237,53 @@ static uint8_t loff(struct ge *ge) {
     return ge->rFO == LOFF_OPCODE && ge->rL1 == LOFF_2NDCHAR;
 }
 
-static uint8_t state_64_65_TI05_CI00(struct ge *ge) {
+static uint8_t jc_js1_js2_jie_condition_verified(struct ge *ge) {
     return ge->AVER && jc_js1_js2_jie(ge);
+}
+
+static uint8_t nop(struct ge *ge) {
+    return ge->rFO == NOP2_OPCODE;
+}
+
+static uint8_t jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(struct ge *ge) {
+    return jc_js1_js2_jie(ge) || lon_loll(ge) || loff(ge) || ins(ge) || ens(ge) || nop(ge);
+}
+
+/*  PER - PERI: conditions from fo. 46 */
+
+static uint8_t per_peri(struct ge *ge) {
+    return ((ge->rFO == PER_OPCODE) ||
+            (ge->rFO == PERI_OPCODE));
+}
+
+static uint8_t per_peri_TO25_CO30(struct ge *ge) {
+    return per_peri(ge) && !BIT(ge->rFO, 1);
 }
 
 static const struct msl_timing_chart state_64_65[] = {
     { TO10, CO10, jc_js1_js2_jie },
+    { TO10, CO18, per_peri },
+    { TO10, CO95, per_peri },
+    { TO10, CO96, per_peri },
+    { TO10, CO97, per_peri },
     { TO20, CI87, lon_loll },
     { TO20, CI77, ins },
+    { TO25, CO30, per_peri_TO25_CO30 },
     { TO30, CI12, jc_js1_js2_jie },
     { TO40, CO01, jc_js1_js2_jie },
     { TO60, CO35, jie },
-    { TO65, CO49, 0 },
+    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
     { TO70, CI78, ens },
     { TO89, CI88, loff },
-    { TI05, CI00, state_64_65_TI05_CI00 },
-    { TI06, CU01, 0 },
+    { TI05, CI05, per_peri_TO25_CO30 },
+    { TI05, CI00, jc_js1_js2_jie_condition_verified },
+    { TI06, CU01, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
     { TI06, CU10, 0 },
     { TI06, CU07, 0 },
     { TI06, CU12, 0 },
-    { END_OF_STATUS, 0, 0 }
+    { TI06, CU15, per_peri },
+    { TI06, CU03, per_peri },
+    { END_OF_STATUS, 0, 0 },
 };
 
 /* Display */
