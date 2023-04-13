@@ -38,12 +38,13 @@ static void CO12(struct ge* ge) { ge->kNO.cmd = KNOT_V2_IN_NO; }
 static void CO13(struct ge* ge) { ge->kNO.cmd = KNOT_V3_IN_NO; }
 static void CO14(struct ge* ge) { ge->kNO.cmd = KNOT_V4_IN_NO; }
 static void CO16(struct ge* ge) { ge->kNO.cmd = KNOT_L2_IN_NO; }
+static void CO18(struct ge *ge) { ge->kNO.cmd = KNOT_FORCE_IN_NO_21; }
 
 static void CI12(struct ge* ge) { CO12(ge);                          }
 static void CI15(struct ge* ge) { ge->kNO.cmd = KNOT_L1_IN_NO;       }
 static void CI16(struct ge* ge) { CO16(ge);                          }
 static void CI17(struct ge* ge) { ge->kNO.cmd = KNOT_L3_IN_NO;       }
-static void CI19(struct ge* ge) { ge->kNO.cmd = KNOT_FORCE_IN_NO_21; }
+static void CI19(struct ge* ge) { ge->kNO.cmd = KNOT_FORCE_IN_NO_43; }
 static void CI20(struct ge* ge) { ge->kNO.cmd = KNOT_AM_IN_NO;       }
 static void CI21(struct ge* ge) { ge->kNO.cmd = KNOT_RI_IN_NO_43;    }
 
