@@ -319,9 +319,14 @@ struct ge {
     uint8_t INTE:1; ///< Interruption present
 
     /**
+     * Selected connector busy condition
+     */
+    uint8_t PUB0:1;
+
+    /**
      * Selection Channel 1
      *
-     * Used during the general B phasef o rcommand forwarding or condition
+     * Used during the general B phase for command forwarding or condition
      * examination.
      * Unconditionally set by command CE02 which enables the channel selection
      * even if the interested  channels are 2 or 3.

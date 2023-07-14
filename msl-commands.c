@@ -166,7 +166,13 @@ static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
 /* Commands For External Operations */
 /* -------------------------------- */
 
-/* static void CEXX(struct ge* ge) CC */
+static void CE01(struct ge* ge) CC /* ro -> re */
+static void CE02(struct ge* ge) {
+    /* admits AEBE */
+
+    /* Unconditionally set by command CE02 (cpu fo. 235) */
+    ge->PUC1 = 1;
+}
 
 /* Future States Commands */
 /* ---------------------- */
