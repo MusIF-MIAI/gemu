@@ -22,6 +22,26 @@ static uint8_t not_RO05(struct ge *ge) { return !BIT(ge->rRO, 5); }
 static uint8_t not_RO06(struct ge *ge) { return !BIT(ge->rRO, 6); }
 static uint8_t not_RO07(struct ge *ge) { return !BIT(ge->rRO, 7); }
 
+/* Additional conditions signals */
+/* ----------------------------- */
+
+static uint8_t DI12A0(struct ge *ge) { return 1; }
+static uint8_t DI17A0(struct ge *ge) { return 1; }
+static uint8_t DI18A0(struct ge *ge) { return 1; }
+static uint8_t DI18B0(struct ge *ge) { return 1; }
+static uint8_t DI19A0(struct ge *ge) { return 1; }
+static uint8_t DI60A0(struct ge *ge) { return 1; }
+static uint8_t DI20A0(struct ge *ge) { return 1; }
+static uint8_t DI28A0(struct ge *ge) { return 1; }
+static uint8_t DI28B0(struct ge *ge) { return 1; }
+static uint8_t DI57A0(struct ge *ge) { return 1; }
+static uint8_t DI57B0(struct ge *ge) { return 1; }
+
+static uint8_t DE00A0(struct ge *ge) { return 1; }
+
+static uint8_t EC56A0(struct ge *ge) { return 1; }
+static uint8_t EC69A0(struct ge *ge) { return 1; }
+static uint8_t EC70A0(struct ge *ge) { return 1; }
 
 /* Initialitiation */
 /* --------------- */
@@ -33,13 +53,15 @@ static uint8_t AINI(struct ge *ge) { return ge->AINI; }
 static uint8_t not_AINI(struct ge *ge) { return !AINI(ge); }
 
 static const struct msl_timing_chart state_80[] = {
-    { TO30, CI19, 0 },
+    { TO30, CI19, 0, DI28A0 },
     { TO30, CO96, 0 },
     { TO30, CO97, 0 },
     { TO40, CO00, 0 },
     { TO40, CO02, 0 },
-    { TO50, CI32, 0 },
-    { TI05, CI05, 0 },
+    { TO50, CI32, 0, DI28A0 },
+    { TO70, CI62, 0 },
+    { TO70, CI67, 0, DI28B0},
+    { TI05, CI05, 0, DI28B0},
     { TI05, CI08, 0 },
     { TI06, CI76, 0 },
     { TI06, CI80, 0 },
@@ -72,11 +94,11 @@ static uint8_t state_E2_E3_TI06_CU04(struct ge *ge) {
 
 static const struct msl_timing_chart state_E2_E3[] = {
     { TO10, CO10, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },
-    { TO40, CO02, 0 },
-    { TO70, CI67, 0 },
-    { TO70, CI62, 0 },
+    { TO10, CO41, 0, DI12A0 },
+    { TO25, CO30, 0, DI12A0 },
+    { TO40, CO02, 0, DI18B0 },
+    { TO70, CI67, 0, DI12A0 },
+    { TO70, CI62, 0, DI12A0 },
     { TO80, CI89, state_E2_E3_TO80_CI89 },
     { TI05, CI08, 0 },
     { TI06, CI80, 0 },
@@ -84,7 +106,7 @@ static const struct msl_timing_chart state_E2_E3[] = {
     { TI06, CI83, 0 },
     { TI06, CU04, state_E2_E3_TI06_CU04 },
     { TI06, CU10, 0 },
-    { TI06, CU11, 0 },
+    { TI06, CU11, 0, DI18A0 },
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -96,14 +118,14 @@ static uint8_t state_E0_TI06_CU17(struct ge *ge) {
 }
 
 static const struct msl_timing_chart state_E0[] = {
-    { TO10, CO12, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },
-    { TO40, CO00, 0 },
-    { TO70, CI67, 0 },
-    { TO70, CI62, 0 },
+    { TO10, CO12, 0, DI17A0 },
+    { TO10, CO41, 0, DI12A0 },
+    { TO25, CO30, 0, DI12A0 },
+    { TO40, CO00, 0, DI17A0 },
+    { TO70, CI67, 0, DI12A0 },
+    { TO70, CI62, 0, DI12A0 },
     { TO80, CI39, 0 },
-    { TI05, CI05, 0 },
+    { TI05, CI05, 0, DI17A0 },
     { TI06, CU02, 0 },
     { TI06, CU17, state_E0_TI06_CU17 },
     { END_OF_STATUS, 0, 0 }
@@ -114,17 +136,17 @@ static const struct msl_timing_chart state_E0[] = {
 static uint8_t state_E4_TO70_CI60(struct ge *ge) { return 0; }
 
 static const struct msl_timing_chart state_E4[] = {
-    { TO10, CO10, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },
-    { TO40, CO00, 0 },
-    { TO70, CI67, 0 },
-    { TO70, CI62, 0 },
-    { TO70, CI65, 0 },
+    { TO10, CO10, 0, DI60A0 },
+    { TO10, CO41, 0, DI60A0 },
+    { TO25, CO30, 0, DI12A0 },
+    { TO40, CO00, 0, DI60A0 },
+    { TO70, CI67, 0, DI12A0 },
+    { TO70, CI62, 0, DI12A0 },
+    { TO70, CI65, 0, DI19A0 },
     { TO70, CI60, state_E4_TO70_CI60 },
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
-    { TI06, CU01, 0 },
+    { TI06, CU01, 0, DI60A0 },
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -141,18 +163,18 @@ static uint8_t state_E6_TI06_CU17(struct ge *ge) {
 }
 
 static const struct msl_timing_chart state_E6[] = {
-    { TO10, CO10, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },
+    { TO10, CO10, 0, DI60A0 },
+    { TO10, CO41, 0, DI60A0 },
+    { TO25, CO30, 0, DI12A0 },
     { TO30, CI12, 0 },
-    { TO40, CO00, 0 },
-    { TO70, CI67, 0 },
-    { TO70, CI62, 0 },
+    { TO40, CO00, 0, DI60A0 },
+    { TO70, CI67, 0, DI12A0 },
+    { TO70, CI62, 0, DI12A0 },
     { TO80, CI38, state_E6_TO80_CI38 },
     { TI05, CI01, 0 },
     { TI05, CI02, 0 },
-    { TI06, CU00, 0 },
-    { TI06, CU03, state_E6_TI06_CU03 },
+    { TI06, CU00, 0, DI20A0 },
+    { TI06, CU03, state_E6_TI06_CU03, EC56A0 },
 
     /* in the manual this is CU10, but it maybe a mistake.. there's no way to reach
      * the alpha states if we don't reset this bit 1 instead of bit 0 */
@@ -165,17 +187,17 @@ static const struct msl_timing_chart state_E6[] = {
 // to state E7
 
 static const struct msl_timing_chart state_E5[] = {
-    { TO10, CO10, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },
-    { TO40, CO00, 0 },
-    { TO70, CI67, 0 },
-    { TO70, CI62, 0 },
-    { TO70, CI65, 0 },
+    { TO10, CO10, 0, DI60A0 },
+    { TO10, CO41, 0, DI60A0 },
+    { TO25, CO30, 0, DI12A0 },
+    { TO40, CO00, 0, DI60A0 },
+    { TO70, CI67, 0, DI12A0 },
+    { TO70, CI62, 0, DI12A0 },
+    { TO70, CI65, 0, DI19A0 },
     { TO70, CI60, not_RO07 },
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
-    { TI06, CU01, 0 },
+    { TI06, CU01, 0, DI60A0 },
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -190,17 +212,17 @@ static uint8_t state_E7_TI06_CU17(struct ge *ge) {
 }
 
 static const struct msl_timing_chart state_E7[] = {
-    { TO10, CO10, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },
+    { TO10, CO10, 0, DI60A0 },
+    { TO10, CO41, 0, DI60A0 },
+    { TO25, CO30, 0, DI12A0 },
     { TO30, CI12, 0 },
-    { TO40, CO00, 0 },
-    { TO70, CI67, 0 },
+    { TO40, CO00, 0, DI60A0 },
+    { TO70, CI67, 0, DI12A0 },
     { TO70, CI62, 0 },
     { TO80, CI38, state_E7_TO80_CI38 },
     { TI05, CI02, 0 },
-    { TI06, CU00, 0 },
-    { TI06, CU03, state_E7_TI06_CU03 },
+    { TI06, CU00, 0, DI20A0 },
+    { TI06, CU03, 0, EC56A0 },
     { TI06, CU10, 0 },
     { TI06, CU17, state_E7_TI06_CU17 },
     { END_OF_STATUS, 0, 0 }
@@ -278,9 +300,9 @@ static const struct msl_timing_chart state_64_65[] = {
     { TI05, CI05, per_peri_TO25_CO30 },
     { TI05, CI00, jc_js1_js2_jie_condition_verified },
     { TI06, CU01, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
-    { TI06, CU10, 0 },
+    { TI06, CU10, 0, DE00A0 },
     { TI06, CU07, 0 },
-    { TI06, CU12, 0 },
+    { TI06, CU12, 0, DE00A0 },
     { TI06, CU15, per_peri },
     { TI06, CU03, per_peri },
     { END_OF_STATUS, 0, 0 },
@@ -322,20 +344,20 @@ static uint8_t AF52_not_RO06(struct ge *ge) { return AF52(ge) && not_RO06(ge); }
 static uint8_t AF52_not_RO07(struct ge *ge) { return AF52(ge) && not_RO07(ge); }
 
 static const struct msl_timing_chart state_08[] = {
-    { TO10, CO11, AF41 }, /* fo. 18 */
+    { TO10, CO11, AF41, EC69A0 }, /* fo. 18 */
     { TO10, CO11, AF51 },
     { TO10, CO41, 0 },
     { TO25, CO30, AF51 },
     { TO25, CO31, AF41 },
     { TO30, CI20, 0 },
-    { TO40, CO01, AF41 },
+    { TO40, CO01, AF41, EC69A0 },
     { TO40, CO01, AF51 },
     { TO50, CO48, AF52 },
     /* NO -> BO */
     { TO50, CI33, AF41 },
     { TO50, CI33, AF43 },
     { TO64, CO49, AF52_not_RO07 },
-    { TO70, CI62, AF51 },
+    { TO70, CI62, AF51, EC70A0 },
     { TO70, CI67, AF51 }, /* fo. 19 */
     { TI05, CI04, AF10 },
     { TI05, CI02, AF50 },
@@ -363,13 +385,13 @@ static const struct msl_timing_chart state_08[] = {
     { TI06, CI85, AF52_not_RO05 },
     { TI06, CI86, AF52_not_RO06 },
     { TI06, CU00, 0 },
-    { TI06, CU01, 0 },
+    { TI06, CU01, 0, DI57B0 },
     { TI06, CU02, 0 },
-    { TI06, CU03, 0 },
-    { TI06, CU04, 0 },
+    { TI06, CU03, 0, DI57B0 },
+    { TI06, CU04, 0, DI57B0 },
     { TI06, CU05, 0 },
     { TI06, CU06, 0 },
-    { TI06, CU07, 0 },
+    { TI06, CU07, 0, DI57A0 },
     { TI06, CU10, not_RO00 }, /* fo. 21 */
     { TI06, CU11, not_RO01 },
     { TI06, CU12, not_RO02 },
