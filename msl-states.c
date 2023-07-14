@@ -100,7 +100,7 @@ static uint8_t DO041 (struct ge *ge) { return !DO04A(ge); }
 
 static uint8_t DO07A (struct ge *ge) { return !(!BIT(ge->rFO, 0) &&
                                                 !BIT(ge->rFO, 6) &&
-                                                DO041(ge)); }
+                                                 DO041(ge)); }
 static uint8_t DO071 (struct ge *ge) { return !DO07A(ge); }
 static uint8_t DE07A (struct ge *ge) { return !(DO071(ge) &&
                                                 DI062(ge)); }
@@ -119,6 +119,77 @@ static uint8_t EC69A0(struct ge *ge) { return !EC69A(ge); }
 
 static uint8_t EC70A (struct ge *ge) { return !(AF51(ge) && DI572(ge)); }
 static uint8_t EC70A0(struct ge *ge) { return !EC70A(ge); }
+
+static uint8_t DI14A (struct ge *ge) { return !( BIT(ge->rSA, 7) &&
+                                                !BIT(ge->rSA, 5) &&
+                                                 BIT(ge->rSA, 6)); }
+
+static uint8_t DI141 (struct ge *ge) { return !DI14A(ge); }
+
+static uint8_t DI23A (struct ge *ge) { return !( DI141(ge) &&
+                                                 BIT(ge->rSA, 3) &&
+                                                !BIT(ge->rSA, 4)); }
+
+static uint8_t DI231 (struct ge *ge) { return !DI23A(ge); }
+
+static uint8_t DI24A (struct ge *ge) { return !(DI231(ge) &&
+                                                BIT(ge->rSA, 2)); };
+
+static uint8_t DI25A (struct ge *ge) { return !( DI231(ge) &&
+                                                !BIT(ge->rSA, 1) &&
+                                                !BIT(ge->rSA, 2)); };
+
+static uint8_t DI29A (struct ge *ge) { return !(DI271(ge) &&
+                                                BIT(ge->rSA, 5) &&
+                                                BIT(ge->rSA, 3)); };
+
+static uint8_t DI971 (struct ge *ge) { return !(DI29A(ge) &&
+                                                DI25A(ge) &&
+                                                DI24A(ge) &&
+                                                DI29A(ge)); }
+
+static uint8_t DI97A (struct ge *ge) { return !DI971(ge); }
+static uint8_t DI97A0(struct ge *ge) { return !DI97A(ge); }
+
+static uint8_t ED70A (struct ge *ge) { return !(!ge->AINI &&
+                                                 DI971(ge)); }
+static uint8_t ED70A0(struct ge *ge) { return ED70A(ge); }
+
+static uint8_t DI21A (struct ge *ge) { return !( DI141(ge) &&
+                                                 BIT(ge->rSA, 4) &&
+                                                 BIT(ge->rSA, 3) &&
+                                                !BIT(ge->rSA, 2)); }
+static uint8_t DI211 (struct ge *ge) { return !DI21A(ge); }
+static uint8_t DI21A0(struct ge *ge) { return !DI21A(ge); }
+
+static uint8_t DI03A (struct ge *ge) { return !(BIT(ge->rSA, 0) &&
+                                                BIT(ge->rSA, 1)); }
+static uint8_t DI031 (struct ge *ge) { return !DI03A(ge); }
+static uint8_t DI91A (struct ge *ge) { return !(DI031(ge) &&
+                                                DI211(ge)); }
+static uint8_t DI91A0(struct ge *ge) { return !DI91A(ge); }
+
+static uint8_t DI25A0(struct ge *ge) { return !DI25A(ge); }
+
+static uint8_t DI15A (struct ge *ge) { return !( DI141(ge) &&
+                                                !BIT(ge->rSA, 3)); }
+
+static uint8_t DI931 (struct ge *ge) { return !(DI21A(ge) &&
+                                                DI29A(ge) &&
+                                                DI21A(ge) &&
+                                                DI15A(ge)); }
+
+static uint8_t DI93A (struct ge *ge) { return !DI931(ge); }
+static uint8_t DI93A0(struct ge *ge) { return !DI93A(ge); }
+
+static uint8_t DI94A (struct ge *ge) { return !(BIT(ge->rSA, 0) &&
+                                                DI931(ge)); }
+static uint8_t DI94A0(struct ge *ge) { return !DI94A(ge); }
+
+static uint8_t DI95A (struct ge *ge) { return !(DI931(ge) &&
+                                                DI031(ge)); }
+static uint8_t DI95A0(struct ge *ge) { return !DI95A(ge); }
+
 
 /* Initialitiation */
 /* --------------- */
@@ -481,3 +552,128 @@ static const struct msl_timing_chart state_08[] = {
     { TI06, CU17, not_RO07 },
     { END_OF_STATUS, 0, 0 }
 };
+
+/* PER - PERI */
+/* ---------- */
+
+static uint8_t PUC26(struct ge *ge) {
+    /* ch 136 - 24 */
+    return ge->PUC2;
+}
+
+static uint8_t PUC36(struct ge *ge) {
+    /* ch 136 - 29 */
+    return ge->PUC3;
+}
+
+static uint8_t DU90A(struct ge *ge) {
+    /* ch. 197 - 6 */
+    return !(PUC26(ge) && !BIT(ge->rRO, 0));
+}
+
+static uint8_t DU91A(struct ge *ge) {
+    /* ch. 227 - 13 */
+    return !( BIT(ge->rRO, 0) &&
+             !BIT(ge->rRO, 3) &&
+              PUC36(ge));
+}
+
+/** Selected channel busy */
+static uint8_t DU92(struct ge *ge) {
+    /* ch. 286 - 1 */
+    return !(DU90A(ge) && DU91A(ge));
+}
+
+/** LPER external operation */
+static uint8_t DU93(struct ge *ge) {
+    // ch. 180
+    uint8_t DU93A = !(BIT(ge->rL2, 7) && BIT(ge->rL2, 5));
+    return !DU93A;
+}
+
+static uint8_t state_c8_TI06_CI85(struct ge *ge) {
+    /* !(selected_connector_busy || selected_channel_busy) */
+    return !(ge->PUB0 || DU92(ge));
+}
+
+static const struct msl_timing_chart state_c8[] = {
+    { TO10, CO12, 0, DI97A0 },
+    { TO10, CO41, 0, DI97A0},
+    { TO25, CO30, not_AINI, ED70A0},
+    { TO40, CO02, 0, DI97A0 },
+    { TO70, CI62, 0, DI25A0 },
+    { TO70, CI67, 0, DI25A0 },
+    { TI06, CI06, 0 },
+    { TI06, CI75, 0, DI25A0 },
+    { TI06, CI84, 0, DI25A0 },
+    { TI06, CI85, state_c8_TI06_CI85 },
+    { TI06, CU04, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static uint8_t state_d8_TO19_CE02(struct ge *ge) {
+    return !BIT(ge->ffFA, 5) && !BIT(ge->ffFA, 4);
+}
+
+static uint8_t state_d8_TO40_CO00(struct ge *ge) {
+    return BIT(ge->ffFA, 5) && !DU93(ge);
+}
+
+static const struct msl_timing_chart state_d8[] = {
+    { TO10, CO10, 0 },
+    { TO10, CO40, 0, DI21A0 },
+    { TO10, CO41, 0, DI21A0 },
+    { TO19, CE02, state_d8_TO19_CE02 },
+    { TO30, CI15, 0, DI21A0 },
+    { TO40, CO00, state_d8_TO40_CO00 },
+    { TO50, CI33, 0, DI21A0 },
+    { TO50 /* PIPO */, CE01, 0 },
+    { TI06, CU00, 0, DI93A0},
+    { END_OF_STATUS, 0, 0 },
+};
+
+static uint8_t state_d9_TO40_CO00(struct ge *ge) {
+    return BIT(ge->ffFA, 5) && !DU93(ge);
+}
+
+static const struct msl_timing_chart state_d9[] = {
+    { TO10, CO10, 0 },
+    { TO10, CO40, 0, DI21A0 },
+    { TO10, CO41, 0, DI21A0},
+    { TO30, CI15, 0, DI21A0 },
+    { TO40, CO00, state_d9_TO40_CO00 },
+    { TO50, CI33, 0, DI21A0},
+    { TI06, CU00, 0, DI93A0},
+    { TI06, CU01, 0, DI94A0},
+    { TI06, CU10, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_da[] = {
+    { TO10, CO10, 0 },
+    { TO10, CO40, 0, DI21A0 },
+    { TO10, CO41, 0, DI21A0 },
+    { TO30, CI15, 0, DI21A0 },
+    { TO40, CO00, state_d9_TO40_CO00 },
+    { TO50, CI33, 0, DI21A0 },
+    { TI06, CU00, 0, DI93A0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_db[] = {
+    { TO10, CO10, 0 },
+    { TO10, CO40, 0, DI21A0 },
+    { TO10, CO41, 0, DI21A0 },
+    { TO30, CI15, 0, DI21A0 },
+    { TO40, CO00, state_d9_TO40_CO00 },
+    { TO50, CI33, 0, DI21A0 },
+    { TI06, CI74, 0, DI91A0 },
+    { TI06, CU00, 0, DI93A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU01, 0, DI94A0 },
+    { TI06, CU11, 0, DI95A0 },
+    { TI06, CU02, state_d8_TO19_CE02 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
