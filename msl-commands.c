@@ -89,6 +89,7 @@ static void CI39(struct ge *ge)
 /* Count And Arithmetical Unit Commands */
 /* ------------------------------------ */
 
+static void CO40(struct ge* ge) { ge->counting_network.cmds.decresing = 1; };
 static void CO41(struct ge* ge) { ge->counting_network.cmds.from_zero = 1; };
 static void CO48(struct ge* ge)
 {

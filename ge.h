@@ -41,6 +41,7 @@ enum clock {
 struct ge_counting_network {
     struct cmds {
         uint8_t from_zero:1;
+        uint8_t decresing:1;
     } cmds;
 };
 
