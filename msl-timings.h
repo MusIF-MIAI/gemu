@@ -20,11 +20,26 @@ struct msl_timing_chart {
     /**
      * Condition for the command
      *
+     * In the GE timing charts, this is the equation in curly
+     * brackets.
+     *
      * If NULL, the command will always be executed, otherwise
      * the command will get executed only if the condition
      * returns true.
      */
     uint8_t (*condition)(struct ge*);
+
+
+    /**
+     * Additional condition for the command
+     *
+     * In the GE timing charts, this is the equation in parens.
+     *
+     * If NULL, only `condition` is evaluated, otherwise the commmand
+     * will be executed if both `condition` and `additional` return
+     * true.
+     */
+    uint8_t (*additional)(struct ge*);
 };
 
 /**

@@ -21,16 +21,28 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
     uint32_t i = 0;
 
     do {
+        const char *clock_name = ge_clock_name(ge->current_clock);
         chart = &state->chart[i++];
-        if (chart->clock == ge->current_clock) {
-            if (chart->condition) {
-                if (!chart->condition(ge)) {
-                    ge_log(LOG_CONDS, "  time %-4s - condition false\n", ge_clock_name(ge->current_clock));
-                    continue;
-                }
-                ge_log(LOG_CONDS, "  time %-4s - condition true\n", ge_clock_name(ge->current_clock));
+
+        if (chart->clock != ge->current_clock)
+            continue;
+
+        if (chart->additional) {
+            if (!chart->additional(ge)) {
+                ge_log(LOG_CONDS, "  time %-4s - additional false\n", clock_name);
+                continue;
             }
-            chart->command(ge);
+            ge_log(LOG_CONDS, "  time %-4s - additional true\n", clock_name);
         }
+
+        if (chart->condition) {
+            if (!chart->condition(ge)) {
+                ge_log(LOG_CONDS, "  time %-4s - condition false\n", clock_name);
+                continue;
+            }
+            ge_log(LOG_CONDS, "  time %-4s - condition true\n", clock_name);
+        }
+
+        chart->command(ge);
     } while (chart->clock < END_OF_STATUS);
 }
