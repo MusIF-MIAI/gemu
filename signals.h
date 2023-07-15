@@ -371,4 +371,55 @@ SIG(DI95A0) { return !DI95A(ge); }
 
 /** @} */
 
+/**
+ * @defgroup busyconnectorlogic Busy Connector Logic
+ *
+ * From the Intermediate Block Diagram, fo. 9 (5,6-B,C,D)
+ *
+ * @{
+ */
+
+SIG(PB061)    { return  ge->PB06; }
+SIG(PB06A)    { return !ge->PB06; }
+SIG(PB071)    { return  ge->PB07; }
+SIG(PB07A)    { return !ge->PB07; }
+SIG(PB261)    { return  ge->PB26; }
+SIG(PB26A)    { return !ge->PB26; }
+SIG(PB361)    { return  ge->PB36; }
+SIG(PB36A)    { return !ge->PB36; }
+SIG(PB371)    { return  ge->PB37; }
+SIG(PB37A)    { return !ge->PB37; }
+SIG(PUC11)    { return  ge->PUC1; }
+SIG(PUC1A)    { return !ge->PUC1; }
+SIG(PUC21)    { return  ge->PUC2; }
+SIG(PUC2A)    { return !ge->PUC2; }
+SIG(PUC31)    { return  ge->PUC3; }
+SIG(PUC3A)    { return !ge->PUC3; }
+
+SIG(PC11A)    { return !(PUC11(ge) && PB071(ge) && PB061(ge)); }
+SIG(PC12A)    { return !(PUC11(ge) && PB071(ge) && PB06A(ge)); }
+SIG(PC13A)    { return !(PUC11(ge) && PB07A(ge) && PB06A(ge)); }
+SIG(PC14A)    { return !(PUC11(ge) && PB07A(ge) && PB061(ge)); }
+SIG(PC21A)    { return !(PUC21(ge) && PB261(ge)); }
+SIG(PC22A)    { return !(PUC21(ge) && PB26A(ge)); }
+SIG(PC31A)    { return !(PUC31(ge) && PB371(ge) && PB361(ge)); }
+SIG(PC32A)    { return !(PUC31(ge) && PB371(ge) && PB36A(ge)); }
+SIG(PC33A)    { return !(PUC31(ge) && PB37A(ge) && PB36A(ge)); }
+SIG(PC34A)    { return !(PUC31(ge) && PB37A(ge) && PB361(ge)); }
+
+SIG(SEPEI)    { return !(PC11A(ge) && PC21A(ge) && PC31A(ge)); }
+SIG(PU002)    { return !(PC12A(ge) && PC22A(ge) && PC32A(ge)); }
+SIG(PU003)    { return !(PC13A(ge) && PC33A(ge)); }
+SIG(PU004)    { return !(PC14A(ge) && PC34A(ge)); }
+
+SIG(PUB01_d1) { return !(SEPEI(ge) && BIT(ge->rL1, 7) && BIT(ge->rL1, 6)); }
+SIG(PUB01_d2) { return !(PU002(ge) && BIT(ge->rL1, 7) && BIT(ge->rL1, 6)); }
+SIG(PUB01_d3) { return !(PU003(ge) && BIT(ge->rL1, 7) && BIT(ge->rL1, 6)); }
+SIG(PUB01_d4) { return !(PU004(ge) && BIT(ge->rL1, 7) && BIT(ge->rL1, 6)); }
+
+/** Selected connector busy condition */
+SIG(PUB01)    { return !(PUB01_d1(ge) && PUB01_d2(ge) && PUB01_d3(ge) && PUB01_d4(ge)); }
+
+/** @} */
+
 #endif

@@ -425,7 +425,7 @@ static uint8_t DU93(struct ge *ge) {
 
 static uint8_t state_c8_TI06_CI85(struct ge *ge) {
     /* !(selected_connector_busy || selected_channel_busy) */
-    return !(ge->PUB0 || DU92(ge));
+    return !(PUB01(ge) || DU92(ge));
 }
 
 static const struct msl_timing_chart state_c8[] = {

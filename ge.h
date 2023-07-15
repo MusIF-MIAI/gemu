@@ -318,10 +318,13 @@ struct ge {
     uint8_t JE:1;   ///< JE/AVER jump instruction exectuted
     uint8_t INTE:1; ///< Interruption present
 
-    /**
-     * Selected connector busy condition
-     */
-    uint8_t PUB0:1;
+    /* Busy Connector Logic */
+
+    uint8_t PB06:1;
+    uint8_t PB07:1;
+    uint8_t PB26:1;
+    uint8_t PB36:1;
+    uint8_t PB37:1;
 
     /**
      * Selection Channel 1
