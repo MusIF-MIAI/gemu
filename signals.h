@@ -365,7 +365,8 @@ SIG(ED70A0) { return !ED70A(ge); }
  */
 
 /* MC */
-SIG(AITEA) { return 0; }
+SIG(AITE)  { return ge->console_switches.SITE; }
+SIG(AITEA) { return !AITE(ge); }
 
 /* RI */
 SIG(LU081) { return 0; }
