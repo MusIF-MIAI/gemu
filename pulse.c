@@ -48,7 +48,11 @@ static void on_TO10(struct ge *ge) {
 
 static void on_TO11(struct ge *ge) {}
 static void on_TO15(struct ge *ge) {}
-static void on_TO19(struct ge *ge) {}
+
+static void on_TO19(struct ge *ge) {
+    /* intermediate fo. 9 B1*/
+    ge->RECE = 0;
+}
 
 static void on_TO20(struct ge *ge) {
     ge->rBO = NO_knot(ge); /* cpu fo. 142, 126 */

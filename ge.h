@@ -212,6 +212,9 @@ struct ge {
      */
     uint8_t rSA;
 
+    uint8_t rRE;
+    uint8_t rRA;
+
     /**
      * Special conditions register 1
      *
@@ -465,6 +468,8 @@ struct ge {
      */
     uint8_t RIA3:1;
 
+    uint8_t RECE:1;
+    
     /**
      * Future state
      *

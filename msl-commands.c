@@ -166,7 +166,11 @@ static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
 /* Commands For External Operations */
 /* -------------------------------- */
 
-static void CE01(struct ge* ge) CC /* ro -> re */
+static void CE01(struct ge* ge) {
+    /* is PIPO needed?! (intermediate fo. 10 A1*/
+    ge->rRE = ge->rRO;
+}
+
 static void CE02(struct ge* ge) {
     /* admits AEBE */
 
@@ -184,6 +188,8 @@ static void CE02(struct ge* ge) {
         ge->PB36 = BIT(ge->rL1, 6);
         ge->PB37 = BIT(ge->rL1, 7);
     }
+
+    /* parity check ignored */
 }
 
 /* Future States Commands */
