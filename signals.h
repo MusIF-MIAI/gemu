@@ -13,6 +13,8 @@
 #include "bit.h"
 #include "ge.h"
 
+#define SIG( name ) static inline uint8_t name (struct ge *ge)
+
 /**
  * @defgroup priority-network Cycle attribution priority network
  * @{
@@ -21,7 +23,7 @@
 /**
  * Cycle assigned to channel 1
  */
-static inline uint8_t RES0(struct ge *ge) {
+SIG(RES0) {
     /* cpu fo. 116 */
     return ge->RESI;
 }
@@ -29,7 +31,7 @@ static inline uint8_t RES0(struct ge *ge) {
 /**
  * Cycle assigned to channel 2
  */
-static inline uint8_t RES2(struct ge *ge) {
+SIG(RES2) {
     /* cpu fo. 116 */
     /* maybe this equation is incorrect in manual? it's
      * documented as `!RIA2`, but it seems it should not
@@ -40,7 +42,7 @@ static inline uint8_t RES2(struct ge *ge) {
 /**
  * Cycle assigned to channel 3
  */
-static inline uint8_t RES3(struct ge *ge) {
+SIG(RES3) {
     /* cpu fo. 115 */
     return ge->RIA3 & !ge->RESI;
 }
@@ -48,7 +50,7 @@ static inline uint8_t RES3(struct ge *ge) {
 /**
  * Cycle assigned to CPU
  */
-static inline uint8_t RIUC(struct ge *ge) {
+SIG(RIUC) {
     return ge->RIA0 & !ge->RESI & !ge->RIA3 & !ge->RIA2;
 }
 
@@ -60,7 +62,7 @@ static inline uint8_t RIUC(struct ge *ge) {
  * This signal is true when the currently executing jump condition is
  * verified.
  */
-static inline uint8_t verified_condition(struct ge *ge) {
+SIG(verified_condition) {
     /* cpu fo 56, 57 */
     uint8_t M = ge->rL1;
     uint8_t M7 = BIT(M, 7);
@@ -87,46 +89,46 @@ static inline uint8_t verified_condition(struct ge *ge) {
  */
 
 /** Selected register V4 */
-static inline uint8_t AF10(struct ge *ge) { return ge->register_selector == RS_V4;      }
+SIG(AF10) { return ge->register_selector == RS_V4;      }
 
 /** Selected register L3 */
-static inline uint8_t AF20(struct ge *ge) { return ge->register_selector == RS_L3;      }
+SIG(AF20) { return ge->register_selector == RS_L3;      }
 
 /** Selected register L1 */
-static inline uint8_t AF21(struct ge *ge) { return ge->register_selector == RS_L1;      }
+SIG(AF21) { return ge->register_selector == RS_L1;      }
 
 /** Selected register V3 */
-static inline uint8_t AF30(struct ge *ge) { return ge->register_selector == RS_V3;      }
+SIG(AF30) { return ge->register_selector == RS_V3;      }
 
 /** Selected register V1 */
-static inline uint8_t AF31(struct ge *ge) { return ge->register_selector == RS_V1;      }
+SIG(AF31) { return ge->register_selector == RS_V1;      }
 
 /** Selected normal operation */
-static inline uint8_t AF32(struct ge *ge) { return ge->register_selector == RS_NORM;    }
+SIG(AF32) { return ge->register_selector == RS_NORM;    }
 
 /** Selected register R1 - L2 */
-static inline uint8_t AF40(struct ge *ge) { return ge->register_selector == RS_R1_L2;   }
+SIG(AF40) { return ge->register_selector == RS_R1_L2;   }
 
 /** Selected register V1 - SCR */
-static inline uint8_t AF41(struct ge *ge) { return ge->register_selector == RS_V1_SCR;  }
+SIG(AF41) { return ge->register_selector == RS_V1_SCR;  }
 
 /** Selected register PO */
-static inline uint8_t AF42(struct ge *ge) { return ge->register_selector == RS_PO;      }
+SIG(AF42) { return ge->register_selector == RS_PO;      }
 
 /** Selected register SO */
-static inline uint8_t AF43(struct ge *ge) { return ge->register_selector == RS_SO;      }
+SIG(AF43) { return ge->register_selector == RS_SO;      }
 
 /** Selected register V2 */
-static inline uint8_t AF50(struct ge *ge) { return ge->register_selector == RS_V2;      }
+SIG(AF50) { return ge->register_selector == RS_V2;      }
 
 /** Selected register V1 - LETT */
-static inline uint8_t AF51(struct ge *ge) { return ge->register_selector == RS_V1_LETT; }
+SIG(AF51) { return ge->register_selector == RS_V1_LETT; }
 
 /** Selected register FI-UR */
-static inline uint8_t AF52(struct ge *ge) { return ge->register_selector == RS_FI_UR;   }
+SIG(AF52) { return ge->register_selector == RS_FI_UR;   }
 
 /** Selected register FO */
-static inline uint8_t AF53(struct ge *ge) { return ge->register_selector == RS_FO;      }
+SIG(AF53) { return ge->register_selector == RS_FO;      }
 /** @} */
 
 static inline uint16_t ge_counting_network_output(struct ge *ge) {
@@ -264,167 +266,108 @@ static inline uint16_t NI_knot(struct ge *ge) {
  * @{
  */
 
-static inline uint8_t DI10A (struct ge *ge) { return !(BIT(ge->rSA, 7) &&
-                                                BIT(ge->rSA, 6) &&
-                                                BIT(ge->rSA, 5) &&
-                                                !BIT(ge->rSA, 4)); }
+SIG(DI10A) { return !(BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 5) && !BIT(ge->rSA, 4)); }
 
-static inline uint8_t DI101 (struct ge *ge) { return !DI10A(ge); }
-static inline uint8_t DI12A (struct ge *ge) { return !(!BIT(ge->rSA, 3) && DI101(ge)); }
-static inline uint8_t DI12A0(struct ge *ge) { return !DI12A(ge); }
+SIG(DI101) { return !DI10A(ge); }
+SIG(DI12A) { return !(!BIT(ge->rSA, 3) && DI101(ge)); }
 
-static inline uint8_t DI121 (struct ge *ge) { return !DI12A(ge); }
-static inline uint8_t DI17A (struct ge *ge) { return !(!BIT(ge->rSA, 1) && DI121(ge) && !BIT(ge->rSA, 2)); }
-static inline uint8_t DI17A0(struct ge *ge) { return !DI17A(ge); }
+SIG(DI121) { return !DI12A(ge); }
+SIG(DI17A) { return !(!BIT(ge->rSA, 1) && DI121(ge) && !BIT(ge->rSA, 2)); }
 
-static inline uint8_t DI18A (struct ge *ge) { return !(!BIT(ge->rSA, 2) && DI121(ge) && BIT(ge->rSA, 1)); }
-static inline uint8_t DI18A0(struct ge *ge) { return !DI18A(ge); }
 
-static inline uint8_t DI181 (struct ge *ge) { return !DI18A(ge); }
-static inline uint8_t DI18B (struct ge *ge) { return !DI181(ge); }
-static inline uint8_t DI18B0(struct ge *ge) { return !DI18B(ge); }
+SIG(DI18A) { return !(!BIT(ge->rSA, 2) && DI121(ge) && BIT(ge->rSA, 1)); }
+SIG(DI181) { return !DI18A(ge); }
+SIG(DI18B) { return !DI181(ge); }
 
-static inline uint8_t DI19A (struct ge *ge) { return !(!BIT(ge->rSA, 1) && DI121(ge) && BIT(ge->rSA, 2)); }
-static inline uint8_t DI19A0(struct ge *ge) { return !DI19A(ge); }
+SIG(DI19A) { return !(!BIT(ge->rSA, 1) && DI121(ge) && BIT(ge->rSA, 2)); }
+SIG(DI20A) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
 
-static inline uint8_t DI60A0(struct ge *ge) { return 1; } // TODO: Missing page in manual (!)
+SIG(DI27A) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 7)); }
+SIG(DI271) { return !DI27A(ge); }
+SIG(DI28A) { return !(DI271(ge) && !BIT(ge->rSA, 5)); }
 
-static inline uint8_t DI20A (struct ge *ge) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
-static inline uint8_t DI20A0(struct ge *ge) { return !DI20A(ge); }
+SIG(DI281) { return !DI28A(ge); }
+SIG(DI28B) { return !DI281(ge); }
 
-static inline uint8_t DI27A (struct ge *ge) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 7)); }
-static inline uint8_t DI271 (struct ge *ge) { return !DI27A(ge); }
-static inline uint8_t DI28A (struct ge *ge) { return !(DI271(ge) && !BIT(ge->rSA, 5)); }
-static inline uint8_t DI28A0(struct ge *ge) { return !DI28A(ge); }
+SIG(DI48A) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && !BIT(ge->rSA, 6) && !BIT(ge->rSA, 7)); }
+SIG(DI481) { return !DI48A(ge); }
 
-static inline uint8_t DI281 (struct ge *ge) { return !DI28A(ge); }
-static inline uint8_t DI28B (struct ge *ge) { return !DI281(ge); }
-static inline uint8_t DI28B0(struct ge *ge) { return !DI28B(ge); }
+SIG(DI69A) { return !(DI481(ge) && !BIT(ge->rSA, 2)); }
+SIG(DI691) { return !DI69A(ge); }
+SIG(DI58A) { return !(BIT(ge->rSA, 3) && !BIT(ge->rSA, 6)); }
+SIG(DI581) { return !DI58A(ge); }
+SIG(DI57A) { return !(!BIT(ge->rSA, 1) && DI581(ge) && DI691(ge)); }
+SIG(DI572) { return !DI57A(ge); }
+SIG(DI57B) { return DI57A(ge) ; }
 
-static inline uint8_t DI48A (struct ge *ge) { return !(!BIT(ge->rSA, 4) &&
-                                                !BIT(ge->rSA, 5) &&
-                                                !BIT(ge->rSA, 6) &&
-                                                !BIT(ge->rSA, 7)); }
-static inline uint8_t DI481 (struct ge *ge) { return !DI48A(ge); }
-
-static inline uint8_t DI69A (struct ge *ge) { return !(DI481(ge) && !BIT(ge->rSA, 2)); }
-static inline uint8_t DI691 (struct ge *ge) { return !DI69A(ge); }
-static inline uint8_t DI58A (struct ge *ge) { return !(BIT(ge->rSA, 3) && !BIT(ge->rSA, 6)); }
-static inline uint8_t DI581 (struct ge *ge) { return !DI58A(ge); }
-static inline uint8_t DI57A (struct ge *ge) { return !(!BIT(ge->rSA, 1) && DI581(ge) && DI691(ge)); }
-static inline uint8_t DI572 (struct ge *ge) { return !DI57A(ge); }
-static inline uint8_t DI57A0(struct ge *ge) { return !DI57A(ge); }
-static inline uint8_t DI57B (struct ge *ge) { return DI57A(ge) ; }
-static inline uint8_t DI57B0(struct ge *ge) { return !DI57B(ge); }
-
-static inline uint8_t DO01A (struct ge *ge) { return !( BIT(ge->rFO, 6) &&
-                                                !BIT(ge->rFO, 3) &&
-                                                !BIT(ge->rFO, 7)); }
-static inline uint8_t DO011 (struct ge *ge) { return !DO01A(ge); }
-
-static inline uint8_t DI06A (struct ge *ge) { return !(!BIT(ge->rSA, 7) &&
-                                                 BIT(ge->rSA, 6) &&
-                                                 BIT(ge->rSA, 2)); }
-static inline uint8_t DI062 (struct ge *ge) { return !DI06A(ge); }
+SIG(DO01A) { return !( BIT(ge->rFO, 6) && !BIT(ge->rFO, 3) && !BIT(ge->rFO, 7)); }
+SIG(DO011) { return !DO01A(ge); }
+SIG(DI06A) { return !(!BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 2)); }
+SIG(DI062) { return !DI06A(ge); }
 
 // TODO: doesn't work for nop/lon/loff ecc
-static inline uint8_t DE00A (struct ge *ge) { return 0;  !(DO011(ge) && DI062(ge)); }
-static inline uint8_t DE00A0(struct ge *ge) { return !DE00A(ge); }
+SIG(DE00A) { return 0;  !(DO011(ge) && DI062(ge)); }
 
-static inline uint8_t DO04A (struct ge *ge) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
-static inline uint8_t DO041 (struct ge *ge) { return !DO04A(ge); }
+SIG(DO04A) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
+SIG(DO041) { return !DO04A(ge); }
+SIG(DO07A) { return !(!BIT(ge->rFO, 0) && !BIT(ge->rFO, 6) && DO041(ge)); }
+SIG(DO071) { return !DO07A(ge); }
+SIG(DE07A) { return !(DO071(ge) && DI062(ge)); }
 
-static inline uint8_t DO07A (struct ge *ge) { return !(!BIT(ge->rFO, 0) &&
-                                                !BIT(ge->rFO, 6) &&
-                                                 DO041(ge)); }
-static inline uint8_t DO071 (struct ge *ge) { return !DO07A(ge); }
-static inline uint8_t DE07A (struct ge *ge) { return !(DO071(ge) &&
-                                                DI062(ge)); }
-static inline uint8_t DE07A0(struct ge *ge) { return !DE07A(ge); }
+SIG(EC69A) { return !(AF41(ge) && DI572(ge));}
+SIG(EC70A) { return !(AF51(ge) && DI572(ge)); }
+SIG(DI14A) { return !( BIT(ge->rSA, 7) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 6)); }
+SIG(DI141) { return !DI14A(ge); }
 
-static inline uint8_t DE08A0(struct ge *ge) { return !(!BIT(ge->rFO, 1) &&
-                                                DI062(ge) &&
-                                                DO071(ge)); }
+SIG(DI23A) { return !( DI141(ge) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 4)); }
+SIG(DI231) { return !DI23A(ge); }
+SIG(DI24A) { return !(DI231(ge) && BIT(ge->rSA, 2)); };
+SIG(DI25A) { return !( DI231(ge) && !BIT(ge->rSA, 1) && !BIT(ge->rSA, 2)); };
+SIG(DI29A) { return !(DI271(ge) && BIT(ge->rSA, 5) && BIT(ge->rSA, 3)); };
+SIG(DI971) { return !(DI29A(ge) && DI25A(ge) && DI24A(ge) && DI29A(ge)); }
+SIG(DI97A) { return !DI971(ge); }
+SIG(DI201) { return DI20A(ge); }
+SIG(EC56A) { return !(DI201(ge) && BIT(ge->rL2, 7)); }
+SIG(ED70A) { return !(!ge->AINI && DI971(ge)); }
+SIG(DI21A) { return !( DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
+SIG(DI211) { return !DI21A(ge); }
 
-static inline uint8_t DI201 (struct ge *ge) { return DI20A(ge); }
-static inline uint8_t EC56A (struct ge *ge) { return !(DI201(ge) && BIT(ge->rL2, 7)); }
-static inline uint8_t EC56A0(struct ge *ge) { return !EC56A(ge); }
+SIG(DI03A) { return !(BIT(ge->rSA, 0) && BIT(ge->rSA, 1)); }
+SIG(DI031) { return !DI03A(ge); }
+SIG(DI91A) { return !(DI031(ge) && DI211(ge)); }
 
-static inline uint8_t EC69A (struct ge *ge) { return !(AF41(ge) && DI572(ge));}
-static inline uint8_t EC69A0(struct ge *ge) { return !EC69A(ge); }
+SIG(DI15A) { return !( DI141(ge) && !BIT(ge->rSA, 3)); }
+SIG(DI931) { return !(DI21A(ge) && DI29A(ge) && DI21A(ge) && DI15A(ge)); }
 
-static inline uint8_t EC70A (struct ge *ge) { return !(AF51(ge) && DI572(ge)); }
-static inline uint8_t EC70A0(struct ge *ge) { return !EC70A(ge); }
+SIG(DI93A) { return !DI931(ge); }
+SIG(DI94A) { return !(BIT(ge->rSA, 0) && DI931(ge)); }
+SIG(DI95A) { return !(DI931(ge) && DI031(ge)); }
 
-static inline uint8_t DI14A (struct ge *ge) { return !( BIT(ge->rSA, 7) &&
-                                                !BIT(ge->rSA, 5) &&
-                                                 BIT(ge->rSA, 6)); }
-
-static inline uint8_t DI141 (struct ge *ge) { return !DI14A(ge); }
-
-static inline uint8_t DI23A (struct ge *ge) { return !( DI141(ge) &&
-                                                 BIT(ge->rSA, 3) &&
-                                                !BIT(ge->rSA, 4)); }
-
-static inline uint8_t DI231 (struct ge *ge) { return !DI23A(ge); }
-
-static inline uint8_t DI24A (struct ge *ge) { return !(DI231(ge) &&
-                                                BIT(ge->rSA, 2)); };
-
-static inline uint8_t DI25A (struct ge *ge) { return !( DI231(ge) &&
-                                                !BIT(ge->rSA, 1) &&
-                                                !BIT(ge->rSA, 2)); };
-
-static inline uint8_t DI29A (struct ge *ge) { return !(DI271(ge) &&
-                                                BIT(ge->rSA, 5) &&
-                                                BIT(ge->rSA, 3)); };
-
-static inline uint8_t DI971 (struct ge *ge) { return !(DI29A(ge) &&
-                                                DI25A(ge) &&
-                                                DI24A(ge) &&
-                                                DI29A(ge)); }
-
-static inline uint8_t DI97A (struct ge *ge) { return !DI971(ge); }
-static inline uint8_t DI97A0(struct ge *ge) { return !DI97A(ge); }
-
-static inline uint8_t ED70A (struct ge *ge) { return !(!ge->AINI &&
-                                                 DI971(ge)); }
-static inline uint8_t ED70A0(struct ge *ge) { return ED70A(ge); }
-
-static inline uint8_t DI21A (struct ge *ge) { return !( DI141(ge) &&
-                                                 BIT(ge->rSA, 4) &&
-                                                 BIT(ge->rSA, 3) &&
-                                                !BIT(ge->rSA, 2)); }
-static inline uint8_t DI211 (struct ge *ge) { return !DI21A(ge); }
-static inline uint8_t DI21A0(struct ge *ge) { return !DI21A(ge); }
-
-static inline uint8_t DI03A (struct ge *ge) { return !(BIT(ge->rSA, 0) &&
-                                                BIT(ge->rSA, 1)); }
-static inline uint8_t DI031 (struct ge *ge) { return !DI03A(ge); }
-static inline uint8_t DI91A (struct ge *ge) { return !(DI031(ge) &&
-                                                DI211(ge)); }
-static inline uint8_t DI91A0(struct ge *ge) { return !DI91A(ge); }
-
-static inline uint8_t DI25A0(struct ge *ge) { return !DI25A(ge); }
-
-static inline uint8_t DI15A (struct ge *ge) { return !( DI141(ge) &&
-                                                !BIT(ge->rSA, 3)); }
-
-static inline uint8_t DI931 (struct ge *ge) { return !(DI21A(ge) &&
-                                                DI29A(ge) &&
-                                                DI21A(ge) &&
-                                                DI15A(ge)); }
-
-static inline uint8_t DI93A (struct ge *ge) { return !DI931(ge); }
-static inline uint8_t DI93A0(struct ge *ge) { return !DI93A(ge); }
-
-static inline uint8_t DI94A (struct ge *ge) { return !(BIT(ge->rSA, 0) &&
-                                                DI931(ge)); }
-static inline uint8_t DI94A0(struct ge *ge) { return !DI94A(ge); }
-
-static inline uint8_t DI95A (struct ge *ge) { return !(DI931(ge) &&
-                                                DI031(ge)); }
-static inline uint8_t DI95A0(struct ge *ge) { return !DI95A(ge); }
+SIG(DI12A0) { return !DI12A(ge); }
+SIG(DI17A0) { return !DI17A(ge); }
+SIG(DI18A0) { return !DI18A(ge); }
+SIG(DI18B0) { return !DI18B(ge); }
+SIG(DI19A0) { return !DI19A(ge); }
+SIG(DI60A0) { return 1; } // TODO: Missing page in manual (!)
+SIG(DI20A0) { return !DI20A(ge); }
+SIG(DI28A0) { return !DI28A(ge); }
+SIG(DI28B0) { return !DI28B(ge); }
+SIG(DI57A0) { return !DI57A(ge); }
+SIG(DI57B0) { return !DI57B(ge); }
+SIG(DE00A0) { return !DE00A(ge); }
+SIG(DE07A0) { return !DE07A(ge); }
+SIG(DE08A0) { return !(!BIT(ge->rFO, 1) && DI062(ge) && DO071(ge)); }
+SIG(EC56A0) { return !EC56A(ge); }
+SIG(EC69A0) { return !EC69A(ge); }
+SIG(EC70A0) { return !EC70A(ge); }
+SIG(DI97A0) { return !DI97A(ge); }
+SIG(ED70A0) { return !ED70A(ge); }
+SIG(DI21A0) { return !DI21A(ge); }
+SIG(DI91A0) { return !DI91A(ge); }
+SIG(DI25A0) { return !DI25A(ge); }
+SIG(DI93A0) { return !DI93A(ge); }
+SIG(DI94A0) { return !DI94A(ge); }
+SIG(DI95A0) { return !DI95A(ge); }
 
 /** @} */
 
