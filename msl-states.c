@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "bit.h"
 #include "msl-timings.h"
+#include "signals.h"
 
 #define MSL_COMMANDS_INCLUDED_BY_MSL_STATES
 #include "msl-commands.c"
@@ -22,175 +23,6 @@ static uint8_t not_RO05(struct ge *ge) { return !BIT(ge->rRO, 5); }
 static uint8_t not_RO06(struct ge *ge) { return !BIT(ge->rRO, 6); }
 static uint8_t not_RO07(struct ge *ge) { return !BIT(ge->rRO, 7); }
 
-/* Additional conditions signals */
-/* ----------------------------- */
-
-static uint8_t SA036 (struct ge *ge) { return BIT(ge->rSA, 3); }
-static uint8_t SA03F (struct ge *ge) { return !SA036(ge); }
-static uint8_t SA046 (struct ge *ge) { return BIT(ge->rSA, 4); }
-static uint8_t SA04F (struct ge *ge) { return !SA046(ge); }
-static uint8_t SA056 (struct ge *ge) { return BIT(ge->rSA, 5); }
-static uint8_t SA066 (struct ge *ge) { return BIT(ge->rSA, 6); }
-static uint8_t SA076 (struct ge *ge) { return BIT(ge->rSA, 7); }
-static uint8_t DI10A (struct ge *ge) { return !(SA066(ge) && SA076(ge) && SA056(ge) && SA04F(ge)); }
-static uint8_t DI101 (struct ge *ge) { return !DI10A(ge); }
-static uint8_t DI12A (struct ge *ge) { return !(SA03F(ge) && DI101(ge)); }
-static uint8_t DI12A0(struct ge *ge) { return !DI12A(ge); }
-
-static uint8_t DI121 (struct ge *ge) { return !DI12A(ge); }
-static uint8_t DI17A (struct ge *ge) { return !(!BIT(ge->rSA, 1) && DI121(ge) && !BIT(ge->rSA, 2)); }
-static uint8_t DI17A0(struct ge *ge) { return !DI17A(ge); }
-
-static uint8_t DI18A (struct ge *ge) { return !(!BIT(ge->rSA, 2) && DI121(ge) && BIT(ge->rSA, 1)); }
-static uint8_t DI18A0(struct ge *ge) { return !DI18A(ge); }
-
-static uint8_t DI181 (struct ge *ge) { return !DI18A(ge); }
-static uint8_t DI18B (struct ge *ge) { return !DI181(ge); }
-static uint8_t DI18B0(struct ge *ge) { return !DI18B(ge); }
-
-static uint8_t DI19A (struct ge *ge) { return !(!BIT(ge->rSA, 1) && DI121(ge) && BIT(ge->rSA, 2)); }
-static uint8_t DI19A0(struct ge *ge) { return !DI19A(ge); }
-
-static uint8_t DI60A0(struct ge *ge) { return 1; } // TODO: Missing page in manual (!)
-
-static uint8_t DI20A (struct ge *ge) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
-static uint8_t DI20A0(struct ge *ge) { return !DI20A(ge); }
-
-static uint8_t DI27A (struct ge *ge) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 7)); }
-static uint8_t DI271 (struct ge *ge) { return !DI27A(ge); }
-static uint8_t DI28A (struct ge *ge) { return !(DI271(ge) && !BIT(ge->rSA, 5)); }
-static uint8_t DI28A0(struct ge *ge) { return !DI28A(ge); }
-
-static uint8_t DI281 (struct ge *ge) { return !DI28A(ge); }
-static uint8_t DI28B (struct ge *ge) { return !DI281(ge); }
-static uint8_t DI28B0(struct ge *ge) { return !DI28B(ge); }
-
-static uint8_t DI48A (struct ge *ge) { return !(!BIT(ge->rSA, 4) &&
-                                                !BIT(ge->rSA, 5) &&
-                                                !BIT(ge->rSA, 6) &&
-                                                !BIT(ge->rSA, 7)); }
-static uint8_t DI481 (struct ge *ge) { return !DI48A(ge); }
-
-static uint8_t DI69A (struct ge *ge) { return !(DI481(ge) && !BIT(ge->rSA, 2)); }
-static uint8_t DI691 (struct ge *ge) { return !DI69A(ge); }
-static uint8_t DI58A (struct ge *ge) { return !(BIT(ge->rSA, 3) && !BIT(ge->rSA, 6)); }
-static uint8_t DI581 (struct ge *ge) { return !DI58A(ge); }
-static uint8_t DI57A (struct ge *ge) { return !(!BIT(ge->rSA, 1) && DI581(ge) && DI691(ge)); }
-static uint8_t DI572 (struct ge *ge) { return !DI57A(ge); }
-static uint8_t DI57A0(struct ge *ge) { return !DI57A(ge); }
-static uint8_t DI57B (struct ge *ge) { return DI57A(ge) ; }
-static uint8_t DI57B0(struct ge *ge) { return !DI57B(ge); }
-
-static uint8_t DO01A (struct ge *ge) { return !( BIT(ge->rFO, 6) &&
-                                                !BIT(ge->rFO, 3) &&
-                                                !BIT(ge->rFO, 7)); }
-static uint8_t DO011 (struct ge *ge) { return !DO01A(ge); }
-
-static uint8_t DI06A (struct ge *ge) { return !(!BIT(ge->rSA, 7) &&
-                                                 BIT(ge->rSA, 6) &&
-                                                 BIT(ge->rSA, 2)); }
-static uint8_t DI062 (struct ge *ge) { return !DI06A(ge); }
-
-// TODO: doesn't work for nop/lon/loff ecc
-static uint8_t DE00A (struct ge *ge) { return 0;  !(DO011(ge) && DI062(ge)); }
-static uint8_t DE00A0(struct ge *ge) { return !DE00A(ge); }
-
-static uint8_t DO04A (struct ge *ge) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
-static uint8_t DO041 (struct ge *ge) { return !DO04A(ge); }
-
-static uint8_t DO07A (struct ge *ge) { return !(!BIT(ge->rFO, 0) &&
-                                                !BIT(ge->rFO, 6) &&
-                                                 DO041(ge)); }
-static uint8_t DO071 (struct ge *ge) { return !DO07A(ge); }
-static uint8_t DE07A (struct ge *ge) { return !(DO071(ge) &&
-                                                DI062(ge)); }
-static uint8_t DE07A0(struct ge *ge) { return !DE07A(ge); }
-
-static uint8_t DE08A0(struct ge *ge) { return !(!BIT(ge->rFO, 1) &&
-                                                DI062(ge) &&
-                                                DO071(ge)); }
-
-static uint8_t DI201 (struct ge *ge) { return DI20A(ge); }
-static uint8_t EC56A (struct ge *ge) { return !(DI201(ge) && BIT(ge->rL2, 7)); }
-static uint8_t EC56A0(struct ge *ge) { return !EC56A(ge); }
-
-static uint8_t EC69A (struct ge *ge) { return !(AF41(ge) && DI572(ge));}
-static uint8_t EC69A0(struct ge *ge) { return !EC69A(ge); }
-
-static uint8_t EC70A (struct ge *ge) { return !(AF51(ge) && DI572(ge)); }
-static uint8_t EC70A0(struct ge *ge) { return !EC70A(ge); }
-
-static uint8_t DI14A (struct ge *ge) { return !( BIT(ge->rSA, 7) &&
-                                                !BIT(ge->rSA, 5) &&
-                                                 BIT(ge->rSA, 6)); }
-
-static uint8_t DI141 (struct ge *ge) { return !DI14A(ge); }
-
-static uint8_t DI23A (struct ge *ge) { return !( DI141(ge) &&
-                                                 BIT(ge->rSA, 3) &&
-                                                !BIT(ge->rSA, 4)); }
-
-static uint8_t DI231 (struct ge *ge) { return !DI23A(ge); }
-
-static uint8_t DI24A (struct ge *ge) { return !(DI231(ge) &&
-                                                BIT(ge->rSA, 2)); };
-
-static uint8_t DI25A (struct ge *ge) { return !( DI231(ge) &&
-                                                !BIT(ge->rSA, 1) &&
-                                                !BIT(ge->rSA, 2)); };
-
-static uint8_t DI29A (struct ge *ge) { return !(DI271(ge) &&
-                                                BIT(ge->rSA, 5) &&
-                                                BIT(ge->rSA, 3)); };
-
-static uint8_t DI971 (struct ge *ge) { return !(DI29A(ge) &&
-                                                DI25A(ge) &&
-                                                DI24A(ge) &&
-                                                DI29A(ge)); }
-
-static uint8_t DI97A (struct ge *ge) { return !DI971(ge); }
-static uint8_t DI97A0(struct ge *ge) { return !DI97A(ge); }
-
-static uint8_t ED70A (struct ge *ge) { return !(!ge->AINI &&
-                                                 DI971(ge)); }
-static uint8_t ED70A0(struct ge *ge) { return ED70A(ge); }
-
-static uint8_t DI21A (struct ge *ge) { return !( DI141(ge) &&
-                                                 BIT(ge->rSA, 4) &&
-                                                 BIT(ge->rSA, 3) &&
-                                                !BIT(ge->rSA, 2)); }
-static uint8_t DI211 (struct ge *ge) { return !DI21A(ge); }
-static uint8_t DI21A0(struct ge *ge) { return !DI21A(ge); }
-
-static uint8_t DI03A (struct ge *ge) { return !(BIT(ge->rSA, 0) &&
-                                                BIT(ge->rSA, 1)); }
-static uint8_t DI031 (struct ge *ge) { return !DI03A(ge); }
-static uint8_t DI91A (struct ge *ge) { return !(DI031(ge) &&
-                                                DI211(ge)); }
-static uint8_t DI91A0(struct ge *ge) { return !DI91A(ge); }
-
-static uint8_t DI25A0(struct ge *ge) { return !DI25A(ge); }
-
-static uint8_t DI15A (struct ge *ge) { return !( DI141(ge) &&
-                                                !BIT(ge->rSA, 3)); }
-
-static uint8_t DI931 (struct ge *ge) { return !(DI21A(ge) &&
-                                                DI29A(ge) &&
-                                                DI21A(ge) &&
-                                                DI15A(ge)); }
-
-static uint8_t DI93A (struct ge *ge) { return !DI931(ge); }
-static uint8_t DI93A0(struct ge *ge) { return !DI93A(ge); }
-
-static uint8_t DI94A (struct ge *ge) { return !(BIT(ge->rSA, 0) &&
-                                                DI931(ge)); }
-static uint8_t DI94A0(struct ge *ge) { return !DI94A(ge); }
-
-static uint8_t DI95A (struct ge *ge) { return !(DI931(ge) &&
-                                                DI031(ge)); }
-static uint8_t DI95A0(struct ge *ge) { return !DI95A(ge); }
-
-
 /* Initialitiation */
 /* --------------- */
 
@@ -208,8 +40,8 @@ static const struct msl_timing_chart state_80[] = {
     { TO40, CO02, 0 },
     { TO50, CI32, 0, DI28A0 },
     { TO70, CI62, 0 },
-    { TO70, CI67, 0, DI28B0},
-    { TI05, CI05, 0, DI28B0},
+    { TO70, CI67, 0, DI28B0 },
+    { TI05, CI05, 0, DI28B0 },
     { TI05, CI08, 0 },
     { TI06, CI76, 0 },
     { TI06, CI80, 0 },
