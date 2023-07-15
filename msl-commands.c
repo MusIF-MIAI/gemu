@@ -154,17 +154,22 @@ static void CI89(struct ge* ge) { ge->ALTO = 1; }
 /* Commands To Force In NO Knot */
 /* ---------------------------- */
 
-static void CO90(struct ge *ge) CC
-static void CO91(struct ge *ge) CC
-static void CO92(struct ge *ge) CC
-static void CO93(struct ge *ge) CC
-static void CO94(struct ge *ge) CC
-static void CO95(struct ge *ge) CC
+static void CO90(struct ge *ge) { SET_BIT(ge->kNO.forcings, 0); }
+static void CO91(struct ge *ge) { SET_BIT(ge->kNO.forcings, 1); }
+static void CO92(struct ge *ge) { SET_BIT(ge->kNO.forcings, 2); }
+static void CO93(struct ge *ge) { SET_BIT(ge->kNO.forcings, 3); }
+static void CO94(struct ge *ge) { SET_BIT(ge->kNO.forcings, 4); }
+static void CO95(struct ge *ge) { SET_BIT(ge->kNO.forcings, 5); }
 static void CO96(struct ge *ge) { SET_BIT(ge->kNO.forcings, 6); }
 static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
 
 /* Commands For External Operations */
 /* -------------------------------- */
+
+static void CE00(struct ge* ge) {
+    /* is PIPO needed?! (intermediate fo. 10 A1*/
+    ge->rRA = ge->rRO;
+}
 
 static void CE01(struct ge* ge) {
     /* is PIPO needed?! (intermediate fo. 10 A1*/
@@ -214,3 +219,8 @@ static void CU14(struct ge* ge) { RESET_BIT(ge->future_state, 4); }
 static void CU15(struct ge* ge) { RESET_BIT(ge->future_state, 5); }
 static void CU16(struct ge* ge) { RESET_BIT(ge->future_state, 6); }
 static void CU17(struct ge* ge) { RESET_BIT(ge->future_state, 7); }
+
+static void CU20(struct ge *ge) {
+    ge->rSO = ge->rSI = ge->future_state;
+    ge_log(LOG_FUTURE, "forcing state with CU20: %2x\n", ge->future_state);
+}
