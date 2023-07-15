@@ -372,6 +372,84 @@ SIG(DI95A0) { return !DI95A(ge); }
 /** @} */
 
 /**
+ * @defgroup peripherals Signals from IO Peripherals
+ * @{
+ */
+
+/* MC */
+SIG(AITEA) { return 0; }
+
+/* RI */
+SIG(LU081) { return 0; }
+SIG(LUPO1) { return 0; }
+
+/* PI */
+SIG(FUSE1) { return 0; }
+SIG(FINA1) { return 0; }
+
+/* ST3 */
+SIG(MARE3) { return 0; }
+SIG(TE303) { return 0; }
+
+/* ST4 */
+SIG(MARE4) { return 0; }
+SIG(TE304) { return 0; }
+
+/** @} */
+
+SIG(PC111); SIG(PC131); SIG(PC141);
+
+SIG(PB11A) { return !(FINA1(ge) && PC111(ge)); }
+SIG(PB13A) { return !(TE303(ge) && PC131(ge)); }
+SIG(PB14A) { return !(TE304(ge) && PC141(ge)); }
+
+SIG(RT121) { /* UNIV 1.2µs */ return 0; } // triggered by CE10 in TI10, if (RUF11 && REN21)
+
+SIG(RB101) { return !(AITEA(ge) && PB11A(ge) && PB13A(ge) && PB14A(ge)); }
+SIG(RB121) { /* UNIV 1.2µs */ return RB101(ge); }
+SIG(RB12A) { return !RB121(ge); }
+SIG(RB01A) { return !(RT121(ge) && RB101(ge)); }
+SIG(RB111) { return !(RB12A(ge) && RB01A(ge)); }
+
+/**
+ * @defgroup channel1 Channel 1 Selection Reset
+ *
+ * From the Intermediate Block Diagram, fo. 10
+ *
+ * @{
+ */
+
+SIG(PC11A); SIG(PC111) { return !PC11A(ge); };
+SIG(PC12A); SIG(PC121) { return !PC12A(ge); };
+SIG(PC13A); SIG(PC131) { return !PC13A(ge); };
+SIG(PC14A); SIG(PC141) { return !PC14A(ge); };
+
+SIG(RUF11) { return  ge->RUF1; }
+SIG(RUF1A) { return !ge->RUF1; }
+SIG(RASI1) { return  ge->RASI; }
+SIG(TO501) { return ge->current_clock == TO50; }
+
+SIG(PELEA) { return !(LU081(ge) && LUPO1(ge)); }
+SIG(RELO1) { return !(PELEA(ge) && RUF1A(ge)); }
+SIG(PAM4A) { return !(RELO1(ge) && RASI1(ge) && PC121(ge)); }
+SIG(PM11A) { return !(FUSE1(ge) && PC111(ge)); }
+SIG(PM13A) { return !(MARE3(ge) && PC131(ge)); }
+SIG(PM14A) { return !(MARE4(ge) && PC141(ge)); }
+SIG(RM101) { return !(PM11A(ge) && PM13A(ge) && PM14A(ge)); }
+SIG(PAM1A) { return !(RASI1(ge) && RM101(ge)); }
+SIG(RS011) { return !(PAM4A(ge) && PAM1A(ge)); }
+SIG(PIM1A) { return !((TO501(ge) && RS011(ge)) || (RB111(ge) && RUF11(ge))); }
+SIG(PIC1A) { return !ge->PIC1; }
+SIG(PUC11) { return !(PIC1A(ge) && PIM1A(ge)); }
+SIG(PUC1)  { return PUC11(ge); }
+
+SIG(PC01A) { return !(!BIT(ge->rL2, 3) && !BIT(ge->rL2, 0)); }
+SIG(PC03A) { return !(!BIT(ge->rL2, 0) && BIT(ge->rL2, 3)); }
+SIG(PC031) { return !PC03A(ge); }
+
+/** @} */
+
+/**
  * @defgroup busyconnectorlogic Busy Connector Logic
  *
  * From the Intermediate Block Diagram, fo. 9 (5,6-B,C,D)
@@ -389,8 +467,6 @@ SIG(PB361)    { return  ge->PB36; }
 SIG(PB36A)    { return !ge->PB36; }
 SIG(PB371)    { return  ge->PB37; }
 SIG(PB37A)    { return !ge->PB37; }
-SIG(PUC11)    { return  ge->PUC1; }
-SIG(PUC1A)    { return !ge->PUC1; }
 SIG(PUC21)    { return  ge->PUC2; }
 SIG(PUC2A)    { return !ge->PUC2; }
 SIG(PUC31)    { return  ge->PUC3; }

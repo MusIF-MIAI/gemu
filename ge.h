@@ -336,9 +336,13 @@ struct ge {
      * When a character transfer in output has been initiated with channel 1,
      * signal PAP4A resets PUC1 at the start of the transper phase, when the
      * first transfer is done from RO in to RA (CE00) unless signal PAR21 had
-     * already absolved this function. (cpu fo. 235)
+     * already absolved this function. (cpu fo. 235).
+     *
+     * Note: the above GE docs refers to `PUC2`, however in intermediate block
+     * diagram fo. 10, it's shown the real flipflop is `PIC1`, and `PUC2` is
+     * derived combinatorially from it.
      */
-    uint8_t PUC1:1;
+    uint8_t PIC1:1;
 
     /**
      * Channel 1 in transfer
@@ -360,6 +364,8 @@ struct ge {
      * (cpu fo. 236)
      */
     uint8_t PUC3:1;
+
+    uint8_t RUF1:1;
 
     uint8_t URPE:1;
     uint8_t URPU:1;

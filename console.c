@@ -2,6 +2,7 @@
 #include "ge.h"
 #include "bit.h"
 #include "log.h"
+#include "signals.h"
 
 void ge_fill_console_data(struct ge* ge, struct ge_console *console)
 {
@@ -31,7 +32,7 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.JE = ge->JE;
 
     console->lamps.I  = ge->INTE;
-    console->lamps.C1 = ge->PUC1;
+    console->lamps.C1 = PUC1(ge);
     console->lamps.C2 = ge->PUC2;
     console->lamps.C3 = ge->PUC3;
 

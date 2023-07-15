@@ -83,7 +83,7 @@ static void CI39(struct ge *ge)
     /* Reset AVER, it also resets the FF AINI and PUC1 (cpu fo. 105) */
     ge->AVER = 0;
     ge->AINI = 0;
-    ge->PUC1 = 0;
+    ge->PIC1 = 0;
 }
 
 /* Count And Arithmetical Unit Commands */
@@ -171,7 +171,19 @@ static void CE02(struct ge* ge) {
     /* admits AEBE */
 
     /* Unconditionally set by command CE02 (cpu fo. 235) */
-    ge->PUC1 = 1;
+    ge->PIC1 = 1;
+
+    /* Latch PB flip flops (intermediate diagram fo. 9  D 1,2,3) */
+    ge->PB06 = BIT(ge->rL1, 6);
+    ge->PB07 = BIT(ge->rL1, 7);
+
+    if (BIT(ge->rL2, 0))
+        ge->PB26 = BIT(ge->rL1, 6);
+
+    if (PC031(ge)) {
+        ge->PB36 = BIT(ge->rL1, 6);
+        ge->PB37 = BIT(ge->rL1, 7);
+    }
 }
 
 /* Future States Commands */
