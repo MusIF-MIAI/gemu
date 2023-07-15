@@ -504,8 +504,8 @@ static const struct msl_timing_chart state_db[] = {
     { TI06, CU10, 0 },
     { TI06, CU01, 0, DI94A0 },
     { TI06, CU11, 0, DI95A0 },
-    { TI06, CU02, state_d8_TO19_CE02 },
     { TI06, CU12, 0 },
+    { TI06, CU02, state_d8_TO19_CE02 },
     { END_OF_STATUS, 0, 0 },
 };
 
