@@ -266,108 +266,96 @@ static inline uint16_t NI_knot(struct ge *ge) {
  * @{
  */
 
+SIG(DI03A) { return !(BIT(ge->rSA, 0) && BIT(ge->rSA, 1)); }
+SIG(DI031) { return !DI03A(ge); }
+SIG(DI06A) { return !(!BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 2)); }
+SIG(DI062) { return !DI06A(ge); }
 SIG(DI10A) { return !(BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 5) && !BIT(ge->rSA, 4)); }
-
 SIG(DI101) { return !DI10A(ge); }
 SIG(DI12A) { return !(!BIT(ge->rSA, 3) && DI101(ge)); }
-
 SIG(DI121) { return !DI12A(ge); }
+SIG(DI14A) { return !(BIT(ge->rSA, 7) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 6)); }
+SIG(DI141) { return !DI14A(ge); }
+SIG(DI15A) { return !(DI141(ge) && !BIT(ge->rSA, 3)); }
 SIG(DI17A) { return !(!BIT(ge->rSA, 1) && DI121(ge) && !BIT(ge->rSA, 2)); }
-
-
 SIG(DI18A) { return !(!BIT(ge->rSA, 2) && DI121(ge) && BIT(ge->rSA, 1)); }
 SIG(DI181) { return !DI18A(ge); }
 SIG(DI18B) { return !DI181(ge); }
-
 SIG(DI19A) { return !(!BIT(ge->rSA, 1) && DI121(ge) && BIT(ge->rSA, 2)); }
 SIG(DI20A) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
-
-SIG(DI27A) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 7)); }
-SIG(DI271) { return !DI27A(ge); }
-SIG(DI28A) { return !(DI271(ge) && !BIT(ge->rSA, 5)); }
-
-SIG(DI281) { return !DI28A(ge); }
-SIG(DI28B) { return !DI281(ge); }
-
-SIG(DI48A) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && !BIT(ge->rSA, 6) && !BIT(ge->rSA, 7)); }
-SIG(DI481) { return !DI48A(ge); }
-
-SIG(DI69A) { return !(DI481(ge) && !BIT(ge->rSA, 2)); }
-SIG(DI691) { return !DI69A(ge); }
-SIG(DI58A) { return !(BIT(ge->rSA, 3) && !BIT(ge->rSA, 6)); }
-SIG(DI581) { return !DI58A(ge); }
-SIG(DI57A) { return !(!BIT(ge->rSA, 1) && DI581(ge) && DI691(ge)); }
-SIG(DI572) { return !DI57A(ge); }
-SIG(DI57B) { return DI57A(ge) ; }
-
-SIG(DO01A) { return !( BIT(ge->rFO, 6) && !BIT(ge->rFO, 3) && !BIT(ge->rFO, 7)); }
-SIG(DO011) { return !DO01A(ge); }
-SIG(DI06A) { return !(!BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 2)); }
-SIG(DI062) { return !DI06A(ge); }
-
-// TODO: doesn't work for nop/lon/loff ecc
-SIG(DE00A) { return 0;  !(DO011(ge) && DI062(ge)); }
-
-SIG(DO04A) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
-SIG(DO041) { return !DO04A(ge); }
-SIG(DO07A) { return !(!BIT(ge->rFO, 0) && !BIT(ge->rFO, 6) && DO041(ge)); }
-SIG(DO071) { return !DO07A(ge); }
-SIG(DE07A) { return !(DO071(ge) && DI062(ge)); }
-
-SIG(EC69A) { return !(AF41(ge) && DI572(ge));}
-SIG(EC70A) { return !(AF51(ge) && DI572(ge)); }
-SIG(DI14A) { return !( BIT(ge->rSA, 7) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 6)); }
-SIG(DI141) { return !DI14A(ge); }
-
+SIG(DI201) { return DI20A(ge); }
+SIG(DI21A) { return !( DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
+SIG(DI211) { return !DI21A(ge); }
+SIG(DI22A) { return !(DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
 SIG(DI23A) { return !( DI141(ge) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 4)); }
 SIG(DI231) { return !DI23A(ge); }
 SIG(DI24A) { return !(DI231(ge) && BIT(ge->rSA, 2)); };
 SIG(DI25A) { return !( DI231(ge) && !BIT(ge->rSA, 1) && !BIT(ge->rSA, 2)); };
+SIG(DI27A) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && BIT(ge->rSA, 7)); }
+SIG(DI271) { return !DI27A(ge); }
+SIG(DI28A) { return !(DI271(ge) && !BIT(ge->rSA, 5)); }
+SIG(DI281) { return !DI28A(ge); }
+SIG(DI28B) { return !DI281(ge); }
 SIG(DI29A) { return !(DI271(ge) && BIT(ge->rSA, 5) && BIT(ge->rSA, 3)); };
-SIG(DI971) { return !(DI29A(ge) && DI25A(ge) && DI24A(ge) && DI29A(ge)); }
-SIG(DI97A) { return !DI971(ge); }
-SIG(DI201) { return DI20A(ge); }
-SIG(EC56A) { return !(DI201(ge) && BIT(ge->rL2, 7)); }
-SIG(ED70A) { return !(!ge->AINI && DI971(ge)); }
-SIG(DI21A) { return !( DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
-SIG(DI211) { return !DI21A(ge); }
-
-SIG(DI03A) { return !(BIT(ge->rSA, 0) && BIT(ge->rSA, 1)); }
-SIG(DI031) { return !DI03A(ge); }
+SIG(DI48A) { return !(!BIT(ge->rSA, 4) && !BIT(ge->rSA, 5) && !BIT(ge->rSA, 6) && !BIT(ge->rSA, 7)); }
+SIG(DI481) { return !DI48A(ge); }
+SIG(DI58A) { return !(BIT(ge->rSA, 3) && !BIT(ge->rSA, 6)); }
+SIG(DI581) { return !DI58A(ge); }
+SIG(DI69A) { return !(DI481(ge) && !BIT(ge->rSA, 2)); }
+SIG(DI691) { return !DI69A(ge); }
+SIG(DI57A) { return !(!BIT(ge->rSA, 1) && DI581(ge) && DI691(ge)); }
+SIG(DI572) { return !DI57A(ge); }
+SIG(DI57B) { return DI57A(ge) ; }
 SIG(DI91A) { return !(DI031(ge) && DI211(ge)); }
-
-SIG(DI15A) { return !( DI141(ge) && !BIT(ge->rSA, 3)); }
 SIG(DI931) { return !(DI21A(ge) && DI29A(ge) && DI21A(ge) && DI15A(ge)); }
-
 SIG(DI93A) { return !DI931(ge); }
 SIG(DI94A) { return !(BIT(ge->rSA, 0) && DI931(ge)); }
 SIG(DI95A) { return !(DI931(ge) && DI031(ge)); }
+SIG(DI971) { return !(DI29A(ge) && DI25A(ge) && DI24A(ge) && DI29A(ge)); }
+SIG(DI97A) { return !DI971(ge); }
 
+SIG(DO01A) { return !( BIT(ge->rFO, 6) && !BIT(ge->rFO, 3) && !BIT(ge->rFO, 7)); }
+SIG(DO011) { return !DO01A(ge); }
+SIG(DO04A) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
+SIG(DO041) { return !DO04A(ge); }
+SIG(DO07A) { return !(!BIT(ge->rFO, 0) && !BIT(ge->rFO, 6) && DO041(ge)); }
+SIG(DO071) { return !DO07A(ge); }
+
+// TODO: doesn't work for nop/lon/loff ecc
+SIG(DE00A) { return 0;  !(DO011(ge) && DI062(ge)); }
+SIG(DE07A) { return !(DO071(ge) && DI062(ge)); }
+
+SIG(EC56A) { return !(DI201(ge) && BIT(ge->rL2, 7)); }
+SIG(EC69A) { return !(AF41(ge) && DI572(ge));}
+SIG(EC70A) { return !(AF51(ge) && DI572(ge)); }
+SIG(ED70A) { return !(!ge->AINI && DI971(ge)); }
+
+SIG(DE00A0) { return !DE00A(ge); }
+SIG(DE07A0) { return !DE07A(ge); }
+SIG(DE08A0) { return !(!BIT(ge->rFO, 1) && DI062(ge) && DO071(ge)); }
 SIG(DI12A0) { return !DI12A(ge); }
 SIG(DI17A0) { return !DI17A(ge); }
 SIG(DI18A0) { return !DI18A(ge); }
 SIG(DI18B0) { return !DI18B(ge); }
 SIG(DI19A0) { return !DI19A(ge); }
-SIG(DI60A0) { return 1; } // TODO: Missing page in manual (!)
 SIG(DI20A0) { return !DI20A(ge); }
+SIG(DI21A0) { return !DI21A(ge); }
+SIG(DI22A0) { return !DI22A(ge); }
+SIG(DI25A0) { return !DI25A(ge); }
 SIG(DI28A0) { return !DI28A(ge); }
 SIG(DI28B0) { return !DI28B(ge); }
 SIG(DI57A0) { return !DI57A(ge); }
 SIG(DI57B0) { return !DI57B(ge); }
-SIG(DE00A0) { return !DE00A(ge); }
-SIG(DE07A0) { return !DE07A(ge); }
-SIG(DE08A0) { return !(!BIT(ge->rFO, 1) && DI062(ge) && DO071(ge)); }
-SIG(EC56A0) { return !EC56A(ge); }
-SIG(EC69A0) { return !EC69A(ge); }
-SIG(EC70A0) { return !EC70A(ge); }
-SIG(DI97A0) { return !DI97A(ge); }
-SIG(ED70A0) { return !ED70A(ge); }
-SIG(DI21A0) { return !DI21A(ge); }
+SIG(DI60A0) { return 1; } // TODO: Missing page in manual (!)
 SIG(DI91A0) { return !DI91A(ge); }
-SIG(DI25A0) { return !DI25A(ge); }
 SIG(DI93A0) { return !DI93A(ge); }
 SIG(DI94A0) { return !DI94A(ge); }
 SIG(DI95A0) { return !DI95A(ge); }
+SIG(DI97A0) { return !DI97A(ge); }
+SIG(EC56A0) { return !EC56A(ge); }
+SIG(EC69A0) { return !EC69A(ge); }
+SIG(EC70A0) { return !EC70A(ge); }
+SIG(ED70A0) { return !ED70A(ge); }
 
 /** @} */
 
