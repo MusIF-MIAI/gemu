@@ -388,41 +388,6 @@ static const struct msl_timing_chart state_08[] = {
 /* PER - PERI */
 /* ---------- */
 
-static uint8_t PUC26(struct ge *ge) {
-    /* ch 136 - 24 */
-    return ge->PUC2;
-}
-
-static uint8_t PUC36(struct ge *ge) {
-    /* ch 136 - 29 */
-    return ge->PUC3;
-}
-
-static uint8_t DU90A(struct ge *ge) {
-    /* ch. 197 - 6 */
-    return !(PUC26(ge) && !BIT(ge->rRO, 0));
-}
-
-static uint8_t DU91A(struct ge *ge) {
-    /* ch. 227 - 13 */
-    return !( BIT(ge->rRO, 0) &&
-             !BIT(ge->rRO, 3) &&
-              PUC36(ge));
-}
-
-/** Selected channel busy */
-static uint8_t DU92(struct ge *ge) {
-    /* ch. 286 - 1 */
-    return !(DU90A(ge) && DU91A(ge));
-}
-
-/** LPER external operation */
-static uint8_t DU93(struct ge *ge) {
-    // ch. 180
-    uint8_t DU93A = !(BIT(ge->rL2, 7) && BIT(ge->rL2, 5));
-    return !DU93A;
-}
-
 static uint8_t state_c8_TI06_CI85(struct ge *ge) {
     /* !(selected_connector_busy || selected_channel_busy) */
     return !(PUB01(ge) || DU92(ge));

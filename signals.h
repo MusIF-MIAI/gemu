@@ -286,8 +286,8 @@ SIG(DI20A) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
 SIG(DI201) { return DI20A(ge); }
 SIG(DI21A) { return !( DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
 SIG(DI211) { return !DI21A(ge); }
-SIG(DI22A) { return !(DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
-SIG(DI23A) { return !( DI141(ge) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 4)); }
+SIG(DI22A) { return !(DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && BIT(ge->rSA, 2)); }
+SIG(DI23A) { return !(DI141(ge) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 4)); }
 SIG(DI231) { return !DI23A(ge); }
 SIG(DI24A) { return !(DI231(ge) && BIT(ge->rSA, 2)); };
 SIG(DI25A) { return !( DI231(ge) && !BIT(ge->rSA, 1) && !BIT(ge->rSA, 2)); };
@@ -341,6 +341,7 @@ SIG(DI19A0) { return !DI19A(ge); }
 SIG(DI20A0) { return !DI20A(ge); }
 SIG(DI21A0) { return !DI21A(ge); }
 SIG(DI22A0) { return !DI22A(ge); }
+SIG(DI24A0) { return !DI24A(ge); }
 SIG(DI25A0) { return !DI25A(ge); }
 SIG(DI28A0) { return !DI28A(ge); }
 SIG(DI28B0) { return !DI28B(ge); }
@@ -438,6 +439,9 @@ SIG(PC031) { return !PC03A(ge); }
 
 /** @} */
 
+SIG(PUC26) { return ge->PUC2; }
+SIG(PUC36) { return ge->PUC3; }
+
 /**
  * @defgroup busyconnectorlogic Busy Connector Logic
  *
@@ -486,5 +490,22 @@ SIG(PUB01_d4) { return !(PU004(ge) && BIT(ge->rL1, 7) && BIT(ge->rL1, 6)); }
 SIG(PUB01)    { return !(PUB01_d1(ge) && PUB01_d2(ge) && PUB01_d3(ge) && PUB01_d4(ge)); }
 
 /** @} */
+
+SIG(DU90A) { return !(PUC26(ge) && !BIT(ge->rRO, 0)); }
+SIG(DU91A) { return !(BIT(ge->rRO, 0) && !BIT(ge->rRO, 3) && PUC36(ge)); }
+
+/** Selected channel busy */
+SIG(DU92)  { return !(DU90A(ge) && DU91A(ge)); }
+
+SIG(DU93A) { return !(BIT(ge->rL2, 7) && BIT(ge->rL2, 5)); }
+
+/** LPER external operation */
+SIG(DU93)  { return !DU93A(ge); }
+
+SIG(DU95A) { return !(!BIT(ge->rRO, 1) && !BIT(ge->rRO, 2) && BIT(ge->rRO, 6)); }
+SIG(DU95) { return !DU95A(ge); }
+
+SIG(DU96A) { return !(BIT(ge->rL2, 7) && BIT(ge->rL2, 7)); }
+SIG(DU96) { return !DU96A(ge); }
 
 #endif
