@@ -47,11 +47,7 @@ UTEST(peri, per_peri) {
     ASSERT_CYCLE(0xd8, "PER-PERI 2");
     ASSERT_CYCLE(0xd9, "PER-PERI 3");
     ASSERT_CYCLE(0xda, "PER-PERI 4");
-    printf("FI: %08x  FA: %08x\n", g.ffFI, g.ffFA);
-
     ASSERT_CYCLE(0xdb, "PER-PERI 5");
-    printf("FI: %08x  FA: %08x\n", g.ffFI, g.ffFA);
-
-//    ASSERT_CYCLE(0xdc, "PER");
-
+    ASSERT_CYCLE(0xdc, "PER-PERI 6");
+    ASSERT_CYCLE(0xcc, "PER-PERI 7");
 }

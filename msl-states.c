@@ -474,3 +474,64 @@ static const struct msl_timing_chart state_db[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+SIG(PCOV) { return 1; }
+
+static uint8_t state_dc_TI06_CI70(struct ge *ge) {
+    return !PCOV(ge) && !BIT(ge->rL2, 2) && !AITE(ge);
+}
+
+static uint8_t state_dc_TI06_CU20(struct ge *ge) {
+    return BIT(ge->rL2, 0) && !BIT(ge->ffFA, 5);
+}
+
+static const struct msl_timing_chart state_dc[] = {
+    { TO10, CO13, 0 },
+    { TO30, CI19, 0 },
+    { TO30, CO90, 0 },
+    { TO40, CO01, 0 },
+    { TO50, CI32, 0, DI22A0 },
+    { TI06, CI70, state_dc_TI06_CI70 },
+    { TI06, CU14, 0, DI22A0 },
+    { TI06, CU20, state_dc_TI06_CU20 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static uint8_t state_cc_TO50_CE00(struct ge *ge) {
+    return !ge->PUC3;
+}
+
+
+static uint8_t state_cc_TI06_CU13(struct ge *ge) {
+    return (PCOV(ge) && DU96(ge) && !DU95(ge)) || BIT(ge->ffFA, 0);
+}
+
+static uint8_t state_cc_TI06_CU05(struct ge *ge) {
+    return BIT(ge->ffFA, 5) || (!BIT(ge->ffFA, 0) && DU96(ge));
+}
+
+static uint8_t state_cc_TI06_CU04(struct ge *ge) {
+    return !BIT(ge->ffFA, 5) && BIT(ge->ffFA, 0);
+}
+
+static uint8_t state_cc_TI06_CU01(struct ge *ge) {
+    return BIT(ge->ffFA, 5) || !BIT(ge->ffFA, 9) ;
+}
+
+static const struct msl_timing_chart state_cc[] = {
+    { TO10, CO12, 0, DI97A0 },
+    { TO10, CO41, 0, DI97A0 },
+    { TO25, CO30, not_AINI, ED70A0 },
+    { TO30, CI19, 0, DI24A0 },
+    { TO30, CO96, 0 },
+    { TO40, CO02, DI97A0 },
+    { TO50, CI32, AINI, 0 },
+    { TO50, CE01, 0 },
+    { TO50, CE00, state_cc_TO50_CE00 },
+    { TI06, CI75, 0 },
+    { TI06, CU13, state_cc_TI06_CU13 },
+    { TI06, CU12, 0 },
+    { TI06, CU05, state_cc_TI06_CU05 },
+    { TI06, CU04, state_cc_TI06_CU04 },
+    { TI06, CU01, state_cc_TI06_CU01 },
+    { END_OF_STATUS, 0, 0 },
+};
