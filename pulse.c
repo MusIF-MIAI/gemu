@@ -12,6 +12,8 @@ static void on_TO00(struct ge *ge) {
     ge->RIA2 = ge->RC02;
     ge->RIA3 = ge->RC03;
 
+    ge->RETO = RES01(ge);
+
     /* TODO: a "counter" with RAMO, RAMI should condition RIA0 */
 
     ge_log(LOG_CYCLE, "  async: RC00: %d RC01: %d RC02: %d RC03: %d ALTO: %d\n",

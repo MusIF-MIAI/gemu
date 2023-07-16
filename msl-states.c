@@ -535,3 +535,25 @@ static const struct msl_timing_chart state_cc[] = {
     { TI06, CU01, state_cc_TI06_CU01 },
     { END_OF_STATUS, 0, 0 },
 };
+
+/* TPER - CPER */
+/* ----------- */
+
+SIG(L207)     { return BIT(ge->rL2, 7); }
+SIG(not_L207) { return !L207(ge); }
+
+static uint8_t state_ca_TO80_CE18(struct ge *ge) {
+    return L207(ge) && (!BIT(ge->rL1, 7) || BIT(ge->rL1, 6) || !BIT(ge->rL1, 0));
+}
+
+static const struct msl_timing_chart state_ca[] = {
+    { TO19, CE08, L207 },
+    { TO65, CE03, 0 },
+    { TO80, CE18, state_ca_TO80_CE18 },
+    { TI06, CU16, not_L207 },
+    { TI06, CU05, 0 },
+    { TI06, CU13, L207 },
+    { TI06, CU11, not_L207 },
+    { TI10, CE10, L207 },
+    { END_OF_STATUS, 0, 0 },
+};

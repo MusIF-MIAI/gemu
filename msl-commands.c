@@ -177,7 +177,8 @@ static void CE01(struct ge* ge) {
 }
 
 static void CE02(struct ge* ge) {
-    /* admits AEBE */
+    /* admits AEBE: */
+    /* UNIV 1.2µs --> RATE1 */
 
     /* Unconditionally set by command CE02 (cpu fo. 235) */
     ge->PIC1 = 1;
@@ -195,6 +196,57 @@ static void CE02(struct ge* ge) {
     }
 
     /* parity check ignored */
+}
+
+static void CE03(struct ge *ge) {
+    /* reset IO */
+    uint8_t CE031 = 1;
+    uint8_t TO191 = ge->current_clock == TO19;
+    uint8_t TO651 = ge->current_clock == TO65;
+    uint8_t RECIA = !(CE031 && PC011(ge));
+    uint8_t RECI1 = !RECIA;
+
+    if (TO651 && RECI1)
+        ge->RIG1 = RF101(ge);
+
+    if (TO191)
+        ge->RACI = 0;
+
+    /* maybe more? */
+}
+
+static void CE08(struct ge *ge) {
+    /* set VICU */
+    uint8_t TO191 = ge->current_clock == TO19;
+
+    if (TO191 && ge->RETO)
+        ge->RAVI = 1;
+
+    if (ge->RAVI && RB111(ge))
+        ge->RACI = 1;
+}
+
+static void CE10(struct ge *ge) {
+    /* emits TU201: */
+    /* UNIV 1.2µs --> RT121 */
+}
+
+static void CE18(struct ge *ge) {
+    /* enable reset RIAP */
+    uint8_t TO801 = ge->current_clock == TO80;
+    
+    if (TO801 && RIUC(ge))
+        ge->RC00 = 0;
+
+    if (TO801 && RESI(ge))
+        ge->RC01 = 0;
+
+    if (TO801 && RES2(ge))
+        ge->RC02 = 0;
+
+    if (TO801 && RES3(ge))
+        ge->RC02 = 0;
+
 }
 
 /* Future States Commands */

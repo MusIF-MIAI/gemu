@@ -20,13 +20,20 @@
  * @{
  */
 
-/**
- * Cycle assigned to channel 1
- */
-SIG(RES0) {
-    /* cpu fo. 116 */
-    return ge->RESI;
-}
+SIG(RESIA) { return !ge->RESI; }
+SIG(RIA01) { return  ge->RIA0; }
+SIG(RIA2A) { return !ge->RIA2; }
+SIG(RIA3A) { return !ge->RIA3; }
+
+SIG(RIUCA) { return !(RIA01(ge) && RESIA(ge) && RIA2A(ge) && RIA3A(ge)); }
+
+/* adding RIUCA here breaks machine startup */
+SIG(RES01) { return !(RESIA(ge) /* && RIUCA(ge) */); }
+
+SIG(RESI)  { return ge->RESI; }
+
+/** Cycle assigned to channel 1 */
+SIG(RES0)  { return RES01(ge); }
 
 /**
  * Cycle assigned to channel 2
@@ -372,6 +379,7 @@ SIG(AITEA) { return !AITE(ge); }
 /* RI */
 SIG(LU081) { return 0; }
 SIG(LUPO1) { return 0; }
+SIG(FINI1) { return 0; }
 
 /* PI */
 SIG(FUSE1) { return 0; }
@@ -380,14 +388,16 @@ SIG(FINA1) { return 0; }
 /* ST3 */
 SIG(MARE3) { return 0; }
 SIG(TE303) { return 0; }
+SIG(FINE3) { return 0; }
 
 /* ST4 */
 SIG(MARE4) { return 0; }
 SIG(TE304) { return 0; }
+SIG(FINE4) { return 0; }
 
 /** @} */
 
-SIG(PC111); SIG(PC131); SIG(PC141);
+SIG(PC111); SIG(PC131); SIG(PC141); SIG(PC121);
 
 SIG(PB11A) { return !(FINA1(ge) && PC111(ge)); }
 SIG(PB13A) { return !(TE303(ge) && PC131(ge)); }
@@ -400,6 +410,11 @@ SIG(RB121) { /* UNIV 1.2µs */ return RB101(ge); }
 SIG(RB12A) { return !RB121(ge); }
 SIG(RB01A) { return !(RT121(ge) && RB101(ge)); }
 SIG(RB111) { return !(RB12A(ge) && RB01A(ge)); }
+
+SIG(PF12A) { return !(FINI1(ge) && PC121(ge)); }
+SIG(PF13A) { return !(FINE3(ge) && PC131(ge)); }
+SIG(PF14A) { return !(FINE4(ge) && PC141(ge)); }
+SIG(RF101) { return !(PF12A(ge) && PF13A(ge) && PF14A(ge)); }
 
 /**
  * @defgroup channel1 Channel 1 Selection Reset
@@ -434,6 +449,7 @@ SIG(PUC11) { return !(PIC1A(ge) && PIM1A(ge)); }
 SIG(PUC1)  { return PUC11(ge); }
 
 SIG(PC01A) { return !(!BIT(ge->rL2, 3) && !BIT(ge->rL2, 0)); }
+SIG(PC011) { return !PC01A(ge); }
 SIG(PC03A) { return !(!BIT(ge->rL2, 0) && BIT(ge->rL2, 3)); }
 SIG(PC031) { return !PC03A(ge); }
 

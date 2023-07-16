@@ -237,8 +237,8 @@ struct ge {
      * (cpu fo. 130).
      * When setting RETO, if PAPA switch is set, rotary is neither in normal, nor
      * in position 8 to store in memory, should set ALTO */
-    uint8_t ffRETO:1;
-    uint8_t ffRET2:1;
+    uint8_t RETO:1;
+    uint8_t RET2:1;
 
     /**
      * Program Loading
@@ -468,8 +468,17 @@ struct ge {
      */
     uint8_t RIA3:1;
 
+    /** Selection Check Byte */
     uint8_t RECE:1;
-    
+
+    /** End from controller 1 */
+    uint8_t RIG1:1;
+
+    /** Rejected Command */
+    uint8_t RACI:1;
+
+    /** VICU Support */
+    uint8_t RAVI:1;
     /**
      * Future state
      *

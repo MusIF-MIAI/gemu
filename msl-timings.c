@@ -208,7 +208,7 @@ struct msl_timing_state msl_timings[0xff] = {
     /* c7 */ { },
     /* c8 */ {state_c8},
     /* c9 */ { },
-    /* ca */ { },
+    /* ca */ {state_ca},
     /* cb */ { },
     /* cc */ {state_cc},
     /* cd */ { },
