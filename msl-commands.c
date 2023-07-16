@@ -40,6 +40,7 @@ static void CO14(struct ge* ge) { ge->kNO.cmd = KNOT_V4_IN_NO; }
 static void CO16(struct ge* ge) { ge->kNO.cmd = KNOT_L2_IN_NO; }
 static void CO18(struct ge *ge) { ge->kNO.cmd = KNOT_FORCE_IN_NO_21; }
 
+static void CI11(struct ge* ge) { CO11(ge);                          }
 static void CI12(struct ge* ge) { CO12(ge);                          }
 static void CI15(struct ge* ge) { ge->kNO.cmd = KNOT_L1_IN_NO;       }
 static void CI16(struct ge* ge) { CO16(ge);                          }
@@ -215,6 +216,14 @@ static void CE03(struct ge *ge) {
     /* maybe more? */
 }
 
+static void CE06(struct ge *ge) {
+    /* enable set error 1 */
+}
+
+static void CE07(struct ge *ge) {
+    /* set io for can 1, 2 or 3 */
+}
+
 static void CE08(struct ge *ge) {
     /* set VICU */
     uint8_t TO191 = ge->current_clock == TO19;
@@ -224,6 +233,11 @@ static void CE08(struct ge *ge) {
 
     if (ge->RAVI && RB111(ge))
         ge->RACI = 1;
+}
+
+static void CE09(struct ge *ge) {
+    /* emits TU101: */
+    /* UNIV 1.2µs --> RT121 */
 }
 
 static void CE10(struct ge *ge) {
@@ -248,6 +262,11 @@ static void CE18(struct ge *ge) {
         ge->RC02 = 0;
 
 }
+
+static void CE19(struct ge *ge) {
+    /* reset selection can 3 */
+}
+
 
 /* Future States Commands */
 /* ---------------------- */

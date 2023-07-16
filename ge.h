@@ -474,6 +474,8 @@ struct ge {
     /** End from controller 1 */
     uint8_t RIG1:1;
 
+    uint8_t RIG3:1;
+
     /** Rejected Command */
     uint8_t RACI:1;
 

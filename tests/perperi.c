@@ -51,4 +51,12 @@ UTEST(peri, per_peri) {
     ASSERT_CYCLE(0xdc, "PER-PERI 6");
     ASSERT_CYCLE(0xcc, "PER-PERI 7");
     ASSERT_CYCLE(0xca, "TPER-CPER 1");
+    ASSERT_CYCLE(0xa8, "TPER-CPER 2");
+    ASSERT_CYCLE(0xa9, "TPER-CPER 3");
+    ASSERT_CYCLE(0xaa, "TPER-CPER 4");
+    ASSERT_CYCLE(0xab, "TPER-CPER 5");
+    ASSERT_CYCLE(0xb8, "TPER-CPER 6");
+    ASSERT_CYCLE(0xea, "TPER-CPER 7");
+    ASSERT_CYCLE(0xeb, "TPER-CPER 8");
+    ASSERT_CYCLE(0xe3, "Alpha 1");
 }
