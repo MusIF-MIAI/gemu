@@ -100,10 +100,11 @@ UTEST(alpha_phase, pm_instruction_to_alpha)
     /* a jmp instruction taken from software/compile-print.txt */
     const uint8_t opcode = 0x47;
     const uint8_t character = 0xf0;
-    const uint8_t arg1 = 0x0d;
-    const uint8_t arg2 = 0xfc;
+    const uint8_t arg_hi = 0x0d;
+    const uint8_t arg_lo = 0xfc;
+    const uint16_t arg = (arg_hi << 8) | arg_lo;
 
-    uint8_t mem[] = {opcode, character, arg1, arg2};
+    uint8_t mem[] = {opcode, character, arg_hi, arg_lo};
 
     struct ge g;
     int r;
@@ -135,9 +136,9 @@ UTEST(alpha_phase, pm_instruction_to_alpha)
     ASSERT_TRUE(g.rSO == 0x64 || g.rSO == 0x65);
 
     ASSERT_EQ(g.rPO, 4);
-    ASSERT_EQ(g.rRO, arg2);
-    ASSERT_EQ(g.rV1, arg2);
-    ASSERT_EQ(g.rV2, arg2);
+    ASSERT_EQ(g.rRO, arg_lo);
+    ASSERT_EQ(g.rV1, arg);
+    ASSERT_EQ(g.rV2, arg);
     ASSERT_EQ(g.rL1, character);
-    ASSERT_EQ(g.rL2, arg1);
+    ASSERT_EQ(g.rL2, arg_hi);
 }
