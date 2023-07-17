@@ -74,12 +74,44 @@ UTEST(peri, per_peri) {
 
     ASSERT_CYCLE(0xcc, "PER-PERI 7");
     ASSERT_EQ(g.rRE, x);
+    ASSERT_EQ(g.rRA, x);
+
+    /* The sequence, from Status CC, can follow 4 different ways:
+     *
+     *    1) With !FA05 . FAOO the sequence reaches back into
+     * Status D8 to do a decount in PO. This is necessary
+     * to carry out a wait recycle for unit free.
+     *
+     *    2) A return to phase ALPHA is done if the unit is busy and
+     * if condition FA05 is present the second time that status CC
+     * is entered into.
+     * For an LPER the instruction is considered. finished,
+     * thus the sequence returns to phase ALPHA.
+     *
+     *    3) If the instruction is a SPER (!FAOO . !FA05 . DU96 . DU95),
+     * the sequence goes to Statuses EA and EB, which perform the
+     * unloading of channel 3 conditions.
+     *
+     *    4) If the instruction is either a CPER or a TPER and all the
+     * conditions set down necessary to continue the sequence have
+     * been satisfied, Status CA is entered. */
 
     ASSERT_CYCLE(0xca, "TPER-CPER 1");
+
     ASSERT_CYCLE(0xa8, "TPER-CPER 2");
+    ASSERT_EQ((g.rL1 & 0xff00) >> 8, l1);
+
     ASSERT_CYCLE(0xa9, "TPER-CPER 3");
+    ASSERT_EQ((g.rL1 & 0xff00) >> 8, l1);
+    ASSERT_EQ((g.rL1 & 0x00ff) >> 0, l2);
+
     ASSERT_CYCLE(0xaa, "TPER-CPER 4");
+    ASSERT_EQ((g.rV1 & 0xff00) >> 8, i1);
+
     ASSERT_CYCLE(0xab, "TPER-CPER 5");
+    ASSERT_EQ((g.rV1 & 0xff00) >> 8, i1);
+    ASSERT_EQ((g.rV1 & 0x00ff) >> 0, i2);
+
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
     ASSERT_CYCLE(0xea, "TPER-CPER 7");
     ASSERT_CYCLE(0xeb, "TPER-CPER 8");
