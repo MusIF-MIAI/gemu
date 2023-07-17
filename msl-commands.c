@@ -169,11 +169,13 @@ static void CO97(struct ge *ge) { SET_BIT(ge->kNO.forcings, 7); }
 
 static void CE00(struct ge* ge) {
     /* is PIPO needed?! (intermediate fo. 10 A1*/
+    ge_log(LOG_PERI, "RA <- %x\n", ge->rRO);
     ge->rRA = ge->rRO;
 }
 
 static void CE01(struct ge* ge) {
     /* is PIPO needed?! (intermediate fo. 10 A1*/
+    ge_log(LOG_PERI, "RE <- %x\n", ge->rRO);
     ge->rRE = ge->rRO;
 }
 
@@ -238,15 +240,19 @@ static void CE08(struct ge *ge) {
 static void CE09(struct ge *ge) {
     /* emits TU101: */
     /* UNIV 1.2µs --> RT121 */
+    ge_log(LOG_PERI, "EMIT TU101 (CE09)\n");
 }
 
 static void CE10(struct ge *ge) {
     /* emits TU201: */
     /* UNIV 1.2µs --> RT121 */
+    ge_log(LOG_PERI, "EMIT TU201 (CE10)\n");
 }
 
 static void CE18(struct ge *ge) {
     /* enable reset RIAP */
+    ge_log(LOG_PERI, "RESET RIAP\n");
+
     uint8_t TO801 = ge->current_clock == TO80;
     
     if (TO801 && RIUC(ge))

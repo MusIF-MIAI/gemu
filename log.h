@@ -24,6 +24,7 @@ enum ge_log_types {
     LOG_FUTURE  = 0x040, ///< Future state network debug
     LOG_CYCLE   = 0x080, ///< Cycle attribution debug
     LOG_CONSOLE = 0x100, ///< Console interactions
+    LOG_PERI    = 0x200, ///< Peripherals IO
 };
 
 /**

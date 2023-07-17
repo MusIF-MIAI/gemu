@@ -16,6 +16,7 @@ static const char *log_type_name(ge_log_type type)
         case LOG_REGS_V: return "regs v  ";
         case LOG_FUTURE: return "future  ";
         case LOG_CYCLE:  return "cycle   ";
+        case LOG_PERI:   return "periph  ";
         default:         return "        ";
     }
 }
