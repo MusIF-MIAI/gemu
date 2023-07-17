@@ -79,7 +79,18 @@ static void on_TO40(struct ge *ge) {
     }
 }
 
-static void on_TO50(struct ge *ge) {}
+static void on_TO50(struct ge *ge) {
+    /* not sure about the timing of memory ops
+     * read was previously done in TO65 with write, but
+     * it didn't work to implement the state CC for PERI.
+     * reading here  seems to work in all known cases */
+    if (ge->memory_command == MC_READ) {
+        ge->rRO = ge->mem[ge->rVO];
+        ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n", ge->rVO, ge->rRO);
+
+        ge->memory_command = MC_NONE;
+    }
+}
 
 static void on_TO50_1(struct ge *ge) {
     if (!ge->TO50_conditions.did_CI33) {
@@ -95,20 +106,16 @@ static void on_TO60(struct ge *ge) {}
 static void on_TO64(struct ge *ge) {}
 
 static void on_TO65(struct ge *ge) {
-    /* the only reference i found for this is the timing diagram
-     * in cpu fo. 145 */
-
-    if (ge->memory_command == MC_READ) {
-        ge->rRO = ge->mem[ge->rVO];
-        ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n", ge->rVO, ge->rRO);
-    }
+    /* not sure about the timing of memory ops
+     * in cpu fo. 145, "write" seems to be at around TO65,
+     * and the "test k" fails if it's in TO50. */
 
     if (ge->memory_command == MC_WRITE) {
         ge->mem[ge->rVO] = ge->rRO;
         ge_log(LOG_STATES, "memory write: mem[VO] = RO = mem[%x] = %x\n", ge->rVO, ge->rRO);
-    }
 
-    ge->memory_command = MC_NONE;
+        ge->memory_command = MC_NONE;
+    }
 
     /* "enables the second phase commands for count selection"
      * (cpu fo. 142), not sure this is what it means */
