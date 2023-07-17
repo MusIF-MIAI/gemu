@@ -214,12 +214,7 @@ static inline uint8_t NA_knot(struct ge *ge) {
 }
 
 static inline uint8_t NI_source(struct ge *ge, enum knot_ni_source source) {
-    uint8_t is_cn = ((ge->kNI.ni1 == NS_CN1) &&
-                     (ge->kNI.ni2 == NS_CN2) &&
-                     (ge->kNI.ni3 == NS_CN3) &&
-                     (ge->kNI.ni4 == NS_CN4));
-
-    uint16_t cn = is_cn ? ge_counting_network_output(ge) : 0;
+    uint16_t cn = ge_counting_network_output(ge);
 
     switch (source) {
         case NS_CN1: return (cn & 0x000f) >>  0;
