@@ -559,7 +559,7 @@ static const struct msl_timing_chart state_ca[] = {
 };
 
 static const struct msl_timing_chart state_a8[] = {
-    { TO10, CO10, 0, DI97A0 },
+    { TO10, CO12, 0, DI97A0 },
     { TO10, CO41, 0, DI97A0 },
     { TO25, CO30, not_AINI, ED70A0 },
     { TO30, CI19, 0, DI29A0 },
@@ -617,8 +617,8 @@ static const struct msl_timing_chart state_ab[] = {
     { TO30, CI19, 0, DI29A0 },
     { TO30, CI11, 0 },
     { TO40, CO02, 0, DI97A0 },
-    { TO70, CI62, state_aa_TO70_CI62, DI79A0 },
-    { TO70, CI67, state_aa_TO70_CI62, DI79A0 },
+    { TO70, CI62, state_aa_TO70_CI62, ED79A0 },
+    { TO70, CI67, state_aa_TO70_CI62, ED79A0 },
     { TO80, CE18, state_aa_TO80_CE18 },
     { TI05, CI01, 0 },
     { TI05, CI04, state_aa_TI05_CI04 },
