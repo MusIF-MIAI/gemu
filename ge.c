@@ -218,6 +218,8 @@ void fsn_last_clock(struct ge *ge)
     if (ge->RIA0 && !ge->console_switches.RICI) {
         ge_log(LOG_FUTURE, "last clock cpu, %02x in SO\n", ge->future_state);
         ge->rSO = ge->future_state;
+    } else {
+        ge_log(LOG_FUTURE, "last clock cpu, not setting future state %02x in SO becuse RIA0 %d and !RICI %d\n", ge->future_state, ge->RIA0, !ge->console_switches.RICI);
     }
 
     /* after the end of a cpu work cycle, (ALTO / ALS71=1) is set if
