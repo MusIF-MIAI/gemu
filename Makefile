@@ -21,7 +21,7 @@ check: tests/tests
 
 .PHONY: clean
 clean:
-	rm -f libge.a ge tests/tests
+	rm -f libge.a main.o ge tests/tests
 	rm -f $(OBJS) $(OBJS:%.o=%.d)
 	rm -f $(TESTS) $(TESTS:%.o=%.d)
 
