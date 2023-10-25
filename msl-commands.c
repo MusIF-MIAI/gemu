@@ -209,11 +209,21 @@ static void CE03(struct ge *ge) {
     uint8_t RECIA = !(CE031 && PC011(ge));
     uint8_t RECI1 = !RECIA;
 
-    if (TO651 && RECI1)
-        ge->RIG1 = RF101(ge);
+    ge_log(LOG_PERI, "RESET I/U (CE03)\n");
 
-    if (TO191)
+    if (TO651 && RECI1) {
+        ge->RIG1 = RF101(ge);
+        ge_log(LOG_PERI, "SETTING RIG1 TO %d (CE03)\n", ge->RIG1);
+    } else {
+        ge_log(LOG_PERI, "NOT RESETTING RIG1 (CE03)\n");
+    }
+
+    if (TO191) {
         ge->RACI = 0;
+        ge_log(LOG_PERI, "RESETTING RACI (CE03)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT RESETTING RACI (CE03)\n");
+    }
 
     /* maybe more? */
 }
@@ -224,17 +234,39 @@ static void CE06(struct ge *ge) {
 
 static void CE07(struct ge *ge) {
     /* set io for can 1, 2 or 3 */
+    uint8_t TO191 = ge->current_clock == TO19;
+
+    if (TO191 && PC011(ge)) {
+        ge->RASI = 1;
+        ge_log(LOG_PERI, "SET RASI (CE07)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT SETTING RASI (CE07)\n");
+    }
+
+    if (TU00A(ge)) {
+        ge_log(LOG_PERI, "TU00A! %d\n", TU00A(ge));
+    }
 }
 
 static void CE08(struct ge *ge) {
     /* set VICU */
     uint8_t TO191 = ge->current_clock == TO19;
 
-    if (TO191 && ge->RETO)
-        ge->RAVI = 1;
+    ge_log(LOG_PERI, "SET VICU (CE08)\n");
 
-    if (ge->RAVI && RB111(ge))
+    if (TO191 && ge->RETO) {
+        ge->RAVI = 1;
+        ge_log(LOG_PERI, "SET RAVI (CE08)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT SETTING RAVI (CE08)\n");
+    }
+
+    if (ge->RAVI && RB111(ge)) {
         ge->RACI = 1;
+        ge_log(LOG_PERI, "SET RACI (CE08)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT SETTING RACI (CE08)\n");
+    }
 }
 
 static void CE09(struct ge *ge) {
@@ -255,18 +287,33 @@ static void CE18(struct ge *ge) {
 
     uint8_t TO801 = ge->current_clock == TO80;
     
-    if (TO801 && RIUC(ge))
+    if (TO801 && RIUC(ge)) {
         ge->RC00 = 0;
+        ge_log(LOG_PERI, "RESETING RC00 (CE18)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT RESETING RC00 (CE18)\n");
+    }
 
-    if (TO801 && RESI(ge))
+    if (TO801 && RESI(ge)) {
         ge->RC01 = 0;
+        ge_log(LOG_PERI, "RESETING RC01 (CE18)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT RESETING RC01 (CE18)\n");
+    }
 
-    if (TO801 && RES2(ge))
+    if (TO801 && RES2(ge)) {
         ge->RC02 = 0;
+        ge_log(LOG_PERI, "RESETING RC02 (CE18)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT RESETING RC02 (CE18)\n");
+    }
 
-    if (TO801 && RES3(ge))
-        ge->RC02 = 0;
-
+    if (TO801 && RES3(ge)) {
+        ge->RC03 = 0;
+        ge_log(LOG_PERI, "RESETING RC03 (CE18)\n");
+    } else {
+        ge_log(LOG_PERI, "NOT RESETING RC03 (CE18)\n");
+    }
 }
 
 static void CE19(struct ge *ge) {

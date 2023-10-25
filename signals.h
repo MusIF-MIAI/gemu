@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "bit.h"
 #include "ge.h"
+#include "log.h"
 
 #define SIG( name ) static inline uint8_t name (struct ge *ge)
 
@@ -417,9 +418,9 @@ SIG(AITE)  { return ge->console_switches.SITE; }
 SIG(AITEA) { return !AITE(ge); }
 
 /* RI */
-SIG(LU081) { return 0; }
-SIG(LUPO1) { return 0; }
-SIG(FINI1) { return 0; }
+SIG(LU081) { ge_log(LOG_PERI, "reading LU081\n"); return 0; }
+SIG(LUPO1) { ge_log(LOG_PERI, "reading LUPO1\n"); return 0; }
+SIG(FINI1) { ge_log(LOG_PERI, "reading FINI1\n"); return 0; }
 
 /* PI */
 SIG(FUSE1) { return 0; }
@@ -576,5 +577,9 @@ SIG(DU97A) { return !((ge->PUC2 && BIT(ge->rL2, 0)) ||
 SIG(DU97) { return !DU97A(ge); }
 
 SIG(DU98) { return !(DU89A(ge) && PC03A(ge)); }
+
+
+/* RI outgoing */
+SIG(TU00A) { return !(RT121(ge) && RUF1A(ge) && PC121(ge));}
 
 #endif

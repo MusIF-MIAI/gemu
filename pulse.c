@@ -60,6 +60,8 @@ static void on_TO20(struct ge *ge) {
     ge->rBO = NO_knot(ge); /* cpu fo. 142, 126 */
     ge->rVO = NO_knot(ge); /* cpu fo. 124, 125 */
 
+    ge->kNO.forcings = 0;
+
     ge->ACIC = 0; /* cpu fo. 99  */
 
     /* TODO: are there any condition?   */
@@ -97,6 +99,7 @@ static void on_TO50_1(struct ge *ge) {
         /* timing chart js1-js2-jie-ecc, fo. 32,
          * also, display, fo. 17 */
         ge->rBO = NO_knot(ge);
+        ge->kNO.forcings = 0;
     }
 
     memset(&ge->TO50_conditions, 0, sizeof(ge->TO50_conditions));

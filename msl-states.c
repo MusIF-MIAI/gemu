@@ -609,9 +609,9 @@ static uint8_t state_aa_TI05_CI04(struct ge *ge) { return BIT(ge->rL2, 0); }
 static uint8_t state_aa_TI05_CI03(struct ge *ge) { return PC031(ge); }
 
 static const struct msl_timing_chart state_ab[] = {
-    { TO00, CE07, 0 }, /* no clock in documentation! */
     { TO10, CO12, 0, DI97A0 },
     { TO10, CO41, 0, DI97A0 },
+    { TO19, CE07, 0 }, /* no clock in documentation! */
     { TO19, CE08, 0 },
     { TO25, CO30, not_AINI, ED70A0 },
     { TO30, CI19, 0, DI29A0 },
