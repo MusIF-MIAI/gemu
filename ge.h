@@ -593,4 +593,6 @@ void fsn_last_clock(struct ge *ge);
  */
 const char *ge_clock_name(enum clock c);
 
+void ge_print_registers_verbose(struct ge *ge);
+
 #endif /* GE_H */

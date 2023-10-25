@@ -19,6 +19,7 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
 {
     const struct msl_timing_chart *chart;
     uint32_t i = 0;
+    char done_log = 0;
 
     do {
         const char *clock_name = ge_clock_name(ge->current_clock);
@@ -26,6 +27,11 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
 
         if (chart->clock != ge->current_clock)
             continue;
+
+        if (!done_log) {
+            ge_print_registers_verbose(ge);
+            done_log = 1;
+        }
 
         if (chart->additional) {
             if (!chart->additional(ge)) {

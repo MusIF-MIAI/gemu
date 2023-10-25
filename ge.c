@@ -160,8 +160,6 @@ int ge_run_pulse(struct ge *ge)
             return r;
     }
 
-    ge_print_registers_verbose(ge);
-
     /* Execute common pulse machine logic */
     pulse(ge);
 
