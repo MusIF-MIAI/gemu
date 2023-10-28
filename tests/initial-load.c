@@ -54,19 +54,17 @@ UTEST(load, initial_load) {
     ASSERT_CYCLE(0xab, "TPER-CPER 5");
     ASSERT_EQ(g.rV1, 0);
 
-    /* state already b8, but it's display because
-     * the cpu is halted waiting for RI */
-    ASSERT_CYCLE(0xb8, "Display cycle");
-    ASSERT_FALSE(g.RIA0);
+    ASSERT_TRUE(g.RIA0);
     ASSERT_FALSE(g.RESI);
     ASSERT_FALSE(g.RIA2);
     ASSERT_FALSE(g.RIA3);
 
-    /*
 
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
+
+    /*
     ASSERT_CYCLE(0xea, "TPER-CPER 7");
     ASSERT_CYCLE(0xeb, "TPER-CPER 8");
     ASSERT_CYCLE(0xe3, "Alpha 1");
-    */
+     */
 }

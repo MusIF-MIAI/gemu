@@ -604,7 +604,14 @@ static const struct msl_timing_chart state_aa[] = {
 };
 
 static uint8_t state_aa_TO70_CI62(struct ge *ge) { return !(PC111(ge) && PC211(ge)); }
-static uint8_t state_aa_TO80_CE18(struct ge *ge) { return !(PC121(ge) || (PC111(ge) && PC211(ge))); }
+
+static uint8_t state_aa_TO80_CE18(struct ge *ge) {
+    /* this equation is different in the timing charts documentation (fo. 58),
+     * and in the cpu PDS documentation (fo. 218) it seems the PDS is the right
+     * one. */
+    return !(PC121(ge) || PC111(ge) || PC211(ge));
+}
+
 static uint8_t state_aa_TI05_CI04(struct ge *ge) { return BIT(ge->rL2, 0); }
 static uint8_t state_aa_TI05_CI03(struct ge *ge) { return PC031(ge); }
 
