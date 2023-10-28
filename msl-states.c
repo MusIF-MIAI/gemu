@@ -635,6 +635,7 @@ static const struct msl_timing_chart state_ab[] = {
     { TI06, CU01, 0, DI94A0},
     { TI06, CU11, 0, DI95A0},
     { TI06, CU04, 0, DI85A0},
+    { TI10, CE10, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -651,6 +652,50 @@ static const struct msl_timing_chart state_b8[] = {
     { TI06, CU06, DU97_or_DU98 },
     { TI10, CE09, state_b8_TI10_CE09 },
     { END_OF_STATUS, 0, 0 },
+};
+
+SIG(L204) { return BIT(ge->rL2, 4); }
+SIG(L205) { return BIT(ge->rL2, 5); }
+SIG(L206) { return BIT(ge->rL2, 6); }
+
+SIG(not_L206) { return !L206(ge); }
+
+SIG(AIGI) { return 0; } // TODO
+SIG(RIVE) { return 0; } // TODO
+
+static uint8_t state_b9_TO25_CO31(struct ge *ge) { return !BIT(ge->ffFA, 1) && !BIT(ge->rL2, 6); }
+static uint8_t state_b9_TO30_CI12(struct ge *ge) { return !L204(ge) && !L206(ge); }
+static uint8_t state_b9_TO40_CO01(struct ge *ge) {
+    return L204(ge) || (!BIT(ge->ffFA, 1) && AIGI(ge) && L206(ge));
+}
+
+static uint8_t state_b9_TO70_CI67(struct ge *ge) { return BIT(ge->ffFA, 1) && !L206(ge); }
+static uint8_t state_b9_TO70_CI66(struct ge *ge) { return !BIT(ge->ffFA, 1) && !L204(ge) && !L206(ge); }
+static uint8_t state_b9_TO80_CE05(struct ge *ge) { return !PC121(ge) && !L206(ge); }
+static uint8_t state_b9_TI06_CU13(struct ge *ge) { return !L204(ge) && !L206(ge); }
+static uint8_t state_b9_TI10_CE09(struct ge *ge) { return !RIVE(ge) && !PC121(ge) && !L206(ge); }
+
+static const struct msl_timing_chart state_b9[] = {
+    { TO10, CO11 },
+    { TO10, CO41 },
+    { TO10, CO40, L205 },
+    { TO25, CO31, state_b9_TO25_CO31 },
+    { TO30, CI15, L204 },
+    { TO30, CI41, L204 },
+    { TO30, CI40, L204 },
+    { TO30, CI12, state_b9_TO30_CI12 },
+    { TO40, CO01, state_b9_TO40_CO01 },
+    { TO50, CI34, not_L206 },
+    { TO70, CI67, state_b9_TO70_CI67 },
+    { TO70, CI66, state_b9_TO70_CI66 },
+    { TO80, CE18, L204 },
+    { TO80, CE05, state_b9_TO80_CE05 },
+    { TO65, CE11, not_L206 },
+    { TI05, CI05, L204 },
+    { TI05, CI02, not_L206 },
+    { TI06, CU13, state_b9_TI06_CU13 },
+    { TI10, CE09, state_b9_TI10_CE09 },
+    { END_OF_STATUS },
 };
 
 static uint8_t L206_or_PC01(struct ge *ge) { return BIT(ge->rL2, 7) || PC011(ge); }

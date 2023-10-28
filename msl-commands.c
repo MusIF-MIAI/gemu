@@ -61,7 +61,13 @@ static void CI32(struct ge* ge) { ge->rRO = NO_knot(ge) >> 8; }
 
 static void CI33(struct ge* ge) {
     ge->rRO = NO_knot(ge) & 0x00ff;
-    ge->TO50_conditions.did_CI33 = 1;
+    ge->TO50_conditions.did_CI33_or_CI34 = 1;
+}
+
+static void CI34(struct ge* ge) {
+    ge->rRO = NE_knot(ge);
+    ge->TO50_conditions.did_CI33_or_CI34 = 1;
+
 }
 
 static void CI38(struct ge *ge)
@@ -104,6 +110,9 @@ static void CO49(struct ge* ge) {
     ge->URPE = 0;
     ge->URPU = 0;
 };
+
+static void CI40(struct ge *ge) { CO40(ge); }
+static void CI41(struct ge *ge) { CO41(ge); }
 
 
 /* NI Knot Selection Commands */
@@ -228,6 +237,10 @@ static void CE03(struct ge *ge) {
     /* maybe more? */
 }
 
+static void CE05(struct ge* ge) {
+    #warning TODO
+}
+
 static void CE06(struct ge *ge) {
     /* enable set error 1 */
 }
@@ -270,15 +283,31 @@ static void CE08(struct ge *ge) {
 }
 
 static void CE09(struct ge *ge) {
+    /* character request */
+
     /* emits TU101: */
-    /* UNIV 1.2µs --> RT121 */
-    ge_log(LOG_PERI, "EMIT TU101 (CE09)\n");
+    /* UNIV 1.2µs --> RT111 */
+
+    reader_send_tu10(ge);
 }
 
 static void CE10(struct ge *ge) {
+    /* command  */
+
     /* emits TU201: */
     /* UNIV 1.2µs --> RT121 */
-    ge_log(LOG_PERI, "EMIT TU201 (CE10)\n");
+
+    /* UNIV seems a delay line to synchronise the hardware, let's
+     * ignore the exact timings.
+     * Also, RT121, RT231 and similar signals seems to be used
+     * to implement priority between channels, ignore them
+     * for now too */
+
+    reader_send_tu00(ge);
+}
+
+static void CE11(struct ge* ge) {
+    #warning TODO
 }
 
 static void CE18(struct ge *ge) {

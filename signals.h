@@ -262,6 +262,21 @@ static inline uint16_t NI_knot(struct ge *ge) {
             (ni1 <<  0));
 }
 
+/**
+ * NI Knot
+ *
+ * Can't find proper documentation in PDS, but it's documented in the intermediate
+ * block diagram, fo. 14.
+ *
+ * Should be a multiplexer of the I/O units outputs.
+ */
+static inline uint16_t NE_knot(struct ge *ge) {
+    /* TODO: proper implementation, just return the RI data */
+    uint16_t ret = ge->integrated_reader.data;
+    ge_log(LOG_PERI, "READING FROM NE KNOT --> %03x\n", ret);
+    return ret;
+}
+
 /** @} */
 
 /**
@@ -418,7 +433,7 @@ SIG(AITE)  { return ge->console_switches.SITE; }
 SIG(AITEA) { return !AITE(ge); }
 
 /* RI */
-SIG(LU081) { ge_log(LOG_PERI, "reading LU081\n"); return 0; }
+SIG(LU081) { return reader_get_lu08(ge); }
 SIG(LUPO1) { ge_log(LOG_PERI, "reading LUPO1\n"); return 0; }
 SIG(FINI1) { ge_log(LOG_PERI, "reading FINI1\n"); return 0; }
 
@@ -578,8 +593,27 @@ SIG(DU97) { return !DU97A(ge); }
 
 SIG(DU98) { return !(DU89A(ge) && PC03A(ge)); }
 
-
 /* RI outgoing */
 SIG(TU00A) { return !(RT121(ge) && RUF1A(ge) && PC121(ge));}
+
+/**
+ * @defgroup cycle-request-1 Channel 1 cycle request
+ *
+ * From the Intermediate Block Diagram, fo. 11
+ *
+ * @{
+ */
+
+SIG(FU091) { return 0; } /* todo: printer */
+SIG(PTA31) { return 0; } /* todo: ST3 */
+SIG(PTA41) { return 0; } /* todo: ST4 */
+
+SIG(PA11A) { return !(FU091(ge) && PC111(ge)); }
+SIG(PA12A) { return !(LU081(ge) && PC121(ge)); }
+SIG(PA13A) { return !(PTA31(ge) && PC131(ge)); }
+SIG(PA14A) { return !(PTA41(ge) && PC141(ge)); }
+SIG(RA101) { return !(PA11A(ge) && PA12A(ge) && PA13A(ge) && PA13A(ge) && PA14A(ge)); }
+
+/* } */
 
 #endif

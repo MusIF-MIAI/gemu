@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "opcodes.h"
 #include "console.h"
+#include "reader.h"
 
 #define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
 #define MEM_SIZE 65536
@@ -510,6 +511,12 @@ struct ge {
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
     struct ge_counting_network counting_network;
+
+    /**
+     * The I/O interface for the integrated reader
+     */
+    struct ge_integrated_reader integrated_reader;
+
     struct ge_peri *peri;
 
     /**
@@ -525,7 +532,7 @@ struct ge {
      */
     struct {
         /* state 00 to 50: "if ci33 is absent, transfer NO in BO */
-        uint8_t did_CI33:1;
+        uint8_t did_CI33_or_CI34:1;
     } TO50_conditions;
 };
 

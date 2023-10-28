@@ -191,7 +191,7 @@ struct msl_timing_state msl_timings[0xff] = {
     /* b6 */ { },
     /* b7 */ { },
     /* b8 */ {state_b8},
-    /* b9 */ { },
+    /* b9 */ {state_b9},
     /* ba */ { },
     /* bb */ { },
     /* bc */ { },

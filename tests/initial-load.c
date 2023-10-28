@@ -59,8 +59,15 @@ UTEST(load, initial_load) {
     ASSERT_FALSE(g.RIA2);
     ASSERT_FALSE(g.RIA3);
 
+    ASSERT_TRUE(g.integrated_reader.sent_tu201);
 
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
+    ASSERT_TRUE(g.integrated_reader.sent_tu101);
+
+    /* actually state is b9 but it's not in SO, so the assert is misleading */
+    ASSERT_CYCLE(0xb8, "TPER INPUT 1");
+
+    ASSERT_EQ(g.mem[0], 0x69); /* assert loading of character from reader */
 
     /*
     ASSERT_CYCLE(0xea, "TPER-CPER 7");
