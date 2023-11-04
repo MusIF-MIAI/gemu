@@ -246,7 +246,7 @@ static void CE03(struct ge *ge) {
 }
 
 static void CE05(struct ge* ge) {
-    #warning TODO
+    ge_log(LOG_PERI, "TODO: enable selection external error\n");
 }
 
 static void CE06(struct ge *ge) {
@@ -315,7 +315,7 @@ static void CE10(struct ge *ge) {
 }
 
 static void CE11(struct ge* ge) {
-    #warning TODO
+    ge_log(LOG_PERI, "TODO: emit TU301.. should not be used by RI but only ST3 and ST4\n");
 }
 
 static void CE18(struct ge *ge) {
