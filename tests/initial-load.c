@@ -78,6 +78,7 @@ UTEST(load, initial_load) {
     /* actually state is b9 but it's not in SO, so the assert is misleading */
     ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 1");
     ASSERT_EQ(g.mem[0], 0x69); /* assert loading of character from reader */
+    ASSERT_EQ(g.rV1, 0x01); /* assert advancement of dst pointer */
 
     ASSERT_CYCLE(0xb1, "TPER-INPUT 2 - 1");
     ASSERT_TRUE(BIT(g.ffFI, 1)); /* always true */

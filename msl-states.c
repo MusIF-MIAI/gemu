@@ -690,7 +690,7 @@ static const struct msl_timing_chart state_b1[] = {
 
 SIG(not_L206) { return !L206(ge); }
 
-SIG(AIGI) { return 0; } // TODO
+SIG(AIGI) { return 1; } // TODO
 SIG(RENIA) { return 1; } // TODO
 SIG(RILIA) { return 1; } // TODO
 
@@ -701,9 +701,7 @@ SIG(RIVE) { return RIVE1(ge); }
 
 static uint8_t state_b9_TO25_CO31(struct ge *ge) { return !BIT(ge->ffFA, 1) && !BIT(ge->rL2, 6); }
 static uint8_t state_b9_TO30_CI12(struct ge *ge) { return !L204(ge) && !L206(ge); }
-static uint8_t state_b9_TO40_CO01(struct ge *ge) {
-    return L204(ge) || (!BIT(ge->ffFA, 1) && AIGI(ge) && L206(ge));
-}
+static uint8_t state_b9_TO40_CO01(struct ge *ge) { return L204(ge) || (!BIT(ge->ffFA, 1) && AIGI(ge) && !L206(ge)); }
 
 static uint8_t state_b9_TO70_CI67(struct ge *ge) { return BIT(ge->ffFA, 1) && !L206(ge); }
 static uint8_t state_b9_TO70_CI66(struct ge *ge) { return !BIT(ge->ffFA, 1) && !L204(ge) && !L206(ge); }
