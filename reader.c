@@ -23,15 +23,45 @@ void reader_send_tu00(struct ge *ge)
     /* just for testing purposes */
     ge->integrated_reader.sent_tu201 = 1;
 
-    ge_log(LOG_PERI, "EMIT TU201 (CE10)\n");
+    ge_log(LOG_READER, "EMIT TU201 (CE10)\n");
 
     uint8_t command = ge->rRE;
 
     switch (command) {
-#define X(cmd, name, desc) case cmd: ge_log(LOG_PERI, "    Command: %02x - %s\n", cmd, desc ); break;
+#define X(cmd, name, desc) case cmd: ge_log(LOG_READER, "    Command: %02x - %s\n", cmd, desc ); break;
             ENUMERATE_READER_COMMANDS
 #undef X
     }
+}
+
+void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
+{
+    ge->integrated_reader.lu08 = 1;
+    ge->integrated_reader.data = data;
+    ge->integrated_reader.fini = end;
+
+    /* UNIV 1.2µs --> RC01 */
+    /* signal cpu of incoming data */
+    ge->RC01 = 1;
+
+    ge_log(LOG_READER, "    RA101 = %d\n", RA101(ge));
+    ge_log(LOG_READER, "    RF101 = %d\n", RF101(ge));
+    ge_log(LOG_READER, "    Signaling incoming data\n");
+
+    /* signal end character */
+    /* todo: should use RF101 here? */
+    ge->RIG1 = 1;
+
+/*
+    if (PIM11(ge))
+        ge->PEC1 = 1;
+ */
+}
+
+void reader_clear_sending(struct ge *ge) 
+{
+    ge->integrated_reader.lu08 = 0;
+    ge->integrated_reader.data = 0;
 }
 
 void reader_send_tu10(struct ge *ge)
@@ -39,31 +69,32 @@ void reader_send_tu10(struct ge *ge)
     /* just for testing purposes */
     ge->integrated_reader.sent_tu101 = 1;
 
-    ge_log(LOG_PERI, "EMIT TU101 (CE09)\n");
-    ge_log(LOG_PERI, "    Card feed\n");
+    ge_log(LOG_READER, "EMIT TU101 (CE09)\n");
+    ge_log(LOG_READER, "    Card feed\n");
 
-    /* send back fake data */
-    ge->integrated_reader.sending = 1;
-    ge->integrated_reader.data = 0x69;
-
-    /* UNIV 1.2µs --> RC01 */
-    /* signal cpu of incoming data */
-
-    /* todo: RA101 seems to be incorrect here: check the PBxx decoding */
-    ge->RC01 = 1;
-    ge_log(LOG_PERI, "    RA101 = %d\n", RA101(ge));
-    ge_log(LOG_PERI, "    Signaling incoming data\n");
 }
 
-uint8_t reader_get_lu08(struct ge *ge)
+uint8_t reader_get_LU08(struct ge *ge)
 {
-    ge_log(LOG_PERI, "reading LU081\n");
+    ge_log(LOG_READER, "reading LU081\n");
 
-    if (ge->integrated_reader.sending) {
-        ge_log(LOG_PERI,
-               "    wanting to send char: %02x\n", 
+    if (ge->integrated_reader.lu08) {
+        ge_log(LOG_READER,
+               "    wanting to send char: %02x\n",
                ge->integrated_reader.data);
     }
 
-    return ge->integrated_reader.sending;
+    return ge->integrated_reader.lu08;
+}
+
+uint8_t reader_get_LUPO1(struct ge *ge)
+{
+    ge_log(LOG_READER, "reading LUPO1\n");
+    return 0;
+}
+
+uint8_t reader_get_FINI1(struct ge *ge)
+{
+    ge_log(LOG_READER, "**** reading FINI1 %d\n", ge->integrated_reader.fini);
+    return ge->integrated_reader.fini;
 }

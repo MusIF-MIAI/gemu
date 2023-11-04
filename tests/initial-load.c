@@ -64,20 +64,32 @@ UTEST(load, initial_load) {
     ASSERT_FALSE(g.RIA3);
 
     ASSERT_TRUE(g.integrated_reader.sent_tu201);
+    g.integrated_reader.sent_tu201 = 0;
 
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
     ASSERT_TRUE(BIT(g.ffFI, 0)); /* always true */
     ASSERT_EQ(g.ffFI, 0x51);
 
     ASSERT_TRUE(g.integrated_reader.sent_tu101);
+    g.integrated_reader.sent_tu101 = 0;
+
+    reader_setup_to_send(&g, 0x69, 1);
 
     /* actually state is b9 but it's not in SO, so the assert is misleading */
-    ASSERT_CYCLE(0xb8, "TPER INPUT 1");
-
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 1");
     ASSERT_EQ(g.mem[0], 0x69); /* assert loading of character from reader */
 
+    ASSERT_CYCLE(0xb1, "TPER-INPUT 2 - 1");
+    ASSERT_TRUE(BIT(g.ffFI, 1)); /* always true */
+    ASSERT_EQ(g.ffFI, 0x53);
+
+    ASSERT_CYCLE(0xb8, "WAIT 1");
+    ASSERT_CYCLE(0xb8, "WAIT 2");
+
     /*
-    ASSERT_CYCLE(0xea, "TPER-CPER 7");
+    reader_setup_to_send(&g, 0x70, 1);
+    ASSERT_CYCLE(0xb8, "WAIT 3" );
+
     ASSERT_CYCLE(0xeb, "TPER-CPER 8");
     ASSERT_CYCLE(0xe3, "Alpha 1");
      */

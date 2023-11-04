@@ -17,6 +17,7 @@ static const char *log_type_name(ge_log_type type)
         case LOG_FUTURE: return "future  ";
         case LOG_CYCLE:  return "cycle   ";
         case LOG_PERI:   return "periph  ";
+        case LOG_READER: return "reader  ";
         default:         return "        ";
     }
 }

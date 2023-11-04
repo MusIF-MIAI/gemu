@@ -183,7 +183,7 @@ struct msl_timing_state msl_timings[0xff] = {
     /* ae */ { },
     /* af */ { },
     /* b0 */ { },
-    /* b1 */ { },
+    /* b1 */ {state_b1},
     /* b2 */ { },
     /* b3 */ { },
     /* b4 */ { },

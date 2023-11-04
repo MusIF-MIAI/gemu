@@ -663,10 +663,40 @@ SIG(L204) { return BIT(ge->rL2, 4); }
 SIG(L205) { return BIT(ge->rL2, 5); }
 SIG(L206) { return BIT(ge->rL2, 6); }
 
+
+SIG(FA01) { return BIT(ge->ffFA, 1); }
+SIG(not_FA01) { return !FA01(ge); }
+
+static const struct msl_timing_chart state_b1[] = {
+    { TO10, CO11 },
+    { TO10, CO41 },
+    { TO10, CO40, L205 },
+    { TO25, CO31, FA01 },
+    { TO30, CI15, not_FA01 },
+    { TO30, CI12, FA01 },
+    { TO30, CI41 },
+    { TO40, CO01, FA01 },
+    { TO50, CI33, FA01 },
+    { TO80, CE18 },
+    { TI05, CI05, not_FA01 },
+    { TI06, CI71 },
+    { TI06, CI81, FA01 },
+    { TI06, CU03 },
+    { TI06, CU10 },
+    { END_OF_STATUS },
+};
+
+
 SIG(not_L206) { return !L206(ge); }
 
 SIG(AIGI) { return 0; } // TODO
-SIG(RIVE) { return 0; } // TODO
+SIG(RENIA) { return 1; } // TODO
+SIG(RILIA) { return 1; } // TODO
+
+SIG(RIGIA) { return !ge->RIG1; }
+SIG(RIVE1) { return !(RIGIA(ge) && RENIA(ge) && RILIA(ge)); }
+/** End of transfer for channel 1 */
+SIG(RIVE) { return RIVE1(ge); }
 
 static uint8_t state_b9_TO25_CO31(struct ge *ge) { return !BIT(ge->ffFA, 1) && !BIT(ge->rL2, 6); }
 static uint8_t state_b9_TO30_CI12(struct ge *ge) { return !L204(ge) && !L206(ge); }
@@ -725,13 +755,14 @@ static const struct msl_timing_chart state_ea[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-SIG(RIG1) { return 0; } /* todo */
-SIG(RIG3) { return 0; } /* todo */
+SIG(RIG1) { return ge->RIG1; }
+SIG(RIG3) { return ge->RIG3; }
 
 static uint8_t state_eb_TI06_CI75(struct ge *ge) {
     return ((RIG3(ge) && BIT(ge->rL2, 7)) ||
             (RIG1(ge) && PC011(ge) && !ge->RACI));
 }
+
 static uint8_t state_eb_TI06_CE19(struct ge *ge) { return 0; }
 
 static const struct msl_timing_chart state_eb[] = {

@@ -433,9 +433,9 @@ SIG(AITE)  { return ge->console_switches.SITE; }
 SIG(AITEA) { return !AITE(ge); }
 
 /* RI */
-SIG(LU081) { return reader_get_lu08(ge); }
-SIG(LUPO1) { ge_log(LOG_PERI, "reading LUPO1\n"); return 0; }
-SIG(FINI1) { ge_log(LOG_PERI, "reading FINI1\n"); return 0; }
+SIG(LU081) { return reader_get_LU08(ge); }
+SIG(LUPO1) { return reader_get_LUPO1(ge); }
+SIG(FINI1) { return reader_get_FINI1(ge); }
 
 /* PI */
 SIG(FUSE1) { return 0; }
@@ -503,6 +503,7 @@ SIG(RM101) { return !(PM11A(ge) && PM13A(ge) && PM14A(ge)); }
 SIG(PAM1A) { return !(RASI1(ge) && RM101(ge)); }
 SIG(RS011) { return !(PAM4A(ge) && PAM1A(ge)); }
 SIG(PIM1A) { return !(TO501(ge) ^ RS011(ge) ^ RB111(ge) ^ RUF11(ge)); }
+SIG(PIM11) { return !PIM1A(ge); }
 SIG(PIC1A) { return !ge->PIC1; }
 SIG(PUC11) { return !(PIC1A(ge) && PIM1A(ge)); }
 SIG(PUC1)  { return PUC11(ge); }
