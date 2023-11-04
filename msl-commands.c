@@ -229,8 +229,8 @@ static void CE03(struct ge *ge) {
     ge_log(LOG_PERI, "RESET I/U (CE03)\n");
 
     if (TO651 && RECI1) {
-        ge->RIG1 = RF101(ge);
-        ge_log(LOG_PERI, "SETTING RIG1 TO %d (CE03)\n", ge->RIG1);
+        ge->RIG1 = 0;
+        ge_log(LOG_PERI, "RESETTING RIG1 (CE03)\n", ge->RIG1);
     } else {
         ge_log(LOG_PERI, "NOT RESETTING RIG1 (CE03)\n");
     }
