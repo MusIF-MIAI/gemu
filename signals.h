@@ -480,10 +480,13 @@ SIG(RF101) { return !(PF12A(ge) && PF13A(ge) && PF14A(ge)); }
  * @{
  */
 
-SIG(PC11A); SIG(PC111) { return !PC11A(ge); };
-SIG(PC12A); SIG(PC121) { return !PC12A(ge); };
-SIG(PC13A); SIG(PC131) { return !PC13A(ge); };
-SIG(PC14A); SIG(PC141) { return !PC14A(ge); };
+SIG(PC11A); SIG(PC12A); SIG(PC13A); SIG(PC14A);
+
+SIG(PC111) { return !PC11A(ge); };
+/** Integrated reader on channel 1 */
+SIG(PC121) { return !PC12A(ge); };
+SIG(PC131) { return !PC13A(ge); };
+SIG(PC141) { return !PC14A(ge); };
 
 SIG(RUF11) { return  ge->RUF1; }
 SIG(RUF1A) { return !ge->RUF1; }
@@ -504,9 +507,14 @@ SIG(PIC1A) { return !ge->PIC1; }
 SIG(PUC11) { return !(PIC1A(ge) && PIM1A(ge)); }
 SIG(PUC1)  { return PUC11(ge); }
 
+/* !(channel 2 non overlap) */
 SIG(PC01A) { return !(!BIT(ge->rL2, 3) && !BIT(ge->rL2, 0)); }
+/** Channel 1 is selected */
 SIG(PC011) { return !PC01A(ge); }
+
+/* !(channel2 overlapped) */
 SIG(PC03A) { return !(!BIT(ge->rL2, 0) && BIT(ge->rL2, 3)); }
+/** Channel 3 is selected */
 SIG(PC031) { return !PC03A(ge); }
 
 /** @} */
@@ -561,11 +569,15 @@ SIG(PUB01_d4) { return !(PU004(ge) && BIT(ge->rL1, 7) && BIT(ge->rL1, 6)); }
 /** Selected connector busy condition */
 SIG(PUB01)    { return !(PUB01_d1(ge) && PUB01_d2(ge) && PUB01_d3(ge) && PUB01_d4(ge)); }
 
+/** Integrated printer on channel 2 */
 SIG(PC211)    { return !PC21A(ge); }
 
 /** @} */
 
+/* !(!rejected && in transfer) => rejected || !in_transfer */
 SIG(DU871) { return !(!ge->RACI && ge->RASI); }
+/* for state b8, FA is set if L200 && L203, which is channel 2 in overlap */
+/* !(channel2 in overlap && channel2 in transfer */
 SIG(DU881) { return !(BIT(ge->ffFA, 2) && ge->PUC2); }
 
 SIG(DU89A) { return !(DU871(ge) && DU881(ge) && PC011(ge) && DU881(ge)); }

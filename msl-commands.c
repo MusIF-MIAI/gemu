@@ -199,6 +199,14 @@ static void CE02(struct ge* ge) {
     ge->PB06 = BIT(ge->rL1, 6);
     ge->PB07 = BIT(ge->rL1, 7);
 
+    /* In case of initial load / TPER, L2 here should be the Z character of
+     * the instructions. It encodes the channel to be used for the transfer.
+     *
+     * If bit 0 of L2 is 0, channel is either 1 or 3,
+     * if bit 0 of L2 is 1, channel is 2.
+     *
+     * (cpu fo. 73)
+     */
     if (BIT(ge->rL2, 0))
         ge->PB26 = BIT(ge->rL1, 6);
 
