@@ -20,6 +20,8 @@ UTEST(load, initial_load) {
 
     ASSERT_CYCLE(0x00, "Display");
     ASSERT_CYCLE(0x80, "Initialisation");
+    ASSERT_TRUE(BIT(g.ffFI, 6)); /* always true */
+    ASSERT_EQ(g.ffFI, 0x40);
 
     ASSERT_CYCLE(0xc8, "PER-PERI 1");
     ASSERT_EQ(g.rL2, 0x00);
@@ -32,6 +34,8 @@ UTEST(load, initial_load) {
     ASSERT_CYCLE(0xd9, "PER-PERI 3");
     ASSERT_CYCLE(0xda, "PER-PERI 4");
     ASSERT_CYCLE(0xdb, "PER-PERI 5");
+    ASSERT_TRUE(BIT(g.ffFI, 4)); /* always true */
+    ASSERT_EQ(g.ffFI, 0x50);
 
     ASSERT_CYCLE(0xdc, "PER-PERI 6");
     ASSERT_EQ(g.rV1, g.rV3);
@@ -62,6 +66,9 @@ UTEST(load, initial_load) {
     ASSERT_TRUE(g.integrated_reader.sent_tu201);
 
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
+    ASSERT_TRUE(BIT(g.ffFI, 0)); /* always true */
+    ASSERT_EQ(g.ffFI, 0x51);
+
     ASSERT_TRUE(g.integrated_reader.sent_tu101);
 
     /* actually state is b9 but it's not in SO, so the assert is misleading */
