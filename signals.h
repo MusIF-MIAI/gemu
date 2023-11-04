@@ -502,7 +502,7 @@ SIG(PM14A) { return !(MARE4(ge) && PC141(ge)); }
 SIG(RM101) { return !(PM11A(ge) && PM13A(ge) && PM14A(ge)); }
 SIG(PAM1A) { return !(RASI1(ge) && RM101(ge)); }
 SIG(RS011) { return !(PAM4A(ge) && PAM1A(ge)); }
-SIG(PIM1A) { return !((TO501(ge) && RS011(ge)) || (RB111(ge) && RUF11(ge))); }
+SIG(PIM1A) { return !(TO501(ge) ^ RS011(ge) ^ RB111(ge) ^ RUF11(ge)); }
 SIG(PIC1A) { return !ge->PIC1; }
 SIG(PUC11) { return !(PIC1A(ge) && PIM1A(ge)); }
 SIG(PUC1)  { return PUC11(ge); }
@@ -599,8 +599,11 @@ SIG(DU95) { return !DU95A(ge); }
 SIG(DU96A) { return !(BIT(ge->rL2, 7) && BIT(ge->rL2, 7)); }
 SIG(DU96) { return !DU96A(ge); }
 
-SIG(DU97A) { return !((ge->PUC2 && BIT(ge->rL2, 0)) ||
-                      (BIT(ge->rL2, 0) && BIT(ge->rL2, 3))); }
+SIG(DU97A) { return !(ge->PUC2 ^
+                      BIT(ge->rL2, 0) ^
+                      BIT(ge->rL2, 0) ^
+                      BIT(ge->rL2, 3)); }
+
 SIG(DU97) { return !DU97A(ge); }
 
 SIG(DU98) { return !(DU89A(ge) && PC03A(ge)); }
