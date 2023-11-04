@@ -52,10 +52,11 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
     /* todo: should use RF101 here? */
     ge->RIG1 = 1;
 
-/*
-    if (PIM11(ge))
+    /* todo: should be conditioned by PIM11, but it's false at this point
+     * without this, we don't get to state ea after waiting state b8 when
+     * reading */
+    if (end)
         ge->PEC1 = 1;
- */
 }
 
 void reader_clear_sending(struct ge *ge) 

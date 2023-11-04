@@ -125,9 +125,15 @@ static void on_TO65(struct ge *ge) {
     ge->counting_network.cmds.from_zero = 0;
 }
 
-static void on_TO70(struct ge *ge) {}
+static void on_TO70(struct ge *ge) {
+    if (ge->PEC1)
+        ge->RASI = 0;
+}
+
 static void on_TO80(struct ge *ge) {}
-static void on_TO89(struct ge *ge) {}
+static void on_TO89(struct ge *ge) {
+    ge->PEC1 = 0;
+}
 
 static void on_TO90(struct ge *ge) {
     /* TODO: check if ! is correct: PODIB should be PODI negated */

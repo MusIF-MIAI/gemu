@@ -91,6 +91,9 @@ static void CI39(struct ge *ge)
     ge->AVER = 0;
     ge->AINI = 0;
     ge->PIC1 = 0;
+
+    /* intermediate fo. 10 B6 */
+    ge->RASI = 0;
 }
 
 /* Count And Arithmetical Unit Commands */

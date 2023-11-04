@@ -644,6 +644,7 @@ static const struct msl_timing_chart state_ab[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+
 static uint8_t state_b8_TI06_CI72(struct ge *ge) { return BIT(ge->rL2, 0) && BIT(ge->rL2, 3); }
 static uint8_t DU97_or_DU98(struct ge *ge) { return DU97(ge) || DU98(ge); }
 static uint8_t state_b8_TI10_CE09(struct ge *ge) { return !BIT(ge->ffFA, 0) && !BIT(ge->rL2, 3) && !ge->RACI; }

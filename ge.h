@@ -369,6 +369,8 @@ struct ge {
      */
     uint8_t PUC3:1;
 
+    uint8_t PEC1:1;
+
     uint8_t RUF1:1;
 
     uint8_t URPE:1;
