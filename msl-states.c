@@ -513,6 +513,10 @@ static uint8_t state_cc_TI06_CU04(struct ge *ge) {
     return !BIT(ge->ffFA, 5) && BIT(ge->ffFA, 0);
 }
 
+static uint8_t state_cc_TI06_CI75(struct ge *ge) {
+    return (PCOV(ge) && DU96(ge) && !DU95(ge)) || BIT(ge->ffFA, 0);
+}
+
 static uint8_t state_cc_TI06_CU01(struct ge *ge) {
     return BIT(ge->ffFA, 5) || !BIT(ge->ffFA, 9) ;
 }
@@ -527,7 +531,8 @@ static const struct msl_timing_chart state_cc[] = {
     { TO50, CI32, AINI, 0 },
     { TO50, CE01, 0 },
     { TO50, CE00, state_cc_TO50_CE00 },
-    { TI06, CI75, 0 },
+    /* TODO: CI75 seems conditioned also on the type of peri operation (e.g. TPER/SPER ecc) */
+    { TI06, CI75, state_cc_TI06_CI75 },
     { TI06, CU13, state_cc_TI06_CU13 },
     { TI06, CU12, 0 },
     { TI06, CU05, state_cc_TI06_CU05 },
