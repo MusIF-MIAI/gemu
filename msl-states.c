@@ -609,17 +609,17 @@ static const struct msl_timing_chart state_aa[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-static uint8_t state_aa_TO70_CI62(struct ge *ge) { return !(PC111(ge) && PC211(ge)); }
+static uint8_t state_ab_TO70_CI62(struct ge *ge) { return !(PC111(ge) && PC211(ge)); }
 
-static uint8_t state_aa_TO80_CE18(struct ge *ge) {
+static uint8_t state_ab_TO80_CE18(struct ge *ge) {
     /* this equation is different in the timing charts documentation (fo. 58),
      * and in the cpu PDS documentation (fo. 218) it seems the PDS is the right
      * one. */
     return !(PC121(ge) || PC111(ge) || PC211(ge));
 }
 
-static uint8_t state_aa_TI05_CI04(struct ge *ge) { return BIT(ge->rL2, 0); }
-static uint8_t state_aa_TI05_CI03(struct ge *ge) { return PC031(ge); }
+static uint8_t state_ab_TI05_CI04(struct ge *ge) { return BIT(ge->rL2, 0); }
+static uint8_t state_ab_TI05_CI03(struct ge *ge) { return PC031(ge); }
 
 static const struct msl_timing_chart state_ab[] = {
     { TO10, CO12, 0, DI97A0 },
@@ -630,12 +630,12 @@ static const struct msl_timing_chart state_ab[] = {
     { TO30, CI19, 0, DI29A0 },
     { TO30, CI11, 0 },
     { TO40, CO02, 0, DI97A0 },
-    { TO70, CI62, state_aa_TO70_CI62, ED79A0 },
-    { TO70, CI67, state_aa_TO70_CI62, ED79A0 },
-    { TO80, CE18, state_aa_TO80_CE18 },
+    { TO70, CI62, state_ab_TO70_CI62, ED79A0 },
+    { TO70, CI67, state_ab_TO70_CI62, ED79A0 },
+    { TO80, CE18, state_ab_TO80_CE18 },
     { TI05, CI01, 0 },
-    { TI05, CI04, state_aa_TI05_CI04 },
-    { TI05, CI03, state_aa_TI05_CI03 },
+    { TI05, CI04, state_ab_TI05_CI04 },
+    { TI05, CI03, state_ab_TI05_CI03 },
     { TI06, CU00, 0, DI93A0},
     { TI06, CU10, 0 },
     { TI06, CU01, 0, DI94A0},
