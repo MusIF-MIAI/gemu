@@ -95,14 +95,14 @@ static void on_TO50(struct ge *ge) {
 }
 
 static void on_TO50_1(struct ge *ge) {
-    if (!ge->TO50_conditions.did_CI33_or_CI34) {
+    if (!ge->TO50_did_CI32_or_CI33) {
         /* timing chart js1-js2-jie-ecc, fo. 32,
          * also, display, fo. 17 */
         ge->rBO = NO_knot(ge);
         ge->kNO.forcings = 0;
     }
 
-    memset(&ge->TO50_conditions, 0, sizeof(ge->TO50_conditions));
+    ge->TO50_did_CI32_or_CI33 = 0;
 }
 
 static void on_TO60(struct ge *ge) {}

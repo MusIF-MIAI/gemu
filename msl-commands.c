@@ -57,17 +57,18 @@ static void CO30(struct ge* ge) { ge->memory_command = MC_READ;  }
 static void CO31(struct ge* ge) { ge->memory_command = MC_WRITE; }
 static void CO35(struct ge* ge) { /* "reset int. error"? (cpu fo. 105) */ }
 
-static void CI32(struct ge* ge) { ge->rRO = NO_knot(ge) >> 8; }
+static void CI32(struct ge* ge) {
+    ge->rRO = NO_knot(ge) >> 8;
+    ge->TO50_did_CI32_or_CI33 = 1;
+}
 
 static void CI33(struct ge* ge) {
     ge->rRO = NO_knot(ge) & 0x00ff;
-    ge->TO50_conditions.did_CI33_or_CI34 = 1;
+    ge->TO50_did_CI32_or_CI33 = 1;
 }
 
 static void CI34(struct ge* ge) {
     ge->rRO = NE_knot(ge);
-    ge->TO50_conditions.did_CI33_or_CI34 = 1;
-
 }
 
 static void CI38(struct ge *ge)

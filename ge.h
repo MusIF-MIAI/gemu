@@ -532,10 +532,7 @@ struct ge {
      * store here the conditions for the common machine TO50,
      * and delay its excecution to a fake TO50-1 clock pulse.
      */
-    struct {
-        /* state 00 to 50: "if ci33 is absent, transfer NO in BO */
-        uint8_t did_CI33_or_CI34:1;
-    } TO50_conditions;
+    uint8_t TO50_did_CI32_or_CI33:1;
 };
 
 /// Initialize the emulator
