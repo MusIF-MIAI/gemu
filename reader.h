@@ -6,9 +6,6 @@
 struct ge;
 
 struct ge_integrated_reader {
-    uint8_t sent_tu101:1;
-    uint8_t sent_tu201:1;
-
     uint8_t lu08:1;
     uint8_t fini:1;
 

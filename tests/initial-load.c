@@ -24,7 +24,15 @@ UTEST(load, initial_load) {
     ASSERT_EQ(g.ffFI, 0x40);
 
     ASSERT_CYCLE(0xc8, "PER-PERI 1");
+    ASSERT_FALSE(BIT(g.rL2, 6)); /* false == input transfer */
+    ASSERT_FALSE(BIT(g.rL2, 5)); /* false == increasing addresses */
+    ASSERT_FALSE(BIT(g.rL2, 4)); /* false == input with packing */
+    ASSERT_FALSE(BIT(g.rL2, 3)); /* false == channel 1 or 3 */
+    ASSERT_FALSE(BIT(g.rL2, 2)); /* false == wait for peripheral availability */
+    ASSERT_FALSE(BIT(g.rL2, 1)); /* always false  */
+    ASSERT_FALSE(BIT(g.rL2, 0)); /* false == channel 1 or 2 */
     ASSERT_EQ(g.rL2, 0x00);
+
     ASSERT_FALSE(BIT(g.ffFI, 4)); /* always false */
     ASSERT_FALSE(BIT(g.ffFI, 5)); /* connector and channel not busy */
 
@@ -63,33 +71,51 @@ UTEST(load, initial_load) {
     ASSERT_FALSE(g.RIA2);
     ASSERT_FALSE(g.RIA3);
 
-    ASSERT_TRUE(g.integrated_reader.sent_tu201);
-    g.integrated_reader.sent_tu201 = 0;
-
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
     ASSERT_TRUE(BIT(g.ffFI, 0)); /* always true */
     ASSERT_EQ(g.ffFI, 0x51);
 
-    ASSERT_TRUE(g.integrated_reader.sent_tu101);
-    g.integrated_reader.sent_tu101 = 0;
-
-    reader_setup_to_send(&g, 0x69, 0);
+    reader_setup_to_send(&g, 0xAB, 0);
 
     /* actually state is b9 but it's not in SO, so the assert is misleading */
     ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 1");
-    ASSERT_EQ(g.mem[0], 0x69); /* assert loading of character from reader */
-    ASSERT_EQ(g.rV1, 0x01); /* assert advancement of dst pointer */
+    ASSERT_EQ(g.mem[0], 0xAB); /* loading of first nibble from reader */
+    ASSERT_EQ(g.rV1, 0x00); /* dst pointer should not advance now */
 
+    reader_clear_sending(&g);
     ASSERT_CYCLE(0xb1, "TPER-INPUT 2 - 1");
-    ASSERT_TRUE(BIT(g.ffFI, 1)); /* always true */
+    ASSERT_TRUE(BIT(g.ffFI, 1)); /* received first nibble */
     ASSERT_EQ(g.ffFI, 0x53);
 
-    reader_setup_to_send(&g, 0x70, 1);
-
+    reader_setup_to_send(&g, 0xCD, 0);
     ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 2");
-    // ASSERT_EQ(g.mem[1], 0x70); /* assert loading of character from reader */
 
+    reader_clear_sending(&g);
     ASSERT_CYCLE(0xb1, "TPER-INPUT 2 - 2");
+    ASSERT_TRUE(BIT(g.ffFI, 0)); /* received second nibble */
+    ASSERT_EQ(g.ffFI, 0x51);
+    ASSERT_EQ(g.mem[0], 0xBD); /* load second nibble from reader */
+    ASSERT_EQ(g.rV1, 0x01); /* advance dst pointer  */
+
+    reader_setup_to_send(&g, 0xEF, 0);
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 3");
+    ASSERT_EQ(g.mem[1], 0xEF); /* loading of first nibble from reader */
+    ASSERT_EQ(g.rV1, 0x01); /* dst pointer should not advance now */
+
+    reader_clear_sending(&g);
+    ASSERT_CYCLE(0xb1, "TPER-INPUT 2 - 3");
+    ASSERT_TRUE(BIT(g.ffFI, 1)); /* received first nibble */
+    ASSERT_EQ(g.ffFI, 0x53);
+
+    reader_setup_to_send(&g, 0xAA, 1);
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 4");
+
+    reader_clear_sending(&g);
+    ASSERT_CYCLE(0xb1, "TPER-INPUT 2 - 4");
+    ASSERT_TRUE(BIT(g.ffFI, 0)); /* received second nibble */
+    ASSERT_EQ(g.ffFI, 0x51);
+    ASSERT_EQ(g.mem[1], 0xFA); /* load second nibble from reader */
+    ASSERT_EQ(g.rV1, 0x02); /* advance dst pointer  */
 
     ASSERT_CYCLE(0xb8, "WAIT 1");
     ASSERT_CYCLE(0xea, "TPER END 1");

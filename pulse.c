@@ -63,8 +63,6 @@ static void on_TO20(struct ge *ge) {
     ge->kNO.forcings = 0;
 
     ge->ACIC = 0; /* cpu fo. 99  */
-
-    /* TODO: are there any condition?   */
     ge->rRO = 0;  /* cpu fo. 142 */
 }
 

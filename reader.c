@@ -20,12 +20,8 @@
 
 void reader_send_tu00(struct ge *ge)
 {
-    /* just for testing purposes */
-    ge->integrated_reader.sent_tu201 = 1;
-
-    ge_log(LOG_READER, "EMIT TU201 (CE10)\n");
-
     uint8_t command = ge->rRE;
+    ge_log(LOG_READER, "EMIT TU201 (CE10)\n");
 
     switch (command) {
 #define X(cmd, name, desc) case cmd: ge_log(LOG_READER, "    Command: %02x - %s\n", cmd, desc ); break;
@@ -49,14 +45,16 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
     ge_log(LOG_READER, "    Signaling incoming data\n");
 
     /* signal end character */
-    /* todo: should use RF101 here? */
-    ge->RIG1 = 1;
+    /* todo: should use RF101 here? is "if (end)" correct? */
+    if (end)
+        ge->RIG1 = 1;
 
     /* todo: should be conditioned by PIM11, but it's false at this point
      * without this, we don't get to state ea after waiting state b8 when
      * reading */
-    if (end)
+    if (end) {
         ge->PEC1 = 1;
+    }
 }
 
 void reader_clear_sending(struct ge *ge) 
@@ -67,12 +65,8 @@ void reader_clear_sending(struct ge *ge)
 
 void reader_send_tu10(struct ge *ge)
 {
-    /* just for testing purposes */
-    ge->integrated_reader.sent_tu101 = 1;
-
     ge_log(LOG_READER, "EMIT TU101 (CE09)\n");
     ge_log(LOG_READER, "    Card feed\n");
-
 }
 
 uint8_t reader_get_LU08(struct ge *ge)

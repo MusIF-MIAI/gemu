@@ -474,6 +474,7 @@ static const struct msl_timing_chart state_db[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+/* needs to be 1 for the per preliminary phase to continue */
 SIG(PCOV) { return 1; }
 
 static uint8_t state_dc_TI06_CI70(struct ge *ge) {
@@ -688,20 +689,25 @@ static const struct msl_timing_chart state_b1[] = {
 };
 
 
-SIG(not_L206) { return !L206(ge); }
+SIG(RIG1) { return ge->RIG1; }
+SIG(RIG3) { return ge->RIG3; }
 
-SIG(AIGI) { return 1; } // TODO
 SIG(RENIA) { return 1; } // TODO
 SIG(RILIA) { return 1; } // TODO
 
-SIG(RIGIA) { return !ge->RIG1; }
-SIG(RIVE1) { return !(RIGIA(ge) && RENIA(ge) && RILIA(ge)); }
+SIG(RIG1A) { return !ge->RIG1; }
+SIG(RIVE1) { return !(RIG1A(ge) && RENIA(ge) && RILIA(ge)); }
 /** End of transfer for channel 1 */
 SIG(RIVE) { return RIVE1(ge); }
 
+SIG(not_L206) { return !L206(ge); }
+
 static uint8_t state_b9_TO25_CO31(struct ge *ge) { return !BIT(ge->ffFA, 1) && !BIT(ge->rL2, 6); }
 static uint8_t state_b9_TO30_CI12(struct ge *ge) { return !L204(ge) && !L206(ge); }
-static uint8_t state_b9_TO40_CO01(struct ge *ge) { return L204(ge) || (!BIT(ge->ffFA, 1) && AIGI(ge) && !L206(ge)); }
+
+/* the original timingchart and the flow chart disagree, RIG1 is spelt "AIGI" in
+ * the timings, but RIG1 in the flow, also timings use L206 and flow use L205... */
+static uint8_t state_b9_TO40_CO01(struct ge *ge) { return (L204(ge) || (!BIT(ge->ffFA, 1) && RIG1(ge))) && !L206(ge); }
 
 static uint8_t state_b9_TO70_CI67(struct ge *ge) { return BIT(ge->ffFA, 1) && !L206(ge); }
 static uint8_t state_b9_TO70_CI66(struct ge *ge) { return !BIT(ge->ffFA, 1) && !L204(ge) && !L206(ge); }
@@ -754,8 +760,6 @@ static const struct msl_timing_chart state_ea[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-SIG(RIG1) { return ge->RIG1; }
-SIG(RIG3) { return ge->RIG3; }
 
 static uint8_t state_eb_TI06_CI75(struct ge *ge) {
     return ((RIG3(ge) && BIT(ge->rL2, 7)) ||
