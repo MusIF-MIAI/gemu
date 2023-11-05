@@ -12,11 +12,11 @@
     } while (0)
 
 UTEST(peri, per_peri) {
-    /* first instruction of software/loader.txt */
-
     uint8_t up_name = 0x80; /* connector 2 */
+
     uint8_t addr_hi = 0x00;
     uint8_t addr_lo = 0x10;
+
     uint8_t z  = 0x00;
     uint8_t x  = 0xbb; /* 0x40; */
     uint8_t l1 = 0xcc; /* 0x00; */
@@ -24,7 +24,12 @@ UTEST(peri, per_peri) {
     uint8_t i1 = 0xee; /* 0x00; */
     uint8_t i2 = 0xff; /* 0x28; */
 
+    uint8_t test_data_hi = 6;
+    uint8_t test_data_lo = 9;
+    uint8_t test_data = (test_data_hi << 4) | test_data_lo;
+
     uint16_t addr  = (addr_hi << 8) | addr_lo;
+    uint16_t dst_addr  = (i1 << 8) | i2;
 
     struct ge g;
     struct ge_console c;
@@ -35,6 +40,7 @@ UTEST(peri, per_peri) {
     g.mem[0x01] = up_name;
     g.mem[0x02] = addr_hi;
     g.mem[0x03] = addr_lo;
+
     g.mem[0x10] = z;
     g.mem[0x11] = x;
     g.mem[0x12] = l1;
@@ -112,11 +118,41 @@ UTEST(peri, per_peri) {
     ASSERT_EQ((g.rV1 & 0xff00) >> 8, i1);
     ASSERT_EQ((g.rV1 & 0x00ff) >> 0, i2);
 
-    /* waiting for RI */
-    /*
+    ASSERT_TRUE(g.RIA0);
+    ASSERT_FALSE(g.RESI);
+    ASSERT_FALSE(g.RIA2);
+    ASSERT_FALSE(g.RIA3);
+
     ASSERT_CYCLE(0xb8, "TPER-CPER 6");
-    ASSERT_CYCLE(0xea, "TPER-CPER 7");
-    ASSERT_CYCLE(0xeb, "TPER-CPER 8");
+    ASSERT_TRUE(BIT(g.ffFI, 0)); /* always true */
+    ASSERT_EQ(g.ffFI, 0x51);
+
+    reader_setup_to_send(&g, test_data_hi, 0);
+
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 1");
+    ASSERT_CYCLE(0xb1, "TPER INPUT 2 - 1");
+    ASSERT_EQ(g.mem[dst_addr], test_data_hi);
+
+    reader_setup_to_send(&g, test_data_lo, 0);
+
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 2");
+    ASSERT_CYCLE(0xb1, "TPER INPUT 1 - 2");
+    ASSERT_EQ(g.mem[dst_addr], test_data);
+
+    reader_setup_to_send(&g, test_data_hi, 1);
+
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 3");
+    ASSERT_CYCLE(0xb1, "TPER INPUT 2 - 3");
+    ASSERT_EQ(g.mem[dst_addr + 1], test_data_hi);
+
+    reader_setup_to_send(&g, test_data_lo, 1);
+
+    ASSERT_CYCLE(0xb8 /* b9 */, "TPER INPUT 1 - 4");
+    ASSERT_CYCLE(0xb1, "TPER INPUT 2 - 4");
+    ASSERT_EQ(g.mem[dst_addr + 1], test_data_hi);
+
+    ASSERT_CYCLE(0xb8, "WAIT 1");
+    ASSERT_CYCLE(0xea, "TPER END 1");
+    ASSERT_CYCLE(0xeb, "TPER END 2");
     ASSERT_CYCLE(0xe3, "Alpha 1");
-     */
 }
