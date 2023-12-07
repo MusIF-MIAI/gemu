@@ -13,10 +13,23 @@ jobs:
         with:
           token: ${{ secrets.DOCS_CHECKOUT_PAT }}
 
-      - run: |
+      - name: Make documentation
+        run: |
           sudo apt install doxygen
           cd docs
           doxygen
+
+      - name: Build wasm
+        uses: addnab/docker-run-action@v3
+        with:
+          image: emscripten/emsdk
+          options: -v ${{ github.workspace }}:/src
+          run: |
+            make -C console/wasm
+            mkdir -p docs/html/emu/
+            cp console/wasm/console.html docs/html/emu/index.html
+            cp console/wasm/main.mjs docs/html/emu
+            cp console/wasm/main.wasm docs/html/emu
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
