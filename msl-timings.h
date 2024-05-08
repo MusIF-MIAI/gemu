@@ -3,6 +3,8 @@
 
 #include "ge.h"
 
+typedef void (*msl_command_cb)(struct ge*);
+
 /**
  * Timing chart row
  *
@@ -15,7 +17,7 @@ struct msl_timing_chart {
     enum clock clock;
 
     /** Pointer to the command function */
-    void (*command)(struct ge*);
+    msl_command_cb command;
 
     /**
      * Condition for the command
@@ -57,5 +59,7 @@ struct msl_timing_state {
  * The timing states of the GE-120, recovered from the manuals.
  */
 extern struct msl_timing_state msl_timings[0xff];
+
+const char *msl_comment_for_command(msl_command_cb command);
 
 #endif /* MSL_TIMINGS_H */

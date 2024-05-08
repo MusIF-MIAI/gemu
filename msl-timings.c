@@ -1,4 +1,5 @@
 #include "msl-timings.h"
+#include "msl-comments.h"
 
 #define MSL_STATES_INCLUDED_BY_MSL_TIMINGS
 #include "msl-states.c"
@@ -263,3 +264,22 @@ struct msl_timing_state msl_timings[0xff] = {
     /* fe */ { },
 };
 
+struct msl_command_comment {
+    msl_command_cb command;
+    const char * comment;
+};
+
+struct msl_command_comment comments[] = {
+#define X(command , comment) { command , #command " - " comment },
+    ENUMERATE_COMMANDS_COMMENTS
+#undef X
+};
+
+const char *msl_comment_for_command(msl_command_cb command) {
+    for (int i = 0; i < sizeof(comments)/sizeof(struct msl_command_comment); i++) {
+        if (comments[i].command == command) {
+            return comments[i].comment;
+        }
+    }
+    return "[no comment]";
+}

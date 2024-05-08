@@ -45,6 +45,8 @@ void msl_run_state(struct ge* ge, struct msl_timing_state *state)
             ge_log(LOG_CONDS, "  time %-4s - condition true\n", clock_name);
         }
 
+
+        ge_log(LOG_CMDS, "    %s\n", msl_comment_for_command(chart->command));
         chart->command(ge);
     } while (chart->clock < END_OF_STATUS);
 }

@@ -26,6 +26,7 @@ enum ge_log_types {
     LOG_CONSOLE = 0x100, ///< Console interactions
     LOG_PERI    = 0x200, ///< Peripherals IO
     LOG_READER  = 0x400, ///< Integrated Reader
+    LOG_CMDS    = 0x800, ///< MSL commands trace
 };
 
 /**
