@@ -32,10 +32,38 @@ static uint8_t not_RO07(struct ge *ge) { return !BIT(ge->rRO, 7); }
 static uint8_t AINI(struct ge *ge) { return ge->AINI; }
 static uint8_t not_AINI(struct ge *ge) { return !AINI(ge); }
 
+/* TODO: "jumpers" configuration.
+ *
+ * This is the configuration without any "configuration" jumper connector
+ * in backplane position E04.
+ * It is possible to change the configuration by plugging either a PONT2N
+ * or PONT2P in that slot, for this available configurations:
+ *
+ *  E04   || FUL2 | FUL3 || Connectors for loading
+ * -------++------+------++-------------------------
+ * EMPTY  ||  1   |  1   || 2 and 3
+ * PONT2N ||  1   |  0   || 2 and 4
+ * PONT2P ||  0   |  1   || 4 and 3
+ *
+ * (detailed ch. 002)
+ *
+ * NOTE: test for the initial load assume FUL2 = FUL3 = 1.
+ */
+SIG(FUL2) { return 1; }
+SIG(FUL3) { return 1; }
+
+static uint8_t state_80_TO30_CO96(struct ge *ge) {
+    return (ge->ALOI && !FUL2(ge)) || (!ge->ALOI && !FUL3(ge));
+}
+
+static uint8_t state_80_TO30_CO97(struct ge *ge) {
+    return ge->ALOI && FUL2(ge);
+}
+
 static const struct msl_timing_chart state_80[] = {
     { TO30, CI19, 0, DI28A0 },
-    { TO30, CO96, 0 },
-    { TO30, CO97, 0 },
+    { TO30, CO96, state_80_TO30_CO96 },
+    { TO30, CO97, state_80_TO30_CO97 },
     { TO40, CO00, 0 },
     { TO40, CO02, 0 },
     { TO50, CI32, 0, DI28A0 },
@@ -418,8 +446,8 @@ static uint8_t state_d8_TO40_CO00(struct ge *ge) {
 
 static const struct msl_timing_chart state_d8[] = {
     { TO10, CO10, 0 },
-    { TO10, CO40, 0, DI21A0 },
-    { TO10, CO41, 0, DI21A0 },
+    { TO10, CO40, 0, DI21A0 }, // NOTE: both commands have same conditions ?!
+    { TO10, CO41, 0, DI21A0 }, // NOTE: it's like this in timing charts.
     { TO19, CE02, state_d8_TO19_CE02 },
     { TO30, CI15, 0, DI21A0 },
     { TO40, CO00, state_d8_TO40_CO00 },

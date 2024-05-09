@@ -42,6 +42,7 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
 
     ge_log(LOG_READER, "    RA101 = %d\n", RA101(ge));
     ge_log(LOG_READER, "    RF101 = %d\n", RF101(ge));
+    ge_log(LOG_READER, "    RB111 = %d\n", RB111(ge));
     ge_log(LOG_READER, "    Signaling incoming data\n");
 
     /* signal end character */
@@ -54,6 +55,10 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
      * reading */
     if (end) {
         ge->PEC1 = 1;
+    }
+
+    if (RB111(ge)) {
+        ge_log(LOG_READER, "XXX\n");
     }
 }
 
@@ -71,7 +76,7 @@ void reader_send_tu10(struct ge *ge)
 
 uint8_t reader_get_LU08(struct ge *ge)
 {
-    ge_log(LOG_READER, "reading LU081\n");
+    ge_log(LOG_READER, "reading LU081 -- character strobe\n");
 
     if (ge->integrated_reader.lu08) {
         ge_log(LOG_READER,

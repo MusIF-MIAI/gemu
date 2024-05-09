@@ -95,6 +95,9 @@ static void CI39(struct ge *ge)
 
     /* intermediate fo. 10 B6 */
     ge->RASI = 0;
+
+    if (!PUC1(ge))
+        ge->RC00 = 1;
 }
 
 /* Count And Arithmetical Unit Commands */
@@ -194,7 +197,8 @@ static void CE01(struct ge* ge) {
 
 static void CE02(struct ge* ge) {
     /* admits AEBE: */
-    /* UNIV 1.2µs --> RATE1 */
+    /*     UNIV 1.2µs --> RATE1 nand PC131 --> AEBE */
+    /*     AEBE is a control signal sent to ST3 */
 
     /* Unconditionally set by command CE02 (cpu fo. 235) */
     ge->PIC1 = 1;
@@ -304,17 +308,13 @@ static void CE09(struct ge *ge) {
 }
 
 static void CE10(struct ge *ge) {
-    /* command  */
+    /* send command */
 
-    /* emits TU201: */
-    /* UNIV 1.2µs --> RT121 */
+    /* emits TU201: UNIV 1.2µs --> RT121 */
+    ge->RT121 = 1;
 
     /* UNIV seems a delay line to synchronise the hardware, let's
-     * ignore the exact timings.
-     * Also, RT121, RT231 and similar signals seems to be used
-     * to implement priority between channels, ignore them
-     * for now too */
-
+     * ignore the exact timings. */
     reader_send_tu00(ge);
 }
 

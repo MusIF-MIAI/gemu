@@ -467,7 +467,7 @@ SIG(PB11A) { return !(FINA1(ge) && PC111(ge)); }
 SIG(PB13A) { return !(TE303(ge) && PC131(ge)); }
 SIG(PB14A) { return !(TE304(ge) && PC141(ge)); }
 
-SIG(RT121) { /* UNIV 1.2µs */ return 0; } // triggered by CE10 in TI10, if (RUF11 && REN21)
+SIG(RT121) { /* UNIV 1.2µs */ return ge->RT121; }
 
 SIG(RB101) { return !(AITEA(ge) && PB11A(ge) && PB13A(ge) && PB14A(ge)); }
 SIG(RB121) { /* UNIV 1.2µs */ return RB101(ge); }
@@ -510,7 +510,7 @@ SIG(PM14A) { return !(MARE4(ge) && PC141(ge)); }
 SIG(RM101) { return !(PM11A(ge) && PM13A(ge) && PM14A(ge)); }
 SIG(PAM1A) { return !(RASI1(ge) && RM101(ge)); }
 SIG(RS011) { return !(PAM4A(ge) && PAM1A(ge)); }
-SIG(PIM1A) { return !(TO501(ge) ^ RS011(ge) ^ RB111(ge) ^ RUF11(ge)); }
+SIG(PIM1A) { return !(TO501(ge) || RS011(ge) || RB111(ge) || RUF11(ge)); }
 SIG(PIM11) { return !PIM1A(ge); }
 SIG(PIC1A) { return !ge->PIC1; }
 SIG(PUC11) { return !(PIC1A(ge) && PIM1A(ge)); }

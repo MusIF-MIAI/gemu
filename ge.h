@@ -253,6 +253,13 @@ struct ge {
      */
     uint8_t AINI:1;
 
+    /** 
+     * Load connector selection
+     *
+     * Set by toggling the bistable switch "LOAD 1"/"LOAD 2" button of the console.
+     */
+    uint8_t ALOI:1;
+
     /**
      * Stops internal cycles
      *
@@ -328,9 +335,9 @@ struct ge {
 
     /* Busy Connector Logic */
 
-    uint8_t PB06:1;
-    uint8_t PB07:1;
-    uint8_t PB26:1;
+    uint8_t PB06:1; ///< Unconditionally stores L106
+    uint8_t PB07:1; ///< Unconditionally stores L106
+    uint8_t PB26:1; ///< Stores L106 if channel 2 is selected
     uint8_t PB36:1;
     uint8_t PB37:1;
 
@@ -488,6 +495,9 @@ struct ge {
 
     /** VICU Support */
     uint8_t RAVI:1;
+
+    uint8_t RT121:1;
+
     /**
      * Future state
      *
@@ -562,6 +572,12 @@ void ge_clear(struct ge * ge);
 
 /// Emulate the press of the "load" button in the console
 void ge_load(struct ge * ge);
+
+/// Emulate the press of the "load 1" button in the console
+void ge_load_1(struct ge * ge);
+
+/// Emulate the press of the "load 2" button in the console
+void ge_load_2(struct ge * ge);
 
 /// Emulate the press of the "start" button in the console
 void ge_start(struct ge * ge);

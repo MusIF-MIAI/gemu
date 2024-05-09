@@ -66,6 +66,28 @@ void ge_load(struct ge *ge)
     ge->AINI = 1;
 }
 
+void ge_load_1(struct ge * ge)
+{
+    /* It is possible to choose one between the two units thus prepared
+     * positioning the operating console switch LOAD1/LOAD2 (The possible
+     * choices are: Conn.2/Conn.3; Conn.4/Conn.3; Conn.2/Conn.4).
+     *
+     * (cpu fo. 43) */
+
+    /* from the previous manual excerpt, ,i would have expected ALOI = 0t to
+     * be LOAD1 and ALOI = 1 to be LOAD2, but running the initial load tests,
+     * ALOI = 1 will result in the machine using the 0x80 unit name, which is
+     * connector 2, while ALOI = 0 results in a 0x00 unit name, which is
+     * connector 3. */
+
+    ge->ALOI = 1;
+}
+
+void ge_load_2(struct ge * ge)
+{
+    ge->ALOI = 0;
+}
+
 void ge_start(struct ge *ge)
 {
     /* according to the cpu documents, we should set the flipflop ARES here to
