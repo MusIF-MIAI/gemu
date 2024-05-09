@@ -1,0 +1,1175 @@
+<style>
+body {
+  background: #111;
+  color: #eee;
+  font-family: Futura;
+  font-size: 8pt;
+}
+
+#verticalcontainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.horizontal-strut {
+  height: 1.8em;
+  flex-grow: 1;
+
+  box-shadow: inset 1px 1px 1px #727272, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 2px 2px 1px 1px;
+  background: #262323;
+}
+
+.strut-blue {
+  box-shadow: inset 2px 2px 2px #0f1d28, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 2px 2px 1px 1px;
+  background: #5a7bb3;
+  padding: 1em;
+  box-shadow: inset 1px 1px 1px #999aa5, inset 0 -2px 1px #000000, 0 1px 2px rgba(39, 40, 70, 0.5);
+  /* text-shadow: 1px  1px 0px rgba(223, 221, 221, 0.3), 1px 1px 0px rgba(0, 0, 0, 0.8); */
+}
+
+#main {
+  display: flex;
+}
+
+.vertical-strut {
+  width: 3em;
+  box-shadow: inset 1px 1px 1px #555555, inset 0 -2px 1px #181818, 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 2px 2px 1px 1px;
+  background: #262323;
+}
+
+#maincontent {
+  width: 100%;
+  padding: 5em;
+  display: flex;
+  align-items: flex-start;
+  gap: 5em;
+}
+
+#main_switches {
+  display: inline-grid;
+  grid-template-columns: repeat(9, 3.5em);
+  /* border: 1px solid red; */
+}
+
+.switch {
+  margin-bottom: 0.3em;
+  text-align: center;
+}
+
+.register-label-row {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+  text-align: center;
+  grid-column: 2/10;
+}
+
+.carets { 
+  position: relative; 
+  width: 95%;
+  margin-top: 0.8em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.caret { 
+  display: block;
+  position: absolute;
+  border-width: 0 0 0 1px;
+  border-color: white;
+  border-style: solid;
+  left: -4px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+}
+
+.caret2 { 
+  display: block;
+  position: absolute;
+  border-width: 1px 0 0 0px;
+  border-color: white;
+  border-style: solid;
+  right: -5px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+}
+
+.caret3 { 
+  display: block;
+  position: absolute;
+  border-width: 1px 1px 0  0;
+  border-color: white;
+  border-style: solid;
+  
+  top: -4px;
+  background: black;
+  width: 10px;
+  height: 10px;
+  transform: rotate(-45deg);
+}
+
+.caret4 { 
+  display: block;
+  position: absolute;
+  border-width: 0 0 1px 0;
+  border-color: white;
+  border-style: solid;
+  left: -4px;
+  top: -12px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+}
+
+.caret5 { 
+  display: block;
+  position: absolute;
+  border-width: 0 1px 0 0;
+  border-color: white;
+  border-style: solid;
+  right: -5px;
+  top: -12px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+}
+
+.caret6 { 
+  display: block;
+  position: absolute;
+  border-width: 0 0 1px 1px;
+  border-color: white;
+  border-style: solid;
+  
+  top: -4px;
+  background: black;
+  width: 10px;
+  height: 10px;
+  transform: rotate(-45deg);
+}
+
+.caret-center {
+  width: 10px;
+  background-color: #333;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.line {
+  display: block;
+  position: absolute;
+  border-color: white;
+  border-style: solid;
+  border-width: 1px 0 0 0;
+  width: 100%;
+  height: 10px;
+  top: 0px;
+}
+
+#main_leds {
+    margin-top: 2em;
+  display: inline-grid;
+  grid-template-columns: repeat(21, auto);
+  font-size: 0.8em;
+  text-align: center;
+}
+
+.led-row-start, .led-row-end {
+    width: 2em;
+    background-color: #222;
+}
+
+.led-row-start {
+    grid-column: 1;
+}
+
+.led-row-end {
+  grid-column: 21;
+}
+
+#main_leds .led {
+  position: relative;
+  width: 2em;
+  background-color: #333;
+  padding-top: 1.2em;
+  padding-bottom: 0.5em;
+}
+
+#main_leds .led-spacer {
+  width: 0.6em;
+  background-color: #222;
+}
+
+.led-label {
+  margin-top: 0.3em;
+}
+
+.led-line {
+  margin-bottom: 1.5em;
+}
+
+.led-line > .carets {
+  margin-bottom: 2em;
+}
+
+/* -- fancyswitch2 -- */
+
+.fancyswitch2 {
+	display: inline-block;
+	margin: 2em 2em;
+	position: relative;
+	border-radius: 3.5em;
+	box-shadow: 0 0 0.5em rgba(255,255,255,0.2);
+  font-size: 0.22em;
+}
+
+.fancyswitch2 label {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 10;
+}
+
+.fancyswitch2 input {
+	display: none;
+}
+
+.fancyswitch2 span {
+	display: block;
+	transition: top 0.05s;
+}
+
+.fancyswitch2-border1 {
+	border: 0.1em solid #000;
+	border-radius: 3.5em;
+	box-shadow: 0 0.2em rgba(255, 255, 255, 0.2);
+}
+
+.fancyswitch2-border2 {
+	width: 6.6em;
+	height: 12.6em;
+	position: relative;
+	border: 0.1em solid #323232;
+	background-image: linear-gradient(to right, #2D2D2D, #4B4B4B, #2D2D2D);
+	border-radius: 3.4em;
+}
+
+.fancyswitch2-border2:before,
+.fancyswitch2-border2:after {
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+	opacity: .3;
+	border-radius: 3.4em;
+}
+
+.fancyswitch2-border2:before {
+	background: linear-gradient(#000, rgba(0,0,0,0));
+}
+
+.fancyswitch2-border2:after {
+	background: linear-gradient(rgba(0,0,0,0), #000);
+}
+
+.fancyswitch2-top {
+	width: 100%;
+	height: 84%;
+	position: absolute;
+	top: 8%;
+	left: 0;
+	z-index: 1;
+	background-image: linear-gradient(to right, #2D2D2D, #4B4B4B, #2D2D2D);
+	border-radius: 3.4em;
+}
+
+.fancyswitch2-shadow {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	border-radius: 3.4em;
+	box-shadow: 0 0 2em black inset;
+}
+
+.fancyswitch2-handle-left,
+.fancyswitch2-handle-right {
+	content: '';
+	display: block;
+	width: 3.6em;
+	height: 0;
+	position: absolute;
+	top: 6.6em;
+	z-index: 2;
+	border-bottom: 4.5em solid #111;
+	border-left: 0.7em solid transparent;
+	border-right: 0.7em solid transparent;
+	border-radius: 0;
+}
+
+.fancyswitch2-handle-left {
+	left: 0.8em;
+}
+
+.fancyswitch2-handle-right {
+	right: 0.8em;
+}
+
+.fancyswitch2-handle {
+	width: 3.6em;
+	height: 4.5em;
+	position: absolute;
+	top: 6.6em;
+	left: 1.5em;
+	z-index: 3;
+	background: #333;
+	background-image: linear-gradient(to right, #111, #777 40%, #888, #777 60%, #111);
+	border-radius: 0;
+}
+
+.fancyswitch2-handle-top {
+	width: 5em;
+	height: 5em;
+	position: absolute;
+	top: 8.5em;
+	left: 0.8em;
+	z-index: 4;
+	background-color: #555;
+	background-image: linear-gradient(to right, #5F5F5F, #878787);
+	border-top: 0.2em solid #AEB2B3;
+	border-radius: 2.5em;
+}
+
+.fancyswitch2-handle-bottom {
+	width: 3.6em;
+	height: 3.6em;
+	position: absolute;
+	top: 4.7em;
+	left: 1.5em;
+	z-index: 3;
+	background: #333;
+	background-image: linear-gradient(to right, #111, #777 40%, #888, #777 60%, #111);
+	border-top: 0.2em solid #141414;
+	border-radius: 1.8em;
+}
+
+.fancyswitch2-handle-base {
+	width: 4.2em;
+	height: 4.2em;
+	position: absolute;
+	top: 3.8em;
+	left: 1.2em;
+	z-index: 2;
+	border-top: 0.2em solid rgba(255,255,255,0.35);
+	border-radius: 2.1em;
+	box-shadow: 0 0 0.5em rgba(0,0,0,0.8) inset;
+}
+/* Switch on */
+
+.fancyswitch2 input:checked~.fancyswitch2-handle-left, .fancyswitch2 input:checked~.fancyswitch2-handle-right {
+	top: 1.5em;
+	border-bottom: 0;
+	border-top: 4.5em solid #111;
+}
+
+.fancyswitch2 input:checked~.fancyswitch2-handle {
+	top: 1.5em;
+}
+
+.fancyswitch2 input:checked~.fancyswitch2-handle-top  {
+	top: -1em;
+	border-top: 0;
+	border-bottom: 0.2em solid #AEB2B3;
+}
+
+.fancyswitch2 input:checked~.fancyswitch2-handle-bottom {
+	top: 4.2em;
+	border-top: 0;
+	border-bottom: 0.2em solid #141414;
+}
+
+.fancyswitch2 input:checked~.fancyswitch2-handle-base {
+	top: 4.5em;
+	border-top: 0;
+	border-bottom: 0.2em solid rgba(255,255,255,0.35);
+}
+
+.led_dot {
+    margin-left: auto;
+    margin-right: auto;
+
+    height: 1em;
+	width: 1em;
+
+	display: block;
+	border-radius: 50%;
+
+      border-radius: 50%;
+
+    box-shadow: 0px 0px 15px rgba(90, 90, 90, 0.6) inset;
+    background-color: #570000;
+}
+
+.led.on .led_dot {
+    background-color: #f00000;
+    box-shadow: 0px 0px 15px rgba(230, 230, 230, 0.6) inset, 0px 0px 15px rgba(240, 0, 0, 0.9);    
+  transition: all 0.1s linear;
+}
+
+.bottom-panel {
+    display: inline-flex;
+    align-items: stretch;
+    
+  /* border-radius: 2px; */
+padding: 1px;
+  box-shadow: inset 1px 1px 1px #999aa5, inset 0 -2px 1px #000000, 0 1px 2px rgba(39, 40, 70, 0.5);
+
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    background-color: #222;
+}
+
+.buttonrow {
+    display: flex;
+    align-content: stretch;
+    gap: 0.4em;
+    background: #222;
+}
+
+.button {
+    background: rgb(205, 191, 191);
+    color: rgb(34, 23, 23);
+    border: 1px solid black;
+    width: 8em;
+    height: 5em;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    text-align: center;
+    font-size: 0.8em;
+}
+
+.button * {
+    border: 1px solid rgb(101, 68, 68);
+    flex-grow: 1;
+}
+
+.button .single {
+    padding-top: 1.8em;
+    box-shadow: inset 0px 0px 10px 5px rgb(184, 175, 175);
+}
+
+.button .top, .button .bottom {
+    padding-top: 0.5em;
+    box-shadow: inset 0px 0px 10px 2px rgb(184, 175, 175);
+}
+
+/* button hovers */
+
+.button.hoverable .blue.single:hover,
+.button.hoverable .blue.top:hover,
+.button.hoverable .blue.bottom:hover,
+.button .blue.on {
+  background-color: rgb(192, 246, 255);
+  box-shadow: inset 0px 0px 10px 5px rgb(117, 201, 200);
+}
+
+.button.hoverable .white.single:hover,
+.button.hoverable .white.top:hover,
+.button.hoverable .white.bottom:hover,
+.button .white.on {
+  background-color: rgb(255, 255, 255);
+  box-shadow: inset 0px 0px 10px 5px rgb(245, 241, 191);
+}
+
+.button.hoverable .red.single:hover,
+.button.hoverable .red.top:hover, 
+.button.hoverable .red.bottom:hover,
+.button .red.on {
+  background-color: rgb(220, 131, 131);
+  box-shadow: inset 0px 0px 10px 5px rgb(142, 41, 41);
+}
+
+.button.hoverable .yellow.single:hover,
+.button.hoverable .yellow.top:hover,
+.button.hoverable .yellow.bottom:hover,
+.button .yellow.on {
+  background-color: rgb(230, 217, 119);
+  box-shadow: inset 0px 0px 10px 5px rgb(255, 243, 112);
+}
+
+
+/* blinkenlights */
+
+.lights {
+    background: #222;
+    padding: 1em 5em;
+    font-size: 0.7em;
+    display: flex;
+    align-items: stretch;
+}
+
+#lights_container {
+    display: grid;
+    grid-template-columns: repeat(19, auto);
+    text-align: center;
+    height: 100%;
+}
+
+#lights_container .spacer { 
+    width: 0.8em;
+}
+
+#lights_container .led_dot {
+    width: 1.5em;
+    height: 1.5em;
+    margin: 0.1em;
+}
+
+#lights_container .label {
+    margin-bottom: 1em;
+}
+
+#rotary {
+  margin-top: 3em;
+  display: flex;
+  align-items: center;
+  padding-top: 4em;
+  padding-left: 10em;
+  padding-bottom: 3em;
+  font-size: 0.8em
+}
+
+.knob {
+  position: relative;
+}
+
+.knob > svg {
+  width: 15em; 
+  height: 15em; 
+  user-select: none; 
+  outline: none; 
+  --rot: 0deg;
+}
+
+.dial {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+
+  display: flex;
+  align-items: center;
+  transform: translate(50%);
+}
+
+:root {
+  --angle: calc(360deg / 20);
+  --phase: calc(360deg / 20 * 6);
+  --radius: 10em;
+}
+
+.dial_label {
+  position: absolute;
+  text-align: center;
+}
+
+.dial_label_text {  
+  position: absolute;
+  border-bottom: 1px solid white;
+  padding-bottom: em;  
+  transform: translate(-50%, -50%);
+  width: 4em;
+  cursor: pointer;
+}
+
+.dial .line {
+  display: block;
+  height: 1px;
+  position: absolute;
+  right: 0em;
+  width: 2em;
+  border-top: 1px solid white;
+}
+
+.dial_label:nth-child(1)  { transform: rotateZ(calc( 0 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(2)  { transform: rotateZ(calc( 1 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(3)  { transform: rotateZ(calc( 2 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(4)  { transform: rotateZ(calc( 3 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(5)  { transform: rotateZ(calc( 4 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(6)  { transform: rotateZ(calc( 5 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(7)  { transform: rotateZ(calc( 6 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(8)  { transform: rotateZ(calc( 7 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(9)  { transform: rotateZ(calc( 8 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(10) { transform: rotateZ(calc( 9 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(11) { transform: rotateZ(calc(10 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(12) { transform: rotateZ(calc(11 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(13) { transform: rotateZ(calc(12 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+.dial_label:nth-child(14) { transform: rotateZ(calc(13 * var(--angle) + var(--phase))) translateX(var(--radius)) ; }
+
+.dial_label:nth-child(1)  .dial_label_text  { transform: rotateZ(calc( -0 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(2)  .dial_label_text  { transform: rotateZ(calc( -1 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(3)  .dial_label_text  { transform: rotateZ(calc( -2 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(4)  .dial_label_text  { transform: rotateZ(calc( -3 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(5)  .dial_label_text  { transform: rotateZ(calc( -4 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(6)  .dial_label_text  { transform: rotateZ(calc( -5 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(7)  .dial_label_text  { transform: rotateZ(calc( -6 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(8)  .dial_label_text  { transform: rotateZ(calc( -7 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(9)  .dial_label_text  { transform: rotateZ(calc( -8 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(10) .dial_label_text  { transform: rotateZ(calc( -9 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(11) .dial_label_text  { transform: rotateZ(calc(-10 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(12) .dial_label_text  { transform: rotateZ(calc(-11 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(13) .dial_label_text  { transform: rotateZ(calc(-12 * var(--angle) - var(--phase))); }
+.dial_label:nth-child(14) .dial_label_text  { transform: rotateZ(calc(-13 * var(--angle) - var(--phase))); }
+
+.log {
+  box-shadow: inset 1px 1px 1px #181818, inset 0 -2px 1px #727272, 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 2px 2px 1px 1px;
+  height: 15em;
+  background: #111;
+  font-family: "Courier";
+  font-size: 1.1em;
+  margin-top: 0px;
+  padding: 0.5em;
+  overflow: auto;
+
+  color:rgb(242, 243, 244);  
+  text-shadow: rgba(255, 255, 255, 0.22) 0 0 3px;
+}
+
+
+.log-container { 
+  position: relative;
+  
+}
+.log-container::after  {
+  content: ' ';
+  position:absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(0, transparent, #000 3px);
+
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+.log ::selection {
+  background: rgba(255, 255, 255, 0.25);
+  text-shadow: none;
+}
+
+.log pre {
+  margin: 5px;
+}
+
+</style>
+
+<div id=verticalcontainer>
+    <div class="horizontal-strut strut-blue"></div>
+    <div class="horizontal-strut strut-top"></div>
+    <div id=main>
+        <div class="vertical-strut strut-left"></div>
+        
+        <div id=maincontent>
+            <div id=main_leds></div>
+            <div id=main_left>
+              <div id=main_switches></div>
+              <div id=rotary>
+                <div class=knob>
+                  <svg id=rs_knob version="1.1" viewBox="-16 -16 32 32">
+                    <defs>
+                        <linearGradient id="shape-fill" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="rgb(80, 80, 81)"/>
+                            <stop offset="100%" stop-color="rgb(30, 30, 31)"/>
+                        </linearGradient>
+                        <radialGradient id="metal-rings" fx="50%" fy="50%" r="10%" spreadMethod="reflect">
+                            <stop offset="30%" stop-color="white" stop-opacity="0.66"></stop>
+                            <stop offset="50%" stop-color="white" stop-opacity="0.69"></stop>
+                            <stop offset="70%" stop-color="white" stop-opacity="0.66"></stop>
+                        </radialGradient>
+                        <path id="shape" d="
+                        M14.876 -5.890A-16 -16 0 0 0 14.876 5.890A16 16 0 0 112.539 9.938A-16 -16 0 0 0 2.337 15.828
+                        A16 16 0 0 1-2.337 15.828A-16 -16 0 0 0 -12.539 9.938A16 16 0 0 1-14.876 5.890A-16 -16 0 0 0 -14.876 -5.890
+                        A16 16 0 0 1-12.539 -9.938A-16 -16 0 0 0 -2.337 -15.828A16 16 0 0 12.337 -15.828A-16 -16 0 0 0 12.539 -9.938
+                        A16 16 0 0 114.876 -5.890"></path>
+                        <clipPath id="shape-mask" style="transform: rotate(var(--rot)) scale(0.87)">
+                            <use href="#shape"/>
+                        </clipPath>
+                        <filter id="lights">
+                            <feDropShadow dx="0" dy="-0.3" stdDeviation="0.1" flood-opacity="0.7" flood-color="white"/>
+                        </filter>
+                        <filter id="shadow">
+                            <feDropShadow dx="0" dy="1.5" stdDeviation="0.5" flood-opacity="0.9" flood-color="black"/>
+                        </filter>
+                    </defs>
+                    <circle cx="0" cy="0" r="15.0" fill="rgb(36, 36, 37)" stroke="rgb(28, 28, 29)" stroke-width="0.5"></circle>
+                    <g filter="url(#shadow)">
+                        <g filter="url(#lights)">
+                            <g clip-path="url(#shape-mask)">
+                                <rect x="-16" y="-16" width="32" height="32" fill="url(#shape-fill)"></rect>
+                                <circle cx="0" cy="-37" r="32" fill="rgba(250, 250, 255, .16)"></circle>
+                            </g>
+                        </g>
+                    </g>
+                    <g style="transform: rotate(var(--rot))">
+                        <circle cx="0" cy="-11" r="1.1" fill="black"></circle>
+                        <circle cx="0" cy="-11" r="0.8" fill="white"></circle>
+                    </g>
+                    <circle cx="0" cy="0" r="9" fill="url(#metal-rings)" stroke="rgb(50, 50, 51)" stroke-width="0.7"></circle>
+
+                  </svg>
+                  <div class=dial>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V4>V4</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_L3>L3</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V3>V3</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_RI_L2>RI_L2</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V2>V2</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_L1>L1</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V1>V1</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V1_SCR>V1_SCR</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V1_LETT>V1_LETT</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_NORM>NORM</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_PO>PO</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_FI_UR>FI_UR</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_SO>SO</div></div>
+                    <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_FO>FO</div></div>
+                </div>
+                  
+                </div>
+              </div>
+            </div>
+        </div>
+        
+        <div class="vertical-strut strut-right"></div>    
+    </div>
+    <div class="horizontal-strut strut-bottom"></div>
+    <div class=strut-blue>
+      <div class=log-container>
+      <div class=log id=log_box>
+        <pre>GEMU 130 -- A funny experiment</pre>
+      </div>
+    </div>
+    </div>
+    <div class=strut-blue>
+        <div class=bottom-panel>
+            <div class=buttons>
+                <div class="buttonrow">
+                    <div class=button>
+                        <div class=single>~ ON</div>
+                    </div>
+                    <div class=button>
+                        <div class=single></div>
+                    </div>
+                    <div class=button>
+                        <div class="top red" id=l_DC_ALERT>DC ALERT</div>
+                        <div class="bottom yellow" id=l_POWER_OFF>POWER OFF</div>
+                    </div>
+                    <div class="button hoverable" id=power_on_button>
+                        <div class="single yellow" id=l_POWER_ON>POWER ON</div>
+                    </div>
+                    <div class=button>
+                        <div class="top red" id=l_MAINTENANCE_ON>MAINT.ON</div>
+                        <div class=bottom>LAMPS CHECK</div>
+                    </div>
+                    <div class=button>
+                        <div class="single white" id=l_SWITCH_1>SWITCH 1</div>
+                    </div>
+                    <div class=button>
+                        <div class="single white" id=l_SWITCH_2>SWITCH 2</div>
+                    </div>
+                    <div class=button>
+                        <div class="single white" id=l_STEP_BY_STEP>STEP BY STEP</div>
+                    </div>
+                    <div class=button>
+                        <div class="top white" id=l_LOAD_1>LOAD 1</div>
+                        <div class="bottom white" id=l_LOAD_2>LOAD 2</div>
+                    </div>
+                </div> 
+                <div class="buttonrow">
+                    <div class="button hoverable" id=emerg_off_button>
+                        <div class="single white">EMERG. OFF</div>
+                    </div>
+                    <div class=button>
+                        <div class=single></div>
+                    </div>
+                    <div class=button id=l_STAND_BY>
+                        <div class="single blue">STAND BY</div>
+                    </div>
+                    <div class=button>
+                        <div class=single></div>
+                    </div>
+                    <div class=button>
+                        <div class="top red" id=l_MEM_CHECK>MEM.CHECK</div>
+                        <div class="bottom red" id=l_INV_ADD>INV.ADD.</div>
+                    </div>
+                    <div class="button hoverable" id=clear_button>
+                        <div class="single white">CLEAR</div>
+                    </div>
+                    <div class="button hoverable" id=load_button>
+                        <div class="single white">LOAD</div>
+                    </div>
+                    <div class="button hoverable" id=start_button>
+                        <div class="top white" id=l_HALT>HALT</div>
+                        <div class="bottom white">START</div>
+                    </div>
+                    <div class="button">
+                        <div class="single white" id=l_OPERATOR_CALL>OPER. CALL</div>
+                    </div>
+                </div>
+            </div>
+            <div class=lights>
+                <div id=lights_container>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+
+<script>
+function makeDiv(className) {
+    const sw = document.createElement("div")
+    sw.className = className
+    return sw
+}
+
+const makeEmptySwitch = () => makeDiv("empty")
+
+function makeSwitch(id, label) {
+    const sw = document.createElement("div")
+    sw.className = "switch"
+    sw.id = id
+    sw.innerHTML = `<div class=label>${label}</div>`
+    sw.appendChild(makeFancySwitch2(id + '_fs'))
+    return sw
+}
+
+function makeTopLabel(text) {
+    const label = document.createElement("div")
+    label.className = "register-label-row"
+    label.innerHTML = `
+        ${text}
+        <div class=carets>
+            <div class=caret></div>
+            <div class=caret2></div>
+            <div class=line></div>
+            <div class="caret-center"><div class="caret3"></div></div>
+        </div>
+        `
+    return label
+}
+
+function makeBottomLabel(text, column) {
+    const label = document.createElement("div")
+    label.className = "led-line"
+    label.innerHTML = `
+        <div class=carets>
+            <div class=line></div>
+            <div class=caret4></div>
+            <div class=caret5></div>
+            <div class="caret-center"><div class="caret6"></div></div>
+        </div>
+        ${text}
+        `
+    if (column) { label.style.gridColumn = column }
+    return label;
+}
+
+function makeLedLabel(label, column) { 
+    const div = makeDiv("led-label")
+    div.innerHTML = label
+    if (column) { div.style.gridColumn = column }
+    return div
+}
+
+/* fancy switch */
+
+function makeFancySwitch2(id) {
+    const div = document.createElement("div")
+    div.class = "fancycontainer"
+    div.innerHTML = `
+    <div class="fancyswitch2">
+        <span class="fancyswitch2-border1">
+            <span class="fancyswitch2-border2">
+                <input id="${id}" type="checkbox" onchange="document.set_switches()"/>
+                <label for="${id}"></label>
+                <span class="fancyswitch2-top"></span>
+                <span class="fancyswitch2-shadow"></span>
+                <span class="fancyswitch2-handle"></span>
+                <span class="fancyswitch2-handle-left"></span>
+                <span class="fancyswitch2-handle-right"></span>
+                <span class="fancyswitch2-2handle-top"></span>
+                <span class="fancyswitch2-handle-bottom"></span>
+                <span class="fancyswitch2-handle-base"></span>
+            </span>
+        </span>
+    </span>
+    `
+
+    return div;
+}
+
+/* - */
+
+const switchesOther = ["site", "ince", "inar", "stoc", "acon", "acov", "rici", "pate", "papa"]
+const labels_15_12  = ["15", "14", "13", "12"]
+const labels_11_08  = ["11", "10", "09", "08"]
+const labels_07_04  = ["07", "06", "05", "04"]
+const labels_03_00  = ["03", "02", "01", "00"]
+
+/* leds */
+
+function makeLed(id) {
+    const led = makeDiv("led")
+    led.innerHTML = '<div class="led_dot"></div>'
+    if (id) led.id = "l_" + id
+    return led
+}
+
+function makeLedRow(ids) {
+    let x = { i: 0 }
+
+    let makeLedId = () => { 
+      const led = makeLed()
+      const id = ids[x.i++]
+      if (id !== null) led.id =  "l_" + id
+      return led
+    }
+
+    const start = () => makeDiv("led-row-start")
+    const end = () => makeDiv("led-row-end")
+    const led = ids ? makeLedId : makeLed
+
+    const spacer = () => makeDiv("led-spacer")
+
+    const nibble = [led, led, led, led]
+    const row = Array().concat([start], nibble, [spacer], nibble, [spacer], nibble, [spacer], nibble, [end])
+    return row.map(i => i())
+}
+
+const makeLedLabels = (labels, starting) => labels.map((l, i) => makeLedLabel(l, i == 0 ? starting : null))
+
+const rowOneLedIds = [
+  null,   null,   null,   "UR",
+  null,   null,   null,   "RO_8",
+  "RO_7", "RO_6", "RO_5", "RO_4",
+  "RO_3", "RO_2", "RO_1", "RO_0",
+]
+
+const rowTwoLedIds = [
+  "FA_3", "FA_2", "FA_1", "FA_0",
+  null,   null,   null,   null,
+  "SO_7", "SO_6", "SO_5", "SO_4",
+  "SO_3", "SO_2", "SO_1", "SO_0",
+]
+
+const rowThreeLedIds = [
+  "B_3",  "B_2",  "B_1",  "B_0",
+  null,   null,   null,   null,
+  "SA_7", "SA_6", "SA_5", "SA_4",
+  "SA_3", "SA_2", "SA_1", "SA_0",
+]
+
+const allLedDivs = Array().concat(
+    makeLedRow(rowOneLedIds),
+    makeLedLabel("UR", 5),
+    makeLedLabel("08", 10),
+    makeLedLabels(labels_07_04, 12),
+    makeLedLabels(labels_03_00, 17),
+    makeBottomLabel("RO", "10/21"),
+    makeLedRow(rowTwoLedIds),
+    makeLedLabels(labels_03_00, 2),
+    makeLedLabels(labels_07_04, 12),
+    makeLedLabels(labels_03_00, 17),
+    makeBottomLabel("FA", "2/6"),
+    makeBottomLabel("SO", "12/21"),
+    makeLedRow(rowThreeLedIds),
+    makeLedLabels(["B4", "B3", "B2", "B1"], 2),
+    makeLedLabels(labels_07_04, 12),
+    makeLedLabels(labels_03_00, 17),
+    makeBottomLabel("SA", "12/21"),
+)
+
+/* leds in bottom section */
+
+const bottomLabel = (text, column) => { 
+  let label = document.createElement("div")
+  label.innerText = text
+  if (column) label.style.gridColumn = column;
+  return label
+}
+
+const bottomLedDivs = [
+  bottomLabel("ADD REG", "1/20"),  
+  makeLed("ADD_F"),   makeLed("ADD_E"),   makeLed("ADD_D"),   makeLed("ADD_C"),   makeDiv("spacer"),
+  makeLed("ADD_B"),   makeLed("ADD_A"),   makeLed("ADD_9"),   makeLed("ADD_8"),   makeDiv("spacer"),
+  makeLed("ADD_7"),   makeLed("ADD_6"),   makeLed("ADD_5"),   makeLed("ADD_4"),   makeDiv("spacer"),
+  makeLed("ADD_3"),   makeLed("ADD_2"),   makeLed("ADD_1"),   makeLed("ADD_0"),  
+  makeLedLabel("8"),  makeLedLabel("4"),  makeLedLabel("2"),  makeLedLabel("1"),  makeDiv("spacer"),
+  makeLedLabel("8"),  makeLedLabel("4"),  makeLedLabel("2"),  makeLedLabel("1"),  makeDiv("spacer"),
+  makeLedLabel("8"),  makeLedLabel("4"),  makeLedLabel("2"),  makeLedLabel("1"),  makeDiv("spacer"),
+  makeLedLabel("8"),  makeLedLabel("4"),  makeLedLabel("2"),  makeLedLabel("1"), 
+
+  bottomLabel("OP REG", "10/20"),  
+  makeLed("OF"),      makeLed("NZ"),      makeLed("IM"),      makeLed("JE"),      makeDiv("spacer"),
+  makeLed("I"),       makeLed("C1"),      makeLed("C2"),      makeLed("C3"),      makeDiv("spacer"),
+  makeLed("OP_7"),    makeLed("OP_6"),    makeLed("OP_5"),    makeLed("OP_4"),    makeDiv("spacer"),
+  makeLed("OP_3"),    makeLed("OP_2"),    makeLed("OP_1"),    makeLed("OP_0"),   
+  makeLedLabel("OF"), makeLedLabel("NZ"), makeLedLabel("IM"), makeLedLabel("JE"), makeDiv("spacer"),
+  makeLedLabel("I"),  makeLedLabel("C1"), makeLedLabel("C2"), makeLedLabel("C3"), makeDiv("spacer"),
+  makeLedLabel("8"),  makeLedLabel("4"),  makeLedLabel("2"),  makeLedLabel("1"),  makeDiv("spacer"),
+  makeLedLabel("8"),  makeLedLabel("4"),  makeLedLabel("2"),  makeLedLabel("1"), 
+]
+
+/* switches */
+
+const switchesHigh = Array().concat(labels_15_12, labels_11_08)
+const switchesLow  = Array().concat(labels_07_04, labels_03_00)
+
+const makeOtherSwitch = i => makeSwitch(i, i.toUpperCase())
+const makeAMSwitch = i => makeSwitch(`am_${i}`, i)
+
+const labelRow = () => [ makeEmptySwitch(), makeTopLabel("AM"), makeEmptySwitch() ]
+const allSwitchesDivs = Array().concat(
+    switchesOther.map(makeOtherSwitch),
+    labelRow(),
+    switchesHigh.map(makeAMSwitch),
+    labelRow(),
+    switchesLow.map(makeAMSwitch),
+)
+
+/* - */
+
+allLedDivs
+    .forEach(i => main_leds.appendChild(i))
+
+allSwitchesDivs
+    .forEach(i => main_switches.appendChild(i))
+
+bottomLedDivs
+   .forEach(i => lights_container.appendChild(i))
+
+/* - */
+
+const AM_switches = [
+    am_00_fs, am_01_fs, am_02_fs, am_03_fs,
+    am_04_fs, am_05_fs, am_06_fs, am_07_fs,
+    am_08_fs, am_09_fs, am_10_fs, am_11_fs,
+    am_12_fs, am_13_fs, am_14_fs, am_15_fs, 
+]
+
+const flag_switches = [
+    site_fs, 
+    ince_fs, inar_fs, stoc_fs, acon_fs,
+    acov_fs, rici_fs, pate_fs, papa_fs,
+]
+
+const bitmask_from_switches = (sw) => sw
+    .map((s, i) => s.checked ?  2 ** i : 0)
+    .reduce((s, i) => s + i, 0)
+
+const am_from_switches = () => bitmask_from_switches(AM_switches)
+const flags_from_switches = () => bitmask_from_switches(flag_switches)
+
+function set_knob_position(pos) {
+  const segment = (360 / 20)
+  const phase = segment * 9
+  const angle = segment * pos - phase
+
+  rs_knob.style.setProperty('--rot', "" + angle + "deg")
+}
+
+set_knob_position(9) // RS_NORM
+
+</script>
+
+<script type="module">
+import { default as GE_Module } from './main.mjs'
+
+const scrollback_lines_length = 100;
+
+function log_add(text) {
+    const p = document.createElement("pre")
+    p.innerText = text
+    log_box.appendChild(p)
+
+    p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
+    
+    if (log_box.children.length > scrollback_lines_length)
+    log_box.children[0].remove()
+}
+
+var module;
+
+power_on_button  .addEventListener("click", e => module && module._press_on()    )
+emerg_off_button .addEventListener("click", e => module && module._press_off()   )
+clear_button     .addEventListener("click", e => module && module._press_clear() )
+load_button      .addEventListener("click", e => module && module._press_load()  )
+start_button     .addEventListener("click", e => module && module._press_start() )
+
+document.set_lamp = function(lamp, val) {
+    if (!module) return;
+    
+    const e = document.getElementById('l_' + lamp);
+    if (!e) return;
+    
+    if (val) e.classList.add("on")
+    else     e.classList.remove("on")
+
+    if (val) console.log()
+}
+
+document.set_switches = function() {
+  console.log(am_from_switches())
+  if (!module) return;
+  module._set_switches(flags_from_switches(), am_from_switches())
+}
+
+const rotary_positions = [
+  rs_V4, rs_L3, rs_V3, rs_RI_L2, 
+  rs_V2, rs_L1, rs_V1, rs_V1_SCR,
+  rs_V1_LETT, rs_NORM, rs_PO, rs_FI_UR, 
+  rs_SO, rs_FO
+]
+
+document.set_dial = function(e) {
+  const pos = rotary_positions.indexOf(e)
+  if (e == -1) return;
+  set_knob_position(pos)
+  module._set_register_selector(pos);
+}
+
+log_add("Loading emulator")
+GE_Module({ print: log_add })
+    .then(m => {
+        module = m
+        log_add("ok.")
+    })
+
+</script>
