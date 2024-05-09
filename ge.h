@@ -50,6 +50,12 @@ struct ge_knot_no {
     uint8_t forcings;
 
     enum {
+        KNOT_FORCING_NONE,
+        KNOT_FORCING_NO_21,
+        KNOT_FORCING_NO_43,
+    } force_mode;
+
+    enum {
         KNOT_PO_IN_NO,
         KNOT_V1_IN_NO,
         KNOT_V2_IN_NO,
@@ -58,8 +64,6 @@ struct ge_knot_no {
         KNOT_L1_IN_NO,
         KNOT_L2_IN_NO,
         KNOT_L3_IN_NO,
-        KNOT_FORCE_IN_NO_21,
-        KNOT_FORCE_IN_NO_43,
         KNOT_AM_IN_NO,
         KNOT_RI_IN_NO_43,
     } cmd;

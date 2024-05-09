@@ -61,6 +61,7 @@ static void on_TO20(struct ge *ge) {
     ge->rVO = NO_knot(ge); /* cpu fo. 124, 125 */
 
     ge->kNO.forcings = 0;
+    ge->kNO.force_mode = KNOT_FORCING_NONE;
 
     ge->ACIC = 0; /* cpu fo. 99  */
     ge->rRO = 0;  /* cpu fo. 142 */
@@ -97,10 +98,12 @@ static void on_TO50_1(struct ge *ge) {
         /* timing chart js1-js2-jie-ecc, fo. 32,
          * also, display, fo. 17 */
         ge->rBO = NO_knot(ge);
-        ge->kNO.forcings = 0;
     }
 
     ge->TO50_did_CI32_or_CI33 = 0;
+
+    ge->kNO.forcings = 0;
+    ge->kNO.force_mode = KNOT_FORCING_NONE;
 }
 
 static void on_TO60(struct ge *ge) {}
@@ -129,6 +132,7 @@ static void on_TO70(struct ge *ge) {
 }
 
 static void on_TO80(struct ge *ge) {}
+
 static void on_TO89(struct ge *ge) {
     ge->PEC1 = 0;
 }
