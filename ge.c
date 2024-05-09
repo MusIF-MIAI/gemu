@@ -180,6 +180,10 @@ int ge_run_pulse(struct ge *ge)
         r = ge_peri_on_clock(ge);
         if (r != 0)
             return r;
+
+        /* poll the connectors and try to set up the cpu state.
+         * should this be here? */
+        connectors_first_clock(ge);
     }
 
     /* Execute common pulse machine logic */
@@ -228,6 +232,18 @@ int ge_deinit(struct ge *ge)
 {
     ge_peri_deinit(ge);
     return 0;
+}
+
+void connectors_first_clock(struct ge *ge)
+{
+    ge_log(LOG_READER, "    RA101 = %d\n", RA101(ge));
+    ge_log(LOG_READER, "    RF101 = %d\n", RF101(ge));
+    ge_log(LOG_READER, "    RB111 = %d\n", RB111(ge));
+    ge_log(LOG_READER, "    Signaling incoming data\n");
+
+    if (RA101(ge)) {
+        ge->RC01 = 1;
+    }
 }
 
 void fsn_last_clock(struct ge *ge)

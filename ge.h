@@ -612,6 +612,8 @@ int ge_register_peri(struct ge *ge, struct ge_peri *p);
  */
 void fsn_last_clock(struct ge *ge);
 
+void connectors_first_clock(struct ge *ge);
+
 /**
  * The clock period name name
  *

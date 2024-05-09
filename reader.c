@@ -36,15 +36,6 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
     ge->integrated_reader.data = data;
     ge->integrated_reader.fini = end;
 
-    /* UNIV 1.2µs --> RC01 */
-    /* signal cpu of incoming data */
-    ge->RC01 = 1;
-
-    ge_log(LOG_READER, "    RA101 = %d\n", RA101(ge));
-    ge_log(LOG_READER, "    RF101 = %d\n", RF101(ge));
-    ge_log(LOG_READER, "    RB111 = %d\n", RB111(ge));
-    ge_log(LOG_READER, "    Signaling incoming data\n");
-
     /* signal end character */
     /* todo: should use RF101 here? is "if (end)" correct? */
     if (end)
