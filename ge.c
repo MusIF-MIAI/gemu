@@ -17,6 +17,9 @@ void ge_init(struct ge *ge)
     ge->halted = 1;
     ge->powered = 1;
     ge->register_selector = RS_NORM;
+
+    ge->ST3.name = "ST3";
+    ge->ST4.name = "ST4";
 }
 
 void ge_clear(struct ge *ge)
@@ -236,12 +239,8 @@ int ge_deinit(struct ge *ge)
 
 void connectors_first_clock(struct ge *ge)
 {
-    ge_log(LOG_READER, "    RA101 = %d\n", RA101(ge));
-    ge_log(LOG_READER, "    RF101 = %d\n", RF101(ge));
-    ge_log(LOG_READER, "    RB111 = %d\n", RB111(ge));
-    ge_log(LOG_READER, "    Signaling incoming data\n");
-
     if (RA101(ge)) {
+        ge_log(LOG_READER, "RA101: signaling incoming data\n");
         ge->RC01 = 1;
     }
 }

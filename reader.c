@@ -89,3 +89,78 @@ uint8_t reader_get_FINI1(struct ge *ge)
     ge_log(LOG_READER, "**** reading FINI1 %d\n", ge->integrated_reader.fini);
     return ge->integrated_reader.fini;
 }
+
+uint8_t connector_get_MARE(struct ge_connector *conn)
+{
+    ge_log(LOG_READER, "%s -- connector_get_MARE\n", conn->name);
+    return conn->mare;
+}
+
+uint8_t connector_get_TE10(struct ge_connector *conn)
+{
+    ge_log(LOG_READER, "%s -- connector_get_TE10\n", conn->name);
+    return conn->te10;
+}
+
+uint8_t connector_get_TE20(struct ge_connector *conn)
+{
+    ge_log(LOG_READER, "%s -- connector_get_TE20\n", conn->name);
+    return conn->te20;
+}
+
+uint8_t connector_get_TE30(struct ge_connector *conn)
+{
+    ge_log(LOG_READER, "%s -- connector_get_TE30\n", conn->name);
+    return conn->te30;
+}
+
+uint8_t connector_get_FINE(struct ge_connector *conn)
+{
+    ge_log(LOG_READER, "%s -- connector_get_FINE\n", conn->name);
+    return conn->fine;
+}
+
+void connector_setup_to_send(struct ge *ge, struct ge_connector *conn, uint8_t data, uint8_t end)
+{
+    /* equivalent of lu08, but not sure if it's TE10 or TE20, seems or-red together
+     * (intermediate fo. 11, D1, D2) */
+
+    conn->te10 = 1;
+    conn->te20 = 1;
+    conn->data = data;
+    conn->fine = end;
+
+    /* signal end character */
+    /* todo: should use RF101 here? is "if (end)" correct? */
+    if (end)
+        ge->RIG1 = 1;
+
+    /* todo: should be conditioned by PIM11, but it's false at this point
+     * without this, we don't get to state ea after waiting state b8 when
+     * reading */
+    if (end)
+        ge->PEC1 = 1;
+
+    if (RB111(ge)) {
+        ge_log(LOG_READER, "XXX\n");
+    }
+}
+
+void connector_clear_sending(struct ge_connector *conn)
+{
+    conn->te10 = 0;
+    conn->te20 = 0;
+    conn->data = 0;
+}
+
+void connector_send_tu00(struct ge *ge, struct ge_connector *conn)
+{
+    uint8_t command = ge->rRE;
+
+    switch (command) {
+#define X(cmd, namex, desc) case cmd: ge_log(LOG_READER, "    connector %s got: %02x - %s\n", conn->name, cmd, desc ); break;
+            ENUMERATE_READER_COMMANDS
+#undef X
+    }
+
+}

@@ -198,7 +198,7 @@ static void CE01(struct ge* ge) {
 static void CE02(struct ge* ge) {
     /* admits AEBE: */
     /*     UNIV 1.2µs --> RATE1 nand PC131 --> AEBE */
-    /*     AEBE is a control signal sent to ST3 */
+    /*     AEBE is a control signal sent to ST3 and ST4 */
 
     /* Unconditionally set by command CE02 (cpu fo. 235) */
     ge->PIC1 = 1;
@@ -304,7 +304,14 @@ static void CE09(struct ge *ge) {
     /* emits TU101: */
     /* UNIV 1.2µs --> RT111 */
 
-    reader_send_tu10(ge);
+    uint8_t RT111 = 1;
+
+    /* intermediate fo 14 D3 */
+    uint8_t TU03A = !(RT111 && PC121(ge));
+    uint8_t TU03 = !TU03A;
+
+    if (TU03)
+        reader_send_tu10(ge);
 }
 
 static void CE10(struct ge *ge) {
@@ -319,7 +326,20 @@ static void CE10(struct ge *ge) {
 }
 
 static void CE11(struct ge* ge) {
-    ge_log(LOG_PERI, "TODO: emit TU301.. should not be used by RI but only ST3 and ST4\n");
+    ge->RT131 = 1;
+
+    /* UNIV seems a delay line to synchronise the hardware, let's
+     * ignore the exact timings. */
+
+    /* ad hoc logic, this should be conditioned by TU30C and TU30D
+     * (intermediate fo 14, B4 B5) to send the command only to the
+     * specified units, but the signals don't fully work here */
+
+    if (PC131(ge))
+        connector_send_tu00(ge, &ge->ST3);
+
+    if (PC141(ge))
+        connector_send_tu00(ge, &ge->ST4);
 }
 
 static void CE18(struct ge *ge) {

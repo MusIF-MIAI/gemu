@@ -21,17 +21,17 @@
  * @{
  */
 
-SIG(RESIA) { return !ge->RESI; }
-SIG(RIA01) { return  ge->RIA0; }
-SIG(RIA2A) { return !ge->RIA2; }
-SIG(RIA3A) { return !ge->RIA3; }
+SIG(RESI)  { return  ge->RESI;  }
+SIG(RESI1) { return  RESI(ge);  }
+SIG(RESIA) { return !RESI1(ge); }
+SIG(RIA01) { return  ge->RIA0;  }
+SIG(RIA2A) { return !ge->RIA2;  }
+SIG(RIA3A) { return !ge->RIA3;  }
 
 SIG(RIUCA) { return !(RIA01(ge) && RESIA(ge) && RIA2A(ge) && RIA3A(ge)); }
 
 /* adding RIUCA here breaks machine startup */
 SIG(RES01) { return !(RESIA(ge) /* && RIUCA(ge) */); }
-
-SIG(RESI)  { return ge->RESI; }
 
 /** Cycle assigned to channel 1 */
 SIG(RES0)  { return RES01(ge); }
@@ -61,6 +61,8 @@ SIG(RES3) {
 SIG(RIUC) {
     return ge->RIA0 & !ge->RESI & !ge->RIA3 & !ge->RIA2;
 }
+
+SIG(RES31) { return RES3(ge); };
 
 /** @} */
 
@@ -270,21 +272,6 @@ static inline uint16_t NI_knot(struct ge *ge) {
             (ni1 <<  0));
 }
 
-/**
- * NI Knot
- *
- * Can't find proper documentation in PDS, but it's documented in the intermediate
- * block diagram, fo. 14.
- *
- * Should be a multiplexer of the I/O units outputs.
- */
-static inline uint16_t NE_knot(struct ge *ge) {
-    /* TODO: proper implementation, just return the RI data */
-    uint16_t ret = ge->integrated_reader.data;
-    ge_log(LOG_PERI, "READING FROM NE KNOT --> %03x\n", ret);
-    return ret;
-}
-
 /** @} */
 
 /**
@@ -450,14 +437,18 @@ SIG(FUSE1) { return 0; }
 SIG(FINA1) { return 0; }
 
 /* ST3 */
-SIG(MARE3) { return 0; }
-SIG(TE303) { return 0; }
-SIG(FINE3) { return 0; }
+SIG(MARE3) { return connector_get_MARE(&ge->ST3); }
+SIG(TE103) { return connector_get_TE10(&ge->ST3); }
+SIG(TE203) { return connector_get_TE20(&ge->ST3); }
+SIG(TE303) { return connector_get_TE30(&ge->ST3); }
+SIG(FINE3) { return connector_get_FINE(&ge->ST3); }
 
 /* ST4 */
-SIG(MARE4) { return 0; }
-SIG(TE304) { return 0; }
-SIG(FINE4) { return 0; }
+SIG(MARE4) { return connector_get_MARE(&ge->ST4); }
+SIG(TE104) { return connector_get_TE10(&ge->ST4); }
+SIG(TE204) { return connector_get_TE20(&ge->ST4); }
+SIG(TE304) { return connector_get_TE30(&ge->ST4); }
+SIG(FINE4) { return connector_get_FINE(&ge->ST4); }
 
 /** @} */
 
@@ -468,6 +459,7 @@ SIG(PB13A) { return !(TE303(ge) && PC131(ge)); }
 SIG(PB14A) { return !(TE304(ge) && PC141(ge)); }
 
 SIG(RT121) { /* UNIV 1.2µs */ return ge->RT121; }
+SIG(RT131) { /* UNIV 1.2µs */ return ge->RT131; }
 
 SIG(RB101) { return !(AITEA(ge) && PB11A(ge) && PB13A(ge) && PB14A(ge)); }
 SIG(RB121) { /* UNIV 1.2µs */ return RB101(ge); }
@@ -581,6 +573,10 @@ SIG(PUB01)    { return !(PUB01_d1(ge) && PUB01_d2(ge) && PUB01_d3(ge) && PUB01_d
 /** Integrated printer on channel 2 */
 SIG(PC211)    { return !PC21A(ge); }
 
+SIG(PC321)    { return !PC32A(ge); }
+SIG(PC331)    { return !PC33A(ge); }
+SIG(PC341)    { return !PC34A(ge); }
+
 /** @} */
 
 /* !(!rejected && in transfer) => rejected || !in_transfer */
@@ -629,8 +625,12 @@ SIG(TU00A) { return !(RT121(ge) && RUF1A(ge) && PC121(ge));}
  */
 
 SIG(FU091) { return 0; } /* todo: printer */
-SIG(PTA31) { return 0; } /* todo: ST3 */
-SIG(PTA41) { return 0; } /* todo: ST4 */
+
+SIG(PTA3A) { return !(TE103(ge) && TE203(ge)); }
+SIG(PTA31) { return !PTA3A(ge); }
+
+SIG(PTA4A) { return !(TE104(ge) && TE204(ge)); }
+SIG(PTA41) { return !PTA4A(ge); }
 
 SIG(PA11A) { return !(FU091(ge) && PC111(ge)); }
 SIG(PA12A) { return !(LU081(ge) && PC121(ge)); }
@@ -638,6 +638,108 @@ SIG(PA13A) { return !(PTA31(ge) && PC131(ge)); }
 SIG(PA14A) { return !(PTA41(ge) && PC141(ge)); }
 SIG(RA101) { return !(PA11A(ge) && PA12A(ge) && PA13A(ge) && PA13A(ge) && PA14A(ge)); }
 
+/* } */
+
+SIG(RET21) { return 0; };
+SIG(PC221) { return 0; };
+
+/**
+ * @defgroup ne-logic NE Knot Logic
+ *
+ * From the Intermediate Block Diagram, fo. 14
+ *
+ * @{
+ */
+
+SIG(PIB1A) { return !(RET21(ge) && PC211(ge)); }
+SIG(PIB11) { return !PIB1A(ge); }
+
+SIG(PB12A) { return !(RESI1(ge) && PC121(ge)); }
+SIG(PB22A) { return !(RET21(ge) && PC221(ge)); }
+SIG(PB32A) { return !(RES31(ge) && PC321(ge)); }
+SIG(PIB21) { return !(PB12A(ge) && PB22A(ge) && PB32A(ge)); }
+
+SIG(RB13A) { return !(RESI1(ge) && PC131(ge)); }
+SIG(RB33A) { return !(RES31(ge) && PC331(ge)); }
+SIG(PIB31) { return !(RB13A(ge) && RB33A(ge)); }
+
+SIG(RB14A) { return !(RESI1(ge) && PC141(ge)); }
+SIG(RB34A) { return !(RES31(ge) && PC341(ge)); }
+SIG(PIB41) { return !(RB14A(ge) && RB34A(ge)); }
+
+/**
+ * NE Knot
+ *
+ * Can't find proper documentation in PDS, but it's documented in the intermediate
+ * block diagram, fo. 14.
+ *
+ * Should be a multiplexer of the I/O units outputs.
+ */
+static inline uint16_t NE_knot(struct ge *ge) {
+    uint16_t ret = 0;
+    const char *where = "";
+
+    uint8_t count = PIB11(ge) + PIB21(ge) + PIB31(ge) + PIB41(ge);
+
+    if (count > 1) {
+        ge_log(LOG_PERI, "multiple input signals for NE knot (?!)\n");
+    }
+
+    if (PIB11(ge)) {
+        where = "PI";
+        ge_log(LOG_PERI, "TODO -- printer\n");
+    }
+
+    if (PIB21(ge)) {
+        where = "RI";
+        ret = ge->integrated_reader.data;
+    }
+
+    if (PIB31(ge)) {
+        where = "ST3";
+        ret = ge->ST3.data;
+    }
+
+    if (PIB41(ge)) {
+        where = "ST4";
+        ret = ge->ST3.data;
+    }
+
+    ge_log(LOG_PERI, "READING FROM NE KNOT %s --> %03x\n", where, ret);
+    return ret;
+}
+
+/* } */
+
+/**
+ * @defgroup connector-3 Connector 3 Logic
+ *
+ * From the Intermediate Block Diagram, fo. 14
+ *
+ * @{
+ */
+
+#define NAOR(a, b, c, d) !(a || b || c || d)
+
+SIG(RT111) { return 0; }
+
+SIG(RT311) { return 0; }
+SIG(RT321) { return 0; }
+SIG(RT331) { return 0; }
+
+SIG(RATE1) { return 0; }
+SIG(PUOO3) { return 0; }
+SIG(RUF31) { return 0; }
+SIG(RAVI1) { return 0; }
+
+SIG(TU10C) { return NAOR(RT111(ge), PC131(ge), RT311(ge), PC331(ge)); }
+SIG(TU20C) { return NAOR(RT121(ge), PC131(ge), RT321(ge), PC331(ge)); }
+SIG(TU30C) { return NAOR(RT131(ge), PC131(ge), RT331(ge), PC331(ge)); }
+SIG(AEBEC) { return !(RATE1(ge) && PC131(ge)); }
+SIG(AECO3) { return !PUOO3(ge); }
+SIG(FINUC) { return NAOR(RUF11(ge), PC131(ge), RUF31(ge), PC331(ge)); }
+SIG(PV13A) { return !(RAVI1(ge) && PC131(ge)); }
+SIG(VICU3) { return !(FINUC(ge) && PV13A(ge)); }
 /* } */
 
 #endif

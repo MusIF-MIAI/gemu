@@ -497,6 +497,7 @@ struct ge {
     uint8_t RAVI:1;
 
     uint8_t RT121:1;
+    uint8_t RT131:1;
 
     /**
      * Future state
@@ -529,9 +530,19 @@ struct ge {
     struct ge_counting_network counting_network;
 
     /**
-     * The I/O interface for the integrated reader
+     * The I/O interface for the integrated reader (RI)
      */
     struct ge_integrated_reader integrated_reader;
+
+    /**
+     * The I/O interface for the ST3 connector
+     */
+    struct ge_connector ST3;
+
+    /**
+     * The I/O interface for the ST4 connector
+     */
+    struct ge_connector ST4;
 
     struct ge_peri *peri;
 
