@@ -527,6 +527,21 @@ struct ge {
 
     uint8_t mem[MEM_SIZE]; ///< The memory of the emulated system
 
+    /** Stored odd-parity bit (1 bit per location) written alongside mem[] */
+    uint8_t mem_parity[MEM_SIZE];
+
+    /** 1 once a location has been written; prevents false MEM CHECK on cleared memory */
+    uint8_t mem_written[MEM_SIZE];
+
+    /** Installed memory size; 0 is treated as MEM_SIZE (full address space) */
+    uint32_t mem_size;
+
+    /** Parity fault flag: set when a READ finds a parity mismatch on a previously-written location */
+    uint8_t mem_check;
+
+    /** Invalid-address fault flag: set when rVO >= installed memory size */
+    uint8_t inv_add;
+
     struct ge_counting_network counting_network;
 
     /**

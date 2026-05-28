@@ -139,6 +139,37 @@ static const struct msl_timing_chart state_E0[] = {
     { END_OF_STATUS, 0, 0 }
 };
 
+// SS (Storage-to-Storage) data ops: opcode list from opcodes.h.
+// These are 6-byte instructions (opcode, LL, A1hi, A1lo, A2hi, A2lo).
+// Operands are loaded by the E4->E6->E5->E7 micro-loop:
+//   E4 -> E6 (first pass, loads V1/V2 base), E5 (loads V1 from A1),
+//   E7 (CI02 at TI05 loads V2 from A2), then EXEC_SS + SS_TO_ALPHA at TI06.
+// V1 = destination address, V2 = source address, L1 = length byte.
+static uint8_t is_ss_data_op(struct ge *ge) {
+    switch (ge->rFO) {
+        case MVC_OPCODE:
+        case NC_OPCODE:
+        case CMC_OPCODE:
+        case OC_OPCODE:
+        case XC_OPCODE:
+        case UPK_OPCODE:
+        case PK_OPCODE:
+        case TL_OPCODE:
+        case EDT_OPCODE:
+        case MVP_OPCODE:
+        case CMP_OPCODE:
+        case AP_OPCODE:
+        case SP_OPCODE:
+        case MP_OPCODE:
+        case DP_OPCODE:
+        case PKS_OPCODE:
+        case UPKS_OPCODE:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 // to state E6
 
 static uint8_t state_E4_TO70_CI60(struct ge *ge) { return 0; }
@@ -233,6 +264,12 @@ static const struct msl_timing_chart state_E7[] = {
     { TI06, CU03, 0, EC56A0 },
     { TI06, CU10, 0 },
     { TI06, CU17, state_E7_TI06_CU17 },
+    /* Mechanism B (hybrid one-shot): execute SS op here at TI06, after CI02 at
+     * TI05 has loaded V2 (source address) and V1 (destination address) was loaded
+     * during the preceding E5 pass.  SS_TO_ALPHA overrides the future state to
+     * e2 (alpha), breaking out of the operand-fetch micro-loop. */
+    { TI06, EXEC_SS,     is_ss_data_op },
+    { TI06, SS_TO_ALPHA, is_ss_data_op },
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -241,6 +278,8 @@ static const struct msl_timing_chart state_E7[] = {
 
 static uint8_t jc_js1_js2_jie(struct ge *ge) {
     return ((ge->rFO == JC_OPCODE) ||
+            (ge->rFO == JU_OPCODE) ||
+            (ge->rFO == JCC_OPCODE) ||
             (ge->rFO == JS1_OPCODE && ge->rL1 == JS1_2NDCHAR) ||
             (ge->rFO == JS2_OPCODE && ge->rL1 == JS2_2NDCHAR) ||
             (ge->rFO == JIE_OPCODE && ge->rL1 == JIE_2NDCHAR));
@@ -275,19 +314,51 @@ static uint8_t nop(struct ge *ge) {
     return ge->rFO == NOP2_OPCODE;
 }
 
+/* PM/SI immediate-format data ops executed in beta via the ALU helpers.
+ * After operand fetch these arrive in beta with V1=address, L1=immediate. */
+static uint8_t is_mvi(struct ge *ge) { return ge->rFO == MVI_OPCODE; }
+static uint8_t is_ni (struct ge *ge) { return ge->rFO == NI_OPCODE;  }
+static uint8_t is_ci (struct ge *ge) { return ge->rFO == CI_OPCODE;  }
+static uint8_t is_cmi(struct ge *ge) { return ge->rFO == CMI_OPCODE; }
+static uint8_t is_xi (struct ge *ge) { return ge->rFO == XI_OPCODE;  }
+static uint8_t is_tm (struct ge *ge) { return ge->rFO == TM_OPCODE;  }
+static uint8_t pm_imm_exec(struct ge *ge) {
+    return is_mvi(ge) || is_ni(ge) || is_ci(ge) || is_cmi(ge) || is_xi(ge) || is_tm(ge);
+}
+
+/* PM register ops (change registers, memory-mapped at 240+N*2): arrive in
+ * beta with V1=I1 address, L1=register-code aux char. */
+static uint8_t is_lr (struct ge *ge) { return ge->rFO == LR_OPCODE;  }
+static uint8_t is_str(struct ge *ge) { return ge->rFO == STR_OPCODE; }
+static uint8_t is_cmr(struct ge *ge) { return ge->rFO == CMR_OPCODE; }
+static uint8_t is_amr(struct ge *ge) { return ge->rFO == AMR_OPCODE; }
+static uint8_t is_smr(struct ge *ge) { return ge->rFO == SMR_OPCODE; }
+static uint8_t is_la (struct ge *ge) { return ge->rFO == LA_OPCODE;  }
+static uint8_t pm_reg_exec(struct ge *ge) {
+    return is_lr(ge) || is_str(ge) || is_cmr(ge) || is_amr(ge) || is_smr(ge) || is_la(ge);
+}
+
 static uint8_t jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(struct ge *ge) {
-    return jc_js1_js2_jie(ge) || lon_loll(ge) || loff(ge) || ins(ge) || ens(ge) || nop(ge);
+    return jc_js1_js2_jie(ge) || lon_loll(ge) || loff(ge) || ins(ge) || ens(ge) || nop(ge)
+           || pm_imm_exec(ge) || pm_reg_exec(ge);
 }
 
 /*  PER - PERI: conditions from fo. 46 */
 
 static uint8_t per_peri(struct ge *ge) {
     return ((ge->rFO == PER_OPCODE) ||
-            (ge->rFO == PERI_OPCODE));
+            (ge->rFO == PERI_OPCODE) ||
+            (ge->rFO == RDC_OPCODE));
 }
 
 static uint8_t per_peri_TO25_CO30(struct ge *ge) {
     return per_peri(ge) && !BIT(ge->rFO, 1);
+}
+
+/* EPER "examine" operation: Z character (in L2) = 0xC0 (bits 7,6 set).
+ * (TPER read Z=0x00 -> bit7=0; "set by-pass" Z=0x80 -> bit6=0.) */
+static uint8_t is_eper_examine(struct ge *ge) {
+    return BIT(ge->rL2, 7) && BIT(ge->rL2, 6);
 }
 
 static const struct msl_timing_chart state_64_65[] = {
@@ -302,13 +373,26 @@ static const struct msl_timing_chart state_64_65[] = {
     { TO30, CI12, jc_js1_js2_jie },
     { TO40, CO01, jc_js1_js2_jie },
     { TO60, CO35, jie },
+    { TO60, CI38, jc_js1_js2_jie },   /* set AVER = verified_condition before the TI05 jump */
     { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
+    { TO65, EXEC_MVI, is_mvi },
+    { TO65, EXEC_NI,  is_ni  },
+    { TO65, EXEC_CI,  is_ci  },
+    { TO65, EXEC_CMI, is_cmi },
+    { TO65, EXEC_XI,  is_xi  },
+    { TO65, EXEC_TM,  is_tm  },
+    { TO65, EXEC_LR,  is_lr  },
+    { TO65, EXEC_STR, is_str },
+    { TO65, EXEC_CMR, is_cmr },
+    { TO65, EXEC_AMR, is_amr },
+    { TO65, EXEC_SMR, is_smr },
+    { TO65, EXEC_LA,  is_la  },
     { TO70, CI78, ens },
     { TO70, CI62, per_peri, DE07A0 },
     { TO70, CI67, per_peri, DE07A0 },
     { TO89, CI88, loff },
     { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
-    { TI05, CI00, jc_js1_js2_jie_condition_verified },
+    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
     { TI06, CU01, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop, DE00A0 },
     { TI06, CU10, 0 },
     { TI06, CU07, DE00A0 },
@@ -560,6 +644,9 @@ static const struct msl_timing_chart state_cc[] = {
     { TO50, CI32, AINI, 0 },
     { TO50, CE01, 0 },
     { TO50, CE00, state_cc_TO50_CE00 },
+    /* For an EPER examine, load the real channel-1 status into RO (after the
+     * memory read at TO50) so the DU95 no-error decode at TI06 is meaningful. */
+    { TO50, CE_chan1_status, is_eper_examine },
     /* TODO: CI75 seems conditioned also on the type of peri operation (e.g. TPER/SPER ecc) */
     { TI06, CI75, state_cc_TI06_CI75 },
     { TI06, CU13, state_cc_TI06_CU13 },
@@ -766,7 +853,23 @@ static const struct msl_timing_chart state_b9[] = {
     { END_OF_STATUS },
 };
 
-static uint8_t L206_or_PC01(struct ge *ge) { return BIT(ge->rL2, 7) || PC011(ge); }
+/* Write-back condition for states ea/eb.
+ *
+ * The original condition read  BIT(rL2,7) || PC011,  but that causes a
+ * spurious mem[V2]=0 write when the machine reaches state_ea via the
+ * peripheral-load path (b8-WAIT → ea).  During a channel-1 INPUT
+ * (bootstrap/load) operation PC011=1 and rL2[7]=0, so the old condition
+ * fired unconditionally and clobbered the just-loaded data.
+ *
+ * The write-back is only meaningful for OUTPUT transfers (rL2 bit 7 = L207
+ * set), where the CPU had previously read memory destructively and now needs
+ * to restore it.  For INPUT transfers (peripheral → memory, L207=0) no
+ * destructive read occurred, so no write-back is needed.
+ *
+ * Rename: the function used BIT(rL2,7) which is L207 (output-transfer flag),
+ * not L206 (bit 6).  Correct the name and drop the spurious PC011 term.
+ */
+static uint8_t L207_output_writeback(struct ge *ge) { return BIT(ge->rL2, 7); }
 
 static const struct msl_timing_chart state_ea[] = {
     { TO10, CO18, 0 },
@@ -780,7 +883,7 @@ static const struct msl_timing_chart state_ea[] = {
     { TO10, CO90, 0, DI11A0 },
     { TO10, CO40, 0, DI11A0 },
     { TO10, CO41, 0, DI11A0 },
-    { TO25, CO31, L206_or_PC01 },
+    { TO25, CO31, L207_output_writeback },
     { TO30, CI11, 0 },
     { TO40, CO02, 0, DI11A0 },
     { TO50, CI33, 0, DI83A0 },
@@ -808,7 +911,7 @@ static const struct msl_timing_chart state_eb[] = {
     { TO10, CO90, 0, DI11A0 },
     { TO10, CO04, 0, DI11A0 },
     { TO10, CO41, 0, DI11A0 },
-    { TO25, CO31, L206_or_PC01 },
+    { TO25, CO31, L207_output_writeback },
     { TO30, CI11, 0 },
     { TO40, CO02, 0, DI11A0 },
     { TO50, CI32, 0, DI82A0 },

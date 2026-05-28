@@ -5,6 +5,20 @@
 #include "signals.h"
 #include "log.h"
 
+/**
+ * Compute the odd-parity bit for an 8-bit data value.
+ *
+ * Returns 0 if the data byte already has an odd number of 1-bits
+ * (parity bit not needed), or 1 if an additional 1-bit is required
+ * to make the total count of 1-bits (data + parity) odd.
+ */
+static inline uint8_t odd_parity(uint8_t data)
+{
+    /* __builtin_popcount gives the number of set bits; if it's already
+     * odd we need parity=0; if even we need parity=1. */
+    return (__builtin_popcount(data) & 1) ? 0 : 1;
+}
+
 static void on_TO00(struct ge *ge) {
     /* cpu fo. 115 */
     ge->RIA0 = ge->RC00 && !ge->ALTO;
@@ -86,8 +100,30 @@ static void on_TO50(struct ge *ge) {
      * it didn't work to implement the state CC for PERI.
      * reading here  seems to work in all known cases */
     if (ge->memory_command == MC_READ) {
-        ge->rRO = ge->mem[ge->rVO];
-        ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n", ge->rVO, ge->rRO);
+        uint32_t size = ge->mem_size ? ge->mem_size : MEM_SIZE;
+
+        if (ge->rVO >= size) {
+            /* Address outside installed memory: raise INV ADD fault */
+            ge->inv_add = 1;
+            ge_log(LOG_STATES, "memory read: INV ADD rVO=%x >= size=%x\n",
+                   ge->rVO, size);
+        } else {
+            ge->rRO = ge->mem[ge->rVO];
+            ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n",
+                   ge->rVO, ge->rRO);
+
+            /* Parity check: only for locations that have been written.
+             * Cleared/uninitialised locations are not checked to avoid
+             * false MEM CHECK on startup. */
+            if (ge->mem_written[ge->rVO]) {
+                if (odd_parity(ge->mem[ge->rVO]) != ge->mem_parity[ge->rVO]) {
+                    ge->mem_check = 1;
+                    ge_log(LOG_STATES,
+                           "memory read: MEM CHECK parity error at %x\n",
+                           ge->rVO);
+                }
+            }
+        }
 
         ge->memory_command = MC_NONE;
     }
@@ -115,8 +151,20 @@ static void on_TO65(struct ge *ge) {
      * and the "test k" fails if it's in TO50. */
 
     if (ge->memory_command == MC_WRITE) {
-        ge->mem[ge->rVO] = ge->rRO;
-        ge_log(LOG_STATES, "memory write: mem[VO] = RO = mem[%x] = %x\n", ge->rVO, ge->rRO);
+        uint32_t size = ge->mem_size ? ge->mem_size : MEM_SIZE;
+
+        if (ge->rVO >= size) {
+            /* Address outside installed memory: raise INV ADD fault, skip store */
+            ge->inv_add = 1;
+            ge_log(LOG_STATES, "memory write: INV ADD rVO=%x >= size=%x\n",
+                   ge->rVO, size);
+        } else {
+            ge->mem[ge->rVO] = ge->rRO;
+            ge->mem_parity[ge->rVO]  = odd_parity(ge->rRO);
+            ge->mem_written[ge->rVO] = 1;
+            ge_log(LOG_STATES, "memory write: mem[VO] = RO = mem[%x] = %x\n",
+                   ge->rVO, ge->rRO);
+        }
 
         ge->memory_command = MC_NONE;
     }

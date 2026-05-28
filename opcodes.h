@@ -37,6 +37,8 @@
 
 #define JRT_OPCODE  0x41
 #define JC_OPCODE   0x43
+#define JU_OPCODE   0x47   /* unconditional jump (JC-family; mask 0xF0) */
+#define JCC_OPCODE  0x40   /* jump on condition, decimal-deck variant (mask in aux char) */
 #define LA_OPCODE   0x68
 #define TM_OPCODE   0x91
 #define MVI_OPCODE  0x92
@@ -47,6 +49,7 @@
 #define PERI_OPCODE 0x9c
 #define LPSR_OPCODE 0x9d
 #define PER_OPCODE  0x9e
+#define RDC_OPCODE  0x90   /* peripheral read-card, decimal-deck variant (PER-family) */
 #define STR_OPCODE  0x84
 #define LR_OPCODE   0xbc
 #define CMR_OPCODE  0xbd

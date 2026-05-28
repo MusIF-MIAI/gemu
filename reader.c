@@ -24,7 +24,10 @@ void reader_send_tu00(struct ge *ge)
     ge_log(LOG_READER, "EMIT TU201 (CE10)\n");
 
     switch (command) {
-#define X(cmd, name, desc) case cmd: ge_log(LOG_READER, "    Command: %02x - %s\n", cmd, desc ); break;
+#define X(cmd, name, desc) \
+        case cmd: \
+            ge_log(LOG_READER, "    Command: %02x - %s\n", cmd, desc ); \
+            break;
             ENUMERATE_READER_COMMANDS
 #undef X
     }
@@ -36,15 +39,22 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
     ge->integrated_reader.data = data;
     ge->integrated_reader.fini = end;
 
-    /* signal end character */
-    /* todo: should use RF101 here? is "if (end)" correct? */
-    if (end)
-        ge->RIG1 = 1;
-
-    /* todo: should be conditioned by PIM11, but it's false at this point
-     * without this, we don't get to state ea after waiting state b8 when
-     * reading */
+    /* When end=1, set the end-of-transfer flip-flops.
+     *
+     * RIG1 is the "reader end" flip-flop; the real hardware sets it via
+     * the RF101 signal chain (FINI1 && PC121).  Here we set it directly
+     * whenever the peripheral signals end-of-card (fini=1), which is
+     * equivalent because we only call reader_setup_to_send from the
+     * integrated-reader path (PC121=1).
+     *
+     * PEC1 is the "peripheral end complete" flip-flop; the real hardware
+     * sets it via PIM11 (end-of-transfer strobe) once RF101 is asserted.
+     * PIM11 depends on TO50 and several channel-status signals that are
+     * not yet fully modelled; the direct set here is the working
+     * approximation until PIM11/RS011 are complete.
+     */
     if (end) {
+        ge->RIG1 = 1;
         ge->PEC1 = 1;
     }
 
@@ -53,10 +63,15 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
     }
 }
 
-void reader_clear_sending(struct ge *ge) 
+void reader_clear_sending(struct ge *ge)
 {
     ge->integrated_reader.lu08 = 0;
     ge->integrated_reader.data = 0;
+    /* Clear the end-of-card strobe so FINI1 / RF101 deassert once the
+     * machine has consumed the end byte.  This is essential for multi-card
+     * reads: if fini stays 1, the NEXT card's first byte would immediately
+     * signal end-of-card again before any data is read. */
+    ge->integrated_reader.fini = 0;
 }
 
 void reader_send_tu10(struct ge *ge)
@@ -130,16 +145,14 @@ void connector_setup_to_send(struct ge *ge, struct ge_connector *conn, uint8_t d
     conn->data = data;
     conn->fine = end;
 
-    /* signal end character */
-    /* todo: should use RF101 here? is "if (end)" correct? */
-    if (end)
+    /* Mirror the same end-of-transfer signalling as reader_setup_to_send.
+     * RIG1/PEC1 are set directly here for the same reasons: the FINE
+     * connector signal drives the RF10x chain (FINE3/FINE4 → PF13A/PF14A →
+     * RF101) but PIM11 is not yet fully modelled for connector paths. */
+    if (end) {
         ge->RIG1 = 1;
-
-    /* todo: should be conditioned by PIM11, but it's false at this point
-     * without this, we don't get to state ea after waiting state b8 when
-     * reading */
-    if (end)
         ge->PEC1 = 1;
+    }
 
     if (RB111(ge)) {
         ge_log(LOG_READER, "XXX\n");
@@ -151,6 +164,8 @@ void connector_clear_sending(struct ge_connector *conn)
     conn->te10 = 0;
     conn->te20 = 0;
     conn->data = 0;
+    /* Clear end-of-card strobe to deassert FINE/RF10x for next card. */
+    conn->fine = 0;
 }
 
 void connector_send_tu00(struct ge *ge, struct ge_connector *conn)
@@ -158,7 +173,10 @@ void connector_send_tu00(struct ge *ge, struct ge_connector *conn)
     uint8_t command = ge->rRE;
 
     switch (command) {
-#define X(cmd, namex, desc) case cmd: ge_log(LOG_READER, "    connector %s got: %02x - %s\n", conn->name, cmd, desc ); break;
+#define X(cmd, namex, desc) \
+        case cmd: \
+            ge_log(LOG_READER, "    connector %s got: %02x - %s\n", conn->name, cmd, desc ); \
+            break;
             ENUMERATE_READER_COMMANDS
 #undef X
     }

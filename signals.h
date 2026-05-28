@@ -83,7 +83,7 @@ SIG(verified_condition) {
     uint8_t FA5 = BIT(ge->ffFA, 5);
     uint8_t FA4 = BIT(ge->ffFA, 4);
 
-    return (((ge->rFO == JC_OPCODE) &&
+    return (((ge->rFO == JC_OPCODE || ge->rFO == JU_OPCODE || ge->rFO == JCC_OPCODE) &&
              ((M7 && !FA4 && !FA5) ||
               (M6 && !FA4 &&  FA5) ||
               (M5 &&  FA4 && !FA5) ||
@@ -167,22 +167,47 @@ static inline uint16_t NO_knot(struct ge *ge)
     uint16_t no = 0;
 
     switch (ge->kNO.cmd) {
-        case KNOT_PO_IN_NO:       no = ge->rPO; break;
-        case KNOT_V1_IN_NO:       no = ge->rV1; break;
-        case KNOT_V2_IN_NO:       no = ge->rV2; break;
-        case KNOT_V3_IN_NO:       no = ge->rV3; break;
-        case KNOT_V4_IN_NO:       no = ge->rV4; break;
-        case KNOT_L1_IN_NO:       no = ge->rL1; break;
-        case KNOT_L2_IN_NO:       no = ge->rL2; break;
-        case KNOT_L3_IN_NO:       no = ge->rL3; break;
-        case KNOT_AM_IN_NO:       no = ge->console_switches.AM; break;
-        case KNOT_RI_IN_NO_43:    no = ge->rRI << 8; break;
+        case KNOT_PO_IN_NO:
+            no = ge->rPO;
+            break;
+        case KNOT_V1_IN_NO:
+            no = ge->rV1;
+            break;
+        case KNOT_V2_IN_NO:
+            no = ge->rV2;
+            break;
+        case KNOT_V3_IN_NO:
+            no = ge->rV3;
+            break;
+        case KNOT_V4_IN_NO:
+            no = ge->rV4;
+            break;
+        case KNOT_L1_IN_NO:
+            no = ge->rL1;
+            break;
+        case KNOT_L2_IN_NO:
+            no = ge->rL2;
+            break;
+        case KNOT_L3_IN_NO:
+            no = ge->rL3;
+            break;
+        case KNOT_AM_IN_NO:
+            no = ge->console_switches.AM;
+            break;
+        case KNOT_RI_IN_NO_43:
+            no = ge->rRI << 8;
+            break;
     }
 
     switch (ge->kNO.force_mode) {
-        case KNOT_FORCING_NONE: break;
-        case KNOT_FORCING_NO_21: no = (no & 0x00ff) | (ge->kNO.forcings << 0); break;
-        case KNOT_FORCING_NO_43: no = (no & 0xff00) | (ge->kNO.forcings << 8); break;
+        case KNOT_FORCING_NONE:
+            break;
+        case KNOT_FORCING_NO_21:
+            no = (no & 0x00ff) | (ge->kNO.forcings << 0);
+            break;
+        case KNOT_FORCING_NO_43:
+            no = (no & 0xff00) | (ge->kNO.forcings << 8);
+            break;
     }
 
     return no;
@@ -228,14 +253,22 @@ static inline uint8_t NI_source(struct ge *ge, enum knot_ni_source source) {
     uint16_t cn = ge_counting_network_output(ge);
 
     switch (source) {
-        case NS_CN1: return (cn & 0x000f) >>  0;
-        case NS_CN2: return (cn & 0x00f0) >>  4;
-        case NS_CN3: return (cn & 0x0f00) >>  8;
-        case NS_CN4: return (cn & 0xf000) >> 12;
-        case NS_RO1: return (ge->rRO & 0x0f) >> 0;
-        case NS_RO2: return (ge->rRO & 0xf0) >> 4;
-        case NS_UA2: return 0;
-        case NS_UA1: return 0;
+        case NS_CN1:
+            return (cn & 0x000f) >>  0;
+        case NS_CN2:
+            return (cn & 0x00f0) >>  4;
+        case NS_CN3:
+            return (cn & 0x0f00) >>  8;
+        case NS_CN4:
+            return (cn & 0xf000) >> 12;
+        case NS_RO1:
+            return (ge->rRO & 0x0f) >> 0;
+        case NS_RO2:
+            return (ge->rRO & 0xf0) >> 4;
+        case NS_UA2:
+            return 0;
+        case NS_UA1:
+            return 0;
     }
 }
 

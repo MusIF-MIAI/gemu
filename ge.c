@@ -44,6 +44,19 @@ void ge_clear(struct ge *ge)
     ge->RC01 = 0;
     ge->RC02 = 0;
     ge->RC03 = 0;
+
+    /* Segment-base / change registers default to N<<12 (identity segment
+     * bases): change register N is the 16-bit big-endian word at mem[240+2N],
+     * and an instruction address with modifier N (address bits 12-14) resolves
+     * to displacement + base[N]. With these defaults a bare 12-bit displacement
+     * carrying modifier N addresses segment N (0x1000*N ..), so the loaded
+     * program's paged addresses (e.g. JU 0x172a) resolve to their full load
+     * addresses; programs may reload a base via LR/LA for paged access. */
+    for (int n = 0; n < 8; n++) {
+        uint16_t v = (uint16_t)(n << 12);
+        ge->mem[240 + 2 * n]     = (uint8_t)(v >> 8);
+        ge->mem[240 + 2 * n + 1] = (uint8_t)(v & 0xff);
+    }
 }
 
 int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
@@ -103,15 +116,28 @@ void ge_start(struct ge *ge)
 static void ge_print_well_known_states(uint8_t state) {
     const char *name;
     switch (state) {
-        case 0x00: name = "- Display sequence"; break;
-        case 0x08: name = "- Forcing sequence"; break;
+        case 0x00:
+            name = "- Display sequence";
+            break;
+        case 0x08:
+            name = "- Forcing sequence";
+            break;
         case 0x64:
-        case 0x65: name = "- Beta Phase"; break;
-        case 0x80: name = "- Initialitiation"; break;
+        case 0x65:
+            name = "- Beta Phase";
+            break;
+        case 0x80:
+            name = "- Initialitiation";
+            break;
         case 0xE2:
-        case 0xE3: name = "- Alpha Phase"; break;
-        case 0xF0: name = "- Interruption"; break;
-        default:   name = "";
+        case 0xE3:
+            name = "- Alpha Phase";
+            break;
+        case 0xF0:
+            name = "- Interruption";
+            break;
+        default:
+            name = "";
     }
 
     ge_log(LOG_STATES, "Running state %02x %s\n", state, name);
@@ -120,7 +146,9 @@ static void ge_print_well_known_states(uint8_t state) {
 const char *ge_clock_name(enum clock c)
 {
     switch (c) {
-        #define X(name) case name : return #name ;
+        #define X(name) \
+            case name : \
+                return #name ;
         ENUMERATE_CLOCKS
         #undef X
     }
@@ -130,7 +158,8 @@ const char *ge_clock_name(enum clock c)
 
 void ge_print_registers_nonverbose(struct ge *ge)
 {
-    if (ge_log_enabled(LOG_REGS_V)) return;
+    if (ge_log_enabled(LOG_REGS_V))
+        return;
     ge_log(LOG_REGS,
            "SO: %02x SA: %02x PO: %04x RO: %04x BO: %04x FO: %04x -  "
            "V1: %04x  V2: %04x V3: %04x  V4: %04x - "
@@ -250,7 +279,11 @@ void fsn_last_clock(struct ge *ge)
     /* at the end of a cycle attributed to the CPU, provided RICI
      * is not active and the rotary switch is in normal position,
      * the future status network is stored in SO. (cpu fo. 127) */
-    if (ge->RIA0 && !ge->console_switches.RICI) {
+    /* RICI ("Disables next status") prevents the future state network from
+     * advancing SO in normal operation. However, when the rotary switch is
+     * in a non-normal (forcing) position the user is explicitly requesting
+     * a register force; RICI must not block that. */
+    if (ge->RIA0 && (!ge->console_switches.RICI || ge->register_selector != RS_NORM)) {
         ge_log(LOG_FUTURE, "last clock cpu, %02x in SO\n", ge->future_state);
         ge->rSO = ge->future_state;
     } else {

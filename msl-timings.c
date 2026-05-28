@@ -109,7 +109,7 @@ struct msl_timing_state msl_timings[0xff] = {
     /* 63 */ { },
     /* 64 */ {state_64_65},
     /* 65 */ {state_64_65},
-    /* 66 */ { },
+    /* 66 */ {state_64_65},  /* CMI (compare-logical-immediate) beta; same chart */
     /* 67 */ { },
     /* 68 */ { },
     /* 69 */ { },

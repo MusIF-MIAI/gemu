@@ -39,6 +39,23 @@ enum ge_log_types {
 void ge_log_set_active_types(ge_log_type types);
 
 /**
+ * Set active log types from a comma-separated name specification
+ *
+ * Parses @p spec as a comma-separated list of category names and enables
+ * exactly those log types by calling ge_log_set_active_types().  Surrounding
+ * whitespace around each name is ignored.
+ *
+ * Recognised names: err, debug, regs, states, conds, regs_v, future, cycle,
+ * console, peri, reader, cmds, all (enable everything), none (disable all).
+ *
+ * If @p spec is NULL or empty the active types are left unchanged.
+ * Unknown names are silently ignored except that a LOG_ERR message is emitted.
+ *
+ * @param spec Comma-separated list of category names, or NULL / empty string
+ */
+void ge_log_set_active_types_from_spec(const char *spec);
+
+/**
  * Log message
  *
  * Specifies which set of logging messages should be displayed.

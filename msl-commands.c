@@ -2,6 +2,10 @@
 #include "log.h"
 #include "bit.h"
 #include "signals.h"
+#include "alu_logic.h"
+#include "alu_dec.h"
+#include "alu_reg.h"
+#include "alu_cc.h"
 
 #ifndef MSL_COMMANDS_INCLUDED_BY_MSL_STATES
 #   error This file should be include by msl-states.c and not compiled directly
@@ -118,6 +122,177 @@ static void CO49(struct ge* ge) {
     ge->URPU = 0;
 };
 
+/* Instruction execution commands (hybrid: invoke the pure ALU helpers once,
+ * in the beta phase, using operands already fetched into V1/L1).
+ * These cover the PM/SI immediate-format ops: opcode, immediate(->L1), addr(->V1). */
+static uint16_t eff_v1_l2(struct ge* ge);
+static void EXEC_MVI(struct ge* ge) { alu_mvi(ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+static void EXEC_NI (struct ge* ge) { alu_ni (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+static void EXEC_CI (struct ge* ge) { alu_ci (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+static void EXEC_CMI(struct ge* ge) { alu_ci (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+static void EXEC_XI (struct ge* ge) { alu_xi (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+static void EXEC_TM (struct ge* ge) { alu_tm (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+
+/* Change registers are memory-mapped, 16-bit big-endian, at addresses
+ * 240 + N*2 (N = 0..7). The register-op aux char (in L1) carries the 4-bit
+ * register code 1000..1111; the register index N = code & 7.
+ * NOTE: the code is assumed to sit in the LOW nibble of the aux char —
+ * verify against the funktionalcpu oracle. V1 holds the I1 memory address. */
+static uint16_t reg_addr_of(struct ge* ge) { return (uint16_t)(240 + (ge->rL1 & 0x07) * 2); }
+static uint16_t cr_rd16(struct ge* ge, uint16_t a) {
+    return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
+}
+static void cr_wr16(struct ge* ge, uint16_t a, uint16_t v) {
+    ge->mem[a] = (uint8_t)(v >> 8);
+    ge->mem[(uint16_t)(a + 1)] = (uint8_t)(v & 0xff);
+}
+
+/* Address modification / segment base.
+ *
+ * An instruction address is a 12-bit displacement plus a 3-bit modifier
+ * (address bits 12-14 = high nibble of the addr-hi byte). The modifier selects
+ * one of the change registers (the "segment base"); the effective address is
+ * displacement + base[modifier]. The change registers live at mem[240+2N] and
+ * default to base[N] = N<<12 at reset (ge_clear) — identity segment bases, so a
+ * bare displacement with modifier N addresses segment N (modifier 0 -> base 0,
+ * i.e. plain 0x000-0xFFF). Programs may reload a base via LR/LA/AMR for paged
+ * access (e.g. the memory test sweeping 8K-32K).
+ *
+ * Operand fetch drops the modifier from V1 (keeps only the 12-bit displacement)
+ * and parks the addr-hi byte in L2, so single-address (PM/SI) ops recover the
+ * modifier from L2's high nibble. For two-address (PMM/SS) ops, V2 keeps the
+ * full address (modifier in bits 12-14) while V1's modifier is taken from its
+ * own high nibble (0 after the drop, i.e. segment 0 for the destination). */
+static uint16_t seg_base_of(struct ge* ge, int seg) {
+    uint16_t a = (uint16_t)(240 + (seg & 7) * 2);
+    return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
+}
+static uint16_t eff_addr(struct ge* ge, uint16_t raw, int seg) {
+    return (uint16_t)((raw & 0x0FFFu) + seg_base_of(ge, seg & 7));
+}
+/* Effective V1 for single-address PM/SI ops: modifier from L2's high nibble. */
+static uint16_t eff_v1_l2(struct ge* ge) { return eff_addr(ge, ge->rV1, (ge->rL2 >> 4) & 7); }
+
+/* Jump target resolution with segment base: like CO00 (rPO <- NI_knot, i.e.
+ * the V1 displacement) but adds the change-register base selected by the
+ * modifier in L2's high nibble, so a jump to a paged address (e.g. 0x172a =
+ * displacement 0x72a + segment 1 base 0x1000) lands correctly. */
+static void CI00s(struct ge* ge) {
+    ge->rPO = eff_addr(ge, NI_knot(ge), (ge->rL2 >> 4) & 7);
+}
+
+static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), cr_rd16(ge, eff_v1_l2(ge))); }
+static void EXEC_STR(struct ge* ge) { cr_wr16(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
+static void EXEC_LA (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), eff_v1_l2(ge)); }
+static void EXEC_CMR(struct ge* ge) { alu_cmr(ge, cr_rd16(ge, reg_addr_of(ge)), cr_rd16(ge, eff_v1_l2(ge))); }
+static void EXEC_AMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_amr(ge, &r, cr_rd16(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
+static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_smr(ge, &r, cr_rd16(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
+
+/* SS (Storage-to-Storage) data-op execution commands (Wave 5 / Mechanism B).
+ *
+ * EXEC_SS fires from state_E7 at TI06, after CI02 at TI05 has loaded V2
+ * (source address) and V1 (destination address) was already set by the
+ * preceding E5 pass.  SS_TO_ALPHA then overrides the future state to
+ * 0xe2 (alpha), breaking out of the operand-fetch micro-loop.
+ *
+ * Operand layout at TI06 of state_E7:
+ *   V1 = destination address
+ *   V2 = source address
+ *   L1 = length byte
+ *
+ * Single-length ops (MVC/NC/OC/XC/CMC/TL/UPK/PK/EDT):
+ *   len = (rL1 & 0xff) + 1
+ *
+ * Two-length decimal ops (AP/SP/MP/DP/MVP/CMP/PKS/UPKS):
+ *   alen = ((rL1 >> 4) & 0xf) + 1    (high nibble + 1)
+ *   blen = (rL1 & 0xf) + 1           (low nibble + 1)
+ */
+static void EXEC_SS(struct ge *ge)
+{
+    uint8_t  len  = (ge->rL1 & 0xff) + 1;
+    uint8_t  alen = ((ge->rL1 >> 4) & 0xf) + 1;
+    uint8_t  blen = (ge->rL1 & 0x0f) + 1;
+    /* SS effective addresses: V2 (source) keeps its full address (modifier in
+     * bits 12-14); V1 (destination) had its modifier dropped to segment 0. */
+    uint16_t dst  = eff_addr(ge, ge->rV1, (ge->rV1 >> 12) & 7);
+    uint16_t src  = eff_addr(ge, ge->rV2, (ge->rV2 >> 12) & 7);
+
+    switch (ge->rFO) {
+        case MVC_OPCODE:
+            alu_mvc(ge, dst, src, len);
+            break;
+        case NC_OPCODE:
+            alu_nc(ge, dst, src, len);
+            break;
+        case OC_OPCODE:
+            alu_oc(ge, dst, src, len);
+            break;
+        case XC_OPCODE:
+            alu_xc(ge, dst, src, len);
+            break;
+        case CMC_OPCODE:
+            alu_cmc(ge, dst, src, len);
+            break;
+        case TL_OPCODE:
+            alu_tl(ge, dst, len, src);
+            break;
+        case UPK_OPCODE:
+            alu_upk(ge, dst, len-1, src, len-1);
+            break;
+        case PK_OPCODE:
+            alu_pk(ge, dst, len-1, src, len-1);
+            break;
+        case EDT_OPCODE:
+            alu_edt(ge, dst, len, src);
+            break;
+        case MVP_OPCODE:
+            alu_mvp(ge, dst, alen-1, src, blen-1);
+            break;
+        case CMP_OPCODE:
+            alu_cmp(ge, dst, alen-1, src, blen-1);
+            break;
+        case AP_OPCODE:
+            alu_ap(ge, dst, alen-1, src, blen-1);
+            break;
+        case SP_OPCODE:
+            alu_sp(ge, dst, alen-1, src, blen-1);
+            break;
+        case MP_OPCODE:
+            alu_mp(ge, dst, alen-1, src, blen-1);
+            break;
+        case DP_OPCODE:
+            alu_dp(ge, dst, alen-1, src, blen-1);
+            break;
+        case PKS_OPCODE:
+            alu_pks(ge, dst, alen-1, src, blen-1);
+            break;
+        case UPKS_OPCODE:
+            alu_upks(ge, dst, alen-1, src, blen-1);
+            break;
+        default:
+            ge_log(LOG_ERR, "EXEC_SS: unknown SS opcode 0x%02x\n", ge->rFO);
+            break;
+    }
+}
+
+/* Force future state to alpha (0xe2).
+ * Must be placed AFTER the regular CU commands in state_E7 so it wins. */
+static void SS_TO_ALPHA(struct ge *ge)
+{
+    ge->future_state = 0xe2;
+}
+
+/* EPER "examine abnormal conditions": load the channel-1 peripheral status
+ * into RO so the qualitative-result decode (DU95 = !RO1 && !RO2 && RO6 = "no
+ * error") reflects the real status. Our integrated-reader feed is always
+ * clean (no parity/format error; CE02 even ignores the parity check), so the
+ * status is no-error: RO6 set, error bits (RO1/RO2) clear. A real error would
+ * be reported here once error injection is modelled. */
+static void CE_chan1_status(struct ge *ge)
+{
+    ge->rRO = 0x40; /* RO6=1 (operation OK), RO1=RO2=0 (no error) -> DU95=1 */
+}
+
 static void CI40(struct ge *ge) { CO40(ge); }
 static void CI41(struct ge *ge) { CO41(ge); }
 
@@ -166,7 +341,7 @@ static void CI88(struct ge* ge) {
     ge->PODI = 0; /* should PODI be set here? */
 }
 
-static void CI89(struct ge* ge) { ge->ALTO = 1; }
+static void CI89(struct ge* ge) { ge->ALTO = 1; ge->halted = 1; }
 
 /* Commands To Force In NO Knot */
 /* ---------------------------- */
