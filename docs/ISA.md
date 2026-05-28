@@ -386,21 +386,24 @@ Fields point to the **rightmost** byte; big-endian; right-to-left.
 
 | Mn | Op | Summary | CC | St |
 |----|----|---------|----|----|
-| **AB** | `FE` | Add Binary: A1 ← A1 + A2 (op2 truncated/zero-extended to op1 length). | set | ◑ |
-| **SB** | `FF` | Subtract Binary: A1 ← A1 − A2; negative stored in two's-complement. | set | ◑ |
+| **AB** | `FE` | Add Binary: A1 ← A1 + A2 (op2 truncated/zero-extended to op1 length). | set | ✅ |
+| **SB** | `FF` | Subtract Binary: A1 ← A1 − A2; negative stored in two's-complement. | set | ✅ |
 
-> ◑ `alu_ab`/`alu_sb` are implemented and unit-tested (`alu_bin.c`) but **not in
-> the `EXEC_SS` dispatch** yet — they will not execute end-to-end until wired.
+> Wired via `EXEC_SS` (two-length encoding: `L1=(LL>>4)+1`,
+> `L2=(LL&0xF)+1`, full byte counts). Covered by `tests/exec.c`
+> (`ab_adds_binary`, `sb_subtracts_binary`).
 
 ### 6.7 Unpacked (zoned) decimal arithmetic — SS format (6 bytes)
 
 | Mn | Op | Summary | CC | St |
 |----|----|---------|----|----|
-| **AD** | `FA` | Add Decimal (zoned, unsigned; zones ignored; carry-out dropped). | set | ◑ |
-| **SD** | `FB` | Subtract Decimal (zoned; wraps mod 10^L1 on underflow). | set | ◑ |
+| **AD** | `FA` | Add Decimal (zoned, unsigned; zones ignored; carry-out dropped). | set | ✅ |
+| **SD** | `FB` | Subtract Decimal (zoned; wraps mod 10^L1 on underflow). | set | ✅ |
 
-> ◑ Implemented in `alu_bin.c`; not yet wired. **CC tables for AD/SD are
-> OCR-inferred** (`alu_bin.h:34`) — medium confidence; re-check page images.
+> Wired (two-length encoding, full byte counts; result zone cleared
+> to 0). Tests: `ad_adds_unpacked_decimal`, `sd_subtracts_unpacked_decimal`.
+> **CC tables for AD/SD remain OCR-inferred** (`alu_bin.h:34`) — medium
+> confidence; re-check page images.
 
 ### 6.8 Packed decimal arithmetic — SS format (6 bytes)
 
@@ -431,14 +434,16 @@ holds a digit + the sign nibble. CC: 0 overflow, 1 `<0`, 2 `=0`, 3 `>0`
 
 | Mn | Op | Summary | CC | St |
 |----|----|---------|----|----|
-| **MVQ** | `F8` | Move Quartets: copy digit nibbles (low 4 bits) A2→A1, preserve dest zones; CC 0=zero,1=nonzero. | set | ◑ |
-| **CMQ** | `F9` | Compare Quartets: compare digit nibbles only; CC 1/2/3. | set | ◑ |
+| **MVQ** | `F8` | Move Quartets: copy digit nibbles (low 4 bits) A2→A1, preserve dest zones; CC 0=zero,1=nonzero. | set | ✅ |
+| **CMQ** | `F9` | Compare Quartets: compare digit nibbles only; CC 1/2/3. | set | ✅ |
 | **SR** | `D9` | Search Right: scan A-field L→R for model byte; result address → register 7. | — | ◑ |
 | **SL** | `DB` | Search Left: scan A-field R→L for model byte; result address → register 7. | — | ◑ |
 
-> ◑ All four exist in `alu_reg.c` with unit tests but are **absent from
-> `EXEC_SS`/`is_ss_data_op`** — not yet dispatched. `MVQ` zone handling carries an
-> OCR uncertainty (`alu_reg.h:266`).
+> **MVQ/CMQ** wired (single-length: `len = (LL&0xFF)+1`); tests
+> `mvq_moves_digit_preserving_zone`, `cmq_compares_quartets_high`. `MVQ` zone
+> handling carries an OCR uncertainty (`alu_reg.h:266`).
+> ◑ **SR/SL** remain unwired: their model-byte source and result-register
+> encoding in the SS format are unconfirmed — held for the manual-evidence pass.
 
 ### 6.11 Peripheral / I-O & status — PM format
 
@@ -488,7 +493,7 @@ test when latched into `ffFA` at the following `TO10` (§5.2).
 | JU/JCC mask source | shared mask path with JC | §fo.56/57 page image |
 | AD/SD CC tables | OCR-inferred | §5.5.1.1 / §5.5.1.2 page images |
 | MVQ zones | "zones not processed" interpretation | §3.084/3.098 + hardware trace |
-| AB/SB/AD/SD/MVQ/CMQ/SR/SL | ALU done, not wired into decode | finish `EXEC_SS`/`is_ss_data_op` wiring |
+| SR/SL | ALU done, not wired — SS model-byte/result-register encoding unconfirmed | search-instruction page image |
 
 ---
 

@@ -254,3 +254,87 @@ UTEST(exec, ap_adds_packed_decimal)
     ASSERT_EQ(g.rPO, 0x0006);
     ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
 }
+
+/* -----------------------------------------------------------------------
+ * Wave 6: SS ops wired in from existing ALU helpers (AB/SB/AD/SD/MVQ/CMQ).
+ *
+ * Two-length ops (AB/SB/AD/SD) take a full byte-count per operand: the LL
+ * byte's high nibble = L1-1, low nibble = L2-1.  AB/SB are binary, AD/SD are
+ * unsigned zoned decimal (zones ignored, result zone cleared).
+ * MVQ/CMQ are single-length (len = LL+1) quartet ops on the digit nibbles.
+ * ----------------------------------------------------------------------- */
+
+/* AB – Add Binary: 1-byte op1 += 1-byte op2 (LL=0x00 -> L1=L2=1). */
+UTEST(exec, ab_adds_binary)
+{
+    uint8_t prog[] = { AB_OPCODE, 0x00, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0x05;
+    g.mem[0x80] = 0x03;
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0x08);
+    ASSERT_EQ(alu_get_cc(&g), 1);              /* nonzero, no overflow */
+    ASSERT_EQ(g.rPO, 0x0006);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+}
+
+/* SB – Subtract Binary: positive result sets cc=3. */
+UTEST(exec, sb_subtracts_binary)
+{
+    uint8_t prog[] = { SB_OPCODE, 0x00, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0x08;
+    g.mem[0x80] = 0x03;
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0x05);
+    ASSERT_EQ(alu_get_cc(&g), ALU_CC_POS);     /* result > 0 */
+}
+
+/* AD – Add Decimal (zoned): digits add, result zone cleared to 0. */
+UTEST(exec, ad_adds_unpacked_decimal)
+{
+    uint8_t prog[] = { AD_OPCODE, 0x00, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0xF5;   /* zoned '5' */
+    g.mem[0x80] = 0xF3;   /* zoned '3' */
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0x08);              /* digit 8, zone cleared */
+    ASSERT_EQ(alu_get_cc(&g), 1);              /* nonzero */
+}
+
+/* SD – Subtract Decimal (zoned). */
+UTEST(exec, sd_subtracts_unpacked_decimal)
+{
+    uint8_t prog[] = { SD_OPCODE, 0x00, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0xF8;   /* zoned '8' */
+    g.mem[0x80] = 0xF3;   /* zoned '3' */
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0x05);
+    ASSERT_EQ(alu_get_cc(&g), 1);
+}
+
+/* MVQ – Move Quartets: copy digit nibble from src, preserve dst zone. */
+UTEST(exec, mvq_moves_digit_preserving_zone)
+{
+    uint8_t prog[] = { MVQ_OPCODE, 0x00, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0x50;   /* dst zone 5, digit 0 */
+    g.mem[0x80] = 0x73;   /* src zone 7, digit 3 */
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0x53);              /* dst zone kept, digit from src */
+    ASSERT_EQ(alu_get_cc(&g), 1);              /* transferred digit nonzero */
+}
+
+/* CMQ – Compare Quartets: 2-byte fields, op1 > op2 sets cc=3. */
+UTEST(exec, cmq_compares_quartets_high)
+{
+    uint8_t prog[] = { CMQ_OPCODE, 0x01, 0x00, 0x71, 0x00, 0x81 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0xF1; g.mem[0x71] = 0xF5;    /* op1 digits "1 5" */
+    g.mem[0x80] = 0xF1; g.mem[0x81] = 0xF3;    /* op2 digits "1 3" */
+    run_one_ss(&g);
+    ASSERT_EQ(alu_get_cc(&g), ALU_CC_HIGH);    /* 15 > 13 */
+    ASSERT_EQ(g.mem[0x70], 0xF1);              /* CMQ does not modify memory */
+    ASSERT_EQ(g.mem[0x71], 0xF5);
+}

@@ -3,6 +3,7 @@
 #include "bit.h"
 #include "signals.h"
 #include "alu_logic.h"
+#include "alu_bin.h"
 #include "alu_dec.h"
 #include "alu_reg.h"
 #include "alu_cc.h"
@@ -268,6 +269,24 @@ static void EXEC_SS(struct ge *ge)
             break;
         case UPKS_OPCODE:
             alu_upks(ge, dst, alen-1, src, blen-1);
+            break;
+        case AB_OPCODE:
+            alu_ab(ge, dst, alen, src, blen);
+            break;
+        case SB_OPCODE:
+            alu_sb(ge, dst, alen, src, blen);
+            break;
+        case AD_OPCODE:
+            alu_ad(ge, dst, alen, src, blen);
+            break;
+        case SD_OPCODE:
+            alu_sd(ge, dst, alen, src, blen);
+            break;
+        case MVQ_OPCODE:
+            alu_mvq(ge, dst, src, len);
+            break;
+        case CMQ_OPCODE:
+            alu_cmq(ge, dst, src, len);
             break;
         default:
             ge_log(LOG_ERR, "EXEC_SS: unknown SS opcode 0x%02x\n", ge->rFO);
