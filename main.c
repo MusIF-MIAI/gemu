@@ -3,6 +3,8 @@
 #include <string.h>
 #include "ge.h"
 #include "console_socket.h"
+#include "cardreader.h"
+#include "transcode.h"
 #include "log.h"
 
 /*
@@ -18,7 +20,7 @@ static void print_usage(const char *argv0)
         "Usage: %s [OPTIONS]\n"
         "\n"
         "Options:\n"
-        "  --deck <path>        Path to card-deck file to load (scaffolded; not yet used)\n"
+        "  --deck <path>        Path to a .cap card deck; loaded via the reader (connector 2)\n"
         "  --trace <spec>       Enable log types from spec string\n"
         "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000)\n"
         "  --console            Enable interactive console socket (/tmp/gemu.console)\n"
@@ -48,7 +50,6 @@ int main(int argc, char *argv[])
                 return 1;
             }
             deck_path = argv[++i];
-            ge_log(LOG_DEBUG, "deck requested: %s (not loaded yet)\n", deck_path);
         } else if (strcmp(argv[i], "--trace") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --trace requires an argument\n");
@@ -83,6 +84,21 @@ int main(int argc, char *argv[])
     }
 
     ge_clear(&ge);
+
+    /* Faithful load: drive the LOAD button so the bootstrap pulls the deck in
+     * through the card reader on connector 2 (channel 1), exactly as the
+     * bootstrap.c test does — no direct mem[] writes. */
+    if (deck_path) {
+        ge_load_1(&ge);   /* select connector 2 (LOAD1) */
+        ge_load(&ge);     /* set AINI: state 80 -> c8 starts the load sequence */
+        ret = cardreader_register(&ge, deck_path, TC_NORMAL);
+        if (ret != 0) {
+            fprintf(stderr, "error: failed to load deck '%s'\n", deck_path);
+            ge_deinit(&ge);
+            return ret;
+        }
+    }
+
     ge_start(&ge);
 
     while (!ge.halted && cycles < max_cycles) {
@@ -92,8 +108,8 @@ int main(int argc, char *argv[])
             break;
     }
 
-    printf("exit: halted=%d cycles=%ld max=%ld error=%d\n",
-           ge.halted, cycles, max_cycles, ret);
+    printf("exit: halted=%d cycles=%ld max=%ld error=%d state=%02x PO=%04x\n",
+           ge.halted, cycles, max_cycles, ret, ge.rSO, ge.rPO);
 
     ge_deinit(&ge);
     return ret;
