@@ -66,6 +66,13 @@ defines it:
 - **Condition code (CC)**: a **2-bit** result indicator, set by most data and
   compare instructions, tested by conditional branches (§5).
 
+**Loading software.** gemu has two input paths: a positional binary
+(`./ge prog.bin`) in the **unified format** (a small `origin`+`entry` header then
+the flat image — see `docs/binformat.md`), produced by `gasm` and by
+`gdis --image`; and `./ge --deck deck.cap`, the Hollerith card-reader path
+(`docs/punchcards.md`). The binary path is the primary one and is what the real
+machine's card-reader interface will inject.
+
 ---
 
 ## 2. Data formats
@@ -527,3 +534,215 @@ test when latched into `ffFA` at the following `TO10` (§5.2).
 *Generated from the `gemu` emulator sources (the project's executable transcription
 of the GE-130 Programmed Description Specification). Treat OCR-flagged values as
 provisional pending page-image review.*
+
+---
+
+# Appendix A — Assembler instruction dictionary
+
+This appendix is the language reference for **`gasm`**, the standalone assembler
+in `software/gemu/assembler/`. It restates the encoding of §§3–6 in the concrete
+form the assembler accepts, and is the authoritative dictionary of every
+mnemonic and operand variant. The assembler's opcode/aux/format tables are
+transcribed from `opcodes.h`, `msl-commands.c`, and `signals.h`; this appendix
+and `gasm.c` are meant to be kept in sync.
+
+## A.1 Source format
+
+```
+; comment                 (# also begins a comment)
+label:                    label definition  (symbol = current address)
+NAME    EQU  expr         constant symbol
+        ORG  0x0100       set the location counter (default 0x0000)
+        MNEMONIC operands
+label:  MNEMONIC operands ; label + instruction on one line
+```
+
+**Directives**
+
+| Directive | Bytes | Meaning |
+|---|---|---|
+| `ORG expr` | 0 | set the location counter |
+| `NAME EQU expr` | 0 | define a constant symbol |
+| `DB b[, …]` | 1/byte | emit bytes; `"text"` emits one (raw ASCII) byte per character |
+| `DW w[, …]` | 2/word | emit 16-bit **big-endian** words |
+| `DS n` | n | reserve `n` zero bytes |
+
+**Expressions** — terms are hex (`0x1F`/`$1F`), decimal, char (`'A'`), or a
+symbol, combined with `+`/`-` (e.g. `buf+4`, `0x100-1`).
+
+## A.2 Operand kinds
+
+- **K** — an 8-bit immediate (`0x00–0xFF`).
+- **N** — a change-register number (`0–7`).
+- **mask** — a byte whose high nibble (bits 4–7) is the condition mask (§6.2).
+- **len** — an SS single field length, `1–256` (encoded `LL = len-1`).
+- **l1, l2** — SS two-field lengths, `1–16` each
+  (encoded `LL = ((l1-1)<<4) | (l2-1)`).
+- **addr** — a memory address, written one of two ways:
+
+  | Written | Field encoded | Effective address |
+  |---|---|---|
+  | `expr` (absolute, ≤ `0x7FFF`) or a label | `field = value` | `value` (identity bases) |
+  | `disp(N)` | `field = (N<<12)\|(disp&0xFFF)` | `disp + change_register[N]` |
+
+  The 16-bit address field is `(modifier<<12) \| displacement` (§4.2); bit 15 is
+  unused. Absolute addresses above `0x7FFF` cannot be encoded directly — load a
+  base register (`LA`/`LR`) and use `disp(N)`.
+
+## A.3 Master dictionary
+
+`Op`/`2nd` are hex. `Len` is the instruction length in bytes. **St** is the
+emulator status from §0 (✅ wired · ◑ ALU-only · ○ recognized · ✗ reserved/undecoded).
+
+### A.3.1 Control — P format (2 bytes, no operands)
+
+| Mnemonic | Syntax | Op | 2nd | Len | Meaning | St |
+|---|---|----|----|----|---|----|
+| `HLT` | `HLT` | `0A` | `00` | 2 | Halt the CPU. | ✅ |
+| `NOP2` / `NOP` | `NOP2` | `07` | `00` | 2 | No operation. | ✅ |
+| `ENS` | `ENS` | `02` | `10` | 2 | Enable system / interrupts *(name unverified)*. | ○ |
+| `INS` | `INS` | `02` | `20` | 2 | Inhibit/interrupt system *(unverified)*. | ○ |
+| `LOFF` | `LOFF` | `02` | `40` | 2 | Indicator/interrupt off *(unverified)*. | ○ |
+| `LON` | `LON` | `02` | `80` | 2 | Indicator/interrupt on *(unverified)*. | ○ |
+| `LOLL` | `LOLL` | `02` | `91` | 2 | Purpose unclear *(unverified)*. | ○ |
+
+### A.3.2 Branches — PM format (4 bytes)
+
+| Mnemonic | Syntax | Op | aux | Len | Meaning | St |
+|---|---|----|----|----|---|----|
+| `JC` | `JC mask, addr` | `43` | `mask & 0xF0` | 4 | Jump if CC ∈ mask (§6.2). | ✅ |
+| `JCC` | `JCC mask, addr` | `40` | `mask & 0xF0` | 4 | Jump on condition, decimal-deck variant. | ✅ |
+| `JU` | `JU addr` | `47` | `F0` | 4 | Unconditional jump. | ✅ |
+| `JS1` | `JS1 addr` | `53` | `80` | 4 | Jump if console sense switch 1 set. | ✅ |
+| `JS2` | `JS2 addr` | `53` | `40` | 4 | Jump if console sense switch 2 set. | ✅ |
+| `JIE` | `JIE addr` | `53` | `20` | 4 | Jump "if end" *(condition source unconfirmed)*. | ○ |
+
+**Jump-alias sugar** — `gasm` convenience mnemonics that emit `JC` (`0x43`) with
+a computed mask. The machine has no separate opcodes for these. Condition codes
+follow §5.1 (cc1 `<`, cc2 `=`, cc3 `>`, cc0 overflow/special):
+
+| Alias | Mask | CC values that jump | Reading |
+|---|----|---|---|
+| `JMP` / `JANY` | `F0` | 0,1,2,3 | always |
+| `JL` / `JLT` | `40` | 1 | first `<` second / result `< 0` |
+| `JE` / `JEQ` / `JZ` | `20` | 2 | equal / result `= 0` |
+| `JH` / `JGT` | `10` | 3 | first `>` second / result `> 0` |
+| `JNE` / `JNZ` | `50` | 1,3 | not equal / result `≠ 0` |
+| `JLE` | `60` | 1,2 | `≤` |
+| `JGE` | `30` | 2,3 | `≥` |
+| `JOV` | `80` | 0 | overflow / special (op-specific, see §5.1) |
+
+### A.3.3 Register & address — PM format (4 bytes)
+
+`aux = N & 7` selects change register `N` (memory-mapped at `0xF0 + 2N`).
+
+| Mnemonic | Syntax | Op | Len | Meaning | St |
+|---|---|----|----|---|----|
+| `LR`  | `LR N, addr`  | `BC` | 4 | `reg[N] ← mem16[addr]`. | ✅ |
+| `STR` | `STR N, addr` | `84` | 4 | `mem16[addr] ← reg[N]`. | ✅ |
+| `LA`  | `LA N, addr`  | `68` | 4 | `reg[N] ← addr` (effective address, no fetch). | ✅ |
+| `CMR` | `CMR N, addr` | `BD` | 4 | Compare `reg[N]` to `mem16[addr]`; set CC. | ✅ |
+| `AMR` | `AMR N, addr` | `BE` | 4 | `reg[N] += mem16[addr]`; set CC. | ✅ |
+| `SMR` | `SMR N, addr` | `BF` | 4 | `reg[N] -= mem16[addr]`; set CC. | ✅ |
+
+### A.3.4 Immediate — PM format (4 bytes)
+
+`aux = K` (the immediate byte); `addr` selects the target byte.
+
+| Mnemonic | Syntax | Op | Len | Meaning | St |
+|---|---|----|----|---|----|
+| `MVI` | `MVI K, addr` | `92` | 4 | `mem[addr] ← K`. | ✅ |
+| `NI`  | `NI K, addr`  | `94` | 4 | `mem[addr] &= K`. | ✅ |
+| `XI`  | `XI K, addr`  | `97` | 4 | `mem[addr] ^= K`; set CC. | ✅ |
+| `CI`  | `CI K, addr`  | `96` | 4 | compare `mem[addr]` with `K`; set CC. | ✅ |
+| `CMI` | `CMI K, addr` | `95` | 4 | compare-logical immediate (routes to `CI`). | ✅ |
+| `TM`  | `TM K, addr`  | `91` | 4 | test `mem[addr] & K`; set CC (no write). | ✅ |
+
+### A.3.5 Peripheral / misc — PM format (4 bytes, generic `aux, addr`)
+
+The Z/aux byte for the PER family encodes channel and sub-operation; `gasm`
+takes it as a raw `aux` byte (see §6.11 for the bit meanings).
+
+| Mnemonic | Syntax | Op | Len | Meaning | St |
+|---|---|----|----|---|----|
+| `PER`  | `PER aux, addr`  | `9E` | 4 | Peripheral / external operation. | ✅ |
+| `PERI` | `PERI aux, addr` | `9C` | 4 | Peripheral operation, interrupt variant. | ✅ |
+| `RDC`  | `RDC aux, addr`  | `90` | 4 | Read card (PER-family, decimal-deck variant). | ✅ |
+| `LPSR` | `LPSR aux, addr` | `9D` | 4 | Load program status register. | ✗ |
+| `JRT`  | `JRT aux, addr`  | `41` | 4 | Jump-and-return / linkage. | ✗ |
+
+> `LPSR` and `JRT` have assigned opcodes but **no decode path** in the current
+> emulator: they assemble but will not execute end-to-end.
+
+### A.3.6 SS single-length — SS format (6 bytes): `len, A1, A2`
+
+`LL = len-1`, `len` ∈ `1..256`. Fields point to the **leftmost** byte (§4.5).
+
+| Mnemonic | Syntax | Op | Len | Meaning | St |
+|---|---|----|----|---|----|
+| `MVC` | `MVC len, A1, A2` | `D2` | 6 | Move characters A2→A1. | ✅ |
+| `NC`  | `NC len, A1, A2`  | `D4` | 6 | `A1 ← A1 & A2`. | ✅ |
+| `CMC` | `CMC len, A1, A2` | `D5` | 6 | Compare characters; set CC. | ✅ |
+| `OC`  | `OC len, A1, A2`  | `D6` | 6 | `A1 ← A1 \| A2`. | ✅ |
+| `XC`  | `XC len, A1, A2`  | `D7` | 6 | `A1 ← A1 ^ A2`; set CC. | ✅ |
+| `TL`  | `TL len, A1, A2`  | `DC` | 6 | Translate A1 through table at A2. | ✅ |
+| `MVQ` | `MVQ len, A1, A2` | `F8` | 6 | Move digit quartets; set CC. | ✅ |
+| `CMQ` | `CMQ len, A1, A2` | `F9` | 6 | Compare digit quartets; set CC. | ✅ |
+| `EDT` | `EDT len, A1, A2` | `DE` | 6 | Edit packed A2 into pattern at A1; set CC. | ✅ |
+| `SR`  | `SR len, A1, A2`  | `D9` | 6 | Search right; result address → reg 7. *(encoding unconfirmed)* | ◑ |
+| `SL`  | `SL len, A1, A2`  | `DB` | 6 | Search left; result address → reg 7. *(encoding unconfirmed)* | ◑ |
+
+### A.3.7 SS two-length — SS format (6 bytes): `l1, l2, A1, A2`
+
+`LL = ((l1-1)<<4) | (l2-1)`, with `l1, l2` ∈ `1..16`. Decimal/binary fields point
+to the **rightmost** byte and are processed right-to-left (§4.5).
+
+| Mnemonic | Syntax | Op | Len | Meaning | St |
+|---|---|----|----|---|----|
+| `PK`   | `PK l1, l2, A1, A2`   | `DA` | 6 | Pack zoned A2 → packed A1. | ✅ |
+| `UPK`  | `UPK l1, l2, A1, A2`  | `D8` | 6 | Unpack packed A2 → zoned A1. | ✅ |
+| `PKS`  | `PKS l1, l2, A1, A2`  | `EE` | 6 | Pack with sign; set CC. | ✅ |
+| `UPKS` | `UPKS l1, l2, A1, A2` | `EF` | 6 | Unpack with sign; set CC. | ✅ |
+| `MVP`  | `MVP l1, l2, A1, A2`  | `E8` | 6 | Move packed A2→A1; set CC. | ✅ |
+| `CMP`  | `CMP l1, l2, A1, A2`  | `E9` | 6 | Compare packed; set CC. | ✅ |
+| `AP`   | `AP l1, l2, A1, A2`   | `EA` | 6 | Add packed `A1 += A2`; set CC. | ✅ |
+| `SP`   | `SP l1, l2, A1, A2`   | `EB` | 6 | Subtract packed `A1 -= A2`; set CC. | ✅ |
+| `MP`   | `MP l1, l2, A1, A2`   | `EC` | 6 | Multiply packed; set CC. | ✅ |
+| `DP`   | `DP l1, l2, A1, A2`   | `ED` | 6 | Divide packed; set CC. | ✅ |
+| `AD`   | `AD l1, l2, A1, A2`   | `FA` | 6 | Add zoned decimal; set CC. | ✅ |
+| `SD`   | `SD l1, l2, A1, A2`   | `FB` | 6 | Subtract zoned decimal; set CC. | ✅ |
+| `AB`   | `AB l1, l2, A1, A2`   | `FE` | 6 | Add binary; set CC. | ✅ |
+| `SB`   | `SB l1, l2, A1, A2`   | `FF` | 6 | Subtract binary; set CC. | ✅ |
+
+> `SR` (`D9`) and `SL` (`DB`) — the search instructions — assemble as plain
+> single-length SS ops (so they round-trip with the `gdis` disassembler), but
+> their true model-byte/result-register encoding is **unconfirmed** (§6.10,
+> ◑ ALU-only in gemu). Treat the operand layout as provisional until verified.
+
+## A.4 Round-trip encoding examples
+
+These are the assembler's regression vectors; each matches the emulator decode
+(the first four are the §3.3 worked examples; `MVI 0xAB,0x0050` is the
+`tests/exec.c` `mvi_stores_immediate` vector).
+
+| Source | Bytes |
+|---|---|
+| `HLT` | `0A 00` |
+| `JC 0xF0, 0x175A` | `43 F0 17 5A` |
+| `JU 0x0100` | `47 F0 01 00` |
+| `MVC 5, 0x0E00, 0x0F00` | `D2 04 0E 00 0F 00` |
+| `MVI 0xAB, 0x0050` | `92 AB 00 50` |
+| `JE 0x0100` | `43 20 01 00` |
+| `LR 2, 0x0050` | `BC 02 00 50` |
+| `AP 3, 2, 0x0E00, 0x0F00` | `EA 21 0E 00 0F 00` |
+| `MVC 4, 0x100(2), 0xFFF(7)` | `D2 03 21 00 7F FF` |
+
+## A.5 Loading the output
+
+`gasm` writes pure machine code with no header. Default origin is `0x0000`,
+which matches `ge_load_program()` (copies the image to `mem[0]`; reset leaves
+`PO = 0`) — the path the unit tests use. For card-deck-style programs that the
+integrated reader bootstraps at `0x0100` (the `DUMP1`/`funktionalcpu`
+convention), assemble with `--org 0x0100`. See
+`software/gemu/assembler/README.md` for the full CLI and a `ge_load_program`
+harness snippet.

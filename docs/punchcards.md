@@ -195,7 +195,7 @@ payload; each is:
 
 | Field | Cols | Value (verified) | Meaning |
 |---|---|---|---|
-| Identifier prefix | 0–7 | constant `00 04 40 00 20 40 40 42` | card-type tag (same on every data card) |
+| Identifier prefix | 0–7 | `00 04 40 00 20 40 40 42` (this deck) | card-type tag — **per-deck constant** (see below) |
 | `LL` | 8 | `0x41` (= 65) | payload length − 1 → **66 payload bytes** (`LL+1`) |
 | Load address | 9–10 | big-endian | absolute target address of byte 0 of payload |
 | Payload | 11–76 | 66 bytes | the program image fragment |
@@ -205,6 +205,34 @@ payload; each is:
 exactly **66 (`0x42`)** per card — `0x0100, 0x0142, 0x0184, 0x01C6, …` — covering
 **`0x0100` … `0x1C54`** with no gaps. Combined with an entry jump `JU 0x0100`, the
 deck boots into the program at `0x0100`.
+
+**The identifier prefix is PER-DECK, not universal (verified, high — 2026-05-29).**
+The earlier "constant tag" claim holds *within* a deck but **not across decks**.
+Decoding the full `software/DUMP1/*.cap` set with the `gdis` depuncher shows each
+CPU-program deck carries its **own** constant 8-byte prefix on its data cards:
+
+| Deck | Data-card prefix | Data cards |
+|---|---|---|
+| `funktionalcpu` | `00 04 40 00 20 40 40 42` | 108 |
+| `control-program-cr` (+ `-copia`) | `00 04 80 04 02 40 40 04` | 61 |
+| `ls600-doe` | `00 04 80 00 00 40 10 02` | 82 |
+| `printermechanicaltest` | `00 04 40 01 20 40 80 02` | 40 |
+
+The family signature is `00 04 .. .. .. 40 .. ..` (bytes 0–1 = `00 04`, byte 5 =
+`40`; bytes 2,3,4,6,7 vary per deck — likely a deck/title identifier or
+checksum, **meaning unconfirmed**). Consequence for tooling: a depuncher must
+**auto-detect** the deck's dominant prefix rather than hardcode one value;
+`gdis` does this. Confidence: high for "per-deck constant", low for the meaning
+of the varying bytes.
+
+**A second card framing exists (medium).** The `isolationcpu01/02/03` and
+`isolat-dsu-erganz-cpu` decks do **not** use the `00 04 ..` record format: their
+COLBIN-decoded cards carry GE code more directly (e.g. `9E 80 00 04 …`,
+`07 0A 07 0A 92 FF …`, `43 F0 …`) with a different/absent header, so the
+`LL@8 / addr@9-10 / payload@11` offsets above do not apply. These need their own
+layout reverse-engineering. The `ls600-*` / `sat-ls600` / `printer*` / `reading-*`
+decks are **peripheral test decks** — even where they share the `00 04` framing,
+their payloads are test patterns, not `0x0100` CPU programs.
 
 **Order-independence (verified, notable):** cards 107–108 are physically *out of
 sequence* in the capture (their addresses `0x18FA`, `0x193C` belong between cards
@@ -266,6 +294,11 @@ halting in the "no test selected" branch when that byte is zero.
    = `LL+1` payload bytes; write them to `mem[address …]`.
 4. Ignore physical card order — trust each card's self-described address.
 5. After loading, enter at `0x0100` (or the deck's entry jump).
+
+The `gdis` depuncher implements exactly this and can write the reconstructed image
+as a gemu-loadable **unified binary** (`gdis --image -o deck.bin deck.cap`; see
+`docs/binformat.md`), bridging a Hollerith `.cap` deck to the binary load path
+(`./ge deck.bin`).
 
 ---
 

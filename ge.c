@@ -72,6 +72,49 @@ int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
     return 0;
 }
 
+/* odd-parity bit for a byte: 1 if the byte has an even number of set bits
+ * (so data+parity is odd). Mirrors odd_parity() in pulse.c. */
+static inline uint8_t ge_odd_parity(uint8_t data)
+{
+    return __builtin_parity(data) ? 0 : 1;
+}
+
+/* Load a flat image into memory at `origin` (the unified-format payload).
+ * Unlike ge_load_program this is origin-aware and not size-capped; it also
+ * primes the parity store and marks the cells written, so reads of the loaded
+ * code parity-check cleanly. Returns 0 on success, -1 if it would exceed the
+ * installed memory. */
+int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
+                  uint16_t origin)
+{
+    uint32_t max = ge->mem_size ? ge->mem_size : MEM_SIZE;
+
+    if (image == NULL && size != 0)
+        return -1;
+    if ((uint32_t)origin + (uint32_t)size > max)
+        return -1;
+
+    for (size_t i = 0; i < size; i++) {
+        uint16_t a = (uint16_t)(origin + i);
+        ge->mem[a]         = image[i];
+        ge->mem_parity[a]  = ge_odd_parity(image[i]);
+        ge->mem_written[a] = 1;
+    }
+    return 0;
+}
+
+/* Enter execution at `entry` without the peripheral LOAD bootstrap: seed the
+ * program counter and drop the sequencer straight into the alpha (fetch) phase.
+ * Use after ge_clear + ge_load_image for the direct binary-load path; the
+ * --deck card-reader path uses the natural state 00 -> 80 -> alpha bootstrap
+ * instead (which leaves entry at 0). */
+void ge_enter(struct ge *ge, uint16_t entry)
+{
+    ge->rPO = entry;
+    ge->rSO = 0xe2;   /* alpha phase: fetch the instruction at PO */
+    ge->rSA = 0xe2;
+}
+
 void ge_load(struct ge *ge)
 {
     /* When pressing LOAD button, AINI is set. If AINI is set, the state 80

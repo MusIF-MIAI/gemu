@@ -8,3 +8,9 @@ tests/tests
 *.xcodeproj/**
 tags
 docs/html/**
+
+# toolchain build artifacts
+assembler/gasm
+assembler/build/
+disassembler/gdis
+disassembler/funktionalcpu.s

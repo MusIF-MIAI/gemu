@@ -2,6 +2,7 @@
 #define GE_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "opcodes.h"
 #include "console.h"
 #include "reader.h"
@@ -583,6 +584,15 @@ int ge_deinit(struct ge *ge);
 
 /// Copy a program at the start of memory
 int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size);
+
+/// Load a flat image at `origin` (unified-format payload); origin-aware, not
+/// size-capped, primes the parity store. Returns 0 on success, -1 on range error.
+int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
+                  uint16_t origin);
+
+/// Enter execution at `entry`: seed PO and drop into the alpha (fetch) phase,
+/// bypassing the peripheral LOAD bootstrap (direct binary-load path).
+void ge_enter(struct ge *ge, uint16_t entry);
 
 /// Run the emulator
 int ge_run(struct ge *ge);
