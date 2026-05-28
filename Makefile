@@ -24,6 +24,7 @@ tools:
 .PHONY: check
 check: tests/tests ge tools
 	tests/tests
+	python3 tests/isa_consistency.py
 	sh tests/roundtrip.sh
 
 .PHONY: clean
