@@ -46,12 +46,17 @@ echo "== .cap depunch -> unified -> run =="
 
 if [ -f "$CAP" ]; then
     if "$GDIS" --image -o "$TMP/fk.bin" "$CAP" >/dev/null 2>&1; then
-        errs=$("$GE" "$TMP/fk.bin" --trace err --max-cycles 50000 2>&1 \
-               | grep -c 'no timing charts\|implement command')
-        if [ "$errs" -eq 0 ]; then
-            echo "  ok: funktionalcpu depunch loads + executes (no decode errors)"
-        else
+        run=$("$GE" "$TMP/fk.bin" --trace err --max-cycles 200000 2>&1)
+        errs=$(echo "$run" | grep -c 'no timing charts\|implement command')
+        last=$(echo "$run" | tail -1)
+        # With no test option selected (mem[0x0E00]=0) the CPU functional test
+        # converges to the documented idle halt at PO=0x175a.
+        if [ "$errs" -ne 0 ]; then
             echo "FAIL: funktionalcpu run produced $errs decode error(s)"; fail=1
+        elif echo "$last" | grep -q 'halted=1' && echo "$last" | grep -q 'PO=175a'; then
+            echo "  ok: funktionalcpu depunch -> binary -> halts at documented idle HLT 0x175a"
+        else
+            echo "FAIL: funktionalcpu did not reach the idle HLT 0x175a ($last)"; fail=1
         fi
     else
         echo "FAIL: gdis could not depunch $CAP"; fail=1

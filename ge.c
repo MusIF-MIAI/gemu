@@ -45,13 +45,22 @@ void ge_clear(struct ge *ge)
     ge->RC02 = 0;
     ge->RC03 = 0;
 
-    /* Segment-base / change registers default to N<<12 (identity segment
-     * bases): change register N is the 16-bit big-endian word at mem[240+2N],
-     * and an instruction address with modifier N (address bits 12-14) resolves
-     * to displacement + base[N]. With these defaults a bare 12-bit displacement
-     * carrying modifier N addresses segment N (0x1000*N ..), so the loaded
-     * program's paged addresses (e.g. JU 0x172a) resolve to their full load
-     * addresses; programs may reload a base via LR/LA for paged access. */
+    ge_seed_segment_bases(ge);
+}
+
+/* Seed the eight change / segment-base registers to their identity defaults
+ * N<<12: change register N is the 16-bit big-endian word at mem[240+2N], and
+ * an instruction address with modifier N (address bits 12-14) resolves to
+ * displacement + base[N]. With these defaults a bare 12-bit displacement
+ * carrying modifier N addresses segment N (0x1000*N ..), so a program's paged
+ * addresses (e.g. JU 0x172a) resolve to their full load addresses; programs
+ * may reload a base via LR/LA for paged access.
+ *
+ * Called by ge_clear (reset) and re-applied after a direct binary image load,
+ * because a contiguous image spanning the 0x00F0-0x00FF window would otherwise
+ * overwrite the bases (with its own bytes, or zeros in reconstructed gaps). */
+void ge_seed_segment_bases(struct ge *ge)
+{
     for (int n = 0; n < 8; n++) {
         uint16_t v = (uint16_t)(n << 12);
         ge->mem[240 + 2 * n]     = (uint8_t)(v >> 8);

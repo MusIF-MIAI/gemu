@@ -106,7 +106,16 @@ or `.cap` parsing.
   image that spans this window will overwrite them with its own bytes (or zeros in
   reconstructed gaps), which can break segment-base addressing. Programs that load
   across low memory must re-establish these bases (or the loader must preserve
-  them). See `docs/ISA.md` §4 for the addressing model. This is the open item for
-  running the large diagnostic decks through the binary path.
+  them). See `docs/ISA.md` §4 for the addressing model. gemu's direct binary-load
+  path re-seeds the identity bases after loading (`ge_seed_segment_bases`), so a
+  depunched diagnostic runs correctly: `funktionalcpu` reaches its documented idle
+  HLT at PO=0x175a (asserted in `tests/roundtrip.sh`).
+- **Diagnostic console options.** Some decks read a console-selected option byte
+  (funktionalcpu: `mem[0x0E00]`) to pick a sub-test. Set it with
+  `./ge fk.bin --poke 0x0E00=0xNN`. With it 0, funktionalcpu takes the "no test
+  selected" idle halt (0x175a). Driving the memory-test halts (3465 / 1466–146B /
+  19DE) needs the exact option-byte encoding and installed-memory sizing, which is
+  still being recovered from the diagnostic listing (an option value of 0x10 runs
+  off the loaded image into high memory) — tracked as evidence work.
 - **bit 15 of an address** is unused/unknown (masked); see `docs/ISA.md` §4.2.
 - Version is checked on read; an unknown version is rejected rather than guessed.

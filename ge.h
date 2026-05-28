@@ -594,6 +594,11 @@ int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
 /// bypassing the peripheral LOAD bootstrap (direct binary-load path).
 void ge_enter(struct ge *ge, uint16_t entry);
 
+/// Seed the eight change/segment-base registers (mem[240+2N]) to identity
+/// bases N<<12. Called by ge_clear; re-apply after a direct image load that
+/// may have overwritten the 0x00F0-0x00FF window.
+void ge_seed_segment_bases(struct ge *ge);
+
 /// Run the emulator
 int ge_run(struct ge *ge);
 

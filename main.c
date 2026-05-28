@@ -27,6 +27,8 @@ static void print_usage(const char *argv0)
         "Options:\n"
         "  --raw                Treat the positional file as a headerless flat image\n"
         "  --org <0xNNNN>       Load origin for --raw (default 0x0000; entry = origin)\n"
+        "  --poke <A=V>         Write byte V to address A after load (repeatable),\n"
+        "                       e.g. --poke 0x0E00=0x80 to set a diagnostic option\n"
         "  --deck <path>        Path to a .cap card deck; loaded via the reader (connector 2)\n"
         "  --trace <spec>       Enable log types from spec string\n"
         "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000)\n"
@@ -46,6 +48,7 @@ int main(int argc, char *argv[])
     const char *image_path = NULL;
     int raw = 0;
     long load_org = 0x0000;
+    uint16_t poke_addr[32]; uint8_t poke_val[32]; int npoke = 0;
 
     /* --- argument parsing: --opt value style --- */
     for (int i = 1; i < argc; i++) {
@@ -84,6 +87,20 @@ int main(int argc, char *argv[])
                 return 1;
             }
             load_org = strtol(argv[++i], NULL, 0);
+        } else if (strcmp(argv[i], "--poke") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "error: --poke requires ADDR=VAL\n");
+                return 1;
+            }
+            char *eq = strchr(argv[i + 1], '=');
+            if (!eq || npoke >= 32) {
+                fprintf(stderr, "error: bad --poke '%s' (want 0xADDR=0xVAL)\n", argv[i + 1]);
+                return 1;
+            }
+            poke_addr[npoke] = (uint16_t)strtoul(argv[i + 1], NULL, 0);
+            poke_val[npoke]  = (uint8_t)strtoul(eq + 1, NULL, 0);
+            npoke++;
+            i++;
         } else if (argv[i][0] == '-') {
             fprintf(stderr, "error: unknown option '%s'\n", argv[i]);
             print_usage(argv[0]);
@@ -160,10 +177,23 @@ int main(int argc, char *argv[])
             ge_deinit(&ge);
             return 1;
         }
+        /* A contiguous image spanning 0x00F0-0x00FF overwrites the segment-base
+         * registers ge_clear set up; re-establish the identity bases so paged
+         * addressing works (programs may still reload bases at runtime). */
+        ge_seed_segment_bases(&ge);
         image_loaded = 1;
         image_entry  = entry;
         ge_log(LOG_DEBUG, "loaded %u bytes at 0x%04x, entry 0x%04x\n",
                (unsigned)len, origin, entry);
+    }
+
+    /* Apply --poke writes after the image + base seeding (e.g. the diagnostic
+     * console test-selection byte at 0x0E00) so they override loaded values. */
+    for (int p = 0; p < npoke; p++) {
+        ge.mem[poke_addr[p]] = poke_val[p];
+        ge.mem_parity[poke_addr[p]]  = __builtin_parity(poke_val[p]) ? 0 : 1;
+        ge.mem_written[poke_addr[p]] = 1;
+        ge_log(LOG_DEBUG, "poke mem[0x%04x] = 0x%02x\n", poke_addr[p], poke_val[p]);
     }
 
     ge_start(&ge);
