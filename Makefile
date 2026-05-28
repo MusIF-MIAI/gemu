@@ -15,15 +15,24 @@ tests/tests: $(TESTS) libge.a
 -include $(OBJS:%.o=%.d)
 -include $(TESTS:%.o=%.d)
 
+# Build the assembler (gasm) and disassembler (gdis) toolchain.
+.PHONY: tools
+tools:
+	$(MAKE) -C assembler gasm
+	$(MAKE) -C disassembler gdis
+
 .PHONY: check
-check: tests/tests
+check: tests/tests ge tools
 	tests/tests
+	sh tests/roundtrip.sh
 
 .PHONY: clean
 clean:
 	rm -f libge.a main.o ge tests/tests
 	rm -f $(OBJS) $(OBJS:%.o=%.d)
 	rm -f $(TESTS) $(TESTS:%.o=%.d)
+	$(MAKE) -C assembler clean
+	$(MAKE) -C disassembler clean
 
 .PHONY: docs
 docs:
