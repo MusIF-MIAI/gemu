@@ -402,12 +402,12 @@ static void fmt_addr(uint16_t field, char *buf, size_t n)
  * MACHINE (not ASCII — which did not yet exist). Glyphs that have no ASCII
  * equivalent (up/left arrows 0xA0/0xBA, long dash 0xAA, bullet 0xAC) render '.'.
  *
- * EVIDENCE CONFLICT (do not silently resolve): this documented internal set puts
- * digits at 0x40-0x49 and letters at 0x51-0x59 / 0xA1-0xA9 / 0xB2-0xB9, whereas
- * the card-reader "normal" transcoder in ../transcode.c produced EBCDIC-like
- * codes (digits 0xF0-0xF9, X=0xE7 …) to match funktionalcpu.bin. The two
- * encodings genuinely differ; see docs/punchcards.md / docs/ISA.md. For these
- * comments we use the APS-documented machine graphic set.
+ * This table is corroborated by the CRZ card transcoder: CRZ[2] §5.3 "Table 3 —
+ * IBM card code and Internal GECB code equivalent" (vol. [2] p.113) shows the
+ * transcoder converts card punches to this same internal code (digit '0'=0x40,
+ * 'J'=0xA1). The EBCDIC-like codes in ../transcode.c (digits 0xF0-0xF9) are an
+ * artifact of the externally-supplied funktionalcpu.bin, not the machine's
+ * code — see docs/ISA.md §2.1 for the full reconciliation.
  */
 static const char GE_GLYPH[256] = {
     [0x40]='0',[0x41]='1',[0x42]='2',[0x43]='3',[0x44]='4',[0x45]='5',

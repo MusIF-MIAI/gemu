@@ -139,9 +139,18 @@ row0→0xF0 '0'  row1→0xF1 '1'  row2→0xF2 '2'  row3→0xF3 '3'  row4→0xF4 
 row5→0xF5 '5'  row6→0xF6 '6'  row7→0xF7 '7'  row8→0xF8 '8'  row9→0xF9 '9'
 ```
 
-plus a handful of zone+digit combos (`<`, `@`, `#`, `X`, `Y`, `,`, `+`, …). This
-is the GE machine character set; `funktionalcpu.cap` → `funktionalcpu.bin` is an
-exact byte match, which is the table's acceptance test (`tests/transcode.c`).
+plus a handful of zone+digit combos (`<`, `@`, `#`, `X`, `Y`, `,`, `+`, …).
+`funktionalcpu.cap` → `funktionalcpu.bin` is an exact byte match, which is the
+table's acceptance test (`tests/transcode.c`).
+
+> ⚠️ **These output codes are EBCDIC, not the GE machine's own character code.**
+> `0xF0`–`0xF9` = digits, `0xE7`=`X`, `0x6B`=`,` are EBCDIC code points. The
+> *documented* GE-120 transcoder (CRZ[2] §5.3 Table 3) instead converts card
+> punches to the **GE-100 internal graphic code** (digit `0`=`0x40`, `J`=`0xA1`;
+> APS Reference Manual Fig 3 — see `docs/ISA.md` §2.1). `TC_NORMAL` matches the
+> externally-supplied `.bin` (an EBCDIC rendering), not the machine code; it is
+> only used for NORMAL-mode text, never for program loading (which is
+> by-pass/COLBIN, §4.3). Treat `TC_NORMAL`'s glyph labels as EBCDIC.
 
 ### 4.2 `TC_HEX` — loader hex-nibble (verified, medium)
 

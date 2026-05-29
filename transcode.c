@@ -30,6 +30,18 @@
  *   0x0101→0x6B (','), 0x0201→0xBA (special), 0x1001→0x4E ('+').
  *
  * TC_BINARY mode: returns low 8 bits of the column value unchanged.
+ *
+ * CAVEAT (character code): the TC_NORMAL output values above are EBCDIC
+ * (digits 0xF0-0xF9, 'X'=0xE7, ','=0x6B) because they were fit to the
+ * externally-supplied funktionalcpu.bin, which is an EBCDIC rendering of the
+ * deck. They are NOT the GE machine's documented internal character code. The
+ * real GE-120 card transcoder (CRZ[2] §5.3, "Table 3 — IBM card code and
+ * Internal GECB code equivalent") converts IBM/BULL card punches to the GE-100
+ * internal graphic set (digit '0'=0x40, 'J'=0xA1, …; APS Reference Manual
+ * Figure 3), which is what gdis uses for DB-comment glyphs (see docs/ISA.md
+ * §2.1). This mismatch only affects hypothetical NORMAL-mode text reads;
+ * program loading uses by-pass/COLBIN (TC_COLBIN), whose B2R map is
+ * document-confirmed.
  */
 
 #include "transcode.h"
