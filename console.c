@@ -39,6 +39,12 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.MEM_CHECK = ge->mem_check;
     console->lamps.INV_ADD   = ge->inv_add;
 
+    /* STEP BY STEP lamp reflects the PAPA (passo-passo) switch: when inserted
+     * the CPU halts after each operation (fsn_last_clock re-arms ALTO), so each
+     * START performs exactly one operation — the step-by-step mode used to key
+     * data/instructions in from the panel. */
+    console->lamps.STEP_BY_STEP = ge->console_switches.PAPA;
+
     console->lamps.OP_reg  = ge->rFO;
 
     console->rotary = ge->register_selector;
