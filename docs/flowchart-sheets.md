@@ -141,6 +141,34 @@ not cycle-accurate** to these sheets.
   (C2–C1), but the `LPSR 0x9d` opcode is recognized and not decoded to enter
   them from beta.
 
+## Authoritative per-clock timing tables — CPU[7] pages 61+
+
+The flow-chart **foldouts** (sheets above, render-pg ~23-46) give the state graph
+and register transfers but are low-contrast and hard to read precisely. CPU[7]
+**pages 61 onward** carry the per-state **timing tables** — one (or two) per
+page, **rotated 90°** but with **clean OCR** — and these are the authoritative
+per-clock source that `struct msl_timing_chart` mirrors directly. Columns:
+
+| Clock | Comando (command) | Equazione (firing equation) | Pin (board/loc) | Evento–Comment (register transfer) |
+
+The *Equazione* column is the gold for fidelity: e.g. `CO1011 = …` / `(DI12A0)`
+maps to gemu's `{clock, command, condition, additional}`. Read them upright with:
+```sh
+pdftoppm -png -r 320 -f <pg> -l <pg> "CPU/GE 120 CENTRAL PROCESSOR [7].pdf" t
+convert t-0NN.png -rotate -90 +repage page.png      # -90 = upright
+```
+The state-code box at the table head is the SO/SA hex (e.g. `1110 0000` = `0xE0`).
+
+**Verified against these tables this session:** `state_E0` (page 61, top table)
+matches **1:1** — transfers `V2→NO, COUNT FROM 00, MEM→RO, NI→PO, NO→BO, RO1→NI1,
+RO2→NI2, RES AVER, NI→L1, Set S002, Reset S007` = gemu's
+`CO12/CO41/CO30/CO00/(TO20 BO)/CI67/CI62/CI39/CI05/CU02/CU17`, same order, with
+the `DI17A0`/`DI12A0` gates matching. This confirms the alpha family is faithful
+and supersedes the blurry-foldout caveats for the states whose tables are read
+here. **Next:** walk pages 61+ and do this row-by-row for every implemented
+state (esp. the forcing/peripheral states whose brackets the foldouts left
+ambiguous).
+
 ## How to re-verify a sheet
 ```sh
 P="CPU/GE 120 CENTRAL PROCESSOR [7].pdf"
