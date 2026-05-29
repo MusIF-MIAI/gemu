@@ -11,6 +11,12 @@
 #   error This file should be include by msl-timings.c and not compiled directly
 #endif
 
+/* The states below transcribe the micro-sequencer flow-chart foldouts
+ * (drawing 14023130, CPU[7] = Volume 7 schematics). docs/flowchart-sheets.md
+ * maps each sheet -> the state(s) here and records the per-state fidelity audit
+ * (which states are faithful per-clock transcriptions vs. functionally-correct
+ * hybrids that call the alu_* helpers). Sheet citations are noted on each chart. */
+
 /* Common Conditions */
 /* ----------------- */
 
@@ -443,6 +449,14 @@ static uint8_t is_eper_examine(struct ge *ge) {
     return BIT(ge->rL2, 7) && BIT(ge->rL2, 6);
 }
 
+/* Beta phase. The per-opcode beta recipes are flow charts 14023130E (JU/JC/JRT/
+ * JS/JE), the JS/JC/NOP/HLT/INS/ENS/LON/LOFF/LOLL sheet (render-pg 28), the
+ * LR/AMR/CMR/SMR/STR sheet (render-pg 30), 14023130O (NI/XI/OI/TM, render-pg 31),
+ * the CMI/CHI sheet (render-pg 38) and the EXECUTIVE-PHASE data-op sheets
+ * (render-pg 44-45). gemu implements these HYBRIDLY: the MSL drives routing here
+ * while the operation is performed once by an alu_* helper (EXEC_*), rather than
+ * transcribing each sheet's per-clock datapath. Functionally validated by
+ * tests/exec.c + the deck + cc; not cycle-accurate. See docs/flowchart-sheets.md. */
 static const struct msl_timing_chart state_64_65[] = {
     { TO10, CO10, jc_js1_js2_jie },
     { TO10, CO18, per_peri },
@@ -493,6 +507,8 @@ static uint8_t state_00_TO10_CO11(struct ge *ge) { return AF31(ge) || AF41(ge) |
 static uint8_t state_00_TO30_CI15(struct ge *ge) { return !AF20(ge) && !AF40(ge); }
 static uint8_t state_00_TO50_CI33(struct ge *ge) { return !AF20(ge) && !AF21(ge) && !AF40(ge); }
 
+/* Flow chart 14023130A "DISPLAY SEQUENCE" (CPU[7] render-pg 24). Verified
+ * row-by-row; the chart's `V3->BO [AF36]` is a scan artifact for `[AF30]`. */
 static const struct msl_timing_chart state_00[] = {
     { TO10, CO10, state_00_TO10_CO10 }, /* RS_NORM or RS_PO */
     { TO10, CO11, state_00_TO10_CO11 }, /* RS_V1 or RS_V1_SCR or RS_V1_LETT */
@@ -520,6 +536,9 @@ static uint8_t AF52_not_RO05(struct ge *ge) { return AF52(ge) && not_RO05(ge); }
 static uint8_t AF52_not_RO06(struct ge *ge) { return AF52(ge) && not_RO06(ge); }
 static uint8_t AF52_not_RO07(struct ge *ge) { return AF52(ge) && not_RO07(ge); }
 
+/* Flow chart 14023130B "FORCING SEQUENCE" (CPU[7] render-pg 25). States match
+ * + tests/forcing.c passes; a few forcing-read brackets (CO30/CO31/CI20/CI33)
+ * need a higher-DPI/physical recheck (docs/flowchart-sheets.md). */
 static const struct msl_timing_chart state_08[] = {
     { TO10, CO11, AF41, EC69A0 }, /* fo. 18 */
     { TO10, CO11, AF51 },
@@ -588,6 +607,11 @@ static uint8_t state_c8_TI06_CI85(struct ge *ge) {
     return !(PUB01(ge) || DU92(ge));
 }
 
+/* PER-PERI preliminary phase, flow chart 14023130F (CPU[7] render-pg 32).
+ * State graph 64/65->c8->d8/d9/da/db->dc->cc and 80->(AINI)->c8|alpha verified
+ * via the CUxx future-state arithmetic; tests/initial-load.c locks the per-state
+ * register values. Peripheral-status decode (DU95/DU96/PCOV) is partial — PCOV
+ * is stubbed to 1. See docs/flowchart-sheets.md. */
 static const struct msl_timing_chart state_c8[] = {
     { TO10, CO12, 0, DI97A0 },
     { TO10, CO41, 0, DI97A0},
