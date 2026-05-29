@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "ge.h"
 #include "console_socket.h"
 #include "cardreader.h"
@@ -15,6 +19,47 @@
  * prototype in log.h this extern becomes redundant but harmless.
  */
 extern void ge_log_set_active_types_from_spec(const char *spec);
+
+/*
+ * Launch the ncurses console client (console/curses/console.py) as a child
+ * process for --tui. The client connects to the /tmp/gemu.console socket that
+ * --console registers and draws the operator/diagnostic panel; the emulator
+ * keeps running in this (parent) process. Returns the child pid, or -1 if the
+ * client could not be found / launched.
+ *
+ * The script is looked for next to the ge executable first (so it works from
+ * any cwd), then relative to the current directory.
+ */
+static pid_t spawn_tui(const char *argv0)
+{
+    char path[4096];
+    const char *slash = strrchr(argv0, '/');
+
+    if (slash) {
+        int dlen = (int)(slash - argv0);
+        snprintf(path, sizeof(path), "%.*s/console/curses/console.py", dlen, argv0);
+    } else {
+        snprintf(path, sizeof(path), "console/curses/console.py");
+    }
+    if (access(path, R_OK) != 0)
+        snprintf(path, sizeof(path), "console/curses/console.py");
+    if (access(path, R_OK) != 0) {
+        fprintf(stderr, "error: --tui: cannot find console/curses/console.py\n");
+        return -1;
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return -1;
+    }
+    if (pid == 0) {
+        execlp("python3", "python3", path, (char *)NULL);
+        perror("error: --tui: cannot exec python3");
+        _exit(127);
+    }
+    return pid;
+}
 
 static void print_usage(const char *argv0)
 {
@@ -32,7 +77,9 @@ static void print_usage(const char *argv0)
         "  --deck <path>        Path to a .cap card deck; loaded via the reader (connector 2)\n"
         "  --trace <spec>       Enable log types from spec string\n"
         "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000)\n"
-        "  --console            Enable interactive console socket (/tmp/gemu.console)\n"
+        "  --console            Enable the console socket /tmp/gemu.console (no UI attached)\n"
+        "  --tui                Implies --console and starts the ncurses console client\n"
+        "                       (console/curses/console.py); runs until you quit the TUI\n"
         "  --help, -h           Print this help and exit\n",
         argv0);
 }
@@ -44,6 +91,8 @@ int main(int argc, char *argv[])
     long max_cycles = 100000;
     long cycles = 0;
     int use_console = 0;
+    int use_tui = 0;
+    int trace_set = 0;
     const char *deck_path = NULL;
     const char *image_path = NULL;
     int raw = 0;
@@ -57,6 +106,9 @@ int main(int argc, char *argv[])
             return 0;
         } else if (strcmp(argv[i], "--console") == 0) {
             use_console = 1;
+        } else if (strcmp(argv[i], "--tui") == 0) {
+            use_tui = 1;
+            use_console = 1;   /* --tui implies --console */
         } else if (strcmp(argv[i], "--deck") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --deck requires an argument\n");
@@ -69,6 +121,7 @@ int main(int argc, char *argv[])
                 return 1;
             }
             ge_log_set_active_types_from_spec(argv[++i]);
+            trace_set = 1;
         } else if (strcmp(argv[i], "--max-cycles") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --max-cycles requires an argument\n");
@@ -203,11 +256,41 @@ int main(int argc, char *argv[])
     if (image_loaded)
         ge_enter(&ge, image_entry);
 
-    while (!ge.halted && cycles < max_cycles) {
-        ret = ge_run_cycle(&ge);
-        cycles++;
-        if (ret != 0)
-            break;
+    if (use_tui) {
+        /* Interactive session: launch the ncurses client and run the emulator
+         * until the user quits the TUI. Ignore max-cycles, and keep cycling
+         * even after a HLT so the console socket stays serviced and the panel
+         * stays live (a halted GE-120 just spins on HLT;JU self). Throttle when
+         * halted so an idle session doesn't peg a core. */
+        /* The TUI owns the terminal; silence the (all-on by default) log so it
+         * doesn't scribble over the panel — unless the user explicitly asked
+         * for a --trace. */
+        if (!trace_set)
+            ge_log_set_active_types_from_spec("none");
+        pid_t tui_pid = spawn_tui(argv[0]);
+        if (tui_pid < 0) {
+            ge_deinit(&ge);
+            return 1;
+        }
+        while (waitpid(tui_pid, NULL, WNOHANG) == 0) {
+            ret = ge_run_cycle(&ge);
+            cycles++;
+            if (ret != 0)
+                break;
+            if (ge.halted)
+                usleep(2000);
+        }
+        /* The TUI restores the terminal (curses.endwin) on quit; make sure the
+         * child is gone before we print and exit. */
+        kill(tui_pid, SIGTERM);
+        waitpid(tui_pid, NULL, 0);
+    } else {
+        while (!ge.halted && cycles < max_cycles) {
+            ret = ge_run_cycle(&ge);
+            cycles++;
+            if (ret != 0)
+                break;
+        }
     }
 
     printf("exit: halted=%d cycles=%ld max=%ld error=%d state=%02x PO=%04x\n",
