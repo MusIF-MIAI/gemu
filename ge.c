@@ -328,18 +328,29 @@ void connectors_first_clock(struct ge *ge)
 
 void fsn_last_clock(struct ge *ge)
 {
-    /* at the end of a cycle attributed to the CPU, provided RICI
-     * is not active and the rotary switch is in normal position,
-     * the future status network is stored in SO. (cpu fo. 127) */
-    /* RICI ("Disables next status") prevents the future state network from
-     * advancing SO in normal operation. However, when the rotary switch is
-     * in a non-normal (forcing) position the user is explicitly requesting
-     * a register force; RICI must not block that. */
-    if (ge->RIA0 && (!ge->console_switches.RICI || ge->register_selector != RS_NORM)) {
+    /* At the end of a CPU cycle the future-status network is stored in SO
+     * (cpu fo. 127), advancing the program sequencer one state.
+     *
+     * In maintenance forcing (rotary off NORM) the program sequencer is frozen:
+     * the manual (CPU[4] §4 "Maintenance Panel", dwg 30004122 fo. 35-37) says a
+     * forcing cycle writes the *register under exam* (displayed through BO), it
+     * does not step the program. So a forcing cycle must NOT advance SO — that
+     * is what lets the operator key an instruction across phases (force SO=E2,
+     * step to E0, force FO, step to the 0x64 beta, force L1, step to execute).
+     * The one exception is rotary position 13 (RS_SO), which forces SO/SI
+     * itself — that is how the operator sets the sequencer state.
+     *
+     * RICI ("disable next status") suppresses the advance in normal operation,
+     * letting a status be re-executed. */
+    uint8_t sel_norm = ge->register_selector == RS_NORM;
+    uint8_t sel_so   = ge->register_selector == RS_SO;
+    uint8_t advance_so = sel_norm ? !ge->console_switches.RICI : sel_so;
+    if (ge->RIA0 && advance_so) {
         ge_log(LOG_FUTURE, "last clock cpu, %02x in SO\n", ge->future_state);
         ge->rSO = ge->future_state;
     } else {
-        ge_log(LOG_FUTURE, "last clock cpu, not setting future state %02x in SO becuse RIA0 %d and !RICI %d\n", ge->future_state, ge->RIA0, !ge->console_switches.RICI);
+        ge_log(LOG_FUTURE, "last clock cpu, SO held at %02x (RIA0 %d advance %d)\n",
+               ge->rSO, ge->RIA0, advance_so);
     }
 
     /* after the end of a cpu work cycle, (ALTO / ALS71=1) is set if
