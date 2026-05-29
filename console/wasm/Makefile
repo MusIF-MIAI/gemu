@@ -17,6 +17,11 @@ $(LIBGE):
 clean:
 	rm -f main.o main.js main.wasm main.mjs
 
+# Containerised build (no local emscripten needed). Works with podman or docker;
+# override with CONTAINER=docker / a different WASM_IMAGE if desired.
+CONTAINER  ?= $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
+WASM_IMAGE ?= docker.io/emscripten/emsdk
+
 .PHONY: docker
 docker:
-	docker run --rm -v $(shell pwd)/../../:/src emscripten/emsdk make -C console/wasm
+	$(CONTAINER) run --rm -v $(shell pwd)/../../:/src $(WASM_IMAGE) make -C console/wasm

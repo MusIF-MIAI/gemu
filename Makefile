@@ -29,16 +29,32 @@ check: tests/tests ge tools
 
 # In-browser WebAssembly console (console/wasm/): the whole emulator compiled
 # with emscripten, served as console.html + main.mjs + main.wasm.
-#   make wasm      -- build it (needs emscripten 'emcc'; see console/wasm/Makefile
-#                     'docker' target for a no-local-emcc build). NOTE: this
-#                     rebuilds libge.a with emcc, so run 'make clean && make'
-#                     afterwards to restore the native build.
+#   make wasm      -- build it. Uses local 'emcc' if installed, otherwise runs
+#                     the emscripten/emsdk image via podman or docker (no local
+#                     emscripten needed). NOTE: the build rebuilds libge.a with
+#                     emcc, so run 'make clean && make' afterwards to restore the
+#                     native build.
 #   make wasm-run  -- serve console/wasm over HTTP and open it in a browser.
-WASM_PORT ?= 8120
+#
+# Override the container runtime / image if needed, e.g.:
+#   make wasm CONTAINER=docker
+WASM_PORT  ?= 8120
+WASM_IMAGE ?= docker.io/emscripten/emsdk
+CONTAINER  ?= $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
 
 .PHONY: wasm
 wasm:
-	$(MAKE) -C console/wasm
+	@if command -v emcc >/dev/null 2>&1; then \
+		echo ">> building wasm with local emcc"; \
+		$(MAKE) -C console/wasm; \
+	elif [ -n "$(CONTAINER)" ]; then \
+		echo ">> building wasm with $(CONTAINER) ($(WASM_IMAGE))"; \
+		$(CONTAINER) run --rm -v "$(CURDIR)":/src $(WASM_IMAGE) make -C console/wasm; \
+	else \
+		echo "error: 'make wasm' needs emscripten (emcc) or a container runtime."; \
+		echo "       install emscripten, or put 'podman'/'docker' on PATH."; \
+		exit 1; \
+	fi
 
 .PHONY: wasm-run
 wasm-run:
@@ -56,6 +72,13 @@ clean:
 	rm -f $(TESTS) $(TESTS:%.o=%.d)
 	$(MAKE) -C assembler clean
 	$(MAKE) -C disassembler clean
+	# NB: do NOT recurse into console/wasm clean here — the wasm build's own
+	# libge.a step calls `make -C ../.. clean`, so recursing would delete the
+	# console/wasm/main.o it just built and break `make wasm`. Clean the wasm
+	# artifacts explicitly with `make wasm-clean` / `make -C console/wasm clean`.
+
+.PHONY: wasm-clean
+wasm-clean:
 	$(MAKE) -C console/wasm clean
 
 .PHONY: docs
