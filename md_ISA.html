@@ -44,10 +44,10 @@
   <div class="headertitle"><div class="title">GE-120 / GE-130 Instruction Set Architecture</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md13"></a> A modern-style reference for a 1960s–70s byte-oriented mainframe.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md40"></a> A modern-style reference for a 1960s–70s byte-oriented mainframe.</p>
 <p>This document describes the instruction set of the <b>GE-120 / GE-115 / GE-130</b> family (descended from the Olivetti/GE <b>ELEA 9003</b> line). It is written in the shape of a contemporary ISA manual — encoding diagrams, operand conventions, condition-code tables, a per-instruction reference, and an opcode map — but the machine itself is a variable-length, character/decimal-oriented design of the IBM System/360 era.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md15"></a>
+<h1><a class="anchor" id="autotoc_md42"></a>
 0. Provenance and confidence</h1>
 <p>Per the project's evidence rules, this is reconstructed from primary material and should be read with explicit confidence labels.</p>
 <p><b>Primary evidence used here:</b></p>
@@ -81,9 +81,9 @@
 <blockquote class="doxtable">
 <p>&zwj;⚠️ Several manual section numbers below are quoted from the <code>alu_*.h</code> headers, which transcribe poorly-OCR'd pages. Where a value is OCR-derived rather than cleanly read, it is flagged. Treat those as <em>likely</em> and re-check page images. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md16"></a>
+<h1><a class="anchor" id="autotoc_md43"></a>
 &lt;/blockquote&gt;</h1>
-<h1><a class="anchor" id="autotoc_md17"></a>
+<h1><a class="anchor" id="autotoc_md44"></a>
 1. Machine model at a glance</h1>
 <ul>
 <li><b>Memory</b>: flat, <b>byte-addressable</b>, <b>16-bit addresses</b> → up to <b>64 KiB</b> (<code>mem[65536]</code>). Big-endian within multi-byte fields (most-significant byte at the lowest address).</li>
@@ -103,7 +103,7 @@
 </ul>
 <p><b>Loading software.</b> gemu has two input paths: a positional binary (<code>./ge prog.bin</code>) in the <b>unified format</b> (a small <code>origin</code>+<code>entry</code> header then the flat image — see <code><a class="el" href="binformat_8md.html">docs/binformat.md</a></code>), produced by <code>gasm</code> and by <code>gdis --image</code>; and <code>./ge --deck deck.cap</code>, the Hollerith card-reader path (<code><a class="el" href="punchcards_8md.html">docs/punchcards.md</a></code>). The binary path is the primary one and is what the real machine's card-reader interface will inject.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md19"></a>
+<h1><a class="anchor" id="autotoc_md46"></a>
 2. Data formats</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -118,7 +118,7 @@
 <td class="markdownTableBodyNone"><b>Packed decimal</b>   </td><td class="markdownTableBodyNone">two BCD digits per byte; <b>rightmost byte</b> = one digit (high nibble) + <b>sign</b> (low nibble)   </td><td class="markdownTableBodyNone">AP, SP, MP, DP, CMP, MVP, PKS/UPKS   </td></tr>
 </table>
 <p><b>Decimal sign codes</b> (<code><a class="el" href="alu__dec_8h.html" title="GE-130 packed/signed decimal ALU helpers.">alu_dec.h</a></code>, manual ~line 3155): low nibble <code>0xB</code>/<code>0xD</code> = negative; everything else = positive. Generated signs: <code>0xC</code> positive, <code>0xD</code> negative. Zoned "GE notation" zone nibble is <code>0x4</code> (vs <code>0xF</code> EBCDIC-style); <code>UPKS</code> always emits zone <code>0x4</code>, and <code>PKS</code> reads zone <code>0xA</code> in the rightmost source byte as a negative sign. *(Confidence: high for the model, medium for the exact zone constants — OCR.)*</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md47"></a>
 2.1 Character set — GE 100 Series Graphic Character Set</h2>
 <p>This is <b>not ASCII</b> (which did not yet exist). The machine's 64-character graphic set is documented in the GE <em>APS Reference Manual</em> (EDV-AFL vol. 03) Figure 3, p.16 — internal byte codes occupy **<code>0x40</code>–<code>0x5F</code>** and **<code>0xA0</code>–<code>0xBF</code>**:</p>
 <table class="markdownTable">
@@ -144,9 +144,9 @@
 <p>&zwj;✅ <b>Reconciled with the card transcoder (2026-05-29).</b> The CRZ subsystem transcoder (GIS 481 for IBM cards, GIS 482 for BULL) in <b>normal mode</b> *"transcodes the card code to suit the internal CPU code"* — CRZ[2] §5.3, "Table 3 — IBM card code and Internal GECB code equivalent" (CRZ vol. [2] p.113). Table 3 reads the <b>same</b> code as APS Figure 3: digit <code>0</code> = <code>0x40</code> (column <code>hgfe=0100</code>, rows <code>dcba=0000..1001</code> → <code>0x40</code>–<code>0x49</code>), and <code>J</code> = <code>0xA1</code> (from IBM punch <code>11/1</code>). So <b>the transcoder output IS the GE-100 internal graphic code</b> — CRZ and APS agree, and <code>gdis</code>'s <code>GE_GLYPH</code> table is correct.</p>
 <p>The outlier is **<code><a class="el" href="transcode_8c.html">transcode.c</a></code>'s <code>TC_NORMAL</code> table**, whose "GE char" output is actually <b>EBCDIC</b> (digits <code>0xF0</code>–<code>0xF9</code>, <code>X</code>=<code>0xE7</code>). It was fit to reproduce the externally-supplied <code>funktionalcpu.bin</code> (which is an EBCDIC rendering of the deck), <b>not</b> the machine's documented internal code. This affects only hypothetical NORMAL-mode <em>text</em> reads; program loading is unaffected because program decks are read in <b>by-pass/COLBIN</b> mode, whose B2R map is itself document-confirmed (<code><a class="el" href="punchcards_8md.html">docs/punchcards.md</a></code> §4.3). See <code><a class="el" href="transcode_8c.html">transcode.c</a></code> for the flagged caveat. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md21"></a>
+<h1><a class="anchor" id="autotoc_md48"></a>
 &lt;/blockquote&gt;</h1>
-<h1><a class="anchor" id="autotoc_md22"></a>
+<h1><a class="anchor" id="autotoc_md49"></a>
 3. Instruction formats and encoding</h1>
 <p>The <b>top two bits of the opcode</b> select the format (confirmed both by the opcode ranges in <code><a class="el" href="opcodes_8h.html">opcodes.h</a></code> and by the alpha-phase decode in <code><a class="el" href="msl-states_8c.html">msl-states.c</a>:124</code>, which routes on <code>FO</code> bits 6–7):</p>
 <table class="markdownTable">
@@ -159,7 +159,7 @@
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>0xC0–0xFF</code>   </td><td class="markdownTableBodyNone"><code>11</code>   </td><td class="markdownTableBodyNone"><b>PMM / SS</b> (two address)   </td><td class="markdownTableBodyNone">6 bytes   </td><td class="markdownTableBodyNone"><code>[op][LL][A1-hi][A1-lo][A2-hi][A2-lo]</code>   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md50"></a>
 3.1 The "aux char" (second byte) is overloaded</h2>
 <p>In <b>PM</b> instructions the second byte means different things per opcode group — this is the machine's way of packing a sub-function into one byte:</p>
 <div class="fragment"><div class="line">PM  [ opcode ][   aux char   ][  16-bit address  ]</div>
@@ -167,14 +167,14 @@
 <div class="line">       branches  -&gt; condition MASK (which CC values jump)   §6.2</div>
 <div class="line">       immediate -&gt; the IMMEDIATE operand byte K            §6.4</div>
 <div class="line">       register  -&gt; the 4-bit change-register code (N = code &amp; 7)  §6.3</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md24"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md51"></a>
 3.2 The &lt;tt&gt;LL&lt;/tt&gt; length byte (SS instructions)</h2>
 <div class="fragment"><div class="line">SS  [ opcode ][ LL ][ A1 (2 bytes) ][ A2 (2 bytes) ]</div>
 <div class="line">                |</div>
 <div class="line">  single-length ops:  field length = (LL &amp; 0xFF) + 1            (1..256 bytes)</div>
 <div class="line">  two-length decimals: len(A1) = (LL&gt;&gt;4)+1 ,  len(A2) = (LL&amp;0x0F)+1   (1..16)</div>
 </div><!-- fragment --><p>Source: <code>EXEC_SS</code> in <code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:210</code> (<code>len = (rL1 &amp; 0xff)+1</code>, <code>alen = ((rL1&gt;&gt;4)&amp;0xf)+1</code>, <code>blen = (rL1&amp;0x0f)+1</code>).</p>
-<h2><a class="anchor" id="autotoc_md25"></a>
+<h2><a class="anchor" id="autotoc_md52"></a>
 3.3 Worked encoding examples</h2>
 <div class="fragment"><div class="line">0A 00                  HLT          (P,  2 bytes) — halt</div>
 <div class="line">43 F0 17 5A            JC  ,0x175A  (PM, 4 bytes) — mask 0xF0 = jump on any CC</div>
@@ -182,17 +182,17 @@
 <div class="line">D2 04 0E00 0F00        MVC          (SS, 6 bytes) — move (4+1)=5 chars A2-&gt;A1</div>
 </div><!-- fragment --><p>(The <code>43 F0 17 5A</code> / <code>0A 00</code> pair is the actual idle-halt tail observed when running <code>DUMP1/funktionalcpu</code> to completion.)</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md27"></a>
+<h1><a class="anchor" id="autotoc_md54"></a>
 4. Addressing</h1>
 <p>This is the most important section for understanding the machine, and the part that most resembles — yet subtly differs from — a modern base+displacement ISA.</p>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md55"></a>
 4.1 Address space and ranges</h2>
 <ul>
 <li>Addresses are <b>16-bit</b>, so the architectural space is <b>0x0000–0xFFFF (64 KiB)</b>.</li>
 <li><b>Low memory is reserved</b>: the eight change registers occupy **<code>0x00F0–0x00FF</code>**. Programs in <code>DUMP1</code> load from **<code>0x0100</code>** upward (entry is <code>JU 0x0100</code>).</li>
 <li>A "**segment**" is a <b>4 KiB (0x1000)</b> window — the granularity of the 3-bit address modifier (§4.2).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md29"></a>
+<h2><a class="anchor" id="autotoc_md56"></a>
 4.2 The 16-bit address field: displacement + modifier</h2>
 <p>Every PM/SS memory address in an instruction is <b>not</b> a flat 16-bit pointer. It is split (<code>eff_addr</code> / <code>seg_base_of</code> in <code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:166</code>):</p>
 <div class="fragment"><div class="line">bit  15 | 14 13 12 | 11 10 9 8 7 6 5 4 3 2 1 0</div>
@@ -206,7 +206,7 @@
 <p><b>Effective address:</b></p>
 <div class="fragment"><div class="line">EA = displacement  +  change_register[ modifier ]</div>
 </div><!-- fragment --><p>This is exactly an IBM S/360-style <b>base + displacement</b> computation, but with the base register <em>selected by a 3-bit field inside the address</em> rather than a separate operand field.</p>
-<h2><a class="anchor" id="autotoc_md30"></a>
+<h2><a class="anchor" id="autotoc_md57"></a>
 4.3 Change registers and segment bases</h2>
 <ul>
 <li>Eight 16-bit registers at **<code>0x00F0–0x00FF</code>** (register <code>N</code> at <code>0xF0 + 2N</code>, big-endian).</li>
@@ -229,7 +229,7 @@
 <ul>
 <li>Programs <b>reprogram</b> a base with <code>LR</code> / <code>LA</code> / <code>AMR</code> (§6.3) to point a 4 KiB window anywhere in the 64 KiB space — this is how the CPU diagnostic sweeps memory from 8 K to 32 K: it advances a base register and re-issues the same displacement-relative accesses.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md31"></a>
+<h2><a class="anchor" id="autotoc_md58"></a>
 4.4 Relative vs. global addressing</h2>
 <p>The same encoding supports both styles; the difference is entirely in <b>what the selected base register holds</b>:</p>
 <ul>
@@ -243,7 +243,7 @@
 <blockquote class="doxtable">
 <p>&zwj;<b>Practical reading rule:</b> if a program never reloads its change registers, treat its addresses as <b>global/absolute</b> (identity bases make the encoding transparent). The moment you see <code>LR</code>/<code>LA</code>/<code>AMR</code> targeting a change register, subsequent accesses through that modifier are <b>relative</b> to the new base. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md59"></a>
 4.5 Operand-pointer conventions (a deliberate asymmetry)</h2>
 <p>Two different "where does the address point" rules coexist — match them to the instruction group or you will read fields backwards:</p>
 <ul>
@@ -252,9 +252,9 @@
 <li><b>Search fields</b> (<code>SR</code>/<code>SL</code>, <code><a class="el" href="alu__reg_8h.html" title="ALU helpers for GE-120/GE-130 register and memory-field operations.">alu_reg.h</a></code>): address = <b>leftmost</b> byte; <code>SR</code> scans left→right, <code>SL</code> scans right→left.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md34"></a>
+<h1><a class="anchor" id="autotoc_md61"></a>
 5. Condition code and flags</h1>
-<h2><a class="anchor" id="autotoc_md35"></a>
+<h2><a class="anchor" id="autotoc_md62"></a>
 5.1 Encoding</h2>
 <p>The CC is <b>2 bits</b>, held in bits <b>4 (high)</b> and <b>5 (low)</b> of a condition register: <code>cc = (bit4 &lt;&lt; 1) | bit5</code> (<code><a class="el" href="alu__cc_8c.html">alu_cc.c</a></code>). The four values, with the conventional meanings used across compare/arithmetic ops:</p>
 <table class="markdownTable">
@@ -269,7 +269,7 @@
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">3   </td><td class="markdownTableBodyNone">1 1   </td><td class="markdownTableBodyNone">result &gt; 0, or first operand **&gt;** second   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md36"></a>
+<h2><a class="anchor" id="autotoc_md63"></a>
 5.2 Two condition registers: &lt;tt&gt;FI&lt;/tt&gt; (working) and &lt;tt&gt;FA&lt;/tt&gt; (latched)</h2>
 <p>A subtle but load-bearing detail:</p>
 <ul>
@@ -278,10 +278,10 @@
 <li>The transfer **<code>ffFA ← ffFI</code>** happens once per cycle at pulse **<code>TO10</code>** (<code><a class="el" href="pulse_8c.html">pulse.c</a>:56</code>, <em>cpu fo. 129</em>).</li>
 </ul>
 <p><b>Consequence:</b> an instruction's condition becomes testable by the <em>next</em> instruction (it is latched at the following cycle boundary), not within the same micro-cycle. This is the classic "CC latched at cycle start" behaviour.</p>
-<h2><a class="anchor" id="autotoc_md37"></a>
+<h2><a class="anchor" id="autotoc_md64"></a>
 5.3 Console-visible flags (&lt;tt&gt;ffFA&lt;/tt&gt;)</h2>
 <p><code>OF</code> lamp = bit4 (overflow), <code>NZ</code> lamp = bit5 (non-zero), <code>IM</code> lamp = bit6 (<code><a class="el" href="console_8c.html">console.c</a>:29</code>). The other <code>ffFI</code> bits 0–6 are individually set/reset by the microcode (<code>CI70–CI86</code>) for interrupt/error conditioning.</p>
-<h2><a class="anchor" id="autotoc_md38"></a>
+<h2><a class="anchor" id="autotoc_md65"></a>
 5.4 Interrupts (architectural model — documented, not yet implemented)</h2>
 <p>From the descriptive manual CPU[4] <em>GE 120 CENTRAL PROCESSOR [4]</em>, §5.2 "Interruption" (dwg 30004122, folio ~41–42). An interrupt is taken <b>between instructions</b> (never mid-instruction):</p>
 <ol type="1">
@@ -298,10 +298,10 @@
 </ul>
 <p>Status in gemu: <b>not implemented.</b> The decode branch (<code>RINT &amp;&amp; !FA06</code> → state <code>0xF0</code>) and the FFs (<code>RINT</code>, <code>INTE</code>, <code><a class="el" href="ge_8h.html">ge.h</a></code>) exist, but state <code>0xF0</code> is an empty timing chart, <code>LPSR</code> is reserved (§6.11), there is no PSR save/restore, and no peripheral raises <code>RINT</code>. Implementing it needs: a PSR ⇄ OPSR/IPSR model, the <code>LPSR</code> execution, the state-<code>0xF0</code> interrupt-sequence timing chart (still to be located as a page image), and an interrupt-capable peripheral. Confidence: high for the model (clean prose OCR), medium for the exact IPSR address.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md40"></a>
+<h1><a class="anchor" id="autotoc_md67"></a>
 6. Instruction reference</h1>
 <p>Grouped by function. Opcodes are hex from <code><a class="el" href="opcodes_8h.html">opcodes.h</a></code>. "CC" notes whether the condition code is set. "St" is the implementation status legend from §0 (✅ wired · ◑ ALU-only · ○ recognized · ✗ reserved).</p>
-<h2><a class="anchor" id="autotoc_md41"></a>
+<h2><a class="anchor" id="autotoc_md68"></a>
 6.1 Control / status — P format (2 bytes)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -324,7 +324,7 @@
 <blockquote class="doxtable">
 <p>&zwj;⚠️ The five <code>0x02</code> sub-functions (ENS/INS/LON/LOFF/LOLL) are <b>decoded</b> in <code><a class="el" href="msl-states_8c.html">msl-states.c</a></code> (<code>ens</code>/<code>ins</code>/<code>lon_loll</code>/<code>loff</code>) but their exact architectural effect is <b>not verified</b> here — names are suggestive only. Confidence: low. Recommended next step: locate the interrupt/console-indicator pages of the CPU manual and confirm each sub-function. </p>
 </blockquote>
-<h3><a class="anchor" id="autotoc_md42"></a>
+<h3><a class="anchor" id="autotoc_md69"></a>
 Indicative HLT codes (diagnostic convention)</h3>
 <p>The diagnostic decks use <b>HLT as a status/error stop</b> and identify the reason by an <em>indicative code</em> (read off the console address/data display, or carried in a SMAC "C/S WORD"). Documented in CPU[1] (DIAGNOSTIC ORGANIZATION):</p>
 <table class="markdownTable">
@@ -352,7 +352,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <td class="markdownTableBodyNone"><code>0x00</code> / unmatched   </td><td class="markdownTableBodyNone">fall through to the <b>idle HLT at <code>0x175A</code></b> (<code>HLT; JU 0x175A</code>)   </td></tr>
 </table>
 <p>Confirmed in-image halts: **<code>0x175A</code>** (idle / no option), a block of <code>0A</code> (HLT) bytes at **<code>0x1460</code>–<code>0x14A4</code>** = the memory-test <b>error-halt table</b> (the documented <code>1466</code>–<code>146B</code> codes are halts inside it), and **<code>0x19DE</code>** = <code>HLT; JU 0x0104</code> = the "End" halt + restart. The earlier-cited <code>3465</code> is <b>not</b> an in-image address (image ends <code>0x1C53</code>) — likely a displayed/runtime value, left unverified. The selected memory tests cannot run to their halts in gemu yet: they exercise RAM above the loaded image and peripheral output the emulator does not realistically model, so options <code>0x10</code>–<code>0x80</code> wander near <code>0x2003</code> instead of halting (only <code>0x00</code> reaches <code>0x175A</code>). Confidence: high for the dispatch + halt addresses (disassembled), low for the per-error code values.</p>
-<h2><a class="anchor" id="autotoc_md43"></a>
+<h2><a class="anchor" id="autotoc_md70"></a>
 6.2 Conditional &amp; unconditional branches — PM format (4 bytes)</h2>
 <p>The branch <b>target</b> is the 4th/5th bytes resolved through §4.2 (<code>CI00s</code>, <code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:180</code>). Whether the branch is taken is decided by <code>verified_condition</code> (<code><a class="el" href="signals_8h.html" title="Signals.">signals.h</a>:75</code>): a <b>4-bit mask <code>M</code> = aux char bits 4–7</b> is ANDed against the current CC:</p>
 <div class="fragment"><div class="line">take branch if:  (M7 &amp; cc==0) | (M6 &amp; cc==1) | (M5 &amp; cc==2) | (M4 &amp; cc==3)</div>
@@ -378,7 +378,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <blockquote class="doxtable">
 <p>&zwj;⚠️ <code>JU</code>/<code>JCC</code> share the mask path with <code>JC</code> in the current code (mask read from the aux char <code>L1</code>); the comment in <code><a class="el" href="opcodes_8h.html">opcodes.h</a>:40</code> notes JU as "mask 0xF0" — i.e. the <em>family</em> low-nibble distinguishes the variants. Exact mask source per variant: medium confidence. <code>JRT</code> (<code>0x41</code>) has an assigned opcode but <b>no decode path</b> (<code>jc_js1_js2_jie</code> does not list it) — reserved/unimplemented. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md44"></a>
+<h2><a class="anchor" id="autotoc_md71"></a>
 6.3 Register &amp; address — PM format (4 bytes)</h2>
 <p>Operate on the memory-mapped <b>change registers</b> (§4.3). The aux char carries the register code; index <code>N = aux &amp; 7</code> → register at <code>0xF0 + 2N</code> (<code>reg_addr_of</code>, <code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:141</code>). The memory operand address is resolved with the segment base from <code>L2</code>'s modifier (<code>eff_v1_l2</code>).</p>
 <table class="markdownTable">
@@ -399,7 +399,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><b>TM</b>   </td><td class="markdownTableBodyNone"><code>91</code>   </td><td class="markdownTableBodyNone">Test under Mask: <code>mem[EA] &amp; K</code>; CC=2 if all selected bits 0, else 3 (no write).   </td><td class="markdownTableBodyNone">set   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md45"></a>
+<h2><a class="anchor" id="autotoc_md72"></a>
 6.4 Immediate (single byte &lt;tt&gt;K&lt;/tt&gt;) — PM format (4 bytes)</h2>
 <p>The aux char <b>is</b> the immediate operand <code>K</code>; the address selects the target byte (<code>eff_v1_l2</code>). Dispatched from beta via <code>pm_imm_exec</code> (<code><a class="el" href="msl-states_8c.html">msl-states.c</a>:325</code>).</p>
 <table class="markdownTable">
@@ -421,7 +421,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <blockquote class="doxtable">
 <p>&zwj;Note: <code>CI</code> and <code>CMI</code> are documented as distinct mnemonics but both route to <code>alu_ci</code> here (<code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:131</code>). If the real machine distinguishes signed vs logical compare, that distinction is not yet modelled. Confidence: medium. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md46"></a>
+<h2><a class="anchor" id="autotoc_md73"></a>
 6.5 Character / logical strings — SS format (6 bytes)</h2>
 <p>Fields point to the <b>leftmost</b> byte, processed <b>left-to-right</b>, <code>LL+1</code> bytes. Dispatched by <code>EXEC_SS</code> (<code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:210</code>).</p>
 <table class="markdownTable">
@@ -440,7 +440,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><b>TL</b>   </td><td class="markdownTableBodyNone"><code>DC</code>   </td><td class="markdownTableBodyNone">Translate: each byte <code>b</code> of A1 ← <code>mem[A2 + b]</code> (A2 = 256-aligned table). Manual "TR".   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md47"></a>
+<h2><a class="anchor" id="autotoc_md74"></a>
 6.6 Binary arithmetic — SS format (6 bytes)</h2>
 <p>Fields point to the <b>rightmost</b> byte; big-endian; right-to-left.</p>
 <table class="markdownTable">
@@ -454,7 +454,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <blockquote class="doxtable">
 <p>&zwj;Wired via <code>EXEC_SS</code> (two-length encoding: <code>L1=(LL&gt;&gt;4)+1</code>, <code>L2=(LL&amp;0xF)+1</code>, full byte counts). Covered by <code>tests/exec.c</code> (<code>ab_adds_binary</code>, <code>sb_subtracts_binary</code>). </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md48"></a>
+<h2><a class="anchor" id="autotoc_md75"></a>
 6.7 Unpacked (zoned) decimal arithmetic — SS format (6 bytes)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -467,7 +467,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <blockquote class="doxtable">
 <p>&zwj;Wired (two-length encoding, full byte counts; result zone cleared to 0). Tests: <code>ad_adds_unpacked_decimal</code>, <code>sd_subtracts_unpacked_decimal</code>. <b>CC tables for AD/SD remain OCR-inferred</b> (<code><a class="el" href="alu__bin_8h.html" title="Binary and decimal (unpacked) arithmetic helpers for the GE-120/130.">alu_bin.h</a>:34</code>) — medium confidence; re-check page images. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md49"></a>
+<h2><a class="anchor" id="autotoc_md76"></a>
 6.8 Packed decimal arithmetic — SS format (6 bytes)</h2>
 <p>Two-length encoding: <code>len(A1)=(LL&gt;&gt;4)+1</code>, <code>len(A2)=(LL&amp;0xF)+1</code>. Rightmost byte holds a digit + the sign nibble. CC: 0 overflow, 1 <code>&lt;0</code>, 2 <code>=0</code>, 3 <code>&gt;0</code> (<code><a class="el" href="alu__dec_8h.html" title="GE-130 packed/signed decimal ALU helpers.">alu_dec.h</a>:24</code>).</p>
 <table class="markdownTable">
@@ -486,7 +486,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><b>MVP</b>   </td><td class="markdownTableBodyNone"><code>E8</code>   </td><td class="markdownTableBodyNone">Move Packed: A1 ← A2 (sign preserved from A2).   </td><td class="markdownTableBodyNone">set   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md50"></a>
+<h2><a class="anchor" id="autotoc_md77"></a>
 6.9 Format conversion / edit — SS format (6 bytes)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -502,7 +502,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><b>EDT</b>   </td><td class="markdownTableBodyNone"><code>DE</code>   </td><td class="markdownTableBodyNone">Edit packed source into a pattern at A1 (fill char, digit-substitute / zero-suppress controls <code>0x20</code>/<code>0x21</code>/<code>0x22</code>).   </td><td class="markdownTableBodyNone">set   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md51"></a>
+<h2><a class="anchor" id="autotoc_md78"></a>
 6.10 Quartet &amp; search — SS format (6 bytes)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -519,7 +519,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <blockquote class="doxtable">
 <p>&zwj;<b>MVQ/CMQ</b> wired (single-length: <code>len = (LL&amp;0xFF)+1</code>); tests <code>mvq_moves_digit_preserving_zone</code>, <code>cmq_compares_quartets_high</code>. <code>MVQ</code> zone handling carries an OCR uncertainty (<code><a class="el" href="alu__reg_8h.html" title="ALU helpers for GE-120/GE-130 register and memory-field operations.">alu_reg.h</a>:266</code>). ◑ <b>SR/SL</b> remain unwired: their model-byte source and result-register encoding in the SS format are unconfirmed — held for the manual-evidence pass. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md52"></a>
+<h2><a class="anchor" id="autotoc_md79"></a>
 6.11 Peripheral / I-O &amp; status — PM format</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -536,9 +536,9 @@ Indicative HLT codes (diagnostic convention)</h3>
 <blockquote class="doxtable">
 <p>&zwj;The PER-family is decoded by <code>per_peri</code> (<code><a class="el" href="msl-states_8c.html">msl-states.c</a>:348</code>) and drives the connector / card-reader handshake. The "examine abnormal conditions" (EPER) sub-case maps channel status into the CC (<code>CE_chan1_status</code>, <code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:291</code>). <code>LPSR</code> (<code>0x9D</code>) has an opcode but no decode path yet. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md53"></a>
+<h1><a class="anchor" id="autotoc_md80"></a>
 &lt;/blockquote&gt;</h1>
-<h1><a class="anchor" id="autotoc_md54"></a>
+<h1><a class="anchor" id="autotoc_md81"></a>
 7. Execution model (context)</h1>
 <p>Instructions are not executed by a hard-wired decoder but by a <b>micro-sequenced</b> engine driven by data tables (the <em>Sequence Logic Matrix</em>, MSL). Each instruction passes through CPU <b>phases</b>, advanced by timing pulses <code>TO00…TI10</code>:</p>
 <ol type="1">
@@ -548,7 +548,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 </ol>
 <p>The CC computed in beta (<code>ffFI</code>) becomes visible to the next instruction's branch test when latched into <code>ffFA</code> at the following <code>TO10</code> (§5.2).</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md56"></a>
+<h1><a class="anchor" id="autotoc_md83"></a>
 8. Open questions / low-confidence items</h1>
 <p>Read these against page images, not the OCR text layer (the manual OCR is too garbled for byte-accurate use — render the specific page with <code>pdftoppm</code> and read it). External mnemonic/directive authority: the GE <b>APS</b> manual (EDV-AFL 03).</p>
 <table class="markdownTable">
@@ -578,7 +578,7 @@ Indicative HLT codes (diagnostic convention)</h3>
 <td class="markdownTableBodyNone">isolation decks (<code>isolationcpu0x</code>)   </td><td class="markdownTableBodyNone">distinct card framing (binary cols 1–76, Hollerith 77–80) + SMAC/INTE interpretation   </td><td class="markdownTableBodyNone">CPU[1] folio 52/53a + CPU[3]; see <code><a class="el" href="punchcards_8md.html">docs/punchcards.md</a></code> §5   </td></tr>
 </table>
 <hr  />
-<h1><a class="anchor" id="autotoc_md58"></a>
+<h1><a class="anchor" id="autotoc_md85"></a>
 9. Opcode map (quick reference, sorted by byte)</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -627,10 +627,10 @@ Indicative HLT codes (diagnostic convention)</h3>
 <hr  />
 <p><em>Generated from the <code>gemu</code> emulator sources (the project's executable transcription of the GE-130 Programmed Description Specification). Treat OCR-flagged values as provisional pending page-image review.</em></p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md61"></a>
+<h1><a class="anchor" id="autotoc_md88"></a>
 Appendix A — Assembler instruction dictionary</h1>
 <p>This appendix is the language reference for **<code>gasm</code>**, the standalone assembler in <code>software/gemu/assembler/</code>. It restates the encoding of §§3–6 in the concrete form the assembler accepts, and is the authoritative dictionary of every mnemonic and operand variant. The assembler's opcode/aux/format tables are transcribed from <code><a class="el" href="opcodes_8h.html">opcodes.h</a></code>, <code><a class="el" href="msl-commands_8c.html">msl-commands.c</a></code>, and <code><a class="el" href="signals_8h.html" title="Signals.">signals.h</a></code>; this appendix and <code>gasm.c</code> are meant to be kept in sync.</p>
-<h2><a class="anchor" id="autotoc_md62"></a>
+<h2><a class="anchor" id="autotoc_md89"></a>
 A.1 Source format</h2>
 <div class="fragment"><div class="line">; comment                 (# also begins a comment)</div>
 <div class="line">label:                    label definition  (symbol = current address)</div>
@@ -654,7 +654,7 @@ A.1 Source format</h2>
 <td class="markdownTableBodyNone"><code>DS n</code>   </td><td class="markdownTableBodyNone">n   </td><td class="markdownTableBodyNone">reserve <code>n</code> zero bytes   </td></tr>
 </table>
 <p><b>Expressions</b> — terms are hex (<code>0x1F</code>/<code>$1F</code>), decimal, char (&lsquo;'A&rsquo;<code>), or a symbol, combined with</code>+<code>/</code>-<code>(e.g.</code>buf+4<code>,</code>0x100-1`).</p>
-<h2><a class="anchor" id="autotoc_md63"></a>
+<h2><a class="anchor" id="autotoc_md90"></a>
 A.2 Operand kinds</h2>
 <ul>
 <li><b>K</b> — an 8-bit immediate (<code>0x00–0xFF</code>).</li>
@@ -673,10 +673,10 @@ A.2 Operand kinds</h2>
 <td class="markdownTableBodyNone"><code>disp(N)</code>   </td><td class="markdownTableBodyNone"><code>field = (N&lt;&lt;12)\|(disp&amp;0xFFF)</code>   </td><td class="markdownTableBodyNone"><code>disp + change_register[N]</code>   </td></tr>
 </table>
 <p>The 16-bit address field is <code>(modifier&lt;&lt;12) \| displacement</code> (§4.2); bit 15 is unused. Absolute addresses above <code>0x7FFF</code> cannot be encoded directly — load a base register (<code>LA</code>/<code>LR</code>) and use <code>disp(N)</code>.</p>
-<h2><a class="anchor" id="autotoc_md64"></a>
+<h2><a class="anchor" id="autotoc_md91"></a>
 A.3 Master dictionary</h2>
 <p><code>Op</code>/<code>2nd</code> are hex. <code>Len</code> is the instruction length in bytes. <b>St</b> is the emulator status from §0 (✅ wired · ◑ ALU-only · ○ recognized · ✗ reserved/undecoded).</p>
-<h3><a class="anchor" id="autotoc_md65"></a>
+<h3><a class="anchor" id="autotoc_md92"></a>
 A.3.1 Control — P format (2 bytes, no operands)</h3>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -696,7 +696,7 @@ A.3.1 Control — P format (2 bytes, no operands)</h3>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>LOLL</code>   </td><td class="markdownTableBodyNone"><code>LOLL</code>   </td><td class="markdownTableBodyNone"><code>02</code>   </td><td class="markdownTableBodyNone"><code>91</code>   </td><td class="markdownTableBodyNone">2   </td><td class="markdownTableBodyNone">Purpose unclear *(unverified)*.   </td><td class="markdownTableBodyNone">○   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md66"></a>
+<h3><a class="anchor" id="autotoc_md93"></a>
 A.3.2 Branches — PM format (4 bytes)</h3>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -735,7 +735,7 @@ A.3.2 Branches — PM format (4 bytes)</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>JOV</code>   </td><td class="markdownTableBodyNone"><code>80</code>   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone">overflow / special (op-specific, see §5.1)   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md67"></a>
+<h3><a class="anchor" id="autotoc_md94"></a>
 A.3.3 Register &amp; address — PM format (4 bytes)</h3>
 <p><code>aux = N &amp; 7</code> selects change register <code>N</code> (memory-mapped at <code>0xF0 + 2N</code>).</p>
 <table class="markdownTable">
@@ -754,7 +754,7 @@ A.3.3 Register &amp; address — PM format (4 bytes)</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>SMR</code>   </td><td class="markdownTableBodyNone"><code>SMR N, addr</code>   </td><td class="markdownTableBodyNone"><code>BF</code>   </td><td class="markdownTableBodyNone">4   </td><td class="markdownTableBodyNone"><code>reg[N] -= mem16[addr]</code>; set CC.   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md68"></a>
+<h3><a class="anchor" id="autotoc_md95"></a>
 A.3.4 Immediate — PM format (4 bytes)</h3>
 <p><code>aux = K</code> (the immediate byte); <code>addr</code> selects the target byte.</p>
 <table class="markdownTable">
@@ -773,7 +773,7 @@ A.3.4 Immediate — PM format (4 bytes)</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>TM</code>   </td><td class="markdownTableBodyNone"><code>TM K, addr</code>   </td><td class="markdownTableBodyNone"><code>91</code>   </td><td class="markdownTableBodyNone">4   </td><td class="markdownTableBodyNone">test <code>mem[addr] &amp; K</code>; set CC (no write).   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md69"></a>
+<h3><a class="anchor" id="autotoc_md96"></a>
 A.3.5 Peripheral / misc — PM format (4 bytes, generic &lt;tt&gt;aux, addr&lt;/tt&gt;)</h3>
 <p>The Z/aux byte for the PER family encodes channel and sub-operation; <code>gasm</code> takes it as a raw <code>aux</code> byte (see §6.11 for the bit meanings).</p>
 <table class="markdownTable">
@@ -793,7 +793,7 @@ A.3.5 Peripheral / misc — PM format (4 bytes, generic &lt;tt&gt;aux, addr&lt;/
 <blockquote class="doxtable">
 <p>&zwj;<code>LPSR</code> and <code>JRT</code> have assigned opcodes but <b>no decode path</b> in the current emulator: they assemble but will not execute end-to-end. </p>
 </blockquote>
-<h3><a class="anchor" id="autotoc_md70"></a>
+<h3><a class="anchor" id="autotoc_md97"></a>
 A.3.6 SS single-length — SS format (6 bytes): &lt;tt&gt;len, A1, A2&lt;/tt&gt;</h3>
 <p><code>LL = len-1</code>, <code>len</code> ∈ <code>1..256</code>. Fields point to the <b>leftmost</b> byte (§4.5).</p>
 <table class="markdownTable">
@@ -822,7 +822,7 @@ A.3.6 SS single-length — SS format (6 bytes): &lt;tt&gt;len, A1, A2&lt;/tt&gt;
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>SL</code>   </td><td class="markdownTableBodyNone"><code>SL len, A1, A2</code>   </td><td class="markdownTableBodyNone"><code>DB</code>   </td><td class="markdownTableBodyNone">6   </td><td class="markdownTableBodyNone">Search left; result address → reg 7. *(encoding unconfirmed)*   </td><td class="markdownTableBodyNone">◑   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md71"></a>
+<h3><a class="anchor" id="autotoc_md98"></a>
 A.3.7 SS two-length — SS format (6 bytes): &lt;tt&gt;l1, l2, A1, A2&lt;/tt&gt;</h3>
 <p><code>LL = ((l1-1)&lt;&lt;4) | (l2-1)</code>, with <code>l1, l2</code> ∈ <code>1..16</code>. Decimal/binary fields point to the <b>rightmost</b> byte and are processed right-to-left (§4.5).</p>
 <table class="markdownTable">
@@ -860,7 +860,7 @@ A.3.7 SS two-length — SS format (6 bytes): &lt;tt&gt;l1, l2, A1, A2&lt;/tt&gt;
 <blockquote class="doxtable">
 <p>&zwj;<code>SR</code> (<code>D9</code>) and <code>SL</code> (<code>DB</code>) — the search instructions — assemble as plain single-length SS ops (so they round-trip with the <code>gdis</code> disassembler), but their true model-byte/result-register encoding is <b>unconfirmed</b> (§6.10, ◑ ALU-only in gemu). Treat the operand layout as provisional until verified. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md72"></a>
+<h2><a class="anchor" id="autotoc_md99"></a>
 A.4 Round-trip encoding examples</h2>
 <p>These are the assembler's regression vectors; each matches the emulator decode (the first four are the §3.3 worked examples; <code>MVI 0xAB,0x0050</code> is the <code>tests/exec.c</code> <code>mvi_stores_immediate</code> vector).</p>
 <table class="markdownTable">
@@ -885,11 +885,11 @@ A.4 Round-trip encoding examples</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>MVC 4, 0x100(2), 0xFFF(7)</code>   </td><td class="markdownTableBodyNone"><code>D2 03 21 00 7F FF</code>   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md73"></a>
+<h2><a class="anchor" id="autotoc_md100"></a>
 A.5 Loading the output</h2>
 <p><code>gasm</code> writes pure machine code with no header. Default origin is <code>0x0000</code>, which matches <code><a class="el" href="ge_8c.html#aee3e3f7e190f4c31a2fd5e26dfddbc2e" title="Copy a program at the start of memory.">ge_load_program()</a></code> (copies the image to <code>mem[0]</code>; reset leaves <code>PO = 0</code>) — the path the unit tests use. For card-deck-style programs that the integrated reader bootstraps at <code>0x0100</code> (the <code>DUMP1</code>/<code>funktionalcpu</code> convention), assemble with <code>--org 0x0100</code>. See <code>software/gemu/assembler/README.md</code> for the full CLI and a <code>ge_load_program</code> harness snippet.</p>
 <hr  />
-<h2><a class="anchor" id="autotoc_md75"></a>
+<h2><a class="anchor" id="autotoc_md102"></a>
 11. APS mnemonic cross-check (EDV-AFL 03, "Classification of instructions by APS format")</h2>
 <p>The GE <em>APS Reference Manual</em> (EDV-AFL vol. 03, printed pp. 128–129, PDF pp. 142–143) lists every primary (machine) instruction grouped by format. This cross-checks gasm's <code>MNEMS</code> / <code><a class="el" href="opcodes_8h.html">opcodes.h</a></code> against the documented GE mnemonics.</p>
 <p><b>Confirmed faithful</b> — the core data/control ISA matches the manual exactly:</p><ul>
