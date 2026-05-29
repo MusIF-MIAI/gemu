@@ -23,8 +23,8 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 | 23 | 14023130   | FASE ALFA / ALPHA PHASE | `e2/e3`, `e0`, `e4`, `e6`, `e5`, `e7` (+ `ec/ed`, `ee/ef` indexing) | ✅ faithful (alpha + modified-index micro-cycle) |
 | 24 | 14023130A  | DISPLAY SEQUENCE | `00` | ✅ verified row-by-row |
 | 25 | 14023130B  | FORCING SEQUENCE | `08` | ◑ states match; a few bracket conditions need a higher-DPI/physical recheck |
-| 26 | 14023130C  | INTERRUPTION | `F0` | ✗ **not implemented** (slot empty in `msl_timings`) |
-| 27 | 14023130D  | LPSR SEQUENCE | (LPSR `0x9d`) | ✗ not implemented (opcode recognized, no decode) |
+| 26 | 14023130C  | INTERRUPTION | `F0`,`D2`,`D3`,`D0`,`D1` | ✅ implemented (PSR save → 0x0300) + test |
+| 27 | 14023130D  | LPSR SEQUENCE | `C2`,`C3`,`C0`,`C1` | ✅ implemented as the interrupt restore (load new PSR ← 0x0304); the `0x9d` LPSR *instruction* entry still TODO |
 | 28 | 14023130…  | JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL SEQUENCES | `64/65` (`jc_js1_js2_jie`, `nop`, `lon_loll`, `ins`, `ens`, `loff`, HLT) | ◑ hybrid (functionally wired, not per-clock) |
 | 29 | 14023130E  | JU‑JC‑JRT‑JS‑JE SEQUENCE | `64/65` jump path (`CI00s`, `verified_condition`, `JRT_LINK`) | ◑ hybrid (validated by `tests/exec.c` jumps + JRT) |
 | 30 | 14023130…  | LR‑AMR‑CMR‑SMR‑STR SEQUENCES | `64/65` (`EXEC_LR/STR/CMR/AMR/SMR`) | ◑ hybrid (validated by `tests/exec.c` reg ops) |
@@ -125,11 +125,21 @@ not cycle-accurate** to these sheets.
   and the deck bootstrap, so changes are risky — recheck against the physical
   foldouts before editing.
 
-## Not implemented (flow-chart sheets with no gemu state)
-- **Interruption** (sheet 26, state `F0`): the `INTE = RINT·/MASC` branch out of
-  alpha exists in `e2/e3`, but state `F0` itself is an empty slot — interrupts
-  are not serviced.
-- **LPSR** (sheet 27, `0x9d`): opcode recognized, not decoded.
+### Interruption + LPSR — ✅ implemented this session
+- Sheets 26/27. The `INTE = RINT·/MASC` branch in `e2/e3` already routed to
+  `0xF0` (`CU04`), but `F0` and the chain were empty slots. Added states
+  `F0→D2→D3→D0→D1→C2→C3→C0→C1→alpha` (hybrid `INT_*` commands): F0–D1 **save**
+  the PSR (status byte `b5←FA04,b4←FA05,b0←FA06`; then `0`; then PO hi/lo) to the
+  fixed store **0x0300**; C2–C1 are the **LPSR** load of the new PSR from
+  **0x0304**, vectoring to its PO (the handler) and restoring `FI04/05/06`.
+  `RINT` is acknowledged (cleared) in F0. Validated by `tests/interrupt.c`
+  (`save_and_vector`, `masked_does_not_divert`). The path is dormant for the
+  deck/other tests (`RINT` is never asserted there).
+
+## Still not implemented
+- **LPSR as an instruction** (`0x9d`): the interrupt *uses* the LPSR load states
+  (C2–C1), but the `LPSR 0x9d` opcode is recognized and not decoded to enter
+  them from beta.
 
 ## How to re-verify a sheet
 ```sh

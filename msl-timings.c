@@ -199,10 +199,10 @@ struct msl_timing_state msl_timings[0xff] = {
     /* bd */ { },
     /* be */ { },
     /* bf */ { },
-    /* c0 */ { },
-    /* c1 */ { },
-    /* c2 */ { },
-    /* c3 */ { },
+    /* c0 */ {state_C0},  /* LPSR: load PO high (interrupt restore)  */
+    /* c1 */ {state_C1},  /* LPSR: load PO low -> alpha               */
+    /* c2 */ {state_C2},  /* LPSR: load status byte (from D1 interrupt)*/
+    /* c3 */ {state_C3},  /* LPSR: skip the zero byte                 */
     /* c4 */ { },
     /* c5 */ { },
     /* c6 */ { },
@@ -215,10 +215,10 @@ struct msl_timing_state msl_timings[0xff] = {
     /* cd */ { },
     /* ce */ { },
     /* cf */ { },
-    /* d0 */ { },
-    /* d1 */ { },
-    /* d2 */ { },
-    /* d3 */ { },
+    /* d0 */ {state_D0},  /* interrupt save: PO high  */
+    /* d1 */ {state_D1},  /* interrupt save: PO low   */
+    /* d2 */ {state_D2},  /* interrupt save: status   */
+    /* d3 */ {state_D3},  /* interrupt save: zero byte*/
     /* d4 */ { },
     /* d5 */ { },
     /* d6 */ { },
@@ -247,7 +247,7 @@ struct msl_timing_state msl_timings[0xff] = {
     /* ed */ {state_ED_EC},
     /* ee */ {state_EF_EE},  /* indexing done: route to op2 / SS exec / beta    */
     /* ef */ {state_EF_EE},
-    /* f0 */ { },
+    /* f0 */ {state_F0},  /* interruption entry (from alpha INTE) */
     /* f1 */ { },
     /* f2 */ { },
     /* f3 */ { },

@@ -637,3 +637,84 @@ static void CU20(struct ge *ge) {
     ge->rSO = ge->rSI = ge->future_state;
     ge_log(LOG_FUTURE, "forcing state with CU20: %2x\n", ge->future_state);
 }
+
+/* Interruption routine (flow chart 14023130C, CPU[7] render-pg 26) + the LPSR
+ * load it chains into (14023130D, render-pg 27).
+ *
+ * Entered from alpha (e2/e3) when INTE = RINT & /MASC: the state graph is
+ *   F0 -> D2 -> D3 -> D0 -> D1 -> C2 -> C3 -> C0 -> C1 -> alpha
+ * F0..D1 SAVE the current Program Status Register (PSR) to the fixed store at
+ * 0x0300; C2..C1 are the LPSR sequence that LOADS the new PSR from 0x0304 and
+ * resumes at its PO (the handler). The PSR is 4 bytes (CPU[4] PSR diagram):
+ *   byte0 = status: bit5<-FI04, bit4<-FI05, bit0<-FI06   (FA = latched FI)
+ *   byte1 = 0
+ *   byte2 = PO high (bits 8-15)
+ *   byte3 = PO low  (bits 0-7)
+ * Implemented as hybrid one-shot commands at TI06 (the established gemu idiom;
+ * the per-clock datapath is not transcribed). V1 walks the store; the states
+ * are otherwise inert. See docs/flowchart-sheets.md. */
+static uint8_t int_parity(uint8_t b) { return (__builtin_popcount(b) & 1) ? 0 : 1; }
+static void int_store(struct ge *ge, uint16_t a, uint8_t b) {
+    ge->mem[a] = b;
+    ge->mem_parity[a]  = int_parity(b);
+    ge->mem_written[a] = 1;
+}
+
+/* F0: build the save address (0x0300) into V1; acknowledge the request. */
+static void INT_F0(struct ge *ge) {
+    ge->rV1 = 0x0300;        /* "Set N009-08 / 0i->NO2,1 / Res N010-15 / NO->V1" */
+    ge->RINT = 0;            /* acknowledge: clear the request so we don't re-enter */
+    ge->future_state = 0xd2;
+}
+/* D2: store the status byte (FA04->b5, FA05->b4, FA06->b0). */
+static void INT_D2(struct ge *ge) {
+    uint8_t st = (uint8_t)((BIT(ge->ffFA, 4) << 5) |
+                           (BIT(ge->ffFA, 5) << 4) |
+                           (BIT(ge->ffFA, 6) << 0));
+    int_store(ge, ge->rV1, st);
+    ge->rV1++;
+    ge->future_state = 0xd3;
+}
+/* D3: store the zero byte. */
+static void INT_D3(struct ge *ge) {
+    int_store(ge, ge->rV1, 0x00);
+    ge->rV1++;
+    ge->future_state = 0xd0;
+}
+/* D0: store PO high byte (PO4,3). */
+static void INT_D0(struct ge *ge) {
+    int_store(ge, ge->rV1, (uint8_t)(ge->rPO >> 8));
+    ge->rV1++;
+    ge->future_state = 0xd1;
+}
+/* D1: store PO low byte (PO2,1) -> then to LPSR (C2). */
+static void INT_D1(struct ge *ge) {
+    int_store(ge, ge->rV1, (uint8_t)(ge->rPO & 0xff));
+    ge->rV1++;
+    ge->future_state = 0xc2;
+}
+/* C2 (LPSR): load the new status byte, restore FI04/05/06. */
+static void INT_C2(struct ge *ge) {
+    uint8_t st = ge->mem[ge->rV1];
+    if (BIT(st, 5)) SET_BIT(ge->ffFI, 4); else RESET_BIT(ge->ffFI, 4);
+    if (BIT(st, 4)) SET_BIT(ge->ffFI, 5); else RESET_BIT(ge->ffFI, 5);
+    if (BIT(st, 0)) SET_BIT(ge->ffFI, 6); else RESET_BIT(ge->ffFI, 6);
+    ge->rV1++;
+    ge->future_state = 0xc3;
+}
+/* C3 (LPSR): skip the zero byte. */
+static void INT_C3(struct ge *ge) {
+    ge->rV1++;
+    ge->future_state = 0xc0;
+}
+/* C0 (LPSR): load the new PO high byte. */
+static void INT_C0(struct ge *ge) {
+    ge->rPO = (uint16_t)((ge->mem[ge->rV1] << 8) | (ge->rPO & 0x00ff));
+    ge->rV1++;
+    ge->future_state = 0xc1;
+}
+/* C1 (LPSR): load the new PO low byte -> resume in alpha at the handler. */
+static void INT_C1(struct ge *ge) {
+    ge->rPO = (uint16_t)((ge->rPO & 0xff00) | ge->mem[ge->rV1]);
+    ge->future_state = 0xe2;
+}

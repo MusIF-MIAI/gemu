@@ -356,6 +356,29 @@ static const struct msl_timing_chart state_EF_EE[] = {
     { END_OF_STATUS, 0, 0 }
 };
 
+/* Interruption + LPSR */
+/* ------------------- */
+
+/* Flow charts 14023130C "INTERRUPTION" (CPU[7] render-pg 26) and 14023130D
+ * "LPSR SEQUENCE" (render-pg 27). Entered from alpha (e2/e3) when INTE =
+ * RINT & /MASC routes there (the existing CU04 path: 0xE2 -> 0xF0). The graph
+ * F0 -> D2 -> D3 -> D0 -> D1 -> C2 -> C3 -> C0 -> C1 -> alpha saves the current
+ * PSR to 0x0300 and loads the new PSR (handler) from 0x0304. Each box is one
+ * hybrid command (INT_*, msl-commands.c) issued at TI06 that performs its byte
+ * transfer + V1 walk + routing; the states are otherwise inert. The earlier
+ * `INTE` diamond and CU04 routing already existed — only these target states
+ * were missing (empty slots). RINT is never asserted by the deck/tests, so the
+ * path is dormant there; tests/exec.c drives it explicitly. */
+static const struct msl_timing_chart state_F0[] = { { TI06, INT_F0, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_D2[] = { { TI06, INT_D2, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_D3[] = { { TI06, INT_D3, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_D0[] = { { TI06, INT_D0, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_D1[] = { { TI06, INT_D1, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_C2[] = { { TI06, INT_C2, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_C3[] = { { TI06, INT_C3, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_C0[] = { { TI06, INT_C0, 0 }, { END_OF_STATUS, 0, 0 } };
+static const struct msl_timing_chart state_C1[] = { { TI06, INT_C1, 0 }, { END_OF_STATUS, 0, 0 } };
+
 /* Beta Phase */
 /* ---------- */
 
