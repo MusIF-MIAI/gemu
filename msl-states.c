@@ -124,6 +124,13 @@ static const struct msl_timing_chart state_E2_E3[] = {
     { TO80, CI89, state_E2_E3_TO80_CI89 },
     { TI05, CI08, 0 },
     { TI06, CI80, 0 },
+    /* Reset FI01. Present in the per-clock timing table (14024137 fo.10/11,
+     * CPU[7] p61: "TI06 CI81 CI81A0 = EC73A0") but was missing here. FI01 is set
+     * only by forcing (state 08) / the b1 peripheral path, so the instruction
+     * fetch clearing it is a no-op for normal CPU flow (verified: deck + tests
+     * stay green). EC73A0 isn't transcribed; like the sibling CI80/CI83 resets
+     * (table cond DI18B0 = the in-state decode) it is treated as unconditional. */
+    { TI06, CI81, 0 },
     { TI06, CI82, state_E2_E3_TI06_CI82 },
     { TI06, CI83, 0 },
     { TI06, CU04, state_E2_E3_TI06_CU04 },

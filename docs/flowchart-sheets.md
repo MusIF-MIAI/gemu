@@ -159,15 +159,28 @@ convert t-0NN.png -rotate -90 +repage page.png      # -90 = upright
 ```
 The state-code box at the table head is the SO/SA hex (e.g. `1110 0000` = `0xE0`).
 
-**Verified against these tables this session:** `state_E0` (page 61, top table)
-matches **1:1** — transfers `V2→NO, COUNT FROM 00, MEM→RO, NI→PO, NO→BO, RO1→NI1,
-RO2→NI2, RES AVER, NI→L1, Set S002, Reset S007` = gemu's
-`CO12/CO41/CO30/CO00/(TO20 BO)/CI67/CI62/CI39/CI05/CU02/CU17`, same order, with
-the `DI17A0`/`DI12A0` gates matching. This confirms the alpha family is faithful
-and supersedes the blurry-foldout caveats for the states whose tables are read
-here. **Next:** walk pages 61+ and do this row-by-row for every implemented
-state (esp. the forcing/peripheral states whose brackets the foldouts left
-ambiguous).
+**Verified against these tables this session** (full Clock↔Comando↔Equazione↔
+Evento rows):
+- **`state_E0`** (p61 top, code `1110 0000`): **1:1 match** — `V2→NO, COUNT FROM
+  00, MEM→RO, NI→PO, NO→BO, RO1→NI1, RO2→NI2, RES AVER, NI→L1, Set S002, Reset
+  S007` = `CO12/CO41/CO30/CO00/(TO20 BO)/CI67/CI62/CI39/CI05/CU02/CU17`, same
+  order, `DI17A0`/`DI12A0` gates matching, routing cond `{FO06+FO07}` = `CU17`.
+- **`state_E2_E3`** (p61 bottom): matched except the table lists **four** FI
+  resets at TI06 (`CI80 CI81 CI82 CI83` = Reset FI00/01/02/03) and gemu was
+  missing **`CI81` (Reset FI01)**. **Fixed** — added `{TI06, CI81, 0}` (FI01 is
+  set only by forcing/b1, so this is a no-op for normal flow; deck + 244 tests
+  stay green). Other gates confirmed: `CI82 = EC50A0 {dRO=PER}`, `CU04 = EC53A0
+  {RINT·/FA06}`, `CU11 = (DI18A0)`, `CI89 = EC51A0 {dRO=HLT + ASIN(...)}` (gemu
+  models the `dRO=HLT` term only).
+- **`state_E4`** (p62): the high-byte top-quartet gate `CI60 = EC54A0` (an
+  RO7-based decode) and `CI65 = (DI19A0)` confirm the bit-15 operand-fetch fix —
+  gemu's `not_RO07` on CI60 captures EC54A0's discriminating term, symmetric with
+  E5. ✅
+**Caveat:** the OCR renders `CO1x` as `CO1O` (letter O), so plain token-diffs
+miss CO-family commands — cross-check the rendered image when auditing E5/E6/E7
+and the beta/peripheral tables. **Next:** walk pages 61+ row-by-row for the
+remaining states (E5/E6/E7, beta jumps/data, forcing 08, the peripheral
+cluster), image-confirming each like CI81.
 
 ## How to re-verify a sheet
 ```sh
