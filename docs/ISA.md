@@ -211,8 +211,14 @@ It is split (`eff_addr` / `seg_base_of` in `msl-commands.c:166`):
 - **displacement** = bits 0–11 → a value `0x000–0xFFF` (4 KiB reach).
 - **modifier** = bits 12–14 → selects one of the **8 change registers** (the
   *segment base*).
-- bit 15 — **unused / unknown in the current model** (masked off). *Flagged for
-  verification against the manual; could be a sign/indirect bit.* Confidence: low.
+- bit 15 — **absolute/modified flag** (CPU[4] §2.5, FO. 19–20; confidence: high).
+  **0 = absolute**: bits 0–14 are the address directly (no change register).
+  **1 = modified**: bits 12–14 select the change register, added to the 12-bit
+  displacement (the base+displacement form described above). *Implementation
+  note:* gemu/gasm currently resolve **every** address as base+displacement
+  (ignoring bit 15); with the reset identity bases this coincides with absolute
+  addressing. Fully honoring bit 15 additionally needs the modified-address
+  indexing micro-cycle for single-address ops, not yet transcribed (see §8).
 
 **Effective address:**
 
@@ -609,7 +615,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 
 | Item | Issue | Suggested check |
 |---|---|---|
-| Address bit 15 | masked off; role unknown (sign? indirect?) | CPU addressing pages / schematics |
+| Address bit 15 | **resolved**: absolute(0)/modified(1) flag (CPU[4] §2.5). gemu still resolves all addresses as base+disp (coincides under identity bases); full bit-15 honoring needs the modified-address indexing micro-cycle for single-address ops (operand-fetch flow chart dwg 14023130) — enabling it now derails the fetch loop. | operand-fetch flow chart 14023130 |
 | ENS/INS/LON/LOFF/LOLL | sub-function meanings unverified | interrupt + console-indicator manual pages; APS manual |
 | JRT (`0x41`) | opcode assigned, no decode | branch/linkage section of manual; APS manual |
 | LPSR (`0x9D`) | opcode assigned, no decode | PSW / status-register section |

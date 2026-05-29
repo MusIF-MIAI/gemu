@@ -23,3 +23,9 @@ console/wasm/main.js
 # python bytecode (curses console client)
 __pycache__/
 *.pyc
+
+# C compiler (cc/gec) build artifacts
+cc/gec
+cc/runrv
+cc/*.s
+cc/*.bin

@@ -26,6 +26,7 @@ check: tests/tests ge tools
 	tests/tests
 	python3 tests/isa_consistency.py
 	sh tests/roundtrip.sh
+	sh cc/test.sh
 
 # In-browser WebAssembly console (console/wasm/): the whole emulator compiled
 # with emscripten, served as console.html + main.mjs + main.wasm.

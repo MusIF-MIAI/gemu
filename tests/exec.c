@@ -338,3 +338,45 @@ UTEST(exec, cmq_compares_quartets_high)
     ASSERT_EQ(g.mem[0x70], 0xF1);              /* CMQ does not modify memory */
     ASSERT_EQ(g.mem[0x71], 0xF5);
 }
+
+/* JRT – Jump Return (op 0x41): branch-and-link. Deposits the return address
+ * (the subsequent instruction) into index register 7 (mem 254/255) and jumps.
+ * CPU[4] sec.5.5.6.2 / 5.6.5.1. This is the call mechanism for the C ABI. */
+UTEST(exec, jrt_links_and_jumps)
+{
+    /* JRT ,0x000A with mask 0xF0 (unconditional). Subsequent instr = 0x0004. */
+    uint8_t prog[] = { JRT_OPCODE, 0xF0, 0x00, 0x0A };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    run_one(&g);
+    ASSERT_EQ(g.rPO, 0x000A);              /* jumped to target */
+    ASSERT_EQ(g.mem[254], 0x00);           /* reg7 hi = return addr hi */
+    ASSERT_EQ(g.mem[255], 0x04);           /* reg7 lo = return addr (0x0004) */
+}
+
+/* Conditional JRT must still deposit the link even when the jump is NOT taken
+ * (mask 0x00 -> never jumps; link reserved per sec.5.6.5.1). */
+UTEST(exec, jrt_links_even_when_not_taken)
+{
+    uint8_t prog[] = { JRT_OPCODE, 0x00, 0x00, 0x0A };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    run_one(&g);
+    ASSERT_EQ(g.rPO, 0x0004);              /* fell through (no jump) */
+    ASSERT_EQ(g.mem[254], 0x00);
+    ASSERT_EQ(g.mem[255], 0x04);           /* link still deposited */
+}
+
+/* Regression for the E4 operand-fetch fix: an SS destination must keep its
+ * modifier (full field) and resolve to base+displacement, NOT segment 0.
+ * Before the fix the dest's high byte was dropped and writes fell into segment
+ * 0. Dest field 0x5004 = modifier 5 | disp 4; reg5 = 0x0600 -> EA 0x0604. */
+UTEST(exec, ss_dest_keeps_modifier)
+{
+    uint8_t prog[] = { MVC_OPCODE, 0x00, 0x50, 0x04, 0x00, 0x80 }; /* MVC 1, 0x4(5), 0x80 */
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0xFA] = 0x06; g.mem[0xFB] = 0x00;   /* change register 5 = 0x0600 */
+    g.mem[0x80] = 0xAB;                        /* source byte */
+    g.mem[0x04] = 0x00; g.mem[0x0604] = 0x00;
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x0604], 0xAB);            /* wrote to base+disp */
+    ASSERT_EQ(g.mem[0x04], 0x00);              /* NOT segment 0 */
+}

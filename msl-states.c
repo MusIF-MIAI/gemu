@@ -178,7 +178,14 @@ static uint8_t is_ss_data_op(struct ge *ge) {
 
 // to state E6
 
-static uint8_t state_E4_TO70_CI60(struct ge *ge) { return 0; }
+/* E4 reads the FIRST operand's high byte (A1hi), exactly as E5 reads A2hi; CI60
+ * (ni4 = top quartet = modifier+bit15) fires on /R007 (= not_RO07), matching the
+ * E5 box (CPU[7] flow chart 14023130). The original `return 0` stub never loaded
+ * it, so for absolute addresses the SS destination lost its high quartet and
+ * writes fell into segment 0; restoring the /R007 gating fixes that. (For the
+ * modified case the hardware zeroes V4 and indexes in ED|EC|EF|EE — transcribed
+ * in reference_operand_fetch_flowchart, to be implemented cycle-accurately.) */
+static uint8_t state_E4_TO70_CI60(struct ge *ge) { return not_RO07(ge); }
 
 static const struct msl_timing_chart state_E4[] = {
     { TO10, CO10, 0, DI60A0 },
@@ -196,7 +203,7 @@ static const struct msl_timing_chart state_E4[] = {
 };
 
 // to state E5 if !L207 & (FO07 & FO06)
-//          ED+EC if L207
+//          ED+EC if L207   (modified-address indexing cycle, not yet implemented)
 //          64+65 if !L207 & (!FO07 | !FO06)
 
 static uint8_t state_E6_TO80_CI38(struct ge *ge) { /* DO01? */ return 0; }
@@ -239,7 +246,8 @@ static const struct msl_timing_chart state_E5[] = {
     { TO70, CI67, 0, DI12A0 },
     { TO70, CI62, 0, DI12A0 },
     { TO70, CI65, 0, DI19A0 },
-    { TO70, CI60, not_RO07 },
+    { TO70, CI60, not_RO07 },            /* ni4 [/R007]: top quartet from RO only
+                                          * for absolute (CPU[7] E5 box) */
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0, DI60A0 },
@@ -286,6 +294,7 @@ static uint8_t jc_js1_js2_jie(struct ge *ge) {
     return ((ge->rFO == JC_OPCODE) ||
             (ge->rFO == JU_OPCODE) ||
             (ge->rFO == JCC_OPCODE) ||
+            (ge->rFO == JRT_OPCODE) ||
             (ge->rFO == JS1_OPCODE && ge->rL1 == JS1_2NDCHAR) ||
             (ge->rFO == JS2_OPCODE && ge->rL1 == JS2_2NDCHAR) ||
             (ge->rFO == JIE_OPCODE && ge->rL1 == JIE_2NDCHAR));
@@ -318,6 +327,10 @@ static uint8_t jc_js1_js2_jie_condition_verified(struct ge *ge) {
 
 static uint8_t nop(struct ge *ge) {
     return ge->rFO == NOP2_OPCODE;
+}
+
+static uint8_t is_jrt(struct ge *ge) {
+    return ge->rFO == JRT_OPCODE;
 }
 
 /* PM/SI immediate-format data ops executed in beta via the ALU helpers.
@@ -393,6 +406,7 @@ static const struct msl_timing_chart state_64_65[] = {
     { TO65, EXEC_AMR, is_amr },
     { TO65, EXEC_SMR, is_smr },
     { TO65, EXEC_LA,  is_la  },
+    { TO65, JRT_LINK, is_jrt },
     { TO70, CI78, ens },
     { TO70, CI62, per_peri, DE07A0 },
     { TO70, CI67, per_peri, DE07A0 },

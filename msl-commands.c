@@ -168,16 +168,20 @@ static uint16_t seg_base_of(struct ge* ge, int seg) {
     uint16_t a = (uint16_t)(240 + (seg & 7) * 2);
     return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
 }
+/* Effective address = displacement + change_register[modifier]. Resolves every
+ * address as base+displacement using bits 12-14 as the modifier (bit 15 not yet
+ * honored); with the reset identity bases this coincides with absolute
+ * addressing, and the E4 fix above lets the SS destination's full field reach
+ * here so disp(N) destinations resolve correctly. Full bit-15 absolute/modified
+ * handling needs the ED|EC|EF|EE indexing micro-cycle — fully transcribed in the
+ * reference_operand_fetch_flowchart memory note, to be implemented cycle-accurately. */
 static uint16_t eff_addr(struct ge* ge, uint16_t raw, int seg) {
     return (uint16_t)((raw & 0x0FFFu) + seg_base_of(ge, seg & 7));
 }
 /* Effective V1 for single-address PM/SI ops: modifier from L2's high nibble. */
 static uint16_t eff_v1_l2(struct ge* ge) { return eff_addr(ge, ge->rV1, (ge->rL2 >> 4) & 7); }
 
-/* Jump target resolution with segment base: like CO00 (rPO <- NI_knot, i.e.
- * the V1 displacement) but adds the change-register base selected by the
- * modifier in L2's high nibble, so a jump to a paged address (e.g. 0x172a =
- * displacement 0x72a + segment 1 base 0x1000) lands correctly. */
+/* Jump target resolution with segment base (modifier from L2's high nibble). */
 static void CI00s(struct ge* ge) {
     ge->rPO = eff_addr(ge, NI_knot(ge), (ge->rL2 >> 4) & 7);
 }
@@ -185,6 +189,11 @@ static void CI00s(struct ge* ge) {
 static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), cr_rd16(ge, eff_v1_l2(ge))); }
 static void EXEC_STR(struct ge* ge) { cr_wr16(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
 static void EXEC_LA (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), eff_v1_l2(ge)); }
+/* JRT (Jump Return, op 0x41): deposits the address of the subsequent instruction
+ * (rPO before the jump rewrites it at TI05/CI00s) into index register 7
+ * (mem 254/255). Unconditional, per CPU[4] sec.5.5.6.2 / 5.6.5.1: the link is
+ * reserved even when the conditional form does not take the jump. */
+static void JRT_LINK(struct ge* ge) { cr_wr16(ge, 254, ge->rPO); }
 static void EXEC_CMR(struct ge* ge) { alu_cmr(ge, cr_rd16(ge, reg_addr_of(ge)), cr_rd16(ge, eff_v1_l2(ge))); }
 static void EXEC_AMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_amr(ge, &r, cr_rd16(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
 static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_smr(ge, &r, cr_rd16(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
@@ -213,8 +222,8 @@ static void EXEC_SS(struct ge *ge)
     uint8_t  len  = (ge->rL1 & 0xff) + 1;
     uint8_t  alen = ((ge->rL1 >> 4) & 0xf) + 1;
     uint8_t  blen = (ge->rL1 & 0x0f) + 1;
-    /* SS effective addresses: V2 (source) keeps its full address (modifier in
-     * bits 12-14); V1 (destination) had its modifier dropped to segment 0. */
+    /* SS effective addresses: both V1 (dest, full field via the E4 fix) and V2
+     * (source) -> base+displacement via the modifier in bits 12-14. */
     uint16_t dst  = eff_addr(ge, ge->rV1, (ge->rV1 >> 12) & 7);
     uint16_t src  = eff_addr(ge, ge->rV2, (ge->rV2 >> 12) & 7);
 

@@ -24,8 +24,11 @@
  *   PM  (0x40-0xBF) : 4 bytes  [op][aux][Ahi][Alo]
  *   SS  (0xC0-0xFF) : 6 bytes  [op][LL][A1hi][A1lo][A2hi][A2lo]
  * Addresses are big-endian. A 16-bit instruction address field is
- *   field = (modifier << 12) | displacement      (bit 15 unused)
+ *   field = (modifier << 12) | displacement
  *   EA    = displacement + change_register[modifier]
+ * (Bit 15 is the architectural absolute/modified flag — CPU[4] sec.2.5 — but the
+ * modified-address indexing cycle is not yet implemented in gemu, so the
+ * toolchain stays on base+displacement; see reference_operand_fetch_flowchart.)
  * With the identity change-register defaults an absolute address A <= 0x7FFF
  * encodes as field == A; higher addresses need an explicit base via disp(N).
  *
@@ -321,6 +324,7 @@ static long eval_expr(const char *expr, int pass, int *ok)
 /* Parse a memory address operand into a 16-bit instruction field.
  *   "expr"        -> absolute; field = value (must be <= 0x7FFF)
  *   "disp(N)"     -> field = ((N & 7) << 12) | (disp & 0xFFF)
+ *                    EA = change_register[N] + disp
  */
 static int parse_addr(const char *operand, int pass, uint16_t *field)
 {

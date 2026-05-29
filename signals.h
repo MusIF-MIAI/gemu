@@ -83,7 +83,8 @@ SIG(verified_condition) {
     uint8_t FA5 = BIT(ge->ffFA, 5);
     uint8_t FA4 = BIT(ge->ffFA, 4);
 
-    return (((ge->rFO == JC_OPCODE || ge->rFO == JU_OPCODE || ge->rFO == JCC_OPCODE) &&
+    return (((ge->rFO == JC_OPCODE || ge->rFO == JU_OPCODE || ge->rFO == JCC_OPCODE ||
+              ge->rFO == JRT_OPCODE) &&
              ((M7 && !FA4 && !FA5) ||
               (M6 && !FA4 &&  FA5) ||
               (M5 &&  FA4 && !FA5) ||
