@@ -5,21 +5,15 @@ on:
     branches:
       - main
 
-# Keyless GitHub Pages deploy: uses the built-in GITHUB_TOKEN (via id-token),
-# no Personal Access Token. Requires the repo's Pages source to be set to
-# "GitHub Actions" (Settings -> Pages -> Build and deployment -> Source).
+# Keyless: push the built site to the gh-pages branch with the built-in
+# GITHUB_TOKEN. No Personal Access Token, and no repo-settings change needed
+# for this job to pass. (To actually serve it, point Settings -> Pages at the
+# gh-pages branch.)
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow one concurrent deploy; let a new push supersede an in-progress run.
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,33 +25,8 @@ jobs:
           cd docs
           doxygen
 
-      # Best-effort: a browser-playable WASM build of the emulator console.
-      # If the emscripten build breaks, don't block the docs deploy.
-      - name: Build WASM console
-        continue-on-error: true
-        uses: addnab/docker-run-action@v3
-        with:
-          image: emscripten/emsdk
-          options: -v ${{ github.workspace }}:/src
-          run: |
-            make -C console/wasm
-            mkdir -p docs/html/emu/
-            cp console/wasm/console.html docs/html/emu/index.html
-            cp console/wasm/main.mjs docs/html/emu
-            cp console/wasm/main.wasm docs/html/emu
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs/html
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/html

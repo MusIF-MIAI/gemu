@@ -6,7 +6,7 @@
 UTEST(cpu_isolation, test_k)
 {
     struct ge g;
-    struct ge_console c;
+    struct ge_console c = { 0 };
     struct ge_console_switches s = { 0 };
 
     ge_log(LOG_CONSOLE, "CLEAR\n");

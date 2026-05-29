@@ -36,6 +36,9 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.C2 = ge->PUC2;
     console->lamps.C3 = ge->PUC3;
 
+    console->lamps.MEM_CHECK = ge->mem_check;
+    console->lamps.INV_ADD   = ge->inv_add;
+
     console->lamps.OP_reg  = ge->rFO;
 
     console->rotary = ge->register_selector;
