@@ -891,12 +891,19 @@ the GE names):**
 - `DVP` (GE, Divide Packed) = `DP` (gasm/gemu).
 
 **Genuinely missing / suspect (flagged, not changed):**
-- **`OI`** (OR Immediate) is a real GE primary instruction (3rd group) with **no
-  opcode in `opcodes.h`** and not in gasm/gemu. Its opcode byte must be read
-  from APS pp. 116–127 (internal-format descriptions) before it can be added.
-- **`CI`** (`0x96`) is **not** in the APS list — only `CMI` (compare immediate)
-  appears. Reinforces the open `CI`-vs-`CMI` question (§8); `0x96`'s identity
-  needs the page-image.
+- **`OI`** (OR Immediate) is a real GE primary instruction. APS p.84 ("Type 3
+  Instructions") enumerates **exactly six** immediate ops: **MVI, CMI, NI, OI,
+  XI, TM** ("OI" is OCR'd "01"). gemu/`opcodes.h` instead has **MVI, CMI, NI,
+  CI, XI, TM** — i.e. it carries **`CI` (`0x96`) where the documented set has
+  `OI`**, and lacks OI entirely. So `CI`/`0x96` is the suspect member and OI is
+  the genuinely-missing one. The used immediate opcodes are `0x91 TM, 0x92 MVI,
+  0x94 NI, 0x95 CMI, 0x96 CI, 0x97 XI`, leaving **`0x93` free** — the likely OI
+  slot, but its byte must be confirmed from the APS/PDS internal-format page
+  before adding (not guessed). OR-Immediate semantics are certain (`mem |= K`,
+  no CC — the OR analogue of `NI`).
+- This **supersedes** the open `CI`-vs-`CMI` question: the documented immediate
+  compare is `CMI`; `CI`/`0x96` is not in the APS Type-3 set and is the entry to
+  re-examine.
 - **`MC` vs `NC`**: APS prints `MC` in the SS single-length group where gemu has
   `NC` (AND characters). Likely an OCR N/M misread, but unconfirmed.
 - **`LOLL`** (`0x02`/`0x91`) is **not** in the APS first group (`ENS INS LOFF LON
