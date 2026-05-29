@@ -56,6 +56,10 @@
 <code>#include &lt;stdlib.h&gt;</code><br />
 <code>#include &lt;string.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &lt;unistd.h&gt;</code><br />
+<code>#include &lt;signal.h&gt;</code><br />
+<code>#include &lt;sys/types.h&gt;</code><br />
+<code>#include &lt;sys/wait.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="ge_8h_source.html">ge.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="console__socket_8h_source.html">console_socket.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="cardreader_8h_source.html">cardreader.h</a>&quot;</code><br />
@@ -70,6 +74,8 @@ Functions</h2></td></tr>
 <tr class="memitem:a4c1dde81c3c74105b6c21f081d7a69cb" id="r_a4c1dde81c3c74105b6c21f081d7a69cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a4c1dde81c3c74105b6c21f081d7a69cb">ge_log_set_active_types_from_spec</a> (const char *spec)</td></tr>
 <tr class="memdesc:a4c1dde81c3c74105b6c21f081d7a69cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set active log types from a comma-separated name specification.  <br /></td></tr>
 <tr class="separator:a4c1dde81c3c74105b6c21f081d7a69cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ef898343ecdd7529cc4abcc59074725" id="r_a9ef898343ecdd7529cc4abcc59074725"><td class="memItemLeft" align="right" valign="top">static pid_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a9ef898343ecdd7529cc4abcc59074725">spawn_tui</a> (const char *argv0)</td></tr>
+<tr class="separator:a9ef898343ecdd7529cc4abcc59074725"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a603ee328bed115ceb77c94f97d9d3818" id="r_a603ee328bed115ceb77c94f97d9d3818"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a603ee328bed115ceb77c94f97d9d3818">print_usage</a> (const char *argv0)</td></tr>
 <tr class="separator:a603ee328bed115ceb77c94f97d9d3818"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97" id="r_a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
@@ -141,7 +147,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00040">40</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00087">87</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
 
 </div>
 </div>
@@ -169,7 +175,35 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00019">19</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00064">64</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+</div>
+</div>
+<a id="a9ef898343ecdd7529cc4abcc59074725" name="a9ef898343ecdd7529cc4abcc59074725"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ef898343ecdd7529cc4abcc59074725">&#9670;&#160;</a></span>spawn_tui()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static pid_t spawn_tui </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>argv0</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00033">33</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
 
 </div>
 </div>
