@@ -865,3 +865,48 @@ integrated reader bootstraps at `0x0100` (the `DUMP1`/`funktionalcpu`
 convention), assemble with `--org 0x0100`. See
 `software/gemu/assembler/README.md` for the full CLI and a `ge_load_program`
 harness snippet.
+
+---
+
+## 11. APS mnemonic cross-check (EDV-AFL 03, "Classification of instructions by APS format")
+
+The GE *APS Reference Manual* (EDV-AFL vol. 03, printed pp. 128–129, PDF
+pp. 142–143) lists every primary (machine) instruction grouped by format. This
+cross-checks gasm's `MNEMS` / `opcodes.h` against the documented GE mnemonics.
+
+**Confirmed faithful** — the core data/control ISA matches the manual exactly:
+- P (function only): `ENS INS LOFF LON NOP2 HLT`
+- index-register + address: `LA LR AMR SMR CMR STR`
+- SS single-length: `MVC CMC OC XC UPK SR PK SL EDT` (+ `NC`, `TL` — see below)
+- SS two-length: `MVP CMP AP SP MP PKS MVQ CMQ AD SD AB SB`
+
+**Canonical-name divergences (gasm uses convenient aliases; not wrong, just not
+the GE names):**
+- Conditional jumps — GE canonical: `JE JG JGE JL JLE JNE JU NOJ`, each with a
+  jump-**and-return** variant (`JER JGR JGER JLER JLR JNER JRT NOJR`) and the
+  condition forms `JC`/`JCR`. gasm instead offers IBM-style aliases (`JE JH/JGT
+  JL/JLT JLE JGE JNE/JNZ JEQ JZ JMP JANY JOV`) over `JC`/`JU`. gasm therefore
+  lacks `JG`, `NOJ`, `JCR` and the whole return-jump family as named mnemonics.
+- `TR` (GE) = `TL` (gasm/gemu) — Translate; already noted in `alu_logic.h`.
+- `DVP` (GE, Divide Packed) = `DP` (gasm/gemu).
+
+**Genuinely missing / suspect (flagged, not changed):**
+- **`OI`** (OR Immediate) is a real GE primary instruction (3rd group) with **no
+  opcode in `opcodes.h`** and not in gasm/gemu. Its opcode byte must be read
+  from APS pp. 116–127 (internal-format descriptions) before it can be added.
+- **`CI`** (`0x96`) is **not** in the APS list — only `CMI` (compare immediate)
+  appears. Reinforces the open `CI`-vs-`CMI` question (§8); `0x96`'s identity
+  needs the page-image.
+- **`MC` vs `NC`**: APS prints `MC` in the SS single-length group where gemu has
+  `NC` (AND characters). Likely an OCR N/M misread, but unconfirmed.
+- **`LOLL`** (`0x02`/`0x91`) is **not** in the APS first group (`ENS INS LOFF LON
+  NOP2 HLT`) — possibly an EDOS/ETOS-only or spurious entry; verify.
+- `JCC` (`0x40`, gemu) is not named in APS; may correspond to `JCR` (jump-and-
+  return on condition) or the decimal-deck variant — unconfirmed.
+- `RDC` (`0x90`, gemu peripheral read) is not an APS primary instruction.
+
+Net: the arithmetic/logical/decimal/register/branch **core is faithful**; the
+gaps are (a) gasm's jump-alias naming vs GE canonical names, and (b) a few
+documented ops not yet in gemu (`OI`, the return-jump family, `NOJ`) whose
+opcode bytes need the APS internal-format pages. Adding them is deferred to
+avoid guessing opcode values.
