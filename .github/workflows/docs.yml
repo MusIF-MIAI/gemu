@@ -5,21 +5,36 @@ on:
     branches:
       - main
 
+# Keyless GitHub Pages deploy: uses the built-in GITHUB_TOKEN (via id-token),
+# no Personal Access Token. Requires the repo's Pages source to be set to
+# "GitHub Actions" (Settings -> Pages -> Build and deployment -> Source).
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deploy; let a new push supersede an in-progress run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.DOCS_CHECKOUT_PAT }}
+      - uses: actions/checkout@v4
 
-      - name: Make documentation
+      - name: Build Doxygen documentation
         run: |
-          sudo apt install doxygen
+          sudo apt-get update
+          sudo apt-get install -y doxygen
           cd docs
           doxygen
 
-      - name: Build wasm
+      # Best-effort: a browser-playable WASM build of the emulator console.
+      # If the emscripten build breaks, don't block the docs deploy.
+      - name: Build WASM console
+        continue-on-error: true
         uses: addnab/docker-run-action@v3
         with:
           image: emscripten/emsdk
@@ -31,9 +46,18 @@ jobs:
             cp console/wasm/main.mjs docs/html/emu
             cp console/wasm/main.wasm docs/html/emu
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.DOCS_CHECKOUT_PAT }}
-          publish_dir: docs/html
+          path: docs/html
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
