@@ -361,10 +361,32 @@ SMAC "C/S WORD"). Documented in CPU[1] (DIAGNOSTIC ORGANIZATION):
 | `0EXX` | SMAC test error halt (`XX` = `00`..`FF`, the failing C/S code) | CPU[1] SMAC LANGUAGE DESCRIPTION, folio 21 |
 
 These match the emulator: the bootstrap `loader.txt` places `HLT` at `0x004A`
-(loading end) and `0x0050` (read error). The CPU functional-test memory checks
-report their own codes (`3465`, `1466`–`146B`, `19DE`); pinning each to its
-console-option path needs the CPU[5]/CPU[1] page images (still open — see §8).
-Confidence: medium (prose OCR + loader cross-check).
+(loading end) and `0x0050` (read error).
+
+**funktionalcpu console-option dispatch & halts (from the deck, via `gdis`).**
+CPU[5] turned out to be the Board-Tester / maintenance volume — it only *mentions*
+the CPU Functional Test (run-after-memory-swap), it does **not** contain the
+test's halt table. The mapping was instead recovered by disassembling the deck
+itself (ground truth). The entry jump lands at `0x172A`, a dispatch tree on the
+console option byte **`mem[0x0E00]`**:
+
+| `mem[0x0E00]` | action (sets a selector to `0xF0`, runs the test driver at `0x1760`) |
+|---|---|
+| `0x10` | `MVI 0xF0 -> mem[0x19C3]`, run driver |
+| `0x20` | `MVI 0xF0 -> mem[0x18F5]`, run driver |
+| `0x40` / `0x80` | via `0x178C`: set up, run driver (`0x1752 -> 0x1760`) |
+| `0x00` / unmatched | fall through to the **idle HLT at `0x175A`** (`HLT; JU 0x175A`) |
+
+Confirmed in-image halts: **`0x175A`** (idle / no option), a block of `0A`
+(HLT) bytes at **`0x1460`–`0x14A4`** = the memory-test **error-halt table** (the
+documented `1466`–`146B` codes are halts inside it), and **`0x19DE`** = `HLT; JU
+0x0104` = the "End" halt + restart. The earlier-cited `3465` is **not** an
+in-image address (image ends `0x1C53`) — likely a displayed/runtime value, left
+unverified. The selected memory tests cannot run to their halts in gemu yet:
+they exercise RAM above the loaded image and peripheral output the emulator does
+not realistically model, so options `0x10`–`0x80` wander near `0x2003` instead of
+halting (only `0x00` reaches `0x175A`). Confidence: high for the dispatch + halt
+addresses (disassembled), low for the per-error code values.
 
 ### 6.2 Conditional & unconditional branches — PM format (4 bytes)
 
@@ -563,7 +585,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 | AD/SD CC tables | OCR-inferred | §5.5.1.1 / §5.5.1.2 page images |
 | MVQ zones | "zones not processed" interpretation | §3.084/3.098 + hardware trace |
 | SR/SL | ALU done, not wired — SS model-byte/result-register encoding unconfirmed | search-instruction page image |
-| funktionalcpu memory-test HLTs (`3465`/`1466`–`146B`/`19DE`) | which console option byte (`mem[0x0E00]`) selects each test, + memory sizing | CPU[5] (009) / CPU[1] funktionalcpu listing page images |
+| funktionalcpu memory-test execution | option-byte dispatch + halt addresses now recovered from the deck (§6.1); running the tests to their halts needs realistic RAM-above-image + peripheral-output modelling (they wander near `0x2003`). `0x3465` code unverified. | run under a fuller memory/peripheral model |
 | isolation decks (`isolationcpu0x`) | distinct card framing (binary cols 1–76, Hollerith 77–80) + SMAC/INTE interpretation | CPU[1] folio 52/53a + CPU[3]; see `docs/punchcards.md` §5 |
 
 ---
