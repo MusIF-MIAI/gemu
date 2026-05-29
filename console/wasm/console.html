@@ -687,6 +687,83 @@ padding: 1px;
   margin: 5px;
 }
 
+/* ---- simulator gadget (NOT part of the real console) ------------------- *
+ * The real GE-120 has no file dialog: programs enter through a deck of cards
+ * loaded into the reader. This panel is a simulator convenience, drawn well
+ * apart from the authentic controls and styled deliberately differently
+ * (dashed border, monospace, muted) so it never reads as a real-machine
+ * control. It only mounts a deck "in the hopper"; the actual load is still
+ * performed with the real CLEAR / LOAD / START buttons. */
+/* The authentic console is wider than the viewport, so any in-flow panel at its
+ * edge scrolls off-screen. This is explicitly NOT a hardware control, so it is
+ * floated as a fixed simulator toolbar pinned to the viewport bottom (dashed top
+ * border, muted monospace) — always visible no matter how the console scrolls. */
+body { padding-bottom: 4.5em; }   /* keep the bar from hiding page content */
+
+#simpanel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1.1em;
+  padding: 0.6em 1em;
+  background: #16181c;
+  border-top: 2px dashed #5a6b3b;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 8pt;
+  color: #b9c4a7;
+}
+#simpanel h2 {
+  margin: 0;
+  font-size: 8pt;
+  letter-spacing: 0.12em;
+  color: #9fb36a;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#simpanel .sim-sub { font-size: 7pt; color: #6b7360; max-width: 16em; line-height: 1.25; }
+#simpanel label { font-size: 7.5pt; white-space: nowrap; }
+#simpanel input[type=file] { max-width: 15em; }
+#simpanel input[type=file],
+#simpanel input[type=number] {
+  background: #0c0d10;
+  color: #cdd6bb;
+  border: 1px solid #3a4030;
+  border-radius: 3px;
+  padding: 0.25em;
+  font: inherit;
+  font-size: 7.5pt;
+}
+#simpanel input[type=number] { width: 4em; }
+#simpanel .sim-check { display: flex; gap: 0.35em; align-items: center; font-size: 7.5pt; white-space: nowrap; }
+#simpanel button {
+  padding: 0.45em 1em;
+  background: #2b3320;
+  color: #cfe0a4;
+  border: 1px solid #5a6b3b;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 8pt;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#simpanel button:hover:not(:disabled) { background: #38421f; }
+#simpanel button:disabled { opacity: 0.4; cursor: default; }
+#simpanel .sim-status {
+  font-size: 7pt;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  min-width: 11em;
+  color: #8fa06a;
+}
+#simpanel .sim-seq { font-size: 7pt; color: #7d8768; white-space: nowrap; }
+#simpanel .sim-seq b { color: #b9c4a7; }
 </style>
 
 <div id=verticalcontainer>
@@ -785,14 +862,14 @@ padding: 1px;
                     <div class=button>
                         <div class=single></div>
                     </div>
-                    <div class=button>
+                    <div class="button hoverable" id=power_off_button>
                         <div class="top red" id=l_DC_ALERT>DC ALERT</div>
                         <div class="bottom yellow" id=l_POWER_OFF>POWER OFF</div>
                     </div>
                     <div class="button hoverable" id=power_on_button>
                         <div class="single yellow" id=l_POWER_ON>POWER ON</div>
                     </div>
-                    <div class=button>
+                    <div class="button hoverable" id=lamps_check_button>
                         <div class="top red" id=l_MAINTENANCE_ON>MAINT.ON</div>
                         <div class=bottom>LAMPS CHECK</div>
                     </div>
@@ -847,9 +924,23 @@ padding: 1px;
                 </div>
             </div>
         </div>
-        
+
     </div>
 </div>
+
+<!-- Simulator toolbar: NOT a real-machine control. Pinned to the viewport so it
+     is always visible regardless of how the (wider-than-screen) console scrolls. -->
+<aside id=simpanel>
+    <h2>⛭ Simulator</h2>
+    <span class=sim-sub>not real hardware — mounts a deck "in the reader hopper"</span>
+    <label for=deck_file>Card deck (.cap)</label>
+    <input type=file id=deck_file accept=".cap,.txt">
+    <label class=sim-check><input type=checkbox id=deck_binary> binary</label>
+    <label class=sim-check>first card <input type=number id=deck_first min=0 value=0></label>
+    <button id=mount_button disabled>Insert deck in reader</button>
+    <span class=sim-status id=mount_status>No deck loaded.</span>
+    <span class=sim-seq>then on the console: <b>CLEAR → LOAD → START</b></span>
+</aside>
 
 
 <script>
@@ -1127,15 +1218,63 @@ function log_add(text) {
 
 var module;
 
-power_on_button  .addEventListener("click", e => module && module._press_on()    )
-emerg_off_button .addEventListener("click", e => module && module._press_off()   )
-clear_button     .addEventListener("click", e => module && module._press_clear() )
-load_button      .addEventListener("click", e => module && module._press_load()  )
-start_button     .addEventListener("click", e => module && module._press_start() )
+power_on_button  .addEventListener("click", e => module && module._press_on()        )
+power_off_button .addEventListener("click", e => module && module._press_power_off() )
+emerg_off_button .addEventListener("click", e => module && module._press_off()       )
+clear_button     .addEventListener("click", e => module && module._press_clear()     )
+load_button      .addEventListener("click", e => module && module._press_load()      )
+start_button     .addEventListener("click", e => module && module._press_start()     )
+
+/* LAMPS CHECK: momentary bulb test — while held, force every console lamp on;
+ * on release, restore the real states. (CPU[4] §3.2 — do not use during a run.) */
+let lampCheckActive = false;
+
+function lampCheckStart() {
+    lampCheckActive = true;
+    document.querySelectorAll('[id^="l_"]').forEach(e => e.classList.add("on"));
+}
+function lampCheckEnd() {
+    if (!lampCheckActive) return;
+    lampCheckActive = false;
+    document.querySelectorAll('[id^="l_"]').forEach(e => e.classList.remove("on"));
+    if (module) module._refresh_lamps();
+}
+lamps_check_button.addEventListener("mousedown",  lampCheckStart);
+lamps_check_button.addEventListener("mouseup",    lampCheckEnd);
+lamps_check_button.addEventListener("mouseleave", lampCheckEnd);
+
+/* ---- simulator gadget: mount a .cap deck into the reader's MEMFS ------- */
+let deck_bytes = null;
+
+deck_file.addEventListener("change", async e => {
+    const f = e.target.files[0];
+    if (!f) { deck_bytes = null; mount_status.textContent = "No deck loaded."; return; }
+    deck_bytes = new Uint8Array(await f.arrayBuffer());
+    mount_status.textContent = `Selected ${f.name} (${deck_bytes.length} bytes).`;
+})
+
+mount_button.addEventListener("click", () => {
+    if (!module || !deck_bytes) return;
+    try {
+        module.FS.writeFile('/deck.cap', deck_bytes);
+    } catch (err) {
+        mount_status.textContent = "FS error: " + err;
+        return;
+    }
+    const binary = deck_binary.checked ? 1 : 0;
+    const first  = parseInt(deck_first.value, 10) || 0;
+    const rc = module._mount_deck(binary, first);
+    if (rc === 0)
+        mount_status.textContent =
+            "Deck mounted on connector 2 (LOAD1).\nNow: CLEAR → LOAD → START.";
+    else
+        mount_status.textContent = "Could not parse deck (rc=" + rc + ").";
+})
 
 document.set_lamp = function(lamp, val) {
     if (!module) return;
-    
+    if (lampCheckActive) return;   /* don't fight the bulb test while it's held */
+
     const e = document.getElementById('l_' + lamp);
     if (!e) return;
     
@@ -1169,6 +1308,7 @@ log_add("Loading emulator")
 GE_Module({ print: log_add })
     .then(m => {
         module = m
+        mount_button.disabled = false
         log_add("ok.")
     })
 

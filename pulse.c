@@ -159,11 +159,21 @@ static void on_TO65(struct ge *ge) {
             ge_log(LOG_STATES, "memory write: INV ADD rVO=%x >= size=%x\n",
                    ge->rVO, size);
         } else {
+            uint8_t parity = odd_parity(ge->rRO);
+
+            /* Console check-bit forcing: during a storage forcing from the
+             * console (rotary pos 8, RS_V1_SCR) with INCE inserted, AM08 is
+             * stored as the parity bit and the normal parity generation for
+             * AM07-00 is inhibited. This lets the operator key in a wrong
+             * check bit to exercise MEM CHECK detection. (CPU[4] §4.2, fo.36-37) */
+            if (ge->register_selector == RS_V1_SCR && ge->console_switches.INCE)
+                parity = (ge->console_switches.AM >> 8) & 1;
+
             ge->mem[ge->rVO] = ge->rRO;
-            ge->mem_parity[ge->rVO]  = odd_parity(ge->rRO);
+            ge->mem_parity[ge->rVO]  = parity;
             ge->mem_written[ge->rVO] = 1;
-            ge_log(LOG_STATES, "memory write: mem[VO] = RO = mem[%x] = %x\n",
-                   ge->rVO, ge->rRO);
+            ge_log(LOG_STATES, "memory write: mem[VO] = RO = mem[%x] = %x (parity %d)\n",
+                   ge->rVO, ge->rRO, parity);
         }
 
         ge->memory_command = MC_NONE;

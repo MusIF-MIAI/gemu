@@ -22,6 +22,12 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.HALT = ge->ALTO;
     console->lamps.OPERATOR_CALL = ge->ALAM;
 
+    /* SWITCH 1 / SWITCH 2 lamps show the positions of the two program-readable
+     * switches: lit when the switch reads logic 1 (the value that makes JS1 /
+     * JS2 jump). (CPU[4] §3.3, fo.33) */
+    console->lamps.SWITCH_1 = ge->JS1;
+    console->lamps.SWITCH_2 = ge->JS2;
+
     /* performance conditions (cpu fo. 31, 32) */
 
     console->lamps.ADD_reg = ge->rBO;

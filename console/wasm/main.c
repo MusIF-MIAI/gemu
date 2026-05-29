@@ -8,6 +8,7 @@
 #include "../../log.h"
 #include "../../ge.h"
 #include "../../console.h"
+#include "../../cardreader.h"
 #include "../../bit.h"
 
 struct ge ge130;
@@ -20,7 +21,7 @@ EM_JS(void, set_lamp, (const char *lamp, int val), {
 });
 
 void send_console() {
-    struct ge_console console;
+    struct ge_console console = { 0 };
     int r = running_loop;
 
     ge_fill_console_data(ge, &console);
@@ -100,9 +101,9 @@ void send_console() {
     set_lamp("OF",  console.lamps.OF);
 
     set_lamp("DC_ALERT",       console.lamps.DC_ALERT      );
-    set_lamp("POWER_OFF",      console.lamps.POWER_OFF     );
-    set_lamp("STAND_BY",       console.lamps.STAND_BY      );
-    set_lamp("POWER_ON",       console.lamps.POWER_ON && r );
+    set_lamp("POWER_OFF",      !r                          );
+    set_lamp("STAND_BY",       !r                          );
+    set_lamp("POWER_ON",       r                           );
     set_lamp("MAINTENANCE_ON", console.lamps.MAINTENANCE_ON);
     set_lamp("MEM_CHECK",      console.lamps.MEM_CHECK     );
     set_lamp("INV_ADD",        console.lamps.INV_ADD       );
@@ -116,11 +117,44 @@ void send_console() {
 }
 
 
-void EMSCRIPTEN_KEEPALIVE press_on()    { running_loop = 1; send_console(); }
-void EMSCRIPTEN_KEEPALIVE press_off()   { running_loop = 0; send_console(); }
+void EMSCRIPTEN_KEEPALIVE press_on()        { running_loop = 1; send_console(); }
+void EMSCRIPTEN_KEEPALIVE press_off()       { running_loop = 0; send_console(); }
+void EMSCRIPTEN_KEEPALIVE press_power_off() { running_loop = 0; send_console(); }
+
+/* Push the real lamp states again (used to restore the panel after a momentary
+ * LAMPS CHECK bulb-test, which forces every lamp on from the JS side). */
+void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { send_console(); }
 void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
 void EMSCRIPTEN_KEEPALIVE press_load()  { ge_load(ge);  send_console(); }
 void EMSCRIPTEN_KEEPALIVE press_start() { ge_start(ge); send_console(); }
+
+/*
+ * mount_deck - simulator-only "insert cards in the reader hopper" action.
+ *
+ * There is no file dialog on a real GE-120: a program enters through a deck of
+ * cards physically loaded into the reader on one of the load connectors. This
+ * reproduces exactly that — the JS side writes the chosen .cap deck into the
+ * emscripten in-memory filesystem at /deck.cap, then we attach it to the card
+ * reader on connector 2 and select LOAD1, just like the --deck CLI path.
+ *
+ * The operator then runs the authentic bootstrap on the real console buttons:
+ *   CLEAR -> LOAD -> START
+ * which drives the documented 80 -> c8 load sequence (CPU[4] §5.3, fo.43).
+ *
+ * @binary:     0 = Hollerith transcoding (TC_NORMAL), 1 = raw passthrough.
+ * @first_card: index of the first card to feed (skip title/loader cards;
+ *              0 for a plain deck).
+ * Returns 0 on success, -1 if the deck cannot be opened/parsed.
+ */
+int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
+    int rc;
+
+    ge_load_1(ge);   /* select connector 2 (LOAD1), matching the reader */
+    rc = cardreader_register_from(ge, "/deck.cap",
+                                  binary ? TC_BINARY : TC_NORMAL, first_card);
+    send_console();
+    return rc;
+}
 
 void EMSCRIPTEN_KEEPALIVE set_switches(int flags, int am) {
     struct ge_console_switches switches;

@@ -1,7 +1,9 @@
 CC=emcc
 AR=emar
 
-CFLAGS=-I../.. -s EXPORTED_RUNTIME_METHODS=["callMain"]
+# FS + FORCE_FILESYSTEM let the page write an uploaded .cap deck into the
+# in-memory filesystem (MEMFS) so the card-reader bootstrap can read it.
+CFLAGS=-I../.. -sEXPORTED_RUNTIME_METHODS=callMain,FS,ccall -sFORCE_FILESYSTEM=1
 
 LIBGE=../../libge.a
 

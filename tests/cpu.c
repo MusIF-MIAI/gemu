@@ -157,3 +157,152 @@ UTEST(cpu_isolation, oper_call_by_register_forcing)
     ASSERT_EQ((int)c.lamps.STEP_BY_STEP, 1);      /* PAPA -> step-by-step lamp */
 }
 
+/*
+ * SWITCH 1 / SWITCH 2 lamps follow the two program-readable switches: lit when
+ * the switch reads logic 1 (the value that makes JS1 / JS2 jump).
+ * CPU[4] §3.3, fo.33.
+ */
+UTEST(console_fidelity, switch_lamps)
+{
+    struct ge g;
+    struct ge_console c = { 0 };
+
+    ge_init(&g);
+    ge_clear(&g);
+
+    g.JS1 = 1;
+    g.JS2 = 0;
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.SWITCH_1, 1);
+    ASSERT_EQ((int)c.lamps.SWITCH_2, 0);
+
+    g.JS1 = 0;
+    g.JS2 = 1;
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.SWITCH_1, 0);
+    ASSERT_EQ((int)c.lamps.SWITCH_2, 1);
+}
+
+/*
+ * Step-by-step (PAPA) can be inhibited by the program: INS sets ADIR, ENS /
+ * CLEAR clear it, and the maintenance STOC switch overrides the inhibit.
+ * CPU[4] §3.3; HW gate ALTO <- ASIN(ATOC + !ADIR). Drives fsn_last_clock with
+ * a CPU cycle pending (RIA0) and the rotary in NORM.
+ */
+UTEST(console_fidelity, step_by_step_inhibit)
+{
+    struct ge g;
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_clear(&g);
+    g.register_selector = RS_NORM;
+    g.RC00 = 1;
+    g.RIA0 = 1;
+    s.PAPA = 1;
+
+    /* step-by-step enabled (ADIR = 0): the CPU halts after the step */
+    g.ADIR = 0;
+    g.console_switches = s;
+    g.ALTO = 0;
+    fsn_last_clock(&g);
+    ASSERT_EQ((int)g.ALTO, 1);
+
+    /* INS inhibited step-by-step (ADIR = 1), STOC off: PAPA no longer halts */
+    g.ADIR = 1;
+    s.STOC = 0;
+    g.console_switches = s;
+    g.ALTO = 0;
+    fsn_last_clock(&g);
+    ASSERT_EQ((int)g.ALTO, 0);
+
+    /* STOC overrides the program inhibit: PAPA halts again */
+    s.STOC = 1;
+    g.console_switches = s;
+    g.ALTO = 0;
+    fsn_last_clock(&g);
+    ASSERT_EQ((int)g.ALTO, 1);
+}
+
+/*
+ * PATE stops the timing after every delay-line cycle — finer than PAPA, and
+ * ungated by the CPU/channel cycle. With PAPA off and the rotary in NORM the
+ * machine free-runs (no halt); inserting PATE halts it after a single cycle.
+ * CPU[4] §4, fo.35.
+ */
+UTEST(console_fidelity, pate_single_cycle)
+{
+    struct ge g;
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_clear(&g);
+    g.register_selector = RS_NORM;
+    g.RC00 = 1;
+    g.RIA0 = 1;
+
+    /* baseline: free-running (no PAPA, NORM rotary) -> no halt */
+    g.console_switches = s;
+    g.ALTO = 0;
+    fsn_last_clock(&g);
+    ASSERT_EQ((int)g.ALTO, 0);
+
+    /* PATE halts after one delay-line cycle */
+    s.PATE = 1;
+    g.console_switches = s;
+    g.ALTO = 0;
+    fsn_last_clock(&g);
+    ASSERT_EQ((int)g.ALTO, 1);
+}
+
+/*
+ * INCE check-bit forcing (CPU[4] §4.2, fo.36-37): with the rotary in V1 SCR
+ * (storage forcing) and INCE inserted, AM08 is stored as the memory parity bit
+ * instead of generated odd parity — so the operator can key in a wrong check
+ * bit to exercise MEM CHECK. AM08=1 is wrong for 0x01 (popcount 1 is odd ->
+ * correct parity 0), so reading the byte back raises MEM CHECK.
+ */
+UTEST(console_fidelity, ince_forces_check_bit)
+{
+    struct ge g;
+    struct ge_console c = { 0 };
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_clear(&g);
+    ge_run_cycle(&g);
+
+    /* force 0x01 into mem[0] with a deliberately wrong check bit (AM08 = 1) */
+    ge_set_console_rotary(&g, RS_V1_SCR);
+    s.AM   = 0x0101;   /* AM07-00 = 0x01 (data); AM08 = 1 (forced parity) */
+    s.INCE = 1;
+    s.INAR = 1;        /* inhibit the fault stop while keying in */
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ge_start(&g);
+    ge_run_cycle(&g);
+
+    ASSERT_EQ((int)g.mem[0], 0x01);
+    ASSERT_EQ((int)g.mem_parity[0], 1);   /* AM08, not odd_parity(0x01) = 0 */
+
+    /* point V1 at address 0, then read it back through V1 LETT */
+    ge_clear(&g);
+    ge_run_cycle(&g);
+    ge_set_console_rotary(&g, RS_V1);
+    s.AM   = 0x0000;
+    s.INCE = 0;
+    s.INAR = 0;
+    ge_set_console_switches(&g, &s);
+    ge_start(&g);
+    ge_run_cycle(&g);
+
+    ge_set_console_rotary(&g, RS_V1_LETT);
+    ge_run_cycle(&g);
+    ge_start(&g);
+    ge_run_cycle(&g);
+
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.RO, 0x01);
+    ASSERT_EQ((int)c.lamps.MEM_CHECK, 1);   /* wrong check bit detected on read */
+}
+

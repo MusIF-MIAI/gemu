@@ -361,9 +361,25 @@ void fsn_last_clock(struct ge *ge)
     uint8_t is_papa = ge->console_switches.PAPA;
     uint8_t is_norm = ge->register_selector == RS_NORM;
     uint8_t is_scr  = ge->register_selector == RS_V1_SCR;
-    ge_log(LOG_FUTURE, "    papa: %d, norm: %d, scr: %d ==> %d\n", is_papa, is_norm, is_scr, ge->RIA0 && (is_papa || !(is_norm || is_scr)));
 
-    if (ge->RIA0 && (is_papa || !(is_norm || is_scr)))
+    /* Step-by-step (PAPA, the ASIN request) can be inhibited by the program:
+     * INS sets ADIR=1, ENS / CLEAR clear it (CPU[4] §3.3). The maintenance STOC
+     * switch overrides the inhibit. This is the HW gate ALTO <- ... ASIN(ATOC +
+     * !ADIR), with ATOC = STOC (msl-states.c fo., cpu fo. 98). */
+    uint8_t step_enabled = ge->console_switches.STOC || !ge->ADIR;
+    uint8_t papa_stop = is_papa && step_enabled;
+    ge_log(LOG_FUTURE, "    papa: %d, step_en: %d, norm: %d, scr: %d ==> %d\n",
+           is_papa, step_enabled, is_norm, is_scr,
+           ge->RIA0 && (papa_stop || !(is_norm || is_scr)));
+
+    if (ge->RIA0 && (papa_stop || !(is_norm || is_scr)))
+        ge->ALTO = 1;
+
+    /* PATE stops the timing after every cycle of the delay line — a finer step
+     * than PAPA and, unlike PAPA, it is not gated by the CPU/channel cycle
+     * (RIA0/RIA2), so it does interfere with peripheral transfers. One START
+     * then runs exactly one delay-line cycle. (CPU[4] §4, fo.35) */
+    if (ge->console_switches.PATE)
         ge->ALTO = 1;
 
     /* after the execution of a channel 2 cycle, load the first
