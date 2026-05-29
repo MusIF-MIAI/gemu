@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <style>
 body {
   background: #111;
@@ -698,7 +699,7 @@ padding: 1px;
  * edge scrolls off-screen. This is explicitly NOT a hardware control, so it is
  * floated as a fixed simulator toolbar pinned to the viewport bottom (dashed top
  * border, muted monospace) — always visible no matter how the console scrolls. */
-body { padding-bottom: 4.5em; }   /* keep the bar from hiding page content */
+body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
 
 #simpanel {
   position: fixed;
@@ -709,46 +710,46 @@ body { padding-bottom: 4.5em; }   /* keep the bar from hiding page content */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5em 1.1em;
-  padding: 0.6em 1em;
+  gap: 0.8em 1.6em;
+  padding: 1em 1.4em;
   background: #16181c;
   border-top: 2px dashed #5a6b3b;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
   font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
-  font-size: 8pt;
+  font-size: 12pt;
   color: #b9c4a7;
 }
 #simpanel h2 {
   margin: 0;
-  font-size: 8pt;
+  font-size: 14pt;
   letter-spacing: 0.12em;
   color: #9fb36a;
   text-transform: uppercase;
   white-space: nowrap;
 }
-#simpanel .sim-sub { font-size: 7pt; color: #6b7360; max-width: 16em; line-height: 1.25; }
-#simpanel label { font-size: 7.5pt; white-space: nowrap; }
-#simpanel input[type=file] { max-width: 15em; }
+#simpanel .sim-sub { font-size: 10pt; color: #6b7360; max-width: 22em; line-height: 1.3; }
+#simpanel label { font-size: 11pt; white-space: nowrap; }
+#simpanel input[type=file] { max-width: 20em; }
 #simpanel input[type=file],
 #simpanel input[type=number] {
   background: #0c0d10;
   color: #cdd6bb;
   border: 1px solid #3a4030;
   border-radius: 3px;
-  padding: 0.25em;
+  padding: 0.4em;
   font: inherit;
-  font-size: 7.5pt;
+  font-size: 11pt;
 }
-#simpanel input[type=number] { width: 4em; }
-#simpanel .sim-check { display: flex; gap: 0.35em; align-items: center; font-size: 7.5pt; white-space: nowrap; }
+#simpanel input[type=number] { width: 4.5em; }
+#simpanel .sim-check { display: flex; gap: 0.4em; align-items: center; font-size: 11pt; white-space: nowrap; }
 #simpanel button {
-  padding: 0.45em 1em;
+  padding: 0.6em 1.4em;
   background: #2b3320;
   color: #cfe0a4;
   border: 1px solid #5a6b3b;
   border-radius: 3px;
   font: inherit;
-  font-size: 8pt;
+  font-size: 12pt;
   letter-spacing: 0.05em;
   cursor: pointer;
   white-space: nowrap;
@@ -756,13 +757,13 @@ body { padding-bottom: 4.5em; }   /* keep the bar from hiding page content */
 #simpanel button:hover:not(:disabled) { background: #38421f; }
 #simpanel button:disabled { opacity: 0.4; cursor: default; }
 #simpanel .sim-status {
-  font-size: 7pt;
+  font-size: 10pt;
   line-height: 1.4;
   white-space: pre-wrap;
-  min-width: 11em;
+  min-width: 14em;
   color: #8fa06a;
 }
-#simpanel .sim-seq { font-size: 7pt; color: #7d8768; white-space: nowrap; }
+#simpanel .sim-seq { font-size: 10pt; color: #7d8768; white-space: nowrap; }
 #simpanel .sim-seq b { color: #b9c4a7; }
 </style>
 
@@ -931,15 +932,15 @@ body { padding-bottom: 4.5em; }   /* keep the bar from hiding page content */
 <!-- Simulator toolbar: NOT a real-machine control. Pinned to the viewport so it
      is always visible regardless of how the (wider-than-screen) console scrolls. -->
 <aside id=simpanel>
-    <h2>⛭ Simulator</h2>
-    <span class=sim-sub>not real hardware — mounts a deck "in the reader hopper"</span>
+    <h2>Simulator</h2>
+    <span class=sim-sub>not real hardware - mounts a deck in the reader hopper</span>
     <label for=deck_file>Card deck (.cap)</label>
     <input type=file id=deck_file accept=".cap,.txt">
     <label class=sim-check><input type=checkbox id=deck_binary> binary</label>
     <label class=sim-check>first card <input type=number id=deck_first min=0 value=0></label>
     <button id=mount_button disabled>Insert deck in reader</button>
     <span class=sim-status id=mount_status>No deck loaded.</span>
-    <span class=sim-seq>then on the console: <b>CLEAR → LOAD → START</b></span>
+    <span class=sim-seq>then on the console: <b>CLEAR -&gt; LOAD -&gt; START</b></span>
 </aside>
 
 
@@ -1266,7 +1267,7 @@ mount_button.addEventListener("click", () => {
     const rc = module._mount_deck(binary, first);
     if (rc === 0)
         mount_status.textContent =
-            "Deck mounted on connector 2 (LOAD1).\nNow: CLEAR → LOAD → START.";
+            "Deck mounted on connector 2 (LOAD1).\nNow: CLEAR -> LOAD -> START.";
     else
         mount_status.textContent = "Could not parse deck (rc=" + rc + ").";
 })
