@@ -168,6 +168,21 @@ byte bit i  ←  card row B2R[i],   B2R = { 9, 8, 7, 6,  3, 2, 1, 0 }
 So the digit rows split into two nibbles around the unused middle rows 4/5, and
 the zone rows 11/12 carry no data in this mode.
 
+> **Confirmed by the manual (was empirical).** CPU[1] *(GE 120 CENTRAL PROCESSOR
+> [1]*, the DIAGNOSTIC ORGANIZATION volume, dwg 4T4714100UA, folio 53a / PDF
+> p.332) prints the binary card bit↔row "law of correspondence" verbatim:
+>
+> ```
+>   bit  07 06 05 04 03 02 01 00      (note: bit 00 = minimum weight)
+>   row   0  1  2  3  6  7  8  9
+> ```
+>
+> This matches `B2R` exactly (bit7←row0 … bit0←row9; rows 4/5 skipped), upgrading
+> the COLBIN decode from reverse-engineered to **document-confirmed (high)**. The
+> same encoding is the documented binary-card format for the CPU ISOLATION TEST
+> medium (§5.1 below), so it is the general GE column-binary convention, not
+> specific to funktionalcpu.
+
 **Worked example** — the same column value `0x0202` (rows 9 and 1 punched) under
 each mode:
 
@@ -225,14 +240,35 @@ checksum, **meaning unconfirmed**). Consequence for tooling: a depuncher must
 `gdis` does this. Confidence: high for "per-deck constant", low for the meaning
 of the varying bytes.
 
-**A second card framing exists (medium).** The `isolationcpu01/02/03` and
-`isolat-dsu-erganz-cpu` decks do **not** use the `00 04 ..` record format: their
-COLBIN-decoded cards carry GE code more directly (e.g. `9E 80 00 04 …`,
-`07 0A 07 0A 92 FF …`, `43 F0 …`) with a different/absent header, so the
-`LL@8 / addr@9-10 / payload@11` offsets above do not apply. These need their own
-layout reverse-engineering. The `ls600-*` / `sat-ls600` / `printer*` / `reading-*`
-decks are **peripheral test decks** — even where they share the `00 04` framing,
-their payloads are test patterns, not `0x0100` CPU programs.
+**A second card framing exists — now documented (2026-05-29).** The
+`isolationcpu01/02/03` and `isolat-dsu-erganz-cpu` decks do **not** use the
+`00 04 ..` record format above; they are the **CPU ISOLATION TEST** medium, whose
+card layout CPU[1] (DIAGNOSTIC ORGANIZATION, dwg 4T4714100UA folio 52 / PDF
+p.330) specifies directly:
+
+- the medium is **1055 cards**; the **first card is a title card** (deck name +
+  code) and the **last is a summary card** — *both must be removed before the
+  deck is loaded* (this is why a naive depunch of the raw `.cap` mis-frames them);
+- **every remaining card: binary code in columns 1–76, Hollerith in columns
+  77–80**;
+- **cols 77–78–79** = a 3-character progressive card identifier
+  (`001,002,…,999,A00,A02,…,A99,B00,…`; digit = punch in that row, `A/B/C` =
+  row 12 + row 1/2/3) — metadata, **not** payload;
+- **col 80** = medium version (row 0 = original, row 1 = first update, …);
+- each card carries "a specific diagnostic stimulus plus a transfer instruction"
+  — i.e. the payload is a **SMAC** program (a *loader* + the *INTE* interpreter +
+  a series of *WORDS*), not a load-to-address image. The binary columns use the
+  **same B2R bit↔row map** as §4.3 (confirmed on the same volume, folio 53a).
+
+So extracting these decks means: drop the title + summary cards, read **cols 1–76
+as 76 COLBIN bytes per card** (ignore 77–80), then interpret the byte stream as
+SMAC WORDS via INTE — a separate effort from the funktionalcpu loader. There is
+also a distinct **SMAC "system composition card"** (CPU[1] folio 45, PDF p.65):
+cols 9–14 = length (L−1) + system-table address, cols 15–74 = peripheral codes.
+
+The `ls600-*` / `sat-ls600` / `printer*` / `reading-*` decks are **peripheral
+test decks** — even where they share the `00 04` framing, their payloads are test
+patterns, not `0x0100` CPU programs.
 
 **Order-independence (verified, notable):** cards 107–108 are physically *out of
 sequence* in the capture (their addresses `0x18FA`, `0x193C` belong between cards

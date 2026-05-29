@@ -26,6 +26,8 @@ should be read with explicit confidence labels.
 | `software/gemu/signals.h` (`verified_condition`) | Branch condition-mask logic | high |
 | `software/gemu/pulse.c` | FI→FA condition latch (`cpu fo. 129`) | high |
 | `software/gemu/ge.c` (`ge_clear`) | Segment-base register defaults | high |
+| CPU[1] *GE 120 CENTRAL PROCESSOR [1]* (DIAGNOSTIC ORGANIZATION; page images) | Indicative HLT codes, SMAC language, card formats (§6.1, `docs/punchcards.md`) | medium (OCR garbled; read via page images per the project's OCR rule) |
+| GE *APS — Assembly Programming System* manual (EDV-AFL vol. 03) | External authority for mnemonics/directives (cross-check for gasm/§9) | not yet reconciled (page-image read pending) |
 
 **What "Status" means in the tables below** — whether the *emulator* (`gemu`)
 currently executes the instruction, independent of whether the *architecture*
@@ -308,6 +310,24 @@ condition code is set. "St" is the implementation status legend from §0
 > Recommended next step: locate the interrupt/console-indicator pages of the CPU
 > manual and confirm each sub-function.
 
+#### Indicative HLT codes (diagnostic convention)
+
+The diagnostic decks use **HLT as a status/error stop** and identify the reason by
+an *indicative code* (read off the console address/data display, or carried in a
+SMAC "C/S WORD"). Documented in CPU[1] (DIAGNOSTIC ORGANIZATION):
+
+| Code | Meaning | Source |
+|---|---|---|
+| `0050` | error HALT during program loading | CPU[1] "PROGRAM LISTING FORMAT" |
+| `004A` | program loading end (normal) | CPU[1]; matches `software/loader.txt` `0x004A HLT` |
+| `0EXX` | SMAC test error halt (`XX` = `00`..`FF`, the failing C/S code) | CPU[1] SMAC LANGUAGE DESCRIPTION, folio 21 |
+
+These match the emulator: the bootstrap `loader.txt` places `HLT` at `0x004A`
+(loading end) and `0x0050` (read error). The CPU functional-test memory checks
+report their own codes (`3465`, `1466`–`146B`, `19DE`); pinning each to its
+console-option path needs the CPU[5]/CPU[1] page images (still open — see §8).
+Confidence: medium (prose OCR + loader cross-check).
+
 ### 6.2 Conditional & unconditional branches — PM format (4 bytes)
 
 The branch **target** is the 4th/5th bytes resolved through §4.2
@@ -490,17 +510,23 @@ test when latched into `ffFA` at the following `TO10` (§5.2).
 
 ## 8. Open questions / low-confidence items
 
+Read these against page images, not the OCR text layer (the manual OCR is too
+garbled for byte-accurate use — render the specific page with `pdftoppm` and read
+it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
+
 | Item | Issue | Suggested check |
 |---|---|---|
 | Address bit 15 | masked off; role unknown (sign? indirect?) | CPU addressing pages / schematics |
-| ENS/INS/LON/LOFF/LOLL | sub-function meanings unverified | interrupt + console-indicator manual pages |
-| JRT (`0x41`) | opcode assigned, no decode | branch/linkage section of manual |
+| ENS/INS/LON/LOFF/LOLL | sub-function meanings unverified | interrupt + console-indicator manual pages; APS manual |
+| JRT (`0x41`) | opcode assigned, no decode | branch/linkage section of manual; APS manual |
 | LPSR (`0x9D`) | opcode assigned, no decode | PSW / status-register section |
 | CI vs CMI | both map to `alu_ci`; signed-vs-logical distinction? | §5.5.5.1 page image |
 | JU/JCC mask source | shared mask path with JC | §fo.56/57 page image |
 | AD/SD CC tables | OCR-inferred | §5.5.1.1 / §5.5.1.2 page images |
 | MVQ zones | "zones not processed" interpretation | §3.084/3.098 + hardware trace |
 | SR/SL | ALU done, not wired — SS model-byte/result-register encoding unconfirmed | search-instruction page image |
+| funktionalcpu memory-test HLTs (`3465`/`1466`–`146B`/`19DE`) | which console option byte (`mem[0x0E00]`) selects each test, + memory sizing | CPU[5] (009) / CPU[1] funktionalcpu listing page images |
+| isolation decks (`isolationcpu0x`) | distinct card framing (binary cols 1–76, Hollerith 77–80) + SMAC/INTE interpretation | CPU[1] folio 52/53a + CPU[3]; see `docs/punchcards.md` §5 |
 
 ---
 
