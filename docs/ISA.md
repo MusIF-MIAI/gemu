@@ -322,6 +322,39 @@ micro-cycle. This is the classic "CC latched at cycle start" behaviour.
 (`console.c:29`). The other `ffFI` bits 0–6 are individually set/reset by the
 microcode (`CI70–CI86`) for interrupt/error conditioning.
 
+### 5.4 Interrupts (architectural model — documented, not yet implemented)
+
+From the descriptive manual CPU[4] *GE 120 CENTRAL PROCESSOR [4]*, §5.2
+"Interruption" (dwg 30004122, folio ~41–42). An interrupt is taken **between
+instructions** (never mid-instruction):
+
+1. store the **PSR** (program status register) into the **OPSR** zone in memory;
+2. load the **PSR** from the **IPSR** zone;
+3. resume execution.
+
+- **Enable mask**: interrupts are felt only when **PSR bit 24 == 0**. In the
+  emulator that bit is **`FA06`** — exactly the `!FA06` term already gating the
+  alpha→`0xF0` branch (`state_E2_E3_TI06_CU04 = RINT && !BIT(ffFA,6)`,
+  `msl-states.c`). After CLEAR interrupts are **disabled**; a program enables
+  them with **`LPSR`** (opcode `0x9D`) loading a PSR whose bit 24 = 0.
+- **Re-entrancy guard**: the IPSR always has bit 24 = 1, so the handler runs with
+  interrupts disabled. Returning is done with **`LPSR 768`** (load PSR from OPSR),
+  which both resumes the interrupted program and re-enables interrupts.
+- **Interrupt zone**: memory **`0x0300`–`0x0307`** (decimal 768–775; "zone used by
+  the interruption mechanism", CPU[4] §2.3.1). OPSR is at **`0x0300`** (768,
+  named by the `LPSR 768` resume); IPSR is the other half of the 8-byte zone
+  (likely `0x0304`, **inferred** — confirm against the page image).
+- **Sources**: only specially-enabled peripheral subsystems raise the interrupt
+  signal (`RINT` / `INTE` = "interruption present", CPU[4] line 4412).
+
+Status in gemu: **not implemented.** The decode branch (`RINT && !FA06` →
+state `0xF0`) and the FFs (`RINT`, `INTE`, `ge.h`) exist, but state `0xF0` is an
+empty timing chart, `LPSR` is reserved (§6.11), there is no PSR save/restore, and
+no peripheral raises `RINT`. Implementing it needs: a PSR ⇄ OPSR/IPSR model, the
+`LPSR` execution, the state-`0xF0` interrupt-sequence timing chart (still to be
+located as a page image), and an interrupt-capable peripheral. Confidence: high
+for the model (clean prose OCR), medium for the exact IPSR address.
+
 ---
 
 ## 6. Instruction reference
@@ -539,7 +572,7 @@ holds a digit + the sign nibble. CC: 0 overflow, 1 `<0`, 2 `=0`, 3 `>0`
 | **PER** | `9E` | Peripheral / external operation (issue command to a channel). | via status | ✅ |
 | **PERI** | `9C` | Peripheral operation, interrupt variant. | via status | ✅ |
 | **RDC** | `90` | Read Card (peripheral read, decimal-deck variant; PER-family). | via status | ✅ |
-| **LPSR** | `9D` | Load Program Status Register. | — | ✗ |
+| **LPSR** | `9D` | Load Program Status Register (PSR ← mem). The interrupt-enable/return mechanism: `LPSR` with bit 24 = 0 enables interrupts, `LPSR 768` resumes from OPSR (§5.4). | — | ✗ |
 
 > The PER-family is decoded by `per_peri` (`msl-states.c:348`) and drives the
 > connector / card-reader handshake. The "examine abnormal conditions" (EPER)
