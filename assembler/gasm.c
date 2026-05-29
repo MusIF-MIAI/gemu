@@ -23,14 +23,13 @@
  *   P   (0x00-0x3F) : 2 bytes  [op][aux]
  *   PM  (0x40-0xBF) : 4 bytes  [op][aux][Ahi][Alo]
  *   SS  (0xC0-0xFF) : 6 bytes  [op][LL][A1hi][A1lo][A2hi][A2lo]
- * Addresses are big-endian. A 16-bit instruction address field is
- *   field = (modifier << 12) | displacement
- *   EA    = displacement + change_register[modifier]
- * (Bit 15 is the architectural absolute/modified flag — CPU[4] sec.2.5 — but the
- * modified-address indexing cycle is not yet implemented in gemu, so the
- * toolchain stays on base+displacement; see reference_operand_fetch_flowchart.)
- * With the identity change-register defaults an absolute address A <= 0x7FFF
- * encodes as field == A; higher addresses need an explicit base via disp(N).
+ * Addresses are big-endian. Bit 15 of a 16-bit address field is the
+ * architectural absolute/modified flag (CPU[4] sec.2.5), honored by gemu's
+ * operand-fetch indexing micro-cycle:
+ *   absolute  (bit 15 = 0): field = address (<= 0x7FFF); EA = field, used directly
+ *   modified  (bit 15 = 1): field = 0x8000 | (N<<12) | disp; EA = chgreg[N] + disp
+ * So an absolute address A <= 0x7FFF encodes as field == A (no base added);
+ * higher memory is reached relative to a reprogrammed base via disp(N).
  *
  * This file is self-contained C99 apart from binimage.h/.c (the standalone
  * shared definition of the unified output format); it includes no other gemu
@@ -322,9 +321,13 @@ static long eval_expr(const char *expr, int pass, int *ok)
 /* ------------------------------------------------------------------ */
 
 /* Parse a memory address operand into a 16-bit instruction field.
- *   "expr"        -> absolute; field = value (must be <= 0x7FFF)
- *   "disp(N)"     -> field = ((N & 7) << 12) | (disp & 0xFFF)
- *                    EA = change_register[N] + disp
+ *   "expr"        -> absolute; bit 15 = 0; field = value (must be <= 0x7FFF);
+ *                    EA = value, used directly (no change register).
+ *   "disp(N)"     -> modified; bit 15 = 1; field = 0x8000|((N&7)<<12)|(disp&0xFFF);
+ *                    EA = change_register[N] + disp.
+ * Bit 15 is the absolute/modified flag (CPU[4] §2.5, FO.19-20; flow chart dwg
+ * 14023130). gemu resolves it in operand fetch: absolute fields verbatim,
+ * modified fields via the ED|EC->EF|EE indexing micro-cycle.
  */
 static int parse_addr(const char *operand, int pass, uint16_t *field)
 {
@@ -345,7 +348,7 @@ static int parse_addr(const char *operand, int pass, uint16_t *field)
             if (n < 0 || n > 7) { err("base register %ld out of range 0..7", n); return -1; }
             if (disp < 0 || disp > 0xFFF) { err("displacement 0x%lX out of range 0..0xFFF", disp); return -1; }
         }
-        *field = (uint16_t)(((n & 7) << 12) | (disp & 0xFFF));
+        *field = (uint16_t)(0x8000u | ((n & 7) << 12) | (disp & 0xFFF));
         return 0;
     }
 

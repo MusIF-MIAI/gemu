@@ -214,21 +214,27 @@ It is split (`eff_addr` / `seg_base_of` in `msl-commands.c:166`):
 - bit 15 — **absolute/modified flag** (CPU[4] §2.5, FO. 19–20; confidence: high).
   **0 = absolute**: bits 0–14 are the address directly (no change register).
   **1 = modified**: bits 12–14 select the change register, added to the 12-bit
-  displacement (the base+displacement form described above). *Implementation
-  note:* gemu/gasm currently resolve **every** address as base+displacement
-  (ignoring bit 15); with the reset identity bases this coincides with absolute
-  addressing. Fully honoring bit 15 additionally needs the modified-address
-  indexing micro-cycle for single-address ops, not yet transcribed (see §8).
+  displacement (the base+displacement form). gemu **honors bit 15**: it resolves
+  the effective address during operand fetch — an absolute field is taken
+  verbatim, a modified field is resolved through the indexing micro-cycle
+  (states `ED|EC → EF|EE`, flow chart dwg 14023130) which adds
+  `change_register[N]` to the displacement and leaves the resolved EA in the
+  operand register. Both operands of a two-address (SS) instruction carry the
+  flag independently. `gasm` encodes `disp(N)` with bit 15 set and a bare
+  address/label with bit 15 clear; `gdis` decodes them back.
 
 **Effective address:**
 
 ```
-EA = displacement  +  change_register[ modifier ]
+bit 15 = 0 (absolute):   EA = field & 0x7FFF                         (no base)
+bit 15 = 1 (modified):   EA = displacement + change_register[modifier]
 ```
 
-This is exactly an IBM S/360-style **base + displacement** computation, but with
-the base register *selected by a 3-bit field inside the address* rather than a
-separate operand field.
+The modified form is exactly an IBM S/360-style **base + displacement**
+computation, but with the base register *selected by a 3-bit field inside the
+address* rather than a separate operand field. The absolute form bypasses the
+change registers entirely, so an absolute address is never aliased by a
+reprogrammed base register.
 
 ### 4.3 Change registers and segment bases
 
@@ -255,25 +261,23 @@ separate operand field.
 The same encoding supports both styles; the difference is entirely in **what the
 selected base register holds**:
 
-- **Global / absolute addressing** — name a fixed cell directly.
-  - Trivial form: **modifier 0 with base[0] = 0** → `EA = displacement`, a plain
-    `0x000–0xFFF` pointer into segment 0.
-  - General form: any base left at its identity value means
-    `EA = N*0x1000 + displacement`, i.e. the address byte *literally encodes* the
-    absolute address. Example: `JU 0x172A` decodes as displacement `0x72A`,
-    modifier `1` → `0x72A + base[1] (0x1000) = 0x172A`. With identity bases the
-    written address and the effective address coincide — the program reads as if
-    it used flat 16-bit pointers.
-- **Relative (relocatable) addressing** — name a cell *relative to a base you
-  control*. Load a base register with the start of a buffer/table/segment, then
-  use small displacements (`0x000–0xFFF`) against it. Move the base and the whole
-  access window relocates without changing any displacement. This is the
-  mechanism behind position-independent table walks and the memory-test sweep.
+- **Global / absolute addressing** (bit 15 = 0) — name a fixed cell directly.
+  The 15-bit field *is* the effective address; change registers are not
+  consulted. Example: `JU 0x172A` encodes field `0x172A` (bit 15 clear) and
+  jumps to `0x172A` regardless of what base register 1 currently holds.
+- **Relative (relocatable) addressing** (bit 15 = 1, `disp(N)`) — name a cell
+  *relative to a base you control*. Load a base register with the start of a
+  buffer/table/segment, then use small displacements (`0x000–0xFFF`) against it.
+  Move the base and the whole access window relocates without changing any
+  displacement. This is the mechanism behind position-independent table walks,
+  the memory-test sweep, and the C ABI's frame/stack (`disp(5)`/`disp(6)`).
 
-> **Practical reading rule:** if a program never reloads its change registers,
-> treat its addresses as **global/absolute** (identity bases make the encoding
-> transparent). The moment you see `LR`/`LA`/`AMR` targeting a change register,
-> subsequent accesses through that modifier are **relative** to the new base.
+> **Practical reading rule:** bit 15 decides it. An absolute field (`0xxx`/`1xxx`
+> ≤ `0x7FFF`) is the address verbatim; a modified field (`8xxx`–`Fxxx`, written
+> `disp(N)`) is `change_register[N] + disp`. Out of reset the change registers
+> hold identity bases (`N<<12`), so a *modified* address with an un-reloaded base
+> still reads as `N*0x1000 + disp` — but an *absolute* address is never affected
+> by a base reload.
 
 ### 4.5 Operand-pointer conventions (a deliberate asymmetry)
 
@@ -615,7 +619,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 
 | Item | Issue | Suggested check |
 |---|---|---|
-| Address bit 15 | **resolved**: absolute(0)/modified(1) flag (CPU[4] §2.5). gemu still resolves all addresses as base+disp (coincides under identity bases); full bit-15 honoring needs the modified-address indexing micro-cycle for single-address ops (operand-fetch flow chart dwg 14023130) — enabling it now derails the fetch loop. | operand-fetch flow chart 14023130 |
+| Address bit 15 | **honored**: absolute(0)/modified(1) flag (CPU[4] §2.5). gemu resolves the EA in operand fetch — absolute verbatim, modified via the indexing micro-cycle `ED\|EC → EF\|EE` (flow chart dwg 14023130), for single- and two-address ops. `gasm`/`gdis` encode/decode `disp(N)` with bit 15. | implemented; flow chart 14023130 |
 | ENS/INS/LON/LOFF/LOLL | sub-function meanings unverified | interrupt + console-indicator manual pages; APS manual |
 | JRT (`0x41`) | opcode assigned, no decode | branch/linkage section of manual; APS manual |
 | LPSR (`0x9D`) | opcode assigned, no decode | PSW / status-register section |
@@ -707,12 +711,13 @@ symbol, combined with `+`/`-` (e.g. `buf+4`, `0x100-1`).
 
   | Written | Field encoded | Effective address |
   |---|---|---|
-  | `expr` (absolute, ≤ `0x7FFF`) or a label | `field = value` | `value` (identity bases) |
-  | `disp(N)` | `field = (N<<12)\|(disp&0xFFF)` | `disp + change_register[N]` |
+  | `expr` (absolute, ≤ `0x7FFF`) or a label | `field = value` (bit 15 = 0) | `value`, used directly (no base) |
+  | `disp(N)` | `field = 0x8000\|(N<<12)\|(disp&0xFFF)` (bit 15 = 1) | `disp + change_register[N]` |
 
-  The 16-bit address field is `(modifier<<12) \| displacement` (§4.2); bit 15 is
-  unused. Absolute addresses above `0x7FFF` cannot be encoded directly — load a
-  base register (`LA`/`LR`) and use `disp(N)`.
+  Bit 15 is the absolute/modified flag (§4.2): `gasm` sets it for `disp(N)` and
+  clears it for an absolute address/label; `gdis` decodes a bit-15 field back to
+  `disp(N)`. Absolute addresses above `0x7FFF` cannot be encoded directly — load
+  a base register (`LA`/`LR`) and use `disp(N)`.
 
 ## A.3 Master dictionary
 
@@ -848,7 +853,9 @@ to the **rightmost** byte and are processed right-to-left (§4.5).
 
 These are the assembler's regression vectors; each matches the emulator decode
 (the first four are the §3.3 worked examples; `MVI 0xAB,0x0050` is the
-`tests/exec.c` `mvi_stores_immediate` vector).
+`tests/exec.c` `mvi_stores_immediate` vector). The last row exercises `disp(N)`
+on both operands — bit 15 is set in each field (`0x100(2)` → `0xA100`,
+`0xFFF(7)` → `0xFFFF`).
 
 | Source | Bytes |
 |---|---|
@@ -860,7 +867,7 @@ These are the assembler's regression vectors; each matches the emulator decode
 | `JE 0x0100` | `43 20 01 00` |
 | `LR 2, 0x0050` | `BC 02 00 50` |
 | `AP 3, 2, 0x0E00, 0x0F00` | `EA 21 0E 00 0F 00` |
-| `MVC 4, 0x100(2), 0xFFF(7)` | `D2 03 21 00 7F FF` |
+| `MVC 4, 0x100(2), 0xFFF(7)` | `D2 03 A1 00 FF FF` |
 
 ## A.5 Loading the output
 

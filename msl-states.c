@@ -23,6 +23,14 @@ static uint8_t not_RO05(struct ge *ge) { return !BIT(ge->rRO, 5); }
 static uint8_t not_RO06(struct ge *ge) { return !BIT(ge->rRO, 6); }
 static uint8_t not_RO07(struct ge *ge) { return !BIT(ge->rRO, 7); }
 
+/* Address modify flag (bit 15 of the operand address = L2 bit 7 once the
+ * addr-hi byte has been read into L2). Used to route operand fetch into the
+ * modified-address indexing micro-cycle. (SIG(L207)/SIG(not_L207) are defined
+ * later in this file for the TPER/CPER path; these mirror them but are visible
+ * to the alpha-phase states below.) */
+static uint8_t addr_modified(struct ge *ge) { return BIT(ge->rL2, 7); }
+static uint8_t addr_absolute(struct ge *ge) { return !BIT(ge->rL2, 7); }
+
 /* Initialitiation */
 /* --------------- */
 
@@ -233,6 +241,11 @@ static const struct msl_timing_chart state_E6[] = {
     { TI06, CU11, 0 },
 
     { TI06, CU17, state_E6_TI06_CU17 },
+
+    /* Modified first operand (L207 = address bit 15): enter the indexing
+     * micro-cycle (ED|EC -> EF|EE). INDEX_OP1 sets SA00 (first operand) and
+     * forces the next state to 0xec, overriding the CU bits above. */
+    { TI06, INDEX_OP1, addr_modified },
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -281,9 +294,59 @@ static const struct msl_timing_chart state_E7[] = {
     /* Mechanism B (hybrid one-shot): execute SS op here at TI06, after CI02 at
      * TI05 has loaded V2 (source address) and V1 (destination address) was loaded
      * during the preceding E5 pass.  SS_TO_ALPHA overrides the future state to
-     * e2 (alpha), breaking out of the operand-fetch micro-loop. */
-    { TI06, EXEC_SS,     is_ss_data_op },
-    { TI06, SS_TO_ALPHA, is_ss_data_op },
+     * e2 (alpha), breaking out of the operand-fetch micro-loop.
+     *
+     * Only when the second operand is ABSOLUTE (not_L207). A modified second
+     * operand instead enters the indexing micro-cycle via INDEX_OP2 (SA00 = 0,
+     * no V1 copy); the SS op is then executed by INDEX_DONE in state EF|EE once
+     * V2 holds the resolved source address. */
+    { TI06, EXEC_SS,     is_ss_data_op, addr_absolute },
+    { TI06, SS_TO_ALPHA, is_ss_data_op, addr_absolute },
+    { TI06, INDEX_OP2,   addr_modified },
+    { END_OF_STATUS, 0, 0 }
+};
+
+/* Modified-Address Indexing Micro-Cycle */
+/* ------------------------------------- */
+
+/* Entered from E6 (operand 1) or E7 (operand 2) when the address is modified
+ * (L207 = bit 15 of the address field). Faithful to flow chart dwg 14023130:
+ *
+ *   ED|EC  — compute EA = change_register[N] + displacement into V2, and copy
+ *            it to V1 for the first operand (SA00). (EXEC_INDEX fuses the
+ *            flow chart's low-byte add ED|EC and high-byte/carry add EF|EE into
+ *            one hybrid step; the two sheets survive as two states so the
+ *            control flow still mirrors the chart.)
+ *   EF|EE  — route onward (INDEX_DONE):
+ *              first operand of a two-address (PMM) op -> fetch/index op 2 (E5)
+ *              SS data op, both operands resolved       -> EXEC_SS, then alpha
+ *              single-address op (data or jump)         -> beta (0x64) to run it
+ */
+static uint8_t is_pmm(struct ge *ge) { return BIT(ge->rFO, 6) && BIT(ge->rFO, 7); }
+
+static void INDEX_DONE(struct ge *ge) {
+    if (ge->SA00 && is_pmm(ge)) {
+        /* first operand of a two-address op resolved -> go fetch operand 2 */
+        ge->SA00 = 0;
+        ge->future_state = 0xe5;
+    } else if (is_ss_data_op(ge)) {
+        /* both SS operands resolved -> execute and return to alpha */
+        EXEC_SS(ge);
+        ge->future_state = 0xe2;
+    } else {
+        /* single-address op (data op or jump) -> execute in beta */
+        ge->future_state = 0x64;
+    }
+}
+
+static const struct msl_timing_chart state_ED_EC[] = {
+    { TI06, EXEC_INDEX, 0 },
+    { TI06, INDEX_NEXT, 0 },   /* -> EF|EE (0xee) */
+    { END_OF_STATUS, 0, 0 }
+};
+
+static const struct msl_timing_chart state_EF_EE[] = {
+    { TI06, INDEX_DONE, 0 },
     { END_OF_STATUS, 0, 0 }
 };
 

@@ -46,10 +46,13 @@ valid options it is marked **[abi]**.
 
 ## 1. Memory map
 
-16-bit address space; **bit 15 of an encoded address field is unused** (ISA §4.2),
-so directly-encoded addresses span `0x0000–0x7FFF`. Higher memory is reachable
-only by loading a base register, which we do not do — **the C model lives in the
-low 32 KiB.**
+16-bit address space; **bit 15 of an encoded address field is the
+absolute/modified flag** (ISA §4.2). Absolute fields (bit 15 = 0) are used
+verbatim and span `0x0000–0x7FFF`; modified fields (bit 15 = 1, written
+`disp(N)`) resolve to `change_register[N] + disp`. The C model places its
+code+globals at absolute addresses (now above `0x1000`) and reaches the
+frame/stack via `disp(5)`/`disp(6)` against the reprogrammed base registers —
+**the C model lives in the low 32 KiB.**
 
 ```
 0x0000 .. 0x000F   reserved / low scratch
@@ -271,13 +274,14 @@ holds `42`.
   `0x6000–0x7FFF` stack window (8 KiB).
 - Single translation unit at first (no separate-compilation linker yet); `crt0`
   + program assembled together by `gasm`.
-- **Addressing (current toolchain):** the emulator resolves every operand
-  address as base+displacement (`disp(N)` → `change_register[N] + disp`) and does
-  not yet honor the architectural bit-15 absolute/modified flag (ISA.md §4.2,
-  §8). Local/stack access via `disp(5)`/`disp(6)` is exact; but an **absolute**
-  address ≥ `0x1000` would index a (possibly reloaded) base register, so **keep
-  compiled code and globals in low memory (< 0x1000)** until the bit-15 modified
-  indexing micro-cycle is transcribed. Small programs are unaffected.
+- **Addressing:** the emulator honors the architectural bit-15 absolute/modified
+  flag (ISA.md §4.2, §8). Absolute address fields (bit 15 = 0: code labels,
+  globals) are used verbatim; modified fields (`disp(N)`, bit 15 = 1:
+  local/stack access via `disp(5)`/`disp(6)`) resolve to `change_register[N] +
+  disp` through the operand-fetch indexing micro-cycle. Because absolute
+  addresses bypass the change registers, code+globals are **no longer confined
+  to low memory** and never alias the reprogrammed base registers (R5/R6 =
+  `0x6000`); `gec` now places them above `0x1000`.
 
 > **Status:** the compiler (`cc/gec.c`) implements this ABI and is verified
 > end-to-end on `gemu` (`cc/test.sh`, run by `make check`): arithmetic, `* / %`,

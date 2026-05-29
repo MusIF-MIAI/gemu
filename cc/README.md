@@ -51,8 +51,8 @@ generated into a `crt0` preamble together with the stack/return-value setup.
 
 ## Limitations
 
-See `../docs/ABI.md` §7. Notably: keep compiled code + globals in low memory
-(< 0x1000) for now — the toolchain resolves addresses as base+displacement and
-does not yet honor the architectural bit-15 absolute/modified flag (that needs
-the modified-address indexing micro-cycle transcribed from the operand-fetch
-flow chart). No floats, no separate compilation yet.
+See `../docs/ABI.md` §7. The toolchain now honors the architectural bit-15
+absolute/modified flag (the operand-fetch indexing micro-cycle is implemented),
+so absolute code/globals are used verbatim and `gec` places them above `0x1000`
+without aliasing the reprogrammed base registers; frame/stack use `disp(5)`/
+`disp(6)` (modified). No floats, no separate compilation yet.

@@ -320,6 +320,17 @@ struct ge {
     uint8_t AVER:1;
 
     /**
+     * First-vs-second operand flag for address modification
+     *
+     * Sequencer flag (the flow chart's <SA00> diamond, dwg 14023130) that
+     * distinguishes the FIRST operand (write the resolved effective address
+     * back to V1) from the SECOND operand (V2 only) during the modified-address
+     * indexing micro-cycle (states ED|EC -> EF|EE). Set when entering the index
+     * pass for operand 1, cleared for operand 2.
+     */
+    uint8_t SA00:1;
+
+    /**
      * Disable Step By Step
      *
      * Set with CI77 by the INS instruction, reset with CI78 issued by ENS, or

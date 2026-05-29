@@ -38,7 +38,11 @@ static void run_one_ss(struct ge *g)
     int last = -1;
     for (int i = 0; i < 40; i++) {
         ge_run_cycle(g);
-        if ((g->rSO == 0xe2 || g->rSO == 0xe3) && last == 0xe7)
+        /* Completion lands in alpha from the second-operand fetch (E7, absolute
+         * source) or from the indexing micro-cycle's EF|EE (0xee, modified
+         * source). */
+        if ((g->rSO == 0xe2 || g->rSO == 0xe3) &&
+            (last == 0xe7 || last == 0xee))
             return;
         last = g->rSO;
     }
@@ -365,18 +369,69 @@ UTEST(exec, jrt_links_even_when_not_taken)
     ASSERT_EQ(g.mem[255], 0x04);           /* link still deposited */
 }
 
-/* Regression for the E4 operand-fetch fix: an SS destination must keep its
- * modifier (full field) and resolve to base+displacement, NOT segment 0.
- * Before the fix the dest's high byte was dropped and writes fell into segment
- * 0. Dest field 0x5004 = modifier 5 | disp 4; reg5 = 0x0600 -> EA 0x0604. */
-UTEST(exec, ss_dest_keeps_modifier)
+/* -----------------------------------------------------------------------
+ * Address bit 15 = absolute(0)/modified(1) flag (CPU[4] §2.5; flow chart dwg
+ * 14023130). A modified field (bit 15 set) selects change register N from bits
+ * 12-14 and resolves to change_register[N] + (bits 0-11 displacement) via the
+ * indexing micro-cycle ED|EC -> EF|EE. An absolute field (bit 15 clear) is used
+ * directly. These tests exercise the indexing cycle for a single-address (PM)
+ * op, an SS destination, and an SS op with both operands modified.
+ * ----------------------------------------------------------------------- */
+
+/* PM single-address op, modified address: MVI imm into disp(N).
+ * Field 0xB010 = modified(bit15) | modifier 3 | disp 0x010. reg3 := 0x0400, so
+ * EA = 0x0400 + 0x010 = 0x0410. */
+UTEST(exec, index_pm_modified_resolves_changereg_plus_disp)
 {
-    uint8_t prog[] = { MVC_OPCODE, 0x00, 0x50, 0x04, 0x00, 0x80 }; /* MVC 1, 0x4(5), 0x80 */
+    uint8_t prog[] = { MVI_OPCODE, 0xAB, 0xB0, 0x10 };  /* MVI 0xAB, 0x010(3) */
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0xF6] = 0x04; g.mem[0xF7] = 0x00;   /* change register 3 = 0x0400 */
+    run_one(&g);
+    ASSERT_EQ(g.mem[0x0410], 0xAB);            /* wrote to chgreg[3] + disp */
+    ASSERT_EQ(g.mem[0x3010], 0x00);            /* NOT the identity-base address */
+    ASSERT_EQ(g.rPO, 0x0004);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+}
+
+/* SS destination modified, source absolute. Dest field 0xD004 = modified |
+ * modifier 5 | disp 4; reg5 = 0x0600 -> EA 0x0604. Source 0x0080 is absolute
+ * (bit 15 clear) -> used directly. */
+UTEST(exec, ss_dest_modified_indexes_changereg)
+{
+    uint8_t prog[] = { MVC_OPCODE, 0x00, 0xD0, 0x04, 0x00, 0x80 }; /* MVC 1, 0x004(5), 0x80 */
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[0xFA] = 0x06; g.mem[0xFB] = 0x00;   /* change register 5 = 0x0600 */
-    g.mem[0x80] = 0xAB;                        /* source byte */
-    g.mem[0x04] = 0x00; g.mem[0x0604] = 0x00;
+    g.mem[0x80] = 0xAB;                        /* source byte (absolute) */
     run_one_ss(&g);
-    ASSERT_EQ(g.mem[0x0604], 0xAB);            /* wrote to base+disp */
-    ASSERT_EQ(g.mem[0x04], 0x00);              /* NOT segment 0 */
+    ASSERT_EQ(g.mem[0x0604], 0xAB);            /* wrote to chgreg[5] + disp */
+    ASSERT_EQ(g.mem[0x5004], 0x00);            /* NOT the raw (absolute) field */
+}
+
+/* Modified jump through a change register = the C ABI's subroutine return
+ * (`JU 0x000(7)` after JRT deposited the link in reg 7). Field 0xF000 =
+ * modified | modifier 7 | disp 0. reg7 := 0x0420, so the jump resolves the
+ * target via the indexing micro-cycle and lands at PO = 0x0420. */
+UTEST(exec, modified_jump_via_changereg_returns)
+{
+    uint8_t prog[] = { JU_OPCODE, 0xF0, 0xF0, 0x00 };   /* JU 0x000(7) */
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[254] = 0x04; g.mem[255] = 0x20;               /* change register 7 = 0x0420 */
+    run_one(&g);
+    ASSERT_EQ(g.rPO, 0x0420);                            /* jumped to chgreg[7] + disp */
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
+}
+
+/* SS with BOTH operands modified: dst disp(5), src disp(2). reg5 = 0x0600,
+ * reg2 = 0x0700. dst EA = 0x0604, src EA = 0x0708. */
+UTEST(exec, ss_both_operands_modified)
+{
+    uint8_t prog[] = { MVC_OPCODE, 0x00, 0xD0, 0x04, 0xA0, 0x08 }; /* MVC 1, 0x004(5), 0x008(2) */
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0xFA] = 0x06; g.mem[0xFB] = 0x00;   /* change register 5 = 0x0600 */
+    g.mem[0xF4] = 0x07; g.mem[0xF5] = 0x00;   /* change register 2 = 0x0700 */
+    g.mem[0x0708] = 0x5A;                      /* source byte */
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x0604], 0x5A);            /* dst (chgreg[5]+4) <- src (chgreg[2]+8) */
+    ASSERT_EQ(g.rPO, 0x0006);
+    ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
 }

@@ -243,10 +243,10 @@ struct msl_timing_state msl_timings[0xff] = {
     /* e9 */ { },
     /* ea */ {state_ea},
     /* eb */ {state_eb},
-    /* ec */ { },
-    /* ed */ { },
-    /* ee */ { },
-    /* ef */ { },
+    /* ec */ {state_ED_EC},  /* modified-address indexing: EA = chgreg[N]+disp  */
+    /* ed */ {state_ED_EC},
+    /* ee */ {state_EF_EE},  /* indexing done: route to op2 / SS exec / beta    */
+    /* ef */ {state_EF_EE},
     /* f0 */ { },
     /* f1 */ { },
     /* f2 */ { },

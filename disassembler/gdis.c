@@ -159,6 +159,9 @@ static uint8_t labels[65536];
 
 static void mark_label(uint16_t field)
 {
+    /* Modified fields (bit 15 set) are disp(N), not an address — never a label. */
+    if (field & 0x8000)
+        return;
     if (img_min >= 0 && field >= img_min && field < img_max)
         labels[field] = 1;
 }
@@ -386,12 +389,19 @@ static int all_present(long a, int len)
     return 1;
 }
 
-/* Format a 16-bit address field as an operand. If a label exists at the field
- * value, use it; otherwise the absolute hex value (round-trips through gasm). */
+/* Format a 16-bit address field as an operand. Bit 15 is the absolute/modified
+ * flag (CPU[4] §2.5): a modified field decodes as `disp(N)` (N = bits 12-14,
+ * disp = bits 0-11); an absolute field decodes as a label (if one exists at the
+ * value) or the bare hex value. Round-trips through gasm's parse_addr. */
 static void fmt_addr(uint16_t field, char *buf, size_t n)
 {
-    if (labels[field]) snprintf(buf, n, "L_%04X", field);
-    else               snprintf(buf, n, "0x%04X", field);
+    if (field & 0x8000) {
+        snprintf(buf, n, "0x%03X(%d)", field & 0x0FFF, (field >> 12) & 7);
+    } else if (labels[field]) {
+        snprintf(buf, n, "L_%04X", field);
+    } else {
+        snprintf(buf, n, "0x%04X", field);
+    }
 }
 
 /*

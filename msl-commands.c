@@ -148,43 +148,62 @@ static void cr_wr16(struct ge* ge, uint16_t a, uint16_t v) {
     ge->mem[(uint16_t)(a + 1)] = (uint8_t)(v & 0xff);
 }
 
-/* Address modification / segment base.
+/* Address modification — bit 15 = absolute/modified flag (CPU[4] §2.5, FO.19-20;
+ * flow chart dwg 14023130, transcribed in reference_operand_fetch_flowchart).
  *
- * An instruction address is a 12-bit displacement plus a 3-bit modifier
- * (address bits 12-14 = high nibble of the addr-hi byte). The modifier selects
- * one of the change registers (the "segment base"); the effective address is
- * displacement + base[modifier]. The change registers live at mem[240+2N] and
- * default to base[N] = N<<12 at reset (ge_clear) — identity segment bases, so a
- * bare displacement with modifier N addresses segment N (modifier 0 -> base 0,
- * i.e. plain 0x000-0xFFF). Programs may reload a base via LR/LA/AMR for paged
- * access (e.g. the memory test sweeping 8K-32K).
+ * Every operand address field carries the modify flag in bit 15:
+ *   bit 15 = 0  ABSOLUTE: bits 0-14 are the address directly (0..0x7FFF); the
+ *               change registers are NOT consulted.
+ *   bit 15 = 1  MODIFIED: bits 12-14 select one of the 8 change registers and
+ *               EA = change_register[N] + (bits 0-11 displacement), 16-bit wrap.
  *
- * Operand fetch drops the modifier from V1 (keeps only the 12-bit displacement)
- * and parks the addr-hi byte in L2, so single-address (PM/SI) ops recover the
- * modifier from L2's high nibble. For two-address (PMM/SS) ops, V2 keeps the
- * full address (modifier in bits 12-14) while V1's modifier is taken from its
- * own high nibble (0 after the drop, i.e. segment 0 for the destination). */
-static uint16_t seg_base_of(struct ge* ge, int seg) {
-    uint16_t a = (uint16_t)(240 + (seg & 7) * 2);
+ * The GE-130 resolves this *during operand fetch*: an absolute field is left in
+ * V verbatim (bit 15 = 0, so V < 0x8000); a modified field is reduced to its
+ * 12-bit displacement (top quartet zeroed) in V and the change register is then
+ * added by the indexing micro-cycle ED|EC -> EF|EE (EXEC_INDEX below), which
+ * leaves the resolved EA in V2 and (for the first operand, SA00) copies it to V1.
+ * So after fetch the operand registers hold the RESOLVED effective address and
+ * execution uses them directly — eff_v1_l2 / CI00s / EXEC_SS just mask to the
+ * 15-bit address space. The change registers live at mem[240+2N] and default to
+ * base[N] = N<<12 at reset (ge_clear); programs reload a base via LR/LA/AMR. */
+
+/* Read change register N (16-bit big-endian at mem[240+2N]). */
+static uint16_t cr_base(struct ge* ge, int n) {
+    uint16_t a = (uint16_t)(240 + (n & 7) * 2);
     return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
 }
-/* Effective address = displacement + change_register[modifier]. Resolves every
- * address as base+displacement using bits 12-14 as the modifier (bit 15 not yet
- * honored); with the reset identity bases this coincides with absolute
- * addressing, and the E4 fix above lets the SS destination's full field reach
- * here so disp(N) destinations resolve correctly. Full bit-15 absolute/modified
- * handling needs the ED|EC|EF|EE indexing micro-cycle — fully transcribed in the
- * reference_operand_fetch_flowchart memory note, to be implemented cycle-accurately. */
-static uint16_t eff_addr(struct ge* ge, uint16_t raw, int seg) {
-    return (uint16_t)((raw & 0x0FFFu) + seg_base_of(ge, seg & 7));
-}
-/* Effective V1 for single-address PM/SI ops: modifier from L2's high nibble. */
-static uint16_t eff_v1_l2(struct ge* ge) { return eff_addr(ge, ge->rV1, (ge->rL2 >> 4) & 7); }
 
-/* Jump target resolution with segment base (modifier from L2's high nibble). */
+/* Effective V1 for single-address PM/SI ops: V1 already holds the resolved EA
+ * (absolute field, or change_register+displacement after the indexing cycle). */
+static uint16_t eff_v1_l2(struct ge* ge) { return ge->rV1 & 0x7FFFu; }
+
+/* Jump target: NI re-assembles the resolved target field at TI05 (for a modified
+ * jump it was resolved into V2 by the indexing cycle). Mask to the address space. */
 static void CI00s(struct ge* ge) {
-    ge->rPO = eff_addr(ge, NI_knot(ge), (ge->rL2 >> 4) & 7);
+    ge->rPO = NI_knot(ge) & 0x7FFFu;
 }
+
+/* Modified-address indexing (flow chart ED|EC, the low-byte add, fused with the
+ * EF|EE high-byte/carry add into one hybrid step). The displacement sits in
+ * V2 bits 0-11 (top quartet was zeroed during the high-byte read for a modified
+ * address); the modifier N is L2 bits 4-6 (= address bits 12-14, since L2 holds
+ * the current operand's addr-hi byte). EA = change_register[N] + displacement,
+ * 16-bit wrap (carry beyond word 2 lost). The resolved EA is written to V2 and,
+ * for the first operand (SA00), copied to V1. */
+static void EXEC_INDEX(struct ge* ge) {
+    uint8_t  n    = (ge->rL2 >> 4) & 7;
+    uint16_t disp = ge->rV2 & 0x0FFFu;
+    uint16_t ea   = (uint16_t)(cr_base(ge, n) + disp);
+    ge->rV2 = ea;
+    if (ge->SA00)
+        ge->rV1 = ea;
+}
+
+/* Index-cycle sequencing helpers (explicit future-state forcing, like
+ * SS_TO_ALPHA — see msl-states.c for the routing). */
+static void INDEX_OP1(struct ge* ge)  { ge->SA00 = 1; ge->future_state = 0xec; }
+static void INDEX_OP2(struct ge* ge)  { ge->SA00 = 0; ge->future_state = 0xec; }
+static void INDEX_NEXT(struct ge* ge) { ge->future_state = 0xee; }
 
 static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), cr_rd16(ge, eff_v1_l2(ge))); }
 static void EXEC_STR(struct ge* ge) { cr_wr16(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
@@ -222,10 +241,12 @@ static void EXEC_SS(struct ge *ge)
     uint8_t  len  = (ge->rL1 & 0xff) + 1;
     uint8_t  alen = ((ge->rL1 >> 4) & 0xf) + 1;
     uint8_t  blen = (ge->rL1 & 0x0f) + 1;
-    /* SS effective addresses: both V1 (dest, full field via the E4 fix) and V2
-     * (source) -> base+displacement via the modifier in bits 12-14. */
-    uint16_t dst  = eff_addr(ge, ge->rV1, (ge->rV1 >> 12) & 7);
-    uint16_t src  = eff_addr(ge, ge->rV2, (ge->rV2 >> 12) & 7);
+    /* SS effective addresses: V1 (dest) and V2 (src) already hold the resolved
+     * effective address after operand fetch (absolute field verbatim, or
+     * change_register+displacement via the indexing micro-cycle). Mask to the
+     * 15-bit address space. */
+    uint16_t dst  = ge->rV1 & 0x7FFFu;
+    uint16_t src  = ge->rV2 & 0x7FFFu;
 
     switch (ge->rFO) {
         case MVC_OPCODE:

@@ -796,7 +796,12 @@ static void emit_runtime(FILE *o) {
         "__zero EQU 0x002A\n"           /* constant 0 (set by crt0)           */
         "__lr   EQU 0x002C\n"           /* saved link register for non-leaf helpers */
         "__pw   EQU 0x002E\n"           /* scratch power-of-two               */
-        "       ORG 0x0100\n"
+        /* Code + globals live above 0x1000. With bit-15 absolute/modified
+         * addressing honored (gemu indexing micro-cycle), absolute code/data
+         * references are used verbatim and no longer alias the reloaded base
+         * registers (R5/R6 = 0x6000) — so the layout is no longer confined to
+         * low memory. Frame/stack live at 0x6000 via disp(5)/disp(6) (modified). */
+        "       ORG 0x1100\n"
         "__start:\n"
         "\tLA 5, 0x000(6)\n"            /* FP = SP (R6 = 0x6000 by reset identity) */
         "\tMVI 0, __one\n\tMVI 1, __one+1\n"

@@ -63,16 +63,16 @@ A memory address is written either as an absolute value/label, or as an explicit
 base-relative `disp(N)`:
 
 ```
-0x0500          ; absolute (must be <= 0x7FFF with identity bases) -> field = 0x0500
-buf             ; label, resolved to its absolute address
-0x100(2)        ; displacement 0x100 against change register 2 -> field = 0x2100
+0x0500          ; absolute (<= 0x7FFF) -> field = 0x0500, bit 15 = 0
+buf             ; label, resolved to its absolute address (bit 15 = 0)
+0x100(2)        ; displacement 0x100 against change register 2 -> field = 0xA100, bit 15 = 1
 ```
 
-The instruction address field is `field = (modifier << 12) | displacement`, and
-the effective address is `displacement + change_register[modifier]`. With the
-reset (identity) change registers, an absolute address `A <= 0x7FFF` encodes as
-`field == A`. To reach `0x8000`+ you must reprogram a base register (`LA`/`LR`)
-and use `disp(N)`.
+Bit 15 of the address field is the absolute/modified flag (ISA §4.2). An
+absolute value/label encodes with bit 15 = 0 and is used as the effective
+address directly (no base added). `disp(N)` encodes with bit 15 = 1 and resolves
+at run time to `change_register[N] + displacement`. To reach `0x8000`+ you must
+reprogram a base register (`LA`/`LR`) and use `disp(N)`.
 
 ### Operand forms by instruction
 

@@ -117,5 +117,6 @@ or `.cap` parsing.
   19DE) needs the exact option-byte encoding and installed-memory sizing, which is
   still being recovered from the diagnostic listing (an option value of 0x10 runs
   off the loaded image into high memory) — tracked as evidence work.
-- **bit 15 of an address** is unused/unknown (masked); see `docs/ISA.md` §4.2.
+- **bit 15 of an address** is the absolute(0)/modified(1) flag, honored by the
+  emulator and the gasm/gdis toolchain; see `docs/ISA.md` §4.2.
 - Version is checked on read; an unknown version is rejected rather than guessed.
