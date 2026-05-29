@@ -93,6 +93,35 @@ always emits zone `0x4`, and `PKS` reads zone `0xA` in the rightmost source byte
 as a negative sign. *(Confidence: high for the model, medium for the exact zone
 constants — OCR.)*
 
+### 2.1 Character set — GE 100 Series Graphic Character Set
+
+This is **not ASCII** (which did not yet exist). The machine's 64-character
+graphic set is documented in the GE *APS Reference Manual* (EDV-AFL vol. 03)
+Figure 3, p.16 — internal byte codes occupy **`0x40`–`0x5F`** and **`0xA0`–`0xBF`**:
+
+| Range | Glyphs |
+|---|---|
+| `0x40`–`0x49` | `0 1 2 3 4 5 6 7 8 9` |
+| `0x4A`–`0x4F` | `[  #  @  :  >  ?` |
+| `0x50` | space |
+| `0x51`–`0x59` | `A B C D E F G H I` |
+| `0x5A`–`0x5F` | `&  .  ]  (  <  \` |
+| `0xA0`–`0xA9` | `↑  J K L M N O P Q R` |
+| `0xAA`–`0xAF` | `—  $  •  )  ;  '` |
+| `0xB0`–`0xB9` | `+  /  S T U V W X Y Z` |
+| `0xBA`–`0xBF` | `←  ,  %  =  "  !` |
+
+`gdis` uses this table to annotate `DB` data bytes with their machine glyph.
+
+> ⚠️ **Evidence conflict (unresolved).** This documented internal set places
+> digits at `0x40`–`0x49` and letters at `0x51`–`0x59`/`0xA1`–`0xA9`/`0xB2`–`0xB9`.
+> The card-reader "normal" transcoder (`transcode.c`, derived to reproduce
+> `funktionalcpu.bin`) instead yields **EBCDIC-like** codes — digits `0xF0`–`0xF9`,
+> `X`=`0xE7`, `,`=`0x6B` (see `docs/punchcards.md` §4.1). The two genuinely differ;
+> likely the card transcoder and the CPU's internal graphic set are distinct
+> codes. Not silently reconciled — flagged for the page-image evidence pass
+> (cross-check the CRZ transcoder code chart against APS Figure 3).
+
 ---
 
 ## 3. Instruction formats and encoding

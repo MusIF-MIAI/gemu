@@ -293,6 +293,88 @@ static int load_cap(const char *path, enum transcode_mode mode, int loose,
     return loaded ? 0 : -1;
 }
 
+/*
+ * Decode the Hollerith character punched in a card-identifier column (CPU
+ * ISOLATION TEST cols 77-79): a single punch in rows 0-9 is that digit; the
+ * double punches row12+row1/2/3 are A/B/C (CPU[1] folio 52). Returns the
+ * character, or 0 if the column is blank / not a valid identifier punch.
+ */
+static char holl_ident_char(uint16_t col)
+{
+    int rows[13], n = 0;
+    for (int r = 0; r <= 12; r++)
+        if (col & (1u << r)) rows[n++] = r;
+    if (n == 0) return 0;
+    if (n == 1 && rows[0] >= 0 && rows[0] <= 9) return (char)('0' + rows[0]);
+    if (n == 2 && rows[0] == 1 && rows[1] == 12) return 'A';
+    if (n == 2 && rows[0] == 2 && rows[1] == 12) return 'B';
+    if (n == 2 && rows[0] == 3 && rows[1] == 12) return 'C';
+    return 0;   /* not a clean identifier punch */
+}
+
+/*
+ * Load a CPU ISOLATION TEST deck (CPU[1] folio 52). Card layout differs from
+ * the funktionalcpu family: binary payload in columns 1-76 (COLBIN), and a
+ * 3-character progressive identifier in Hollerith in columns 77-79 (column 80
+ * = medium version). There is no per-card load address — the payload bytes
+ * concatenate into one stream (a SMAC loader + INTE interpreter + WORDS) which
+ * we place contiguously starting at `org`.
+ *
+ * The title card (deck name) and summary card are removed from the physical
+ * medium before loading, so a clean capture has none; any card whose 77-79
+ * identifier does not decode (blank/garbled — a stray title/summary/blank
+ * separator) is skipped rather than emitted as payload. Cards are taken in
+ * physical (= identifier) order. Returns 0 on success.
+ */
+static int load_cap_iso(const char *path, long org, int verbose)
+{
+    struct cap_deck *d = cap_load(path);
+    if (!d) { fprintf(stderr, "gdis: cannot parse .cap '%s'\n", path); return -1; }
+
+    int nc = cap_num_cards(d);
+    int loaded = 0, skipped = 0;
+    long off = org;
+    char first_id[4] = {0}, last_id[4] = {0};
+
+    for (int i = 0; i < nc; i++) {
+        int ncols = cap_card_ncols(d, i);
+        const uint16_t *cols = cap_card_columns(d, i);
+        if (ncols < 80 || !cols) { skipped++; continue; }  /* art / short cards */
+
+        /* Identifier = Hollerith cols 77-79 (cap indices 76-78). */
+        char id[4];
+        id[0] = holl_ident_char(cols[76]);
+        id[1] = holl_ident_char(cols[77]);
+        id[2] = holl_ident_char(cols[78]);
+        id[3] = 0;
+        if (!id[0] || !id[1] || !id[2]) {
+            if (verbose)
+                fprintf(stderr, "  card %3d: skip (no valid 77-79 id — title/summary/blank)\n", i);
+            skipped++;
+            continue;
+        }
+
+        /* Payload = COLBIN cols 1-76 (cap indices 0-75), 76 bytes, appended. */
+        for (int k = 0; k < 76; k++)
+            put(off + k, transcode_column(cols[k], TC_COLBIN));
+        if (!first_id[0]) memcpy(first_id, id, 4);
+        memcpy(last_id, id, 4);
+        if (verbose)
+            fprintf(stderr, "  card %3d: id=%s -> 0x%04lX..0x%04lX\n",
+                    i, id, off, off + 75);
+        off += 76;
+        loaded++;
+    }
+
+    fprintf(stderr, "gdis: %s: ISOLATION deck, %d cards, %d loaded (id %s..%s), "
+            "%d skipped; image 0x%04lX..0x%04lX (%ld bytes)\n",
+            path, nc, loaded, first_id, last_id, skipped,
+            img_min < 0 ? 0 : img_min, img_max ? img_max - 1 : 0,
+            img_min < 0 ? 0 : img_max - img_min);
+    cap_free(d);
+    return loaded ? 0 : -1;
+}
+
 /* ------------------------------------------------------------------ */
 /* Disassembly                                                         */
 /* ------------------------------------------------------------------ */
@@ -310,6 +392,42 @@ static void fmt_addr(uint16_t field, char *buf, size_t n)
 {
     if (labels[field]) snprintf(buf, n, "L_%04X", field);
     else               snprintf(buf, n, "0x%04X", field);
+}
+
+/*
+ * GE 100 Series Graphic Character Set — machine byte -> glyph, transcribed from
+ * the GE APS Reference Manual (EDV-AFL vol. 03) Figure 3, p.16. The 64-character
+ * graphic set occupies 0x40-0x5F and 0xA0-0xBF; all other codes are non-graphic.
+ * Used to annotate DB data bytes with the character they represent ON THE
+ * MACHINE (not ASCII — which did not yet exist). Glyphs that have no ASCII
+ * equivalent (up/left arrows 0xA0/0xBA, long dash 0xAA, bullet 0xAC) render '.'.
+ *
+ * EVIDENCE CONFLICT (do not silently resolve): this documented internal set puts
+ * digits at 0x40-0x49 and letters at 0x51-0x59 / 0xA1-0xA9 / 0xB2-0xB9, whereas
+ * the card-reader "normal" transcoder in ../transcode.c produced EBCDIC-like
+ * codes (digits 0xF0-0xF9, X=0xE7 …) to match funktionalcpu.bin. The two
+ * encodings genuinely differ; see docs/punchcards.md / docs/ISA.md. For these
+ * comments we use the APS-documented machine graphic set.
+ */
+static const char GE_GLYPH[256] = {
+    [0x40]='0',[0x41]='1',[0x42]='2',[0x43]='3',[0x44]='4',[0x45]='5',
+    [0x46]='6',[0x47]='7',[0x48]='8',[0x49]='9',
+    [0x4A]='[',[0x4B]='#',[0x4C]='@',[0x4D]=':',[0x4E]='>',[0x4F]='?',
+    [0x50]=' ',[0x51]='A',[0x52]='B',[0x53]='C',[0x54]='D',[0x55]='E',
+    [0x56]='F',[0x57]='G',[0x58]='H',[0x59]='I',
+    [0x5A]='&',[0x5B]='.',[0x5C]=']',[0x5D]='(',[0x5E]='<',[0x5F]='\\',
+    [0xA1]='J',[0xA2]='K',[0xA3]='L',[0xA4]='M',[0xA5]='N',[0xA6]='O',
+    [0xA7]='P',[0xA8]='Q',[0xA9]='R',
+    [0xAB]='$',[0xAD]=')',[0xAE]=';',[0xAF]='\'',
+    [0xB0]='+',[0xB1]='/',[0xB2]='S',[0xB3]='T',[0xB4]='U',[0xB5]='V',
+    [0xB6]='W',[0xB7]='X',[0xB8]='Y',[0xB9]='Z',
+    [0xBB]=',',[0xBC]='%',[0xBD]='=',[0xBE]='"',[0xBF]='!',
+};
+
+static char ge_glyph(uint8_t b)
+{
+    char c = GE_GLYPH[b];
+    return c ? c : '.';
 }
 
 /* Decode the instruction at addr. On pass 1 record branch-target labels; on
@@ -412,7 +530,7 @@ static int decode_at(long addr, int pass, FILE *out)
 db1:
     /* Unknown/garbled or truncated: emit one data byte and resync. */
     if (pass == 2) fprintf(out, "        DB     0x%02X        ; %c\n",
-                           op, (op >= 0x20 && op < 0x7f) ? op : '.');
+                           op, ge_glyph(op));
     return 1;
 }
 
@@ -475,7 +593,7 @@ int main(int argc, char **argv)
 {
     const char *inpath = NULL, *outpath = NULL;
     enum transcode_mode mode = TC_COLBIN;
-    int is_bin = 0, loose = 0, do_cards = 0, do_hex = 0, do_image = 0, verbose = 0;
+    int is_bin = 0, loose = 0, do_cards = 0, do_hex = 0, do_image = 0, is_iso = 0, verbose = 0;
     long org = 0x0000;
     long entry = -1;   /* --entry; default = image origin (img_min) */
     uint8_t user_prefix[8]; int have_user_prefix = 0;
@@ -489,6 +607,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--cards")) do_cards = 1;
         else if (!strcmp(argv[i], "--hex")) do_hex = 1;
         else if (!strcmp(argv[i], "--image")) do_image = 1;
+        else if (!strcmp(argv[i], "--iso")) is_iso = 1;
         else if (!strcmp(argv[i], "--entry") && i + 1 < argc) entry = strtol(argv[++i], NULL, 0);
         else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) verbose = 1;
         else if (!strcmp(argv[i], "--prefix") && i + 1 < argc) {
@@ -511,6 +630,8 @@ int main(int argc, char **argv)
                    "  --loose        accept any self-consistent card record (ignore the prefix)\n"
                    "  --cards        dump per-card decoded bytes + record parse, then exit\n"
                    "  --hex          dump the reconstructed image as hex, then exit\n"
+                   "  --iso          CPU ISOLATION TEST deck: payload = COLBIN cols 1-76,\n"
+                   "                 id = Hollerith cols 77-79; concatenate cards at --org\n"
                    "  --image        write a unified-format binary (GE12 header + image)\n"
                    "  --entry 0xNNNN entry point for --image (default = image origin)\n"
                    "  -v             verbose card-by-card report on stderr\n");
@@ -585,6 +706,8 @@ int main(int argc, char **argv)
         fclose(f);
         fprintf(stderr, "gdis: %s: loaded 0x%04lX..0x%04lX (%ld bytes)\n",
                 inpath, org, img_max - 1, img_max - org);
+    } else if (is_iso) {
+        if (load_cap_iso(inpath, org, verbose) != 0) return 1;
     } else {
         if (load_cap(inpath, mode, loose, verbose,
                      have_user_prefix ? user_prefix : NULL) != 0) return 1;

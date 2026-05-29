@@ -65,6 +65,25 @@ else
     echo "  skip: $CAP not found"
 fi
 
+echo "== isolation deck (--iso) extraction =="
+
+ISO=../DUMP1/isolationcpu01.cap
+if [ -f "$ISO" ]; then
+    if "$GDIS" --iso --image -o "$TMP/iso.bin" "$ISO" >/dev/null 2>&1; then
+        # 210 valid cards x 76 cols = 15960 payload bytes + 12-byte header.
+        sz=$(wc -c < "$TMP/iso.bin")
+        if [ "$sz" -eq 15972 ]; then
+            echo "  ok: isolationcpu01 --iso -> 15960-byte stream (210 cards x 76)"
+        else
+            echo "FAIL: isolationcpu01 --iso image is $sz bytes (expected 15972)"; fail=1
+        fi
+    else
+        echo "FAIL: gdis --iso could not extract $ISO"; fail=1
+    fi
+else
+    echo "  skip: $ISO not found"
+fi
+
 if [ "$fail" -eq 0 ]; then
     echo "roundtrip: all checks passed"
 else

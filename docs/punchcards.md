@@ -266,6 +266,16 @@ SMAC WORDS via INTE — a separate effort from the funktionalcpu loader. There i
 also a distinct **SMAC "system composition card"** (CPU[1] folio 45, PDF p.65):
 cols 9–14 = length (L−1) + system-table address, cols 15–74 = peripheral codes.
 
+**`gdis --iso` implements the extraction.** It emits cols 1–76 (COLBIN) of every
+card whose Hollerith identifier (cols 77–79) decodes cleanly, concatenated in
+deck order at `--org`, and skips cards with a blank/garbled identifier (a stray
+title/summary/blank separator) rather than assuming fixed first/last positions —
+the captured decks already have the title and summary removed. Verified on the
+four CPU-ISOLATION decks, whose identifiers run contiguously (`001`–`210`,
+`211`–`502`, `503`–…, `A00`–…). The resulting byte stream is the SMAC program;
+interpreting it (loader + INTE + WORDS) is future work — `gdis --iso --hex` /
+`--image` give the bytes today.
+
 The `ls600-*` / `sat-ls600` / `printer*` / `reading-*` decks are **peripheral
 test decks** — even where they share the `00 04` framing, their payloads are test
 patterns, not `0x0100` CPU programs.
