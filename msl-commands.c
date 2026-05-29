@@ -309,7 +309,11 @@ static void SS_TO_ALPHA(struct ge *ge)
  * be reported here once error injection is modelled. */
 static void CE_chan1_status(struct ge *ge)
 {
-    ge->rRO = 0x40; /* RO6=1 (operation OK), RO1=RO2=0 (no error) -> DU95=1 */
+    /* Default: RO6=1 (operation OK), RO1=RO2=0 (no error) -> DU95=1 ("no
+     * error"). When inject_chan1_status is non-zero a test/harness is injecting
+     * an abnormal condition: report that status byte instead (e.g. 0x42 sets
+     * RO1, so DU95 reads "error" and the EPER examine branch fires). */
+    ge->rRO = ge->inject_chan1_status ? ge->inject_chan1_status : 0x40;
 }
 
 static void CI40(struct ge *ge) { CO40(ge); }

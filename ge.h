@@ -543,6 +543,13 @@ struct ge {
     /** Invalid-address fault flag: set when rVO >= installed memory size */
     uint8_t inv_add;
 
+    /** Channel-1 peripheral status override for error injection. 0 = report the
+     *  default "operation OK" status (0x40); non-zero = report this status byte
+     *  instead, so a test/harness can inject a peripheral error/abnormal
+     *  condition (e.g. 0x42 sets RO1 -> the EPER "examine" decode sees an error).
+     *  Read by CE_chan1_status (msl-commands.c). */
+    uint8_t inject_chan1_status;
+
     struct ge_counting_network counting_network;
 
     /**
