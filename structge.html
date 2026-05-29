@@ -165,6 +165,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a81253d5250cefe9592818c7081a0ff09" id="r_a81253d5250cefe9592818c7081a0ff09"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a81253d5250cefe9592818c7081a0ff09">AVER</a>:1</td></tr>
 <tr class="memdesc:a81253d5250cefe9592818c7081a0ff09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Jump Condition Verified.  <br /></td></tr>
 <tr class="separator:a81253d5250cefe9592818c7081a0ff09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd4ff66bc4d9a8255193bd8c7faa1e68" id="r_afd4ff66bc4d9a8255193bd8c7faa1e68"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#afd4ff66bc4d9a8255193bd8c7faa1e68">SA00</a>:1</td></tr>
+<tr class="memdesc:afd4ff66bc4d9a8255193bd8c7faa1e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">First-vs-second operand flag for address modification.  <br /></td></tr>
+<tr class="separator:afd4ff66bc4d9a8255193bd8c7faa1e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8174d589a5636441f2dc515b6353e0a" id="r_aa8174d589a5636441f2dc515b6353e0a"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#aa8174d589a5636441f2dc515b6353e0a">ADIR</a>:1</td></tr>
 <tr class="memdesc:aa8174d589a5636441f2dc515b6353e0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable Step By Step.  <br /></td></tr>
 <tr class="separator:aa8174d589a5636441f2dc515b6353e0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -331,7 +334,7 @@ Data Fields</h2></td></tr>
 <tr><td class="fieldname"><a id="abc6126af1d45847bc59afa0aa3216b04aa0457ade05c23fa7e65f23f725c75f68" name="abc6126af1d45847bc59afa0aa3216b04aa0457ade05c23fa7e65f23f725c75f68"></a>MC_WRITE&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00523">523</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00534">534</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -374,7 +377,7 @@ Data Fields</h2></td></tr>
 <p>Disable Step By Step. </p>
 <p>Set with CI77 by the INS instruction, reset with CI78 issued by ENS, or with "CLEAR" (cpu fo. 97). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00328">328</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00339">339</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -488,7 +491,7 @@ Data Fields</h2></td></tr>
 
 <p>The current state of the console switches. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00519">519</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00530">530</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -504,7 +507,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00553">553</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00564">564</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -578,7 +581,7 @@ Data Fields</h2></td></tr>
 <p>Future state. </p>
 <p>Ad-hoc logic, at the end of the cycle contains the result of the future state network. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00509">509</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00520">520</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -613,7 +616,7 @@ Data Fields</h2></td></tr>
 <p>Channel-1 peripheral status override for error injection. </p>
 <p>0 = report the default "operation OK" status (0x40); non-zero = report this status byte instead, so a test/harness can inject a peripheral error/abnormal condition (e.g. 0x42 sets RO1 -&gt; the EPER "examine" decode sees an error). Read by CE_chan1_status (<a class="el" href="msl-commands_8c.html">msl-commands.c</a>). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00551">551</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00562">562</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -631,7 +634,7 @@ Data Fields</h2></td></tr>
 
 <p>Interruption present. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00335">335</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00346">346</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -649,7 +652,7 @@ Data Fields</h2></td></tr>
 
 <p>The I/O interface for the integrated reader (RI) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00558">558</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00569">569</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -667,7 +670,7 @@ Data Fields</h2></td></tr>
 
 <p>Invalid-address fault flag: set when rVO &gt;= installed memory size. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00544">544</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00555">555</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -685,7 +688,7 @@ Data Fields</h2></td></tr>
 
 <p>JE/AVER jump instruction exectuted. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00334">334</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00345">345</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -703,7 +706,7 @@ Data Fields</h2></td></tr>
 
 <p>Console jump condition 1. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00332">332</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00343">343</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -721,7 +724,7 @@ Data Fields</h2></td></tr>
 
 <p>Console jump condition 2. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00333">333</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00344">344</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -774,7 +777,7 @@ Data Fields</h2></td></tr>
 
 <p>The memory of the emulated system. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00529">529</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00540">540</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -792,7 +795,7 @@ Data Fields</h2></td></tr>
 
 <p>Parity fault flag: set when a READ finds a parity mismatch on a previously-written location. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00541">541</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00552">552</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -810,7 +813,7 @@ Data Fields</h2></td></tr>
 
 <p>Stored odd-parity bit (1 bit per location) written alongside mem[]. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00532">532</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00543">543</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -828,7 +831,7 @@ Data Fields</h2></td></tr>
 
 <p>Installed memory size; 0 is treated as MEM_SIZE (full address space) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00538">538</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00549">549</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -846,7 +849,7 @@ Data Fields</h2></td></tr>
 
 <p>1 once a location has been written; prevents false MEM CHECK on cleared memory </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00535">535</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00546">546</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -894,7 +897,7 @@ Data Fields</h2></td></tr>
 
 <p>Unconditionally stores L106. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00339">339</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00350">350</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -912,7 +915,7 @@ Data Fields</h2></td></tr>
 
 <p>Unconditionally stores L106. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00340">340</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00351">351</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -930,7 +933,7 @@ Data Fields</h2></td></tr>
 
 <p>Stores L106 if channel 2 is selected. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00341">341</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00352">352</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -946,7 +949,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00342">342</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00353">353</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -962,7 +965,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00343">343</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00354">354</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -978,7 +981,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00384">384</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00395">395</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -994,7 +997,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00570">570</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00581">581</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1014,7 +1017,7 @@ Data Fields</h2></td></tr>
 <p>Used during the general B phase for command forwarding or condition examination. Unconditionally set by command CE02 which enables the channel selection even if the interested channels are 2 or 3. When a character transfer in output has been initiated with channel 1, signal PAP4A resets PUC1 at the start of the transper phase, when the first transfer is done from RO in to RA (CE00) unless signal PAR21 had already absolved this function. (cpu fo. 235).</p>
 <p>Note: the above GE docs refers to <code>PUC2</code>, however in intermediate block diagram fo. 10, it's shown the real flipflop is <code>PIC1</code>, and <code>PUC2</code> is derived combinatorially from it. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00361">361</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00372">372</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1068,7 +1071,7 @@ Data Fields</h2></td></tr>
 <p>Channel 2 in transfer. </p>
 <p>(cpu fo. 236) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00375">375</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00386">386</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1087,7 +1090,7 @@ Data Fields</h2></td></tr>
 <p>Channel 3 in transfer. </p>
 <p>(cpu fo. 236) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00382">382</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00393">393</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1105,7 +1108,7 @@ Data Fields</h2></td></tr>
 
 <p>Rejected Command. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00495">495</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00506">506</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1124,7 +1127,7 @@ Data Fields</h2></td></tr>
 <p>Channel 1 in transfer. </p>
 <p>(cpu fo. 236) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00368">368</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00379">379</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1142,7 +1145,7 @@ Data Fields</h2></td></tr>
 
 <p>VICU Support. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00498">498</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00509">509</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1180,7 +1183,7 @@ Data Fields</h2></td></tr>
 <p>Asynchronous CPU Cycle Request. </p>
 <p>It is reset with CE18 (enable RIAP) while a cycle is performed for the CPU (RIUC=1). The CPU is thus waiting for the external triggers of the command received. It is set by the clear signal (CAGUF=0) with the signal of command received by the peripheral unit (RBII1=1) with the insertion of the SITE key which frees the waitings (RAITI=1) and finally with the disselection of channel 1 (PU16 = 0) (cpu fo. 114). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00408">408</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00419">419</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1199,7 +1202,7 @@ Data Fields</h2></td></tr>
 <p>Asynchronous Channel 1 Cycle Request. </p>
 <p>It is set with the OR of the channel 1 request triggers (RAI01) if the executing instruction is not over (RIVEF=1). Also, when the SITE key is inserted during a during a transfer of channel 1 (RAISI2=1). It is reset during a cycle of channel 1 with CE18 (enable RIAP), or at the end of a transfer on channel 1 (cpu fo. 114) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00421">421</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00432">432</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1220,7 +1223,7 @@ Data Fields</h2></td></tr>
 <p>Request from printer do not act on RC02, but are derived from it with an OR (RIMZA).</p>
 <p>It is reset during a cycle of channel 2 with CE18 (enable RIAP), or at the end of a transfer on channel 2 (cpu fo. 114). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00436">436</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00447">447</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1240,7 +1243,7 @@ Data Fields</h2></td></tr>
 <p>It is set with the OR of the cycle request triggers relative to channel 3 (RA301=1) if the executing instruction is not over (RIVAF=1) and additional performances of the GE-130 are enabled (FUL4F=1).</p>
 <p>It is reset during a cycle of channel 3 with CE18 (enable RIAP), also, it is reset when the SITE key is inserted (RAITI=1) during a data transfer on channel 3 (RES36=1), or at the end of transfer on channel 3 (PIC32=0) (cpu fo. 114). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00451">451</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00462">462</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1258,7 +1261,7 @@ Data Fields</h2></td></tr>
 
 <p>Selection Check Byte. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00487">487</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00498">498</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1276,7 +1279,7 @@ Data Fields</h2></td></tr>
 
 <p>The current state of the console register rotary switch. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00514">514</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00525">525</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1295,7 +1298,7 @@ Data Fields</h2></td></tr>
 <p>Synchronous Channel 1 Cycle Request. </p>
 <p>Transfered from RC01 at pulse TO00 (cpu fo. 114). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00470">470</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00481">481</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1366,7 +1369,7 @@ Data Fields</h2></td></tr>
 <p>Is conditioned by the signals ALTOF and RAM02.</p>
 <p>When the FF ALTOF is reset, the cycle requests from the CPU are not serverd, therefore the internal calculation is stopped. This counter consists of the FF RAMO and RAMI and counts with the pulse TO10. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00463">463</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00474">474</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1385,7 +1388,7 @@ Data Fields</h2></td></tr>
 <p>Synchronous Channel 2 Cycle Request. </p>
 <p>Transfered from RC02 at pulse TO00 (cpu fo. 114). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00477">477</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00488">488</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1404,7 +1407,7 @@ Data Fields</h2></td></tr>
 <p>Synchronous Channel 3 Cycle Request. </p>
 <p>Transfered from RC03 at pulse TO00 (cpu fo. 114). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00484">484</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00495">495</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1422,7 +1425,7 @@ Data Fields</h2></td></tr>
 
 <p>End from controller 1. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00490">490</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00501">501</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1438,7 +1441,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00492">492</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00503">503</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1454,7 +1457,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00330">330</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00341">341</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1686,7 +1689,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00500">500</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00511">511</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1702,7 +1705,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00501">501</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00512">512</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1718,7 +1721,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00386">386</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00397">397</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1813,6 +1816,25 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a id="afd4ff66bc4d9a8255193bd8c7faa1e68" name="afd4ff66bc4d9a8255193bd8c7faa1e68"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd4ff66bc4d9a8255193bd8c7faa1e68">&#9670;&#160;</a></span>SA00</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t SA00</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>First-vs-second operand flag for address modification. </p>
+<p>Sequencer flag (the flow chart's &lt;SA00&gt; diamond, dwg 14023130) that distinguishes the FIRST operand (write the resolved effective address back to V1) from the SECOND operand (V2 only) during the modified-address indexing micro-cycle (states ED|EC -&gt; EF|EE). Set when entering the index pass for operand 1, cleared for operand 2. </p>
+
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00331">331</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+
+</div>
+</div>
 <a id="a5530b973a8b935dfa11315d30f45dc46" name="a5530b973a8b935dfa11315d30f45dc46"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5530b973a8b935dfa11315d30f45dc46">&#9670;&#160;</a></span>ST3</h2>
 
@@ -1827,7 +1849,7 @@ Data Fields</h2></td></tr>
 
 <p>The I/O interface for the ST3 connector. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00563">563</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00574">574</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1845,7 +1867,7 @@ Data Fields</h2></td></tr>
 
 <p>The I/O interface for the ST4 connector. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00568">568</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00579">579</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1864,7 +1886,7 @@ Data Fields</h2></td></tr>
 <p>Step by step execution. </p>
 <dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd>replace with signal name </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00521">521</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00532">532</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1883,7 +1905,7 @@ Data Fields</h2></td></tr>
 <p>Workaround for pulse TO50. </p>
 <p>Currently we first run the common machine logic, then the MSL states. However in certain cases (e.g. display state 00) the common TO50 implementation is conditioned on the activation of the MSL TO50... So, until we figure out a better way of factoring the MSL, let's store here the conditions for the common machine TO50, and delay its excecution to a fake TO50-1 clock pulse. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00583">583</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00594">594</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1899,7 +1921,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00388">388</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00399">399</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1915,7 +1937,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00389">389</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00400">400</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
