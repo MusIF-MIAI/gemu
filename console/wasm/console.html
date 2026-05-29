@@ -874,16 +874,16 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
                         <div class="top red" id=l_MAINTENANCE_ON>MAINT.ON</div>
                         <div class=bottom>LAMPS CHECK</div>
                     </div>
-                    <div class=button>
+                    <div class="button hoverable" id=switch_1_button>
                         <div class="single white" id=l_SWITCH_1>SWITCH 1</div>
                     </div>
-                    <div class=button>
+                    <div class="button hoverable" id=switch_2_button>
                         <div class="single white" id=l_SWITCH_2>SWITCH 2</div>
                     </div>
                     <div class=button>
                         <div class="single white" id=l_STEP_BY_STEP>STEP BY STEP</div>
                     </div>
-                    <div class=button>
+                    <div class="button hoverable" id=load_sel_button>
                         <div class="top white" id=l_LOAD_1>LOAD 1</div>
                         <div class="bottom white" id=l_LOAD_2>LOAD 2</div>
                     </div>
@@ -1244,6 +1244,17 @@ lamps_check_button.addEventListener("mousedown",  lampCheckStart);
 lamps_check_button.addEventListener("mouseup",    lampCheckEnd);
 lamps_check_button.addEventListener("mouseleave", lampCheckEnd);
 
+/* SWITCH 1 / SWITCH 2: operator toggle switches the program reads via JS1/JS2;
+ * their lamps follow the inputs (driven back from the CPU side). */
+let sw1 = 0, sw2 = 0;
+switch_1_button.addEventListener("click", () => { if (!module) return; sw1 ^= 1; module._set_switch_1_2(sw1, sw2); });
+switch_2_button.addEventListener("click", () => { if (!module) return; sw2 ^= 1; module._set_switch_1_2(sw1, sw2); });
+
+/* LOAD1/LOAD2 selector: toggles which load connector the bootstrap reads
+ * (default LOAD1). The lamps follow ALOI from the CPU side. */
+let load1 = 1;
+load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 1; module._set_load_unit(load1); });
+
 /* ---- simulator gadget: mount a .cap deck into the reader's MEMFS ------- */
 let deck_bytes = null;
 
@@ -1310,6 +1321,7 @@ GE_Module({ print: log_add })
     .then(m => {
         module = m
         mount_button.disabled = false
+        module._set_load_unit(load1)   /* sync the LOAD selector lamp to the default */
         log_add("ok.")
     })
 

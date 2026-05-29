@@ -28,6 +28,12 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.SWITCH_1 = ge->JS1;
     console->lamps.SWITCH_2 = ge->JS2;
 
+    /* LOAD1/LOAD2 selector lamps: the load-unit selector picks one of the two
+     * install-time load connectors (ALOI=1 -> connector 2 = LOAD1, ALOI=0 ->
+     * LOAD2). Exactly one is lit. (CPU[4] §3.3, fo.43) */
+    console->lamps.LOAD_1 = ge->ALOI;
+    console->lamps.LOAD_2 = !ge->ALOI;
+
     /* performance conditions (cpu fo. 31, 32) */
 
     console->lamps.ADD_reg = ge->rBO;

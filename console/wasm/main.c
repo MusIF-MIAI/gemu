@@ -178,6 +178,24 @@ void EMSCRIPTEN_KEEPALIVE set_register_selector(int s) {
     send_console();
 }
 
+/* SWITCH 1 / SWITCH 2 are operator-panel toggle switches the program reads via
+ * the JS1 / JS2 instructions; their lamps follow these inputs. */
+void EMSCRIPTEN_KEEPALIVE set_switch_1_2(int s1, int s2) {
+    ge->JS1 = !!s1;
+    ge->JS2 = !!s2;
+    send_console();
+}
+
+/* LOAD1/LOAD2 selector: choose which install-time load connector the bootstrap
+ * reads from (load1 != 0 -> LOAD1/connector 2, else LOAD2). */
+void EMSCRIPTEN_KEEPALIVE set_load_unit(int load1) {
+    if (load1)
+        ge_load_1(ge);
+    else
+        ge_load_2(ge);
+    send_console();
+}
+
 void em_main_loop() {
     if (!running_loop) 
         return;

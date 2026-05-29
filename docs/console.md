@@ -166,7 +166,7 @@ ge_run_cycle(&g);                      /* advance the delay-line clock  */
 |-----------|--------------|-------|
 | **CLI (headless)** | `./ge prog.bin` or `./ge --deck deck.cap` | Drives CLEAR→LOAD→START for you and runs to HLT; `--trace` for logs. |
 | **ncurses TUI** | `./ge --tui` | Implies `--console`; spawns `console/curses/console.py` against the `/tmp/gemu.console` socket. |
-| **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `set_switches(flags, am)`, `set_register_selector(s)`. |
+| **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `press_power_off`, `set_switches(flags, am)`, `set_register_selector(s)`, `set_switch_1_2(s1, s2)` (the program-readable switches → `JS1`/`JS2`), `set_load_unit(load1)` (LOAD1/LOAD2 selector), `mount_deck` (deck loader), `refresh_lamps` (after LAMPS CHECK). |
 
 The WebAssembly `set_switches` packs the maintenance switches into a flags word:
 
