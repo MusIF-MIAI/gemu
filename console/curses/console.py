@@ -163,7 +163,7 @@ def draw_lamp_labels():
     # first line
     scr.addstr(y - 1, 9, "┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓ ┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓")
     scr.addstr(y + 1, 32, '08   07 06 05 04 03 02 01 00')
-    scr.addstr(y + 2, 32, '\__________________________/')
+    scr.addstr(y + 2, 32, r'\__________________________/')
     scr.addstr(y + 3, 45, 'RO')
     scr.addstr(y + 1, 20, 'UR')
 
@@ -172,10 +172,10 @@ def draw_lamp_labels():
     # second line
     scr.addstr(y - 1, 9, "┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓ ┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓")
     scr.addstr(y + 1, 37, '07 06 05 04 03 02 01 00')
-    scr.addstr(y + 2, 37, '\_____________________/')
+    scr.addstr(y + 2, 37, r'\_____________________/')
     scr.addstr(y + 3, 48, 'SO')
     scr.addstr(y + 1, 11, '03 02 01 00')
-    scr.addstr(y + 2, 11, '\_________/')
+    scr.addstr(y + 2, 11, r'\_________/')
     scr.addstr(y + 3, 15, 'FA')
 
     y += 6
@@ -183,7 +183,7 @@ def draw_lamp_labels():
     #third line
     scr.addstr(y - 1, 9, "┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓ ┏━━┯━━┯━━┯━━┯━━┯━━┯━━┯━━┓")
     scr.addstr(y + 1, 37, '07 06 05 04 03 02 01 00')
-    scr.addstr(y + 2, 37, '\_____________________/')
+    scr.addstr(y + 2, 37, r'\_____________________/')
     scr.addstr(y + 3, 48, 'SA')
     scr.addstr(y + 1, 11, 'B4 B3 B2 B1')
 
@@ -528,6 +528,5 @@ def main(stdscr):
 
 
 wrapper(main)
-
-curses.echo()
-curses.endwin()
+# curses.wrapper() already restores the terminal (echo + endwin) on exit;
+# calling endwin() again here returned ERR, so don't.

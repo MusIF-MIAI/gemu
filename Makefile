@@ -27,6 +27,28 @@ check: tests/tests ge tools
 	python3 tests/isa_consistency.py
 	sh tests/roundtrip.sh
 
+# In-browser WebAssembly console (console/wasm/): the whole emulator compiled
+# with emscripten, served as console.html + main.mjs + main.wasm.
+#   make wasm      -- build it (needs emscripten 'emcc'; see console/wasm/Makefile
+#                     'docker' target for a no-local-emcc build). NOTE: this
+#                     rebuilds libge.a with emcc, so run 'make clean && make'
+#                     afterwards to restore the native build.
+#   make wasm-run  -- serve console/wasm over HTTP and open it in a browser.
+WASM_PORT ?= 8120
+
+.PHONY: wasm
+wasm:
+	$(MAKE) -C console/wasm
+
+.PHONY: wasm-run
+wasm-run:
+	@test -f console/wasm/main.mjs && test -f console/wasm/main.wasm || { \
+		echo "WASM build missing — run 'make wasm' first (needs emscripten)"; \
+		exit 1; }
+	@echo "Serving console/wasm at http://localhost:$(WASM_PORT)/console.html (Ctrl-C to stop)"
+	@( sleep 1 ; xdg-open "http://localhost:$(WASM_PORT)/console.html" >/dev/null 2>&1 || true ) &
+	@python3 -m http.server $(WASM_PORT) --directory console/wasm
+
 .PHONY: clean
 clean:
 	rm -f libge.a main.o ge tests/tests
@@ -34,6 +56,7 @@ clean:
 	rm -f $(TESTS) $(TESTS:%.o=%.d)
 	$(MAKE) -C assembler clean
 	$(MAKE) -C disassembler clean
+	$(MAKE) -C console/wasm clean
 
 .PHONY: docs
 docs:
