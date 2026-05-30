@@ -312,11 +312,15 @@ static void EXEC_SS(struct ge *ge)
         case SD_OPCODE:
             alu_sd(ge, dst, alen, src, blen);
             break;
+        /* MVQ/CMQ are part of the AB-SB-AD-SD-MVQ-CMQ microcode family, whose
+         * field length is governed by the L1.2 counter (= the high-nibble
+         * length, alen), not the full L1 byte. funktionalcpu step 0x1B
+         * (MVQ 2,0x0531,0x0533 with L1=0x01) moves only alen=1 byte. */
         case MVQ_OPCODE:
-            alu_mvq(ge, dst, src, len);
+            alu_mvq(ge, dst, src, alen);
             break;
         case CMQ_OPCODE:
-            alu_cmq(ge, dst, src, len);
+            alu_cmq(ge, dst, src, alen);
             break;
         /* Search Right/Left (SR=0xD9, SL=0xDB), SS1 format "SR len, A1, A2":
          *   A1 (V1=dst) = leftmost byte of the search field
