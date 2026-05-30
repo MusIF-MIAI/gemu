@@ -302,13 +302,12 @@ void alu_ap(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     }
 
     if (overflow || len_ovf) {
-        /* write the (possibly truncated) result anyway */
+        /* Overflow: write the truncated low-order digits and PRESERVE the
+         * destination's existing sign nibble (deck step 0x45: 0x45+0x0025 ->
+         * 0x65; step 0x46: 902+136 -> 1038 truncated to 038, sign 5 kept ->
+         * 0x0385). Report cc=0 (the MP-DP/AP NOTE overflow slot). */
+        (void)result_sign;
         dec_write_digits(ge->mem, a, ab, r_d, an);
-        /* A length-overflow (L1<L2) preserves the destination's existing sign
-         * nibble (deck step 0x45: 0x45 + 0x0025 -> 0x65, sign 5 kept); a
-         * magnitude carry uses the computed algebraic sign. */
-        if (!len_ovf)
-            dec_set_sign(ge->mem, a, result_sign);
         alu_set_cc(ge, ALU_CC_OVF);
         return;
     }
