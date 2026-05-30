@@ -122,7 +122,7 @@ UTEST(exec, cmi_compare_low_sets_cc1)
 
 UTEST(exec, lr_loads_register_from_memory)
 {
-    uint8_t prog[] = { LR_OPCODE, 0xC0, 0x00, 0x60 };  /* LD reg4 <- mem[0x60] */
+    uint8_t prog[] = { LR_OPCODE, 0xC0, 0x00, 0x61 };  /* LD reg4 <- mem[0x60] */
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[0x60] = 0x12; g.mem[0x61] = 0x34;
     run_one(&g);
@@ -132,7 +132,7 @@ UTEST(exec, lr_loads_register_from_memory)
 
 UTEST(exec, str_stores_register_to_memory)
 {
-    uint8_t prog[] = { STR_OPCODE, 0xC0, 0x00, 0x60 };  /* STR reg4 -> mem[0x60] */
+    uint8_t prog[] = { STR_OPCODE, 0xC0, 0x00, 0x61 };  /* STR reg4 -> mem[0x60] */
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[REG4] = 0xAB; g.mem[REG4 + 1] = 0xCD;
     run_one(&g);
@@ -153,7 +153,7 @@ UTEST(exec, la_loads_address)
 
 UTEST(exec, amr_adds_memory_to_register)
 {
-    uint8_t prog[] = { AMR_OPCODE, 0xC0, 0x00, 0x60 };  /* reg4 += mem[0x60] */
+    uint8_t prog[] = { AMR_OPCODE, 0xC0, 0x00, 0x61 };  /* reg4 += mem[0x60] */
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[REG4] = 0x00; g.mem[REG4 + 1] = 0x10;         /* reg4 = 0x0010 */
     g.mem[0x60] = 0x00; g.mem[0x61] = 0x05;             /* operand = 0x0005 */
@@ -165,7 +165,7 @@ UTEST(exec, amr_adds_memory_to_register)
 
 UTEST(exec, cmr_compare_equal)
 {
-    uint8_t prog[] = { CMR_OPCODE, 0xC0, 0x00, 0x60 };  /* cmp reg4 : mem[0x60] */
+    uint8_t prog[] = { CMR_OPCODE, 0xC0, 0x00, 0x61 };  /* cmp reg4 : mem[0x60] */
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[REG4] = 0x11; g.mem[REG4 + 1] = 0x22;
     g.mem[0x60] = 0x11; g.mem[0x61] = 0x22;

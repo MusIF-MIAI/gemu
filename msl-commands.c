@@ -151,6 +151,20 @@ static void cr_wr16(struct ge* ge, uint16_t a, uint16_t v) {
     ge_mem_store8(ge, (uint16_t)(a + 1), (uint8_t)(v & 0xff));
 }
 
+/* Register-op MEMORY operand: the instruction address (V1) points to the
+ * RIGHTMOST (low) byte; the 16-bit value occupies [addr-1 .. addr] (the
+ * LR-AMR-SMR-CMR-STR microcode reads V2 DOWNWARD, V2-1->V2). Confirmed by
+ * funktionalcpu step 0x37: LR cr6 <- mem[0x0621..0x0622], verified by the
+ * CMC against the saved copy. (The change-register storage at 240+2N is the
+ * other way -- high byte first -- handled by cr_rd16/cr_wr16.) */
+static uint16_t mem_rd16_op(struct ge* ge, uint16_t a) {
+    return (uint16_t)((ge->mem[(uint16_t)(a - 1)] << 8) | ge->mem[a]);
+}
+static void mem_wr16_op(struct ge* ge, uint16_t a, uint16_t v) {
+    ge_mem_store8(ge, (uint16_t)(a - 1), (uint8_t)(v >> 8));
+    ge_mem_store8(ge, a, (uint8_t)(v & 0xff));
+}
+
 /* Address modification — bit 15 = absolute/modified flag (CPU[4] §2.5, FO.19-20;
  * flow chart dwg 14023130, transcribed in reference_operand_fetch_flowchart).
  *
@@ -208,17 +222,17 @@ static void INDEX_OP1(struct ge* ge)  { ge->SA00 = 1; ge->future_state = 0xec; }
 static void INDEX_OP2(struct ge* ge)  { ge->SA00 = 0; ge->future_state = 0xec; }
 static void INDEX_NEXT(struct ge* ge) { ge->future_state = 0xee; }
 
-static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), cr_rd16(ge, eff_v1_l2(ge))); }
-static void EXEC_STR(struct ge* ge) { cr_wr16(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
+static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), mem_rd16_op(ge, eff_v1_l2(ge))); }
+static void EXEC_STR(struct ge* ge) { mem_wr16_op(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
 static void EXEC_LA (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), eff_v1_l2(ge)); }
 /* JRT (Jump Return, op 0x41): deposits the address of the subsequent instruction
  * (rPO before the jump rewrites it at TI05/CI00s) into index register 7
  * (mem 254/255). Unconditional, per CPU[4] sec.5.5.6.2 / 5.6.5.1: the link is
  * reserved even when the conditional form does not take the jump. */
 static void JRT_LINK(struct ge* ge) { cr_wr16(ge, 254, ge->rPO); }
-static void EXEC_CMR(struct ge* ge) { alu_cmr(ge, cr_rd16(ge, reg_addr_of(ge)), cr_rd16(ge, eff_v1_l2(ge))); }
-static void EXEC_AMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_amr(ge, &r, cr_rd16(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
-static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_smr(ge, &r, cr_rd16(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
+static void EXEC_CMR(struct ge* ge) { alu_cmr(ge, cr_rd16(ge, reg_addr_of(ge)), mem_rd16_op(ge, eff_v1_l2(ge))); }
+static void EXEC_AMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_amr(ge, &r, mem_rd16_op(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
+static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_smr(ge, &r, mem_rd16_op(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
 
 /* SS (Storage-to-Storage) data-op execution commands (Wave 5 / Mechanism B).
  *
