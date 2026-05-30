@@ -174,6 +174,63 @@ static void mark_label(uint16_t field)
 }
 
 /* ------------------------------------------------------------------ */
+/* Symbol table (--symbols file.sym): give addresses human names.      */
+/* ------------------------------------------------------------------ */
+/* A .sym file is one symbol per line:
+ *     ADDR  NAME  [; comment]
+ * ADDR is hex (0x.. or bare); NAME is a label identifier; an optional ';'
+ * starts a trailing comment. Blank lines and lines beginning with '#' or ';'
+ * are ignored. When a symbol is present, gdis prints NAME wherever it would
+ * otherwise print L_xxxx (label definitions and operand references), names data
+ * cells (variables) as labels with their comment, and emits an EQU block at the
+ * top for any symbol that falls outside the loaded image. */
+static char *symname[65536];
+static char *symcomment[65536];
+static int   have_symbols = 0;
+
+static char *xstrdup_trim(const char *s)
+{
+    while (*s == ' ' || *s == '\t') s++;
+    size_t n = strlen(s);
+    while (n && (s[n-1] == ' ' || s[n-1] == '\t' || s[n-1] == '\r' || s[n-1] == '\n')) n--;
+    char *r = malloc(n + 1);
+    memcpy(r, s, n); r[n] = '\0';
+    return r;
+}
+
+static int load_symbols(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (!f) { fprintf(stderr, "gdis: cannot open symbols %s\n", path); return -1; }
+    char line[256];
+    int count = 0;
+    while (fgets(line, sizeof line, f)) {
+        char *p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '#' || *p == ';' || *p == '\n' || *p == '\0') continue;
+        char *end;
+        long addr = strtol(p, &end, 16);   /* hex address (0x.. or bare) */
+        if (end == p || addr < 0 || addr > 0xFFFF) continue;
+        p = end;
+        while (*p == ' ' || *p == '\t') p++;
+        /* name = up to whitespace or ';' */
+        char *nstart = p;
+        while (*p && *p != ' ' && *p != '\t' && *p != ';' && *p != '\n') p++;
+        if (p == nstart) continue;
+        char saved = *p; *p = '\0';
+        symname[addr] = xstrdup_trim(nstart);
+        *p = saved;
+        /* optional comment after ';' */
+        char *semi = strchr(p, ';');
+        if (semi) symcomment[addr] = xstrdup_trim(semi + 1);
+        count++;
+    }
+    fclose(f);
+    have_symbols = 1;
+    return count;
+}
+
+/* ------------------------------------------------------------------ */
 /* .cap depunching                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -404,6 +461,8 @@ static void fmt_addr(uint16_t field, char *buf, size_t n)
 {
     if (field & 0x8000) {
         snprintf(buf, n, "0x%03X(%d)", field & 0x0FFF, (field >> 12) & 7);
+    } else if (symname[field]) {
+        snprintf(buf, n, "%s", symname[field]);
     } else if (labels[field] && starts[field]) {
         snprintf(buf, n, "L_%04X", field);
     } else {
@@ -566,13 +625,34 @@ static void disassemble(FILE *out, const char *src)
     fprintf(out, "; origin 0x%04lX, %ld bytes  (re-assemble with gasm)\n\n",
             img_min, img_max - img_min);
 
-    /* Pass 2: emit, inserting ORG at gaps and labels at targets. */
+    /* EQU block: name any symbol that doesn't land on a decoded line start
+     * (data cells / variables), so operand references to it still resolve. */
+    if (have_symbols) {
+        int any = 0;
+        for (long a = 0; a < 0x10000; a++) {
+            if (!symname[a] || starts[a]) continue;
+            if (!any) { fprintf(out, "; ---- named cells (variables / data) ----\n"); any = 1; }
+            fprintf(out, "%-18s EQU 0x%04lX", symname[a], a);
+            if (symcomment[a]) fprintf(out, "   ; %s", symcomment[a]);
+            fprintf(out, "\n");
+        }
+        if (any) fprintf(out, "\n");
+    }
+
+    /* Pass 2: emit, inserting ORG at gaps and labels at targets.
+     * A named address (symbol) prints "name:" + its comment instead of L_xxxx. */
     long expect = img_min;
     fprintf(out, "        ORG    0x%04lX\n", img_min);
     for (long a = img_min; a < img_max; ) {
         if (!present[a]) { a++; continue; }
         if (a != expect) fprintf(out, "\n        ORG    0x%04lX\n", a);
-        if (labels[a]) fprintf(out, "L_%04lX:\n", a);
+        if (symname[a]) {
+            fprintf(out, "%s:", symname[a]);
+            if (symcomment[a]) fprintf(out, "          ; %s", symcomment[a]);
+            fprintf(out, "\n");
+        } else if (labels[a]) {
+            fprintf(out, "L_%04lX:\n", a);
+        }
         int len = decode_at(a, 2, out);
         a += len;
         expect = a;
@@ -614,6 +694,7 @@ int main(int argc, char **argv)
     int is_bin = 0, loose = 0, do_cards = 0, do_hex = 0, do_image = 0, is_iso = 0, verbose = 0;
     long org = 0x0000;
     long entry = -1;   /* --entry; default = image origin (img_min) */
+    const char *sympath = NULL;
     uint8_t user_prefix[8]; int have_user_prefix = 0;
 
     for (int i = 1; i < argc; i++) {
@@ -627,6 +708,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--image")) do_image = 1;
         else if (!strcmp(argv[i], "--iso")) is_iso = 1;
         else if (!strcmp(argv[i], "--entry") && i + 1 < argc) entry = strtol(argv[++i], NULL, 0);
+        else if (!strcmp(argv[i], "--symbols") && i + 1 < argc) sympath = argv[++i];
         else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) verbose = 1;
         else if (!strcmp(argv[i], "--prefix") && i + 1 < argc) {
             /* 8 hex bytes, space/comma separated, e.g. "00 04 40 00 20 40 40 42" */
@@ -652,6 +734,8 @@ int main(int argc, char **argv)
                    "                 id = Hollerith cols 77-79; concatenate cards at --org\n"
                    "  --image        write a unified-format binary (GE12 header + image)\n"
                    "  --entry 0xNNNN entry point for --image (default = image origin)\n"
+            "  --symbols FILE name addresses from a .sym file (ADDR NAME ; comment);\n"
+            "                 renames L_xxxx labels + operands, comments variables\n"
                    "  -v             verbose card-by-card report on stderr\n");
             return 0;
         } else if (argv[i][0] == '-') {
@@ -659,6 +743,12 @@ int main(int argc, char **argv)
         } else inpath = argv[i];
     }
     if (!inpath) { fprintf(stderr, "gdis: no input file\n"); return 2; }
+
+    if (sympath) {
+        int ns = load_symbols(sympath);
+        if (ns < 0) return 2;
+        fprintf(stderr, "gdis: loaded %d symbols from %s\n", ns, sympath);
+    }
 
     /* --cards: inspection dump straight from the deck, then exit. */
     if (do_cards && !is_bin) {
