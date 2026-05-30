@@ -646,48 +646,6 @@ padding: 1px;
 .dial_label:nth-child(13) .dial_label_text  { transform: rotateZ(calc(-12 * var(--angle) - var(--phase))); }
 .dial_label:nth-child(14) .dial_label_text  { transform: rotateZ(calc(-13 * var(--angle) - var(--phase))); }
 
-.log {
-  box-shadow: inset 1px 1px 1px #181818, inset 0 -2px 1px #727272, 0 1px 2px rgba(0, 0, 0, 0.5);
-  border-radius: 2px 2px 1px 1px;
-  height: 15em;
-  background: #111;
-  font-family: "Courier";
-  font-size: 1.1em;
-  margin-top: 0px;
-  padding: 0.5em;
-  overflow: auto;
-
-  color:rgb(242, 243, 244);  
-  text-shadow: rgba(255, 255, 255, 0.22) 0 0 3px;
-}
-
-
-.log-container { 
-  position: relative;
-  
-}
-.log-container::after  {
-  content: ' ';
-  position:absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(0, transparent, #000 3px);
-
-  pointer-events: none;
-  opacity: 0.25;
-}
-
-.log ::selection {
-  background: rgba(255, 255, 255, 0.25);
-  text-shadow: none;
-}
-
-.log pre {
-  margin: 5px;
-}
-
 /* ---- simulator gadget (NOT part of the real console) ------------------- *
  * The real GE-120 has no file dialog: programs enter through a deck of cards
  * loaded into the reader. This panel is a simulator convenience, drawn well
@@ -855,13 +813,6 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
         <div class="vertical-strut strut-right"></div>    
     </div>
     <div class="horizontal-strut strut-bottom"></div>
-    <div class=strut-blue>
-      <div class=log-container>
-      <div class=log id=log_box>
-        <pre>GEMU 130 -- A funny experiment</pre>
-      </div>
-    </div>
-    </div>
     <div class=strut-blue>
         <div class=bottom-panel>
             <div class=buttons>
@@ -1221,19 +1172,6 @@ set_knob_position(9) // RS_NORM
 <script type="module">
 import { default as GE_Module } from './main.mjs'
 
-const scrollback_lines_length = 100;
-
-function log_add(text) {
-    const p = document.createElement("pre")
-    p.innerText = text
-    log_box.appendChild(p)
-
-    p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
-    
-    if (log_box.children.length > scrollback_lines_length)
-    log_box.children[0].remove()
-}
-
 var module;
 
 power_on_button  .addEventListener("click", e => module && module._press_on()        )
@@ -1336,14 +1274,14 @@ document.set_dial = function(e) {
   module._set_register_selector(pos);
 }
 
-log_add("Loading emulator")
-GE_Module({ print: log_add })
+/* No on-page log: silence emscripten stdout (it would flood at real-time speed).
+ * The default handler routes to console.log; an explicit no-op keeps it off. */
+GE_Module({ print: () => {}, printErr: () => {} })
     .then(m => {
         module = m
         mount_button.disabled = false
         module._set_load_unit(load1)   /* sync the LOAD selector lamp to the default */
         module._set_speed(parseFloat(speed_sel.value))   /* default: nominal real time */
-        log_add("ok.")
     })
 
 </script>

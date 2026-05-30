@@ -244,7 +244,10 @@ void em_main_loop() {
 }
 
 int main() {
-    ge_log_set_active_types(~(LOG_REGS_V | LOG_CONDS));
+    /* No log pane in the browser panel, and at real-time speed the per-cycle
+     * log stream would flood stdout and stall the page — suppress all logging
+     * (ge_log early-returns on a type miss, so this is also the fast path). */
+    ge_log_set_active_types(0);
     ge_init(ge);
 
     send_console();
