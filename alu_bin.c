@@ -53,7 +53,7 @@ static inline void field_byte_set(struct ge *ge,
                                   uint8_t pos, uint8_t val)
 {
     if (pos < len)
-        ge->mem[(uint16_t)(base_addr - pos)] = val;
+        ge_mem_store8(ge, (uint16_t)(base_addr - pos), val);
 }
 
 /* ------------------------------------------------------------------ */

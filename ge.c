@@ -88,6 +88,19 @@ static inline uint8_t ge_odd_parity(uint8_t data)
     return __builtin_parity(data) ? 0 : 1;
 }
 
+/* Store a byte to memory the way every real write does: data + generated odd
+ * parity + mark written. The microcoded path (pulse.c on_TO65) does this for
+ * itself (and honours the INCE check-bit forcing); this helper is for the
+ * hybrid ALU/SS execution helpers (alu_*.c) and the change-register store,
+ * which write ge->mem[] directly and would otherwise leave stale parity and
+ * trip a false MEM CHECK on read-back. */
+void ge_mem_store8(struct ge *ge, uint16_t addr, uint8_t val)
+{
+    ge->mem[addr]         = val;
+    ge->mem_parity[addr]  = ge_odd_parity(val);
+    ge->mem_written[addr] = 1;
+}
+
 /* Load a flat image into memory at `origin` (the unified-format payload).
  * Unlike ge_load_program this is origin-aware and not size-capped; it also
  * primes the parity store and marks the cells written, so reads of the loaded

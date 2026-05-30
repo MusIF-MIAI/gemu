@@ -728,7 +728,7 @@ void alu_upk(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t sl
         }
         uint16_t daddr = (uint16_t)(dst - i);
         /* Preserve high nibble (zone) of destination, put digit in low nibble */
-        ge->mem[daddr] = (uint8_t)((ge->mem[daddr] & 0xF0) | digit);
+        ge_mem_store8(ge, daddr, (uint8_t)((ge->mem[daddr] & 0xF0) | digit));
     }
 }
 
@@ -807,7 +807,7 @@ void alu_upks(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t s
         }
         uint16_t daddr = (uint16_t)(dst - i);
         /* Zone is always 0x4 */
-        ge->mem[daddr] = (uint8_t)(0x40 | digit);
+        ge_mem_store8(ge, daddr, (uint8_t)(0x40 | digit));
     }
 
     /* CC reflects sign and value of packed source operand */
@@ -874,29 +874,29 @@ void alu_edt(struct ge *ge, uint16_t pattern, uint8_t plen, uint16_t src)
             uint8_t digit = ge->mem[src_ptr] & 0x0F;
             if (zero_suppress) {
                 if (digit == 0) {
-                    ge->mem[pat_addr] = fill;
+                    ge_mem_store8(ge, pat_addr, fill);
                 } else {
-                    ge->mem[pat_addr] = ge->mem[src_ptr]; /* keep digit byte */
+                    ge_mem_store8(ge, pat_addr, ge->mem[src_ptr]); /* keep digit byte */
                     zero_suppress = 0;
                 }
             } else {
-                ge->mem[pat_addr] = ge->mem[src_ptr];
+                ge_mem_store8(ge, pat_addr, ge->mem[src_ptr]);
             }
             src_ptr++;
         } else if (pc == 0x21) {
             /* TSZ: digit substitute + terminate zero suppression */
-            ge->mem[pat_addr] = ge->mem[src_ptr];
+            ge_mem_store8(ge, pat_addr, ge->mem[src_ptr]);
             zero_suppress = 0;
             src_ptr++;
         } else if (pc == 0x22) {
             /* RSZ: reset zero suppression (restore fill), pointer stays */
-            ge->mem[pat_addr] = fill;
+            ge_mem_store8(ge, pat_addr, fill);
             zero_suppress = 1;
             /* source pointer does NOT advance */
         } else {
             /* Insertion character */
             if (zero_suppress) {
-                ge->mem[pat_addr] = fill;
+                ge_mem_store8(ge, pat_addr, fill);
                 /* pointer does NOT advance */
             } else {
                 /* leave insertion char in place */

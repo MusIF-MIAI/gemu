@@ -35,8 +35,8 @@ static inline uint16_t mem_read16(struct ge *ge, uint16_t addr)
  */
 static inline void mem_write16(struct ge *ge, uint16_t addr, uint16_t val)
 {
-    ge->mem[addr]                   = (uint8_t)(val >> 8);
-    ge->mem[(uint16_t)(addr + 1)]   = (uint8_t)(val & 0xFF);
+    ge_mem_store8(ge, addr, (uint8_t)(val >> 8));
+    ge_mem_store8(ge, (uint16_t)(addr + 1), (uint8_t)(val & 0xFF));
 }
 
 /* =========================================================================
@@ -311,7 +311,7 @@ void alu_mvq(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len)
         uint16_t da = (uint16_t)(dst - i);
         uint8_t  digit = ge->mem[sa] & 0x0F;          /* take digit nibble from src */
         uint8_t  zone  = ge->mem[da] & 0xF0;          /* keep zone nibble from dst  */
-        ge->mem[da] = zone | digit;
+        ge_mem_store8(ge, da, zone | digit);
         if (digit != 0)
             any_nonzero = 1;
     }

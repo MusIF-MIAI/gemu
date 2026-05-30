@@ -612,6 +612,11 @@ int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
 /// bypassing the peripheral LOAD bootstrap (direct binary-load path).
 void ge_enter(struct ge *ge, uint16_t entry);
 
+/// Store a byte with generated odd parity + mark-written (for the hybrid ALU/SS
+/// write paths that write ge->mem[] directly). Keeps parity coherent so a
+/// later read doesn't trip a false MEM CHECK.
+void ge_mem_store8(struct ge *ge, uint16_t addr, uint8_t val);
+
 /// Seed the eight change/segment-base registers (mem[240+2N]) to identity
 /// bases N<<12. Called by ge_clear; re-apply after a direct image load that
 /// may have overwritten the 0x00F0-0x00FF window.

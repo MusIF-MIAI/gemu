@@ -40,7 +40,7 @@ void alu_mvc(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len)
      * which replicates the documented GE behaviour).
      */
     for (i = 0; i < len; i++)
-        ge->mem[(uint16_t)(dst + i)] = ge->mem[(uint16_t)(src + i)];
+        ge_mem_store8(ge, (uint16_t)(dst + i), ge->mem[(uint16_t)(src + i)]);
     /* CC not altered */
 }
 
@@ -50,7 +50,7 @@ void alu_mvc(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len)
 
 void alu_mvi(struct ge *ge, uint16_t addr, uint8_t imm)
 {
-    ge->mem[addr] = imm;
+    ge_mem_store8(ge, addr, imm);
     /* CC not altered */
 }
 
@@ -198,7 +198,7 @@ void alu_tl(struct ge *ge, uint16_t a, uint8_t len, uint16_t table)
      */
     for (i = 0; i < len; i++) {
         uint8_t b = ge->mem[(uint16_t)(a + i)];
-        ge->mem[(uint16_t)(a + i)] = ge->mem[(uint16_t)(table + b)];
+        ge_mem_store8(ge, (uint16_t)(a + i), ge->mem[(uint16_t)(table + b)]);
     }
     /* "Qualitative result: it is not interested." — CC not altered */
 }

@@ -144,8 +144,8 @@ static uint16_t cr_rd16(struct ge* ge, uint16_t a) {
     return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
 }
 static void cr_wr16(struct ge* ge, uint16_t a, uint16_t v) {
-    ge->mem[a] = (uint8_t)(v >> 8);
-    ge->mem[(uint16_t)(a + 1)] = (uint8_t)(v & 0xff);
+    ge_mem_store8(ge, a, (uint8_t)(v >> 8));
+    ge_mem_store8(ge, (uint16_t)(a + 1), (uint8_t)(v & 0xff));
 }
 
 /* Address modification — bit 15 = absolute/modified flag (CPU[4] §2.5, FO.19-20;
