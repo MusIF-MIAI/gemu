@@ -28,9 +28,9 @@
 /* MVC – Move Characters                                               */
 /* ------------------------------------------------------------------ */
 
-void alu_mvc(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len)
+void alu_mvc(struct ge *ge, uint16_t dst, uint16_t src, uint16_t len)
 {
-    uint8_t i;
+    uint16_t i;
     /*
      * The manual says "movement is from left to right through each field
      * a byte at a time" (§5.5.3.1).  A plain left-to-right byte loop is

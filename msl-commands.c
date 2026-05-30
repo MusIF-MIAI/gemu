@@ -260,7 +260,7 @@ static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge));
  */
 static void EXEC_SS(struct ge *ge)
 {
-    uint8_t  len  = (ge->rL1 & 0xff) + 1;
+    uint16_t len  = (uint16_t)((ge->rL1 & 0xff) + 1);  /* up to 256 (LL=0xff); must not be uint8_t */
     uint8_t  alen = ((ge->rL1 >> 4) & 0xf) + 1;
     uint8_t  blen = (ge->rL1 & 0x0f) + 1;
     /* SS effective addresses: V1 (dest) and V2 (src) already hold the resolved

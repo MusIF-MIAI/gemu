@@ -63,7 +63,7 @@
  * the copy proceeds strictly left-to-right (same as the manual description).
  * Does not alter the condition code.
  */
-void alu_mvc(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len);
+void alu_mvc(struct ge *ge, uint16_t dst, uint16_t src, uint16_t len);
 
 /**
  * alu_mvi – Move Immediate (MVI, §5.5.5.2)
