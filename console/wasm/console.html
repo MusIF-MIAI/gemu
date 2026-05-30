@@ -916,13 +916,11 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
      is always visible regardless of how the (wider-than-screen) console scrolls. -->
 <aside id=simpanel>
     <h2>Simulator</h2>
-    <span class=sim-sub>not real hardware - mounts a deck in the reader hopper</span>
-    <label for=deck_file>Card deck (.cap)</label>
-    <input type=file id=deck_file accept=".cap,.txt">
-    <label class=sim-check><input type=checkbox id=deck_binary> binary</label>
-    <label class=sim-check>first card <input type=number id=deck_first min=0 value=0></label>
-    <button id=mount_button disabled>Insert deck in reader</button>
-    <span class=sim-status id=mount_status>No deck loaded.</span>
+    <span class=sim-sub>not real hardware - drops a program image straight into memory</span>
+    <label for=deck_file>Program image (.bin)</label>
+    <input type=file id=deck_file accept=".bin">
+    <button id=mount_button disabled>Stage image</button>
+    <span class=sim-status id=mount_status>No image loaded.</span>
     <span class=sim-seq>then on the console: <b>CLEAR -&gt; LOAD -&gt; START</b></span>
     <label class=sim-check>speed
         <select id=speed_sel>
@@ -1236,12 +1234,15 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 /* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
 
-/* ---- simulator gadget: mount a .cap deck into the reader's MEMFS ------- */
+/* ---- simulator gadget: stage a unified-format image into MEMFS ---------
+ * Temporary simplified loader: the staged image is dropped straight into memory
+ * on the CLEAR-LOAD-START sequence (press_start), bypassing the card-reader
+ * bootstrap. Depunch a deck to a .bin first, e.g. `gdis --image deck.cap -o x.bin`. */
 let deck_bytes = null;
 
 deck_file.addEventListener("change", async e => {
     const f = e.target.files[0];
-    if (!f) { deck_bytes = null; mount_status.textContent = "No deck loaded."; return; }
+    if (!f) { deck_bytes = null; mount_status.textContent = "No image loaded."; return; }
     deck_bytes = new Uint8Array(await f.arrayBuffer());
     mount_status.textContent = `Selected ${f.name} (${deck_bytes.length} bytes).`;
 })
@@ -1249,19 +1250,16 @@ deck_file.addEventListener("change", async e => {
 mount_button.addEventListener("click", () => {
     if (!module || !deck_bytes) return;
     try {
-        module.FS.writeFile('/deck.cap', deck_bytes);
+        module.FS.writeFile('/image.bin', deck_bytes);
     } catch (err) {
         mount_status.textContent = "FS error: " + err;
         return;
     }
-    const binary = deck_binary.checked ? 1 : 0;
-    const first  = parseInt(deck_first.value, 10) || 0;
-    const rc = module._mount_deck(binary, first);
+    const rc = module._stage_image();
     if (rc === 0)
-        mount_status.textContent =
-            "Deck mounted on connector 2 (LOAD1).\nNow: CLEAR -> LOAD -> START.";
+        mount_status.textContent = "Image staged.\nNow: CLEAR -> LOAD -> START.";
     else
-        mount_status.textContent = "Could not parse deck (rc=" + rc + ").";
+        mount_status.textContent = "Not a unified .bin image (rc=" + rc + ").";
 })
 
 document.set_lamp = function(lamp, val) {

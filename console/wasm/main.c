@@ -10,6 +10,7 @@
 #include "../../console.h"
 #include "../../cardreader.h"
 #include "../../disasm.h"
+#include "../../binimage.h"
 #include "../../bit.h"
 
 struct ge ge130;
@@ -147,7 +148,38 @@ void EMSCRIPTEN_KEEPALIVE press_power_off() { running_loop = 0; send_console(); 
 void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { send_console(); }
 void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
 void EMSCRIPTEN_KEEPALIVE press_load()  { ge_load(ge);  send_console(); }
-void EMSCRIPTEN_KEEPALIVE press_start() { ge_start(ge); send_console(); }
+
+/* Simplified loader (temporary): a unified-format image staged by the page is
+ * dropped straight into memory on the CLEAR-LOAD-START sequence, bypassing the
+ * (not-yet-faithful) card-reader bootstrap. We detect the sequence by AINI,
+ * which LOAD sets: a START with AINI set + an image staged => magic-load it and
+ * enter at its entry point. A bare START (resume, AINI=0) just runs. */
+static uint8_t  staged_img[MEM_SIZE];
+static uint16_t staged_origin, staged_entry, staged_len;
+static int      staged = 0;
+
+int EMSCRIPTEN_KEEPALIVE stage_image(void) {
+    FILE *f = fopen("/image.bin", "rb");
+    if (!f)
+        return -1;
+    int rc = binimage_read(f, &staged_origin, &staged_entry,
+                           staged_img, sizeof staged_img, &staged_len);
+    fclose(f);
+    staged = (rc == BINIMAGE_OK);
+    return rc;
+}
+
+void EMSCRIPTEN_KEEPALIVE press_start() {
+    if (staged && ge->AINI) {              /* CLEAR-LOAD-START: magic-load */
+        ge_load_image(ge, staged_img, staged_len, staged_origin);
+        ge_seed_segment_bases(ge);
+        ge_enter(ge, staged_entry);
+        ge->AINI = 0;                      /* consume the load request */
+        running_loop = 1;                  /* power on + run */
+    }
+    ge_start(ge);
+    send_console();
+}
 
 /*
  * mount_deck - simulator-only "insert cards in the reader hopper" action.
