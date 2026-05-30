@@ -937,10 +937,7 @@ step_0x37_lr:          ; change-register op block start (steps 0x37..): LR/STR/A
         CMI    0x95, 0x09D2
         MVC    2, 0x00F4, 0x0627
         MVC    2, 0x0623, 0x0625
-        DB     0xB4        ; U
-        DB     0xA0        ; .
-        DB     0x06        ; .
-        DB     0x24        ; .
+        STR    2, 0x0624
         CMC    2, 0x0623, 0x0627
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
