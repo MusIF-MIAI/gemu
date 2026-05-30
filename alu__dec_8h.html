@@ -205,7 +205,7 @@ Functions</h2></td></tr>
 <p>CMP 0xE9 Compare Packed (algebraic, no operand change); CC set. </p>
 <p>Overflow if L1 &lt; L2. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00550">550</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00559">559</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -256,7 +256,7 @@ Functions</h2></td></tr>
 <p>DP 0xED Divide Packed: op1[left L1-L2 chars] = quotient, op1[right L2+1 chars] = remainder; CC set. </p>
 <p>Overflow if: L1 &lt;= L2, L2 &gt; 7, divisor == 0, or result doesn't fit. On overflow, operation is NOT performed. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00450">450</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00459">459</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -301,7 +301,7 @@ Functions</h2></td></tr>
 <p>EDT 0xDE Edit packed source into pattern at op1. </p>
 <p>pattern: address of leftmost byte of pattern; plen = pattern length (bytes). src: address of RIGHTMOST byte of packed source field. Pattern control chars: 0x20 = SST (digit substitute + zero suppress), 0x21 = TSZ (digit substitute, ends zero suppress), 0x22 = RSZ (reset zero suppress start), other = insertion char (kept as-is). First byte of pattern is the fill character. CC: 1 0 = zero suppression still active (result = 0); 1 1 = active off. (manual §5.5.3.6 / §5.5.3.7 CC table; note "not possible" for 0/1.) </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00859">859</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00868">868</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -352,7 +352,7 @@ Functions</h2></td></tr>
 <p>MP 0xEC Multiply Packed: op1 = op1 * op2; CC set. </p>
 <p>Constraints: blen &lt;= 8, blen &lt; alen; op1 must have ≥blen+1 leading zero digits; otherwise overflow (CC=0, operation not performed). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00356">356</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00358">358</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -402,7 +402,7 @@ Functions</h2></td></tr>
 
 <p>MVP 0xE8 Move Packed: op1 = op2 (sign preserved from op2); CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00605">605</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00614">614</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -452,7 +452,7 @@ Functions</h2></td></tr>
 
 <p>PK 0xDA Pack: zoned op2 → packed op1 (no sign processing). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00671">671</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00682">682</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -503,7 +503,7 @@ Functions</h2></td></tr>
 <p>PKS 0xEE Pack with Sign: zoned op2 → packed op1; sign from zone of rightmost source byte (zone 0xA → negative, else positive). </p>
 <p>CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00752">752</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00761">761</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -553,7 +553,7 @@ Functions</h2></td></tr>
 
 <p>SP 0xEB Subtract Packed: op1 = op1 - op2; CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00322">322</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00324">324</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -603,7 +603,7 @@ Functions</h2></td></tr>
 
 <p>UPK 0xD8 Unpack: packed op2 → zoned op1 (no sign processing; zone of each result byte is taken from the pre-existing zone in ge-&gt;mem). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00715">715</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00728">728</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -654,7 +654,7 @@ Functions</h2></td></tr>
 <p>UPKS 0xEF Unpack with Sign: packed op2 → zoned op1; zone always 0x4. </p>
 <p>CC set (reflects sign/value of packed source). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00795">795</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00804">804</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>

@@ -244,77 +244,96 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    uint8_t result_nonzero = 0;</div>
 <div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span> </div>
 <div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keywordflow">for</span> (uint8_t pos = 0; pos &lt; a_len; pos++) {</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        uint8_t sum = <a class="code hl_function" href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos)</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>                    + <a class="code hl_function" href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a>(<a class="code hl_struct" href="structge.html">ge</a>, b_addr, b_len, pos)</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>                    + carry;</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        carry = sum / 10;</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        uint8_t digit = sum % 10;</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        <span class="comment">/*</span></div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span><span class="comment">         * Write back just the digit in the low nibble; zone (high nibble) is</span></div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span><span class="comment">         * set to 0x00 because the manual states zones are not processed.</span></div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="comment">         * The CPU microsequencer is responsible for zone restoration if needed.</span></div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="comment">         */</span></div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>        <a class="code hl_function" href="alu__bin_8c.html#a166ca7cf27ba608c75c810316f3df0a8">field_byte_set</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos, digit);</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>        <span class="keywordflow">if</span> (digit != 0)</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>            result_nonzero = 1;</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    }</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <span class="comment">/* carry beyond field boundary is silently dropped (§5.5.1) */</span></div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        uint8_t aorig = <a class="code hl_function" href="alu__bin_8c.html#a8ce8422fb4368f719e735593c1e8d8b4">field_byte</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos);</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>        uint8_t sum = (uint8_t)((aorig &amp; 0x0F)</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>                    + <a class="code hl_function" href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a>(<a class="code hl_struct" href="structge.html">ge</a>, b_addr, b_len, pos)</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                    + carry);</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        carry = sum / 10;</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        uint8_t digit = sum % 10;</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        <span class="comment">/*</span></div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span><span class="comment">         * Per the AD microcode (AB-SB-AD-SD-MVQ-CMQ flowchart, box 50-52</span></div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="comment">         * &quot;RO2 -&gt; L1.4&quot;): the result&#39;s high nibble is the FIRST operand&#39;s zone</span></div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="comment">         * (RO2), preserved unchanged; only the low nibble (digit) is computed.</span></div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span><span class="comment">         */</span></div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>        <a class="code hl_function" href="alu__bin_8c.html#a166ca7cf27ba608c75c810316f3df0a8">field_byte_set</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos, (uint8_t)((aorig &amp; 0xF0) | digit));</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        <span class="keywordflow">if</span> (digit != 0)</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            result_nonzero = 1;</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    }</div>
 <div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span> </div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, result_nonzero ? 1u : 0u);</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>}</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span><span class="comment">     * CC per the flowchart NOTE table (AD-AB column): F104 = overflow (a carry</span></div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="comment">     * out of the most-significant digit of the field), F105 = result nonzero.</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="comment">     * alu_set_cc maps cc bit1 -&gt; F104, bit0 -&gt; F105.</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, (uint8_t)((carry ? 2u : 0u) | (result_nonzero ? 1u : 0u)));</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>}</div>
 </div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="comment">/* ------------------------------------------------------------------ */</span></div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="comment">/* SD – Subtract Decimal (opcode 0xFB)                                 */</span></div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span><span class="comment">/*                                                                     */</span></div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="comment">/* CC (§5.10.2, inferred – confidence medium, see header):             */</span></div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="comment">/*   0: result is zero                                                  */</span></div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">/*   1: result is non-zero (includes underflow case)                   */</span></div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span><span class="comment">/*   2/3: not possible                                                  */</span></div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span> </div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">/* ------------------------------------------------------------------ */</span></div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span><span class="comment">/* SD – Subtract Decimal (opcode 0xFB)                                 */</span></div>
 <div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="comment">/*                                                                     */</span></div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment">/* Underflow (borrow beyond the MSP): the manual treats AD/SD operands */</span></div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span><span class="comment">/* as positive integers and does not explicitly describe the underflow  */</span></div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="comment">/* case for SD in the available OCR.  We wrap modulo 10^a_len and set  */</span></div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="comment">/* cc=1.  Human re-inspection of the page images is recommended.       */</span></div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="comment">/* ------------------------------------------------------------------ */</span></div>
-<div class="foldopen" id="foldopen00244" data-start="{" data-end="}">
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno"><a class="line" href="alu__bin_8c.html#ac41b9c3d17398abc472cf2d9e7308257">  244</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__bin_8c.html#ac41b9c3d17398abc472cf2d9e7308257">alu_sd</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>,</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>            uint16_t a_addr, uint8_t a_len,</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>            uint16_t b_addr, uint8_t b_len)</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>{</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    <span class="comment">/* If L2 &gt; L1 truncate to L1 */</span></div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    <span class="keywordflow">if</span> (b_len &gt; a_len)</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>        b_len = a_len;</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    uint8_t borrow = 0;</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    uint8_t result_nonzero = 0;</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span> </div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>    <span class="keywordflow">for</span> (uint8_t pos = 0; pos &lt; a_len; pos++) {</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>        int8_t diff = (int8_t)(<a class="code hl_function" href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos))</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                    - (int8_t)(<a class="code hl_function" href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a>(<a class="code hl_struct" href="structge.html">ge</a>, b_addr, b_len, pos))</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>                    - (int8_t)borrow;</div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        <span class="keywordflow">if</span> (diff &lt; 0) {</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>            diff += 10;</div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>            borrow = 1;</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>            borrow = 0;</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>        }</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        uint8_t digit = (uint8_t)diff;</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>        <a class="code hl_function" href="alu__bin_8c.html#a166ca7cf27ba608c75c810316f3df0a8">field_byte_set</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos, digit);</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>        <span class="keywordflow">if</span> (digit != 0)</div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>            result_nonzero = 1;</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    }</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    <span class="comment">/* borrow beyond field: result wrapped modulo 10^a_len */</span></div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span> </div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, result_nonzero ? 1u : 0u);</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>}</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment">/* CC (§5.10.2, inferred – confidence medium, see header):             */</span></div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span><span class="comment">/*   0: result is zero                                                  */</span></div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="comment">/*   1: result is non-zero (includes underflow case)                   */</span></div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="comment">/*   2/3: not possible                                                  */</span></div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="comment">/*                                                                     */</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span><span class="comment">/* Underflow (borrow beyond the MSP): the manual treats AD/SD operands */</span></div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="comment">/* as positive integers and does not explicitly describe the underflow  */</span></div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="comment">/* case for SD in the available OCR.  We wrap modulo 10^a_len and set  */</span></div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment">/* cc=1.  Human re-inspection of the page images is recommended.       */</span></div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment">/* ------------------------------------------------------------------ */</span></div>
+<div class="foldopen" id="foldopen00249" data-start="{" data-end="}">
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno"><a class="line" href="alu__bin_8c.html#ac41b9c3d17398abc472cf2d9e7308257">  249</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__bin_8c.html#ac41b9c3d17398abc472cf2d9e7308257">alu_sd</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>,</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            uint16_t a_addr, uint8_t a_len,</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>            uint16_t b_addr, uint8_t b_len)</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>{</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <span class="comment">/* If L2 &gt; L1 truncate to L1 */</span></div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    <span class="keywordflow">if</span> (b_len &gt; a_len)</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>        b_len = a_len;</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span> </div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    uint8_t borrow = 0;</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    uint8_t result_nonzero = 0;</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    <span class="keywordflow">for</span> (uint8_t pos = 0; pos &lt; a_len; pos++) {</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>        uint8_t aorig = <a class="code hl_function" href="alu__bin_8c.html#a8ce8422fb4368f719e735593c1e8d8b4">field_byte</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos);</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        int8_t diff = (int8_t)(aorig &amp; 0x0F)</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>                    - (int8_t)(<a class="code hl_function" href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a>(<a class="code hl_struct" href="structge.html">ge</a>, b_addr, b_len, pos))</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>                    - (int8_t)borrow;</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        <span class="keywordflow">if</span> (diff &lt; 0) {</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>            diff += 10;</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>            borrow = 1;</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>            borrow = 0;</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        }</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        uint8_t digit = (uint8_t)diff;</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>        <span class="comment">/* Preserve the first operand&#39;s zone (high nibble), like AD. */</span></div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        <a class="code hl_function" href="alu__bin_8c.html#a166ca7cf27ba608c75c810316f3df0a8">field_byte_set</a>(<a class="code hl_struct" href="structge.html">ge</a>, a_addr, a_len, pos, (uint8_t)((aorig &amp; 0xF0) | digit));</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <span class="keywordflow">if</span> (digit != 0)</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>            result_nonzero = 1;</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    }</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span><span class="comment">     * CC per the flowchart NOTE table (SD-SB-CMQ column): result&lt;0 -&gt; F104=0</span></div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span><span class="comment">     * F105=1 (cc=1); result=0 -&gt; F104=1 F105=0 (cc=2); result&gt;0 -&gt; F104=1</span></div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span><span class="comment">     * F105=1 (cc=3). A borrow out of the MSP means the true result is negative</span></div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="comment">     * (stored ten&#39;s-complement).</span></div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    uint8_t cc;</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>    <span class="keywordflow">if</span> (borrow)</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        cc = 1u;                 <span class="comment">/* result &lt; 0 */</span></div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (!result_nonzero)</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>        cc = 2u;                 <span class="comment">/* result = 0 */</span></div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        cc = 3u;                 <span class="comment">/* result &gt; 0 */</span></div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, cc);</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>}</div>
 </div>
 <div class="ttc" id="aalu__bin_8c_html_a166ca7cf27ba608c75c810316f3df0a8"><div class="ttname"><a href="alu__bin_8c.html#a166ca7cf27ba608c75c810316f3df0a8">field_byte_set</a></div><div class="ttdeci">static void field_byte_set(struct ge *ge, uint16_t base_addr, uint8_t len, uint8_t pos, uint8_t val)</div><div class="ttdoc">Write one byte into a multi-byte big-endian field.</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00051">alu_bin.c:51</a></div></div>
 <div class="ttc" id="aalu__bin_8c_html_a276c6baefca044e7e3431dfdc8a6e04f"><div class="ttname"><a href="alu__bin_8c.html#a276c6baefca044e7e3431dfdc8a6e04f">dec_digit</a></div><div class="ttdeci">static uint8_t dec_digit(const struct ge *ge, uint16_t base_addr, uint8_t len, uint8_t pos)</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00185">alu_bin.c:185</a></div></div>
 <div class="ttc" id="aalu__bin_8c_html_a70a12023d4984ea9242119427f6bc411"><div class="ttname"><a href="alu__bin_8c.html#a70a12023d4984ea9242119427f6bc411">alu_ad</a></div><div class="ttdeci">void alu_ad(struct ge *ge, uint16_t a_addr, uint8_t a_len, uint16_t b_addr, uint8_t b_len)</div><div class="ttdoc">AD – Add Decimal (opcode 0xFA).</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00200">alu_bin.c:200</a></div></div>
 <div class="ttc" id="aalu__bin_8c_html_a8ce8422fb4368f719e735593c1e8d8b4"><div class="ttname"><a href="alu__bin_8c.html#a8ce8422fb4368f719e735593c1e8d8b4">field_byte</a></div><div class="ttdeci">static uint8_t field_byte(const struct ge *ge, uint16_t base_addr, uint8_t len, uint8_t pos)</div><div class="ttdoc">Read one byte from a multi-byte big-endian field at position pos (0 = least-significant byte = rightm...</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00039">alu_bin.c:39</a></div></div>
 <div class="ttc" id="aalu__bin_8c_html_aa67fdc7f13f9f30349fd87e0a713e14a"><div class="ttname"><a href="alu__bin_8c.html#aa67fdc7f13f9f30349fd87e0a713e14a">alu_sb</a></div><div class="ttdeci">void alu_sb(struct ge *ge, uint16_t a_addr, uint8_t a_len, uint16_t b_addr, uint8_t b_len)</div><div class="ttdoc">SB – Subtract Binary (opcode 0xFF).</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00118">alu_bin.c:118</a></div></div>
-<div class="ttc" id="aalu__bin_8c_html_ac41b9c3d17398abc472cf2d9e7308257"><div class="ttname"><a href="alu__bin_8c.html#ac41b9c3d17398abc472cf2d9e7308257">alu_sd</a></div><div class="ttdeci">void alu_sd(struct ge *ge, uint16_t a_addr, uint8_t a_len, uint16_t b_addr, uint8_t b_len)</div><div class="ttdoc">SD – Subtract Decimal (opcode 0xFB).</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00244">alu_bin.c:244</a></div></div>
+<div class="ttc" id="aalu__bin_8c_html_ac41b9c3d17398abc472cf2d9e7308257"><div class="ttname"><a href="alu__bin_8c.html#ac41b9c3d17398abc472cf2d9e7308257">alu_sd</a></div><div class="ttdeci">void alu_sd(struct ge *ge, uint16_t a_addr, uint8_t a_len, uint16_t b_addr, uint8_t b_len)</div><div class="ttdoc">SD – Subtract Decimal (opcode 0xFB).</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00249">alu_bin.c:249</a></div></div>
 <div class="ttc" id="aalu__bin_8c_html_ae865b85eccf3f4b30a00d8ca0e11690c"><div class="ttname"><a href="alu__bin_8c.html#ae865b85eccf3f4b30a00d8ca0e11690c">alu_ab</a></div><div class="ttdeci">void alu_ab(struct ge *ge, uint16_t a_addr, uint8_t a_len, uint16_t b_addr, uint8_t b_len)</div><div class="ttdoc">AB – Add Binary (opcode 0xFE).</div><div class="ttdef"><b>Definition</b> <a href="alu__bin_8c_source.html#l00068">alu_bin.c:68</a></div></div>
 <div class="ttc" id="aalu__bin_8h_html"><div class="ttname"><a href="alu__bin_8h.html">alu_bin.h</a></div><div class="ttdoc">Binary and decimal (unpacked) arithmetic helpers for the GE-120/130.</div></div>
 <div class="ttc" id="aalu__cc_8c_html_a9df1cd65223abbf75273c625056b06c0"><div class="ttname"><a href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a></div><div class="ttdeci">void alu_set_cc(struct ge *ge, uint8_t cc)</div><div class="ttdef"><b>Definition</b> <a href="alu__cc_8c_source.html#l00004">alu_cc.c:4</a></div></div>

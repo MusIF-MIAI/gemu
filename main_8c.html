@@ -48,7 +48,8 @@
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">main.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -74,12 +75,23 @@ Functions</h2></td></tr>
 <tr class="memitem:a4c1dde81c3c74105b6c21f081d7a69cb" id="r_a4c1dde81c3c74105b6c21f081d7a69cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a4c1dde81c3c74105b6c21f081d7a69cb">ge_log_set_active_types_from_spec</a> (const char *spec)</td></tr>
 <tr class="memdesc:a4c1dde81c3c74105b6c21f081d7a69cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set active log types from a comma-separated name specification.  <br /></td></tr>
 <tr class="separator:a4c1dde81c3c74105b6c21f081d7a69cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c245c78296c532ae6b131fcf34607af" id="r_a9c245c78296c532ae6b131fcf34607af"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a9c245c78296c532ae6b131fcf34607af">on_sigusr1</a> (int sig)</td></tr>
+<tr class="separator:a9c245c78296c532ae6b131fcf34607af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48e610b8d0730d3e08090f9dd02798bf" id="r_a48e610b8d0730d3e08090f9dd02798bf"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a48e610b8d0730d3e08090f9dd02798bf">on_sigusr2</a> (int sig)</td></tr>
+<tr class="separator:a48e610b8d0730d3e08090f9dd02798bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ef898343ecdd7529cc4abcc59074725" id="r_a9ef898343ecdd7529cc4abcc59074725"><td class="memItemLeft" align="right" valign="top">static pid_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a9ef898343ecdd7529cc4abcc59074725">spawn_tui</a> (const char *argv0)</td></tr>
 <tr class="separator:a9ef898343ecdd7529cc4abcc59074725"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a603ee328bed115ceb77c94f97d9d3818" id="r_a603ee328bed115ceb77c94f97d9d3818"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a603ee328bed115ceb77c94f97d9d3818">print_usage</a> (const char *argv0)</td></tr>
 <tr class="separator:a603ee328bed115ceb77c94f97d9d3818"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97" id="r_a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a9da6f76de6a812d3b0dd113c3e881dd6" id="r_a9da6f76de6a812d3b0dd113c3e881dd6"><td class="memItemLeft" align="right" valign="top">static volatile sig_atomic_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#a9da6f76de6a812d3b0dd113c3e881dd6">g_toggle_js1</a> = 0</td></tr>
+<tr class="separator:a9da6f76de6a812d3b0dd113c3e881dd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af52ebef0af9b279e6a4d2d87960c0d54" id="r_af52ebef0af9b279e6a4d2d87960c0d54"><td class="memItemLeft" align="right" valign="top">static volatile sig_atomic_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8c.html#af52ebef0af9b279e6a4d2d87960c0d54">g_toggle_js2</a> = 0</td></tr>
+<tr class="separator:af52ebef0af9b279e6a4d2d87960c0d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a4c1dde81c3c74105b6c21f081d7a69cb" name="a4c1dde81c3c74105b6c21f081d7a69cb"></a>
@@ -147,7 +159,63 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00087">87</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00102">102</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+</div>
+</div>
+<a id="a9c245c78296c532ae6b131fcf34607af" name="a9c245c78296c532ae6b131fcf34607af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c245c78296c532ae6b131fcf34607af">&#9670;&#160;</a></span>on_sigusr1()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void on_sigusr1 </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sig</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00041">41</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+</div>
+</div>
+<a id="a48e610b8d0730d3e08090f9dd02798bf" name="a48e610b8d0730d3e08090f9dd02798bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48e610b8d0730d3e08090f9dd02798bf">&#9670;&#160;</a></span>on_sigusr2()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void on_sigusr2 </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sig</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00042">42</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
 
 </div>
 </div>
@@ -175,7 +243,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00064">64</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00075">75</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
 
 </div>
 </div>
@@ -203,7 +271,56 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00033">33</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00044">44</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="a9da6f76de6a812d3b0dd113c3e881dd6" name="a9da6f76de6a812d3b0dd113c3e881dd6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9da6f76de6a812d3b0dd113c3e881dd6">&#9670;&#160;</a></span>g_toggle_js1</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">volatile sig_atomic_t g_toggle_js1 = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00039">39</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+</div>
+</div>
+<a id="af52ebef0af9b279e6a4d2d87960c0d54" name="af52ebef0af9b279e6a4d2d87960c0d54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af52ebef0af9b279e6a4d2d87960c0d54">&#9670;&#160;</a></span>g_toggle_js2</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">volatile sig_atomic_t g_toggle_js2 = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="main_8c_source.html#l00040">40</a> of file <a class="el" href="main_8c_source.html">main.c</a>.</p>
 
 </div>
 </div>

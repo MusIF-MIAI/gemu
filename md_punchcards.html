@@ -44,13 +44,13 @@
   <div class="headertitle"><div class="title">GE-120 Punched-Card Formats — Decoding Notes</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md143"></a> How the <code>.cap</code> card-image captures are structured, and the four hole-pattern → byte conversions used to read GE-120 decks. The <b>column-binary ("by-pass")</b> conversion is the one this project <em>cracked</em> empirically; the others are documented here alongside it because they share the same on-card geometry.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md145"></a> How the <code>.cap</code> card-image captures are structured, and the four hole-pattern → byte conversions used to read GE-120 decks. The <b>column-binary ("by-pass")</b> conversion is the one this project <em>cracked</em> empirically; the others are documented here alongside it because they share the same on-card geometry.</p>
 <blockquote class="doxtable">
 <p>&zwj;Scope: this is a reverse-engineering findings document. Verified claims are backed by the Burroughs reader firmware (ground truth), the <code>gemu</code> transcoder, and direct decode of <code>software/DUMP1/funktionalcpu.cap</code>. OCR/uncertain items are flagged. Confidence labels: <b>high / medium / low</b>. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md144"></a>
+<h1><a class="anchor" id="autotoc_md146"></a>
 &lt;/blockquote&gt;</h1>
-<h1><a class="anchor" id="autotoc_md145"></a>
+<h1><a class="anchor" id="autotoc_md147"></a>
 0. Source of truth</h1>
 <p>The capture hardware is the project's own Raspberry-Pi-Pico reader; its firmware <b>defines</b> the <code>.cap</code> format, so it is the authority for every bit position:</p>
 <ul>
@@ -61,7 +61,7 @@
 </ul>
 <p>Everything below that says "verified" was checked against one of these.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md147"></a>
+<h1><a class="anchor" id="autotoc_md149"></a>
 1. The physical card and its 12 rows</h1>
 <p>A standard 80-column Hollerith card has <b>12 punch rows</b> per column. Top to bottom they are:</p>
 <div class="fragment"><div class="line">row 12   (Y zone / &quot;12-punch&quot;)</div>
@@ -78,7 +78,7 @@
 <div class="line">row  9</div>
 </div><!-- fragment --><p>A column is the set of rows punched in that vertical slice. The reader samples all 12 rows of a column simultaneously into one value.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md149"></a>
+<h1><a class="anchor" id="autotoc_md151"></a>
 2. The &lt;tt&gt;.cap&lt;/tt&gt; file format (verified, high)</h1>
 <p>A <code>.cap</code> file is <b>plain ASCII text</b> produced by the reader's USB console. It contains <b>two independent dumps of the same deck</b>, selected by which key the operator pressed during capture (<code><a class="el" href="main_8c.html">main.c</a>:191</code>/<code>:213</code>):</p>
 <ol type="1">
@@ -86,7 +86,7 @@
 <li><b>ASCII hole-art</b> (key space): for each card, <code>Card n. N</code> followed by <b>12 rows of 80 characters</b>, <code>*</code> = hole, <code>_</code> = no hole, printed in row order <b>12, 11, 0, 1, 2 … 9</b> (<code><a class="el" href="main_8c.html">main.c</a>:194-207</code>).</li>
 </ol>
 <p>So a deck of <em>C</em> cards yields <b>2·C</b> <code>Card n.</code> headers. For <code>funktionalcpu.cap</code>: 228 headers = <b>114 hex cards + 114 ASCII cards</b> (verified by count). The emulator's parser (<code><a class="el" href="cap_8c.html">cap.c</a></code>) keys on the literal <code>Card n.</code> prefix, collects only strict 4-hex-digit tokens, ignores everything else (counters, <code>FEED ON/OFF</code>, the hole-art), and masks each value to 13 bits.</p>
-<h2><a class="anchor" id="autotoc_md150"></a>
+<h2><a class="anchor" id="autotoc_md152"></a>
 2.1 The column value: which bit is which row (verified, high)</h2>
 <p>Each sample is <code>gpio_get_all() &amp; BITMASK</code>, where **<code>BITMASK = 0x1BFF</code>** (<code><a class="el" href="main_8c.html">main.c</a>:14</code>). In the 13-bit value:</p>
 <table class="markdownTable">
@@ -105,7 +105,7 @@
 </table>
 <p><b>The bit-10 hole is the crux.</b> The reader's data pins are GPIO 0–12 <em>except 10</em> (deliberately skipped in init and masked out of every sample). So a cap value's bit <em>b</em> equals card row <em>b</em> for <code>b ∈ {0–9, 11, 12}</code>, and bit 10 is structurally absent. Miss this and every high-nibble decode is shifted.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md152"></a>
+<h1><a class="anchor" id="autotoc_md154"></a>
 3. The "0 is actually 10" insight</h1>
 <p>The single fact that unblocked the column-binary decode:</p>
 <blockquote class="doxtable">
@@ -118,7 +118,7 @@
 </ol>
 <p>Combined, these gave the <b>B2R row map</b> in §4.3. Confidence: high — the resulting decode produces valid, contiguously-loadable GE-120 code (§5).</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md154"></a>
+<h1><a class="anchor" id="autotoc_md156"></a>
 4. The four conversions (&lt;tt&gt;transcode_column&lt;/tt&gt;)</h1>
 <p>The same column geometry feeds four different read modes. Mode is chosen by the reader command / deck type, not by the card.</p>
 <table class="markdownTable">
@@ -133,7 +133,7 @@
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><b>Column-binary / by-pass</b>   </td><td class="markdownTableBodyNone"><code>TC_COLBIN</code>   </td><td class="markdownTableBodyNone"><b>program (data) cards</b>   </td><td class="markdownTableBodyNone">byte bit <em>i</em> ← row <code>B2R[i]</code>   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md155"></a>
+<h2><a class="anchor" id="autotoc_md157"></a>
 4.1 &lt;tt&gt;TC_NORMAL&lt;/tt&gt; — Hollerith→GE table (verified, high)</h2>
 <p>An empirically derived 13-bit→byte table (<code><a class="el" href="transcode_8c.html">transcode.c</a></code>, 8192 entries). Built by aligning all 9120 <code>(card,column)</code> pairs of the 114 hex cards against the 9120 bytes of <code>funktionalcpu.bin</code>: <b>267 distinct inputs, 0 collisions, 18 non-space outputs</b>; everything else defaults to <code>0x20</code> (GE space / blank column). The observed digit mappings (single-row punches) are:</p>
 <div class="fragment"><div class="line">row0→0xF0 &#39;0&#39;  row1→0xF1 &#39;1&#39;  row2→0xF2 &#39;2&#39;  row3→0xF3 &#39;3&#39;  row4→0xF4 &#39;4&#39;</div>
@@ -142,10 +142,10 @@
 <blockquote class="doxtable">
 <p>&zwj;⚠️ <b>These output codes are EBCDIC, not the GE machine's own character code.</b> <code>0xF0</code>–<code>0xF9</code> = digits, <code>0xE7</code>=<code>X</code>, <code>0x6B</code>=<code>,</code> are EBCDIC code points. The <em>documented</em> GE-120 transcoder (CRZ[2] §5.3 Table 3) instead converts card punches to the <b>GE-100 internal graphic code</b> (digit <code>0</code>=<code>0x40</code>, <code>J</code>=<code>0xA1</code>; APS Reference Manual Fig 3 — see <code><a class="el" href="ISA_8md.html">docs/ISA.md</a></code> §2.1). <code>TC_NORMAL</code> matches the externally-supplied <code>.bin</code> (an EBCDIC rendering), not the machine code; it is only used for NORMAL-mode text, never for program loading (which is by-pass/COLBIN, §4.3). Treat <code>TC_NORMAL</code>'s glyph labels as EBCDIC. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md156"></a>
+<h2><a class="anchor" id="autotoc_md158"></a>
 4.2 &lt;tt&gt;TC_HEX&lt;/tt&gt; — loader hex-nibble (verified, medium)</h2>
 <p>The bootstrap loader is punched as hex digits where <b>a nibble equals the sum of the set digit-row indices</b> (rows 0–9; zone rows ignored), and <b>two columns are nibble-packed into one byte</b> (<code><a class="el" href="transcode_8c.html">transcode.c</a>:562</code>). E.g. row6+row8 → 6+8 = 14 = <code>0xE</code>. Verified against the loader listing (38 of 40 bytes; the 2 differences are OCR noise in a trailing descriptor) — confidence medium on those 2 bytes.</p>
-<h2><a class="anchor" id="autotoc_md157"></a>
+<h2><a class="anchor" id="autotoc_md159"></a>
 4.3 &lt;tt&gt;TC_COLBIN&lt;/tt&gt; — column-binary "by-pass" (the cracked one) (verified, high)</h2>
 <p><b>One column → one 8-bit byte, NOT nibble-packed.</b> Each output bit is taken from a specific row:</p>
 <div class="fragment"><div class="line">byte bit i  ←  card row B2R[i],   B2R = { 9, 8, 7, 6,  3, 2, 1, 0 }</div>
@@ -174,7 +174,7 @@
 </table>
 <p>The mode you pick changes the byte completely — which is why the program payload read as nonsense under <code>TC_NORMAL</code>.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md159"></a>
+<h1><a class="anchor" id="autotoc_md161"></a>
 5. Program-card on-card layout (verified empirically, high)</h1>
 <p>Decoding the 114 hex cards of <code>funktionalcpu.cap</code> with <code>TC_COLBIN</code> reveals a clean, <b>self-describing data-card format</b>. Cards <b>6–111</b> are the program payload; each is:</p>
 <div class="fragment"><div class="line">col:  0 1 2 3 4 5 6 7 | 8  | 9  10 | 11 ............... 76 | 77 78 | 79</div>
@@ -220,7 +220,7 @@
 <p>**<code>gdis --iso</code> implements the extraction.** It emits cols 1–76 (COLBIN) of every card whose Hollerith identifier (cols 77–79) decodes cleanly, concatenated in deck order at <code>--org</code>, and skips cards with a blank/garbled identifier (a stray title/summary/blank separator) rather than assuming fixed first/last positions — the captured decks already have the title and summary removed. Verified on the four CPU-ISOLATION decks, whose identifiers run contiguously (<code>001</code>–<code>210</code>, <code>211</code>–<code>502</code>, <code>503</code>–…, <code>A00</code>–…). The resulting byte stream is the SMAC program; interpreting it (loader + INTE + WORDS) is future work — <code>gdis --iso --hex</code> / <code>--image</code> give the bytes today.</p>
 <p>The <code>ls600-*</code> / <code>sat-ls600</code> / <code>printer*</code> / <code>reading-*</code> decks are <b>peripheral test decks</b> — even where they share the <code>00 04</code> framing, their payloads are test patterns, not <code>0x0100</code> CPU programs.</p>
 <p><b>Order-independence (verified, notable):</b> cards 107–108 are physically <em>out of sequence</em> in the capture (their addresses <code>0x18FA</code>, <code>0x193C</code> belong between cards 98 and 99), yet because each card carries its own load address the image is still assembled correctly. The deck can be shuffled without corrupting the load — a deliberate robustness property of the format.</p>
-<h2><a class="anchor" id="autotoc_md160"></a>
+<h2><a class="anchor" id="autotoc_md162"></a>
 5.1 Control / non-payload cards (medium)</h2>
 <p>A few cards are <b>not</b> 66-byte payload cards (different <code>LL</code>); they appear to be loader/patch/terminator records. Roles are inferred, not confirmed:</p>
 <table class="markdownTable">
@@ -237,7 +237,7 @@
 </table>
 <p>The card-112 → <code>0x0E00</code> correspondence is consistent with the observed run halting in the "no test selected" branch when that byte is zero.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md162"></a>
+<h1><a class="anchor" id="autotoc_md164"></a>
 6. Verification summary</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -260,7 +260,7 @@
 <td class="markdownTableBodyNone">Control-card roles (1–5, 112–114)   </td><td class="markdownTableBodyNone">addresses decoded, purpose inferred   </td><td class="markdownTableBodyNone">medium   </td></tr>
 </table>
 <hr  />
-<h1><a class="anchor" id="autotoc_md164"></a>
+<h1><a class="anchor" id="autotoc_md166"></a>
 7. Open questions</h1>
 <ul>
 <li><b>col 79</b> — rotating value <code>40,20,10,08,04,02,01,00…</code>; is it a sequence number, a checksum, or a column-sync mark? (low)</li>
@@ -269,7 +269,7 @@
 <li>**<code>TC_HEX</code> 2-byte discrepancy** — confirm whether OCR noise or a real end-of-record descriptor. (medium)</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md166"></a>
+<h1><a class="anchor" id="autotoc_md168"></a>
 8. Practical recipe (reading a GE deck from &lt;tt&gt;.cap&lt;/tt&gt;)</h1>
 <ol type="1">
 <li>Parse with <code><a class="el" href="cap_8c.html">cap.c</a></code> → per-card arrays of 80 × 13-bit columns.</li>

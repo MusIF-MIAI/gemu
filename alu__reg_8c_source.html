@@ -289,147 +289,149 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="keywordflow">for</span> (i = 0; i &lt; len; i++) {</div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        <span class="keywordflow">if</span> (<a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[(uint16_t)(field + i)] == model) {</div>
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>            *r7 = (uint16_t)(field + i + 1);</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>        }</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    }</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span> </div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    <span class="comment">/* Not found: address following the field */</span></div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    *r7 = (uint16_t)(field + len);</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>}</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>            <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, 1u);   <span class="comment">/* found -&gt; FA05=1 */</span></div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>        }</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    }</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span> </div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <span class="comment">/* Not found: address following the field */</span></div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    *r7 = (uint16_t)(field + len);</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, 0u);           <span class="comment">/* not found -&gt; FA05=0 */</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>}</div>
 </div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span> </div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span><span class="comment">/* =========================================================================</span></div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="comment"> * SL — Search Left (0xDB)</span></div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="comment"> * §5.5.4.2: scan field right-to-left for model byte; deposit result in r7.</span></div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment"> * Result address (symmetric to SR, direction right-to-left):</span></div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span><span class="comment"> *   Found at offset i (0=leftmost): r7 = field + i - 1</span></div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="comment"> *     (address &quot;preceding&quot; the match in left direction; field-1 if i==0)</span></div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span><span class="comment"> *   Not found: r7 = field - 1</span></div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span><span class="comment"> * Qualitative result: &quot;not interested&quot; per §5.5.4.</span></div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span> </div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="comment">/* =========================================================================</span></div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment"> * SL — Search Left (0xDB) — the mirror of SR.</span></div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment"> * §5.5.4.2: scan field right-to-left for the model byte; deposit result in r7.</span></div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="comment"> * The field&#39;s given address (A1) is its RIGHTMOST byte; the field extends LEFT</span></div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span><span class="comment"> * (lower addresses) for `len` bytes, i.e. [field-len+1 .. field], and is scanned</span></div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span><span class="comment"> * right-to-left.  Result is the address &quot;following&quot; the match in the direction</span></div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span><span class="comment"> * of search (leftward), i.e. match-1 — the mirror of SR&#39;s match+1.</span></div>
 <div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span><span class="comment"> * UNCERTAINTY: The manual says the address stored is &quot;the one of the character</span></div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span><span class="comment"> * following the end of the research field in the direction of the research.&quot;</span></div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span><span class="comment"> * For SL the direction is right-to-left, so &quot;following end&quot; = field - 1.</span></div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="comment"> * For a found character the symmetric definition gives field + i - 1.</span></div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span><span class="comment"> * This needs hardware verification; behaviour at i==0 (field-1) may wrap.</span></div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span><span class="comment"> * Confidence: MEDIUM</span></div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span><span class="comment"> * =========================================================================*/</span></div>
-<div class="foldopen" id="foldopen00262" data-start="{" data-end="}">
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno"><a class="line" href="alu__reg_8c.html#ae6751a7e47d2efbf764f154ffcecc94b">  262</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__reg_8c.html#ae6751a7e47d2efbf764f154ffcecc94b">alu_sl</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>, uint16_t *r7,</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>            uint16_t field, uint16_t len, uint8_t model)</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>{</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    uint16_t i;</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span> </div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    <span class="comment">/* Scan right-to-left: start at rightmost byte (field + len - 1) */</span></div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    <span class="keywordflow">for</span> (i = len; i &gt; 0; i--) {</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        uint16_t pos = (uint16_t)(field + i - 1); <span class="comment">/* current byte position */</span></div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        <span class="keywordflow">if</span> (<a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[pos] == model) {</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            <span class="comment">/* &quot;address preceding the match&quot; in the left direction */</span></div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>            *r7 = (uint16_t)(field + i - 2); <span class="comment">/* = pos - 1 */</span></div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        }</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    }</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span> </div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    <span class="comment">/* Not found: one before the field start */</span></div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    *r7 = (uint16_t)(field - 1);</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>}</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span><span class="comment"> *   Found at byte `pos`: r7 = pos - 1</span></div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span><span class="comment"> *   Not found:          r7 = field - len   (past the left end of the field)</span></div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="comment"> * CC: FA05 = found (1) / not found (0), as for SR.</span></div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span><span class="comment"> * Validated against funktionalcpu step 0x22: SL 2,0x0557,0x0558 scans</span></div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span><span class="comment"> * [0x0556..0x0557] right-to-left, finds 0x44 at 0x0557, returns 0x0556.</span></div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span><span class="comment"> * =========================================================================*/</span></div>
+<div class="foldopen" id="foldopen00263" data-start="{" data-end="}">
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno"><a class="line" href="alu__reg_8c.html#ae6751a7e47d2efbf764f154ffcecc94b">  263</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__reg_8c.html#ae6751a7e47d2efbf764f154ffcecc94b">alu_sl</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>, uint16_t *r7,</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>            uint16_t field, uint16_t len, uint8_t model)</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>{</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>    uint16_t i;</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span> </div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    <span class="comment">/* Scan right-to-left from the rightmost byte (field) toward lower addresses */</span></div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    <span class="keywordflow">for</span> (i = 0; i &lt; len; i++) {</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        uint16_t pos = (uint16_t)(field - i);</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        <span class="keywordflow">if</span> (<a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[pos] == model) {</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>            *r7 = (uint16_t)(pos - 1); <span class="comment">/* address following the match (leftward) */</span></div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>            <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, 1u);   <span class="comment">/* found -&gt; FA05=1 */</span></div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        }</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    }</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    <span class="comment">/* Not found: past the left end of the field */</span></div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    *r7 = (uint16_t)(field - len);</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, 0u);           <span class="comment">/* not found -&gt; FA05=0 */</span></div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>}</div>
 </div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span> </div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span><span class="comment">/* =========================================================================</span></div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="comment"> * MVQ — Move Quartets (0xF8)</span></div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span><span class="comment"> * §5.5.1.3, §3.084/3.098: Copy digit nibbles (low 4 bits) from src to dst.</span></div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span><span class="comment"> * Zones (high 4 bits) of destination bytes are preserved.</span></div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span><span class="comment"> * Both fields addressed from rightmost byte; operation proceeds right-to-left.</span></div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span><span class="comment"> * CC result (§5.10.2):</span></div>
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span><span class="comment"> *   FA04=0 FA05=0 (cc=0) → all digit nibbles of result are zero</span></div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span><span class="comment"> *   FA04=0 FA05=1 (cc=1) → at least one digit nibble nonzero</span></div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span><span class="comment"> * NOTE: MVQ uses the ADD-magnitude raw values 0 and 1 directly — these do NOT</span></div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span><span class="comment"> * map to the COMPARE/SIGNED-result named constants; use raw literals here.</span></div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span><span class="comment"> * UNCERTAINTY: &quot;Zones are not processed&quot; (§3.098) could mean:</span></div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span><span class="comment"> *   (a) zones of src are ignored (only digit nibbles copied) — implemented here</span></div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="comment"> *   (b) zones of dst are zeroed, entire byte overwritten</span></div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="comment"> *   (c) entire byte is copied (zones &quot;not processed&quot; meaning &quot;not arithmetically</span></div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span><span class="comment"> *       significant&quot;)</span></div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="comment"> * Interpretation (a) is most consistent with &quot;decimal unpacked&quot; semantics.</span></div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span><span class="comment"> * Hardware trace recommended.</span></div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span><span class="comment"> * Confidence: MEDIUM (OCR partially clear; semantics from §3.098 context)</span></div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span><span class="comment"> * =========================================================================*/</span></div>
-<div class="foldopen" id="foldopen00303" data-start="{" data-end="}">
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno"><a class="line" href="alu__reg_8c.html#a077b86d45ca33d3f40d4a6489251bd62">  303</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__reg_8c.html#a077b86d45ca33d3f40d4a6489251bd62">alu_mvq</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>, uint16_t dst, uint16_t src, uint8_t len)</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>{</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>    uint8_t any_nonzero = 0;</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>    uint8_t i;</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span> </div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    <span class="comment">/* Process right-to-left; addresses given are already rightmost */</span></div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>    <span class="keywordflow">for</span> (i = 0; i &lt; len; i++) {</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>        uint16_t sa = (uint16_t)(src - i);</div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>        uint16_t da = (uint16_t)(dst - i);</div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>        uint8_t  digit = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[sa] &amp; 0x0F;          <span class="comment">/* take digit nibble from src */</span></div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>        uint8_t  zone  = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[da] &amp; 0xF0;          <span class="comment">/* keep zone nibble from dst  */</span></div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>        <a class="code hl_function" href="ge_8c.html#a5a03f9ddd2168fc81951413481e2274d">ge_mem_store8</a>(<a class="code hl_struct" href="structge.html">ge</a>, da, zone | digit);</div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>        <span class="keywordflow">if</span> (digit != 0)</div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>            any_nonzero = 1;</div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>    }</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span> </div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span><span class="comment">     * CC: 0 = all-zero result, 1 = nonzero result (ADD-magnitude raw values).</span></div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="comment">     * FA04=0 always for MVQ (only FA05 encodes the result).</span></div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="comment">     * Use raw 0/1 — these are not the COMPARE/SIGNED-result named constants.</span></div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, any_nonzero ? 1u : 0u);</div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>}</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span> </div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span><span class="comment">/* =========================================================================</span></div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span><span class="comment"> * MVQ — Move Quartets (0xF8)</span></div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span><span class="comment"> * §5.5.1.3, §3.084/3.098: Copy digit nibbles (low 4 bits) from src to dst.</span></div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span><span class="comment"> * Zones (high 4 bits) of destination bytes are preserved.</span></div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span><span class="comment"> * Both fields addressed from rightmost byte; operation proceeds right-to-left.</span></div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span><span class="comment"> * CC result (§5.10.2):</span></div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span><span class="comment"> *   FA04=0 FA05=0 (cc=0) → all digit nibbles of result are zero</span></div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span><span class="comment"> *   FA04=0 FA05=1 (cc=1) → at least one digit nibble nonzero</span></div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span><span class="comment"> * NOTE: MVQ uses the ADD-magnitude raw values 0 and 1 directly — these do NOT</span></div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span><span class="comment"> * map to the COMPARE/SIGNED-result named constants; use raw literals here.</span></div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="comment"> * UNCERTAINTY: &quot;Zones are not processed&quot; (§3.098) could mean:</span></div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="comment"> *   (a) zones of src are ignored (only digit nibbles copied) — implemented here</span></div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span><span class="comment"> *   (b) zones of dst are zeroed, entire byte overwritten</span></div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="comment"> *   (c) entire byte is copied (zones &quot;not processed&quot; meaning &quot;not arithmetically</span></div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span><span class="comment"> *       significant&quot;)</span></div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span><span class="comment"> * Interpretation (a) is most consistent with &quot;decimal unpacked&quot; semantics.</span></div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span><span class="comment"> * Hardware trace recommended.</span></div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span><span class="comment"> * Confidence: MEDIUM (OCR partially clear; semantics from §3.098 context)</span></div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span><span class="comment"> * =========================================================================*/</span></div>
+<div class="foldopen" id="foldopen00305" data-start="{" data-end="}">
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno"><a class="line" href="alu__reg_8c.html#a077b86d45ca33d3f40d4a6489251bd62">  305</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__reg_8c.html#a077b86d45ca33d3f40d4a6489251bd62">alu_mvq</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>, uint16_t dst, uint16_t src, uint8_t len)</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>{</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>    uint8_t any_nonzero = 0;</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    uint8_t i;</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span> </div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>    <span class="comment">/* Process right-to-left; addresses given are already rightmost */</span></div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>    <span class="keywordflow">for</span> (i = 0; i &lt; len; i++) {</div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>        uint16_t sa = (uint16_t)(src - i);</div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>        uint16_t da = (uint16_t)(dst - i);</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>        uint8_t  digit = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[sa] &amp; 0x0F;          <span class="comment">/* take digit nibble from src */</span></div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>        uint8_t  zone  = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[da] &amp; 0xF0;          <span class="comment">/* keep zone nibble from dst  */</span></div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>        <a class="code hl_function" href="ge_8c.html#a5a03f9ddd2168fc81951413481e2274d">ge_mem_store8</a>(<a class="code hl_struct" href="structge.html">ge</a>, da, zone | digit);</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>        <span class="keywordflow">if</span> (digit != 0)</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>            any_nonzero = 1;</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>    }</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span> </div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="comment">     * CC: 0 = all-zero result, 1 = nonzero result (ADD-magnitude raw values).</span></div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span><span class="comment">     * FA04=0 always for MVQ (only FA05 encodes the result).</span></div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span><span class="comment">     * Use raw 0/1 — these are not the COMPARE/SIGNED-result named constants.</span></div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, any_nonzero ? 1u : 0u);</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>}</div>
 </div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span> </div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span><span class="comment">/* =========================================================================</span></div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span><span class="comment"> * CMQ — Compare Quartets (0xF9)</span></div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span><span class="comment"> * §5.5.1.4: Compare digit nibbles of two fields. Neither altered.</span></div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="comment"> * &quot;Not considering the zones.&quot;</span></div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span><span class="comment"> * Both fields addressed from rightmost byte.</span></div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span><span class="comment"> * Comparison is left-to-right (most significant digit first),</span></div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span><span class="comment"> * consistent with treating the field as a multi-digit number.</span></div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span><span class="comment"> * CC result (§5.5.1.4) — COMPARE table:</span></div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="comment"> *   FA04 FA05  cc  meaning</span></div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span><span class="comment"> *    0    0     0  &quot;Not possible&quot; — never set</span></div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span><span class="comment"> *    0    1     1  OP1 &lt; OP2  → ALU_CC_LOW   (1)</span></div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span><span class="comment"> *    1    0     2  OP1 == OP2 → ALU_CC_EQUAL (2)</span></div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span><span class="comment"> *    1    1     3  OP1 &gt; OP2  → ALU_CC_HIGH  (3)</span></div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span><span class="comment"> * UNCERTAINTY: Same as MVQ regarding zone handling.</span></div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span><span class="comment"> * Confidence: MEDIUM-HIGH (§5.5.1.4 text and §5.10.2 table consistent)</span></div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span><span class="comment"> * =========================================================================*/</span></div>
-<div class="foldopen" id="foldopen00345" data-start="{" data-end="}">
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno"><a class="line" href="alu__reg_8c.html#a13e87643a70d789b380153af927bc8bc">  345</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__reg_8c.html#a13e87643a70d789b380153af927bc8bc">alu_cmq</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>, uint16_t a, uint16_t b, uint8_t len)</div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>{</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>    uint8_t i;</div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span> </div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span><span class="comment">     * Compare left-to-right (most significant digit first).</span></div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span><span class="comment">     * Addresses a and b are the rightmost bytes, so the leftmost</span></div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span><span class="comment">     * byte of field &#39;a&#39; is at (a - len + 1).</span></div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>    <span class="keywordflow">for</span> (i = 0; i &lt; len; i++) {</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>        uint8_t da = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[(uint16_t)(a - (len - 1) + i)] &amp; 0x0F;</div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>        uint8_t db = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[(uint16_t)(b - (len - 1) + i)] &amp; 0x0F;</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span> </div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>        <span class="keywordflow">if</span> (da &lt; db) {</div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>            <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, <a class="code hl_enumvalue" href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4ae890a3645c5d5b062e94c4c9cb32b00c">ALU_CC_LOW</a>);    <span class="comment">/* 1 */</span></div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>        }</div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>        <span class="keywordflow">if</span> (da &gt; db) {</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>            <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, <a class="code hl_enumvalue" href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4afb431508a9303c56f690e1834a89d295">ALU_CC_HIGH</a>);   <span class="comment">/* 3 */</span></div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        }</div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>    }</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span> </div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>    <span class="comment">/* All digit nibbles equal */</span></div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, <a class="code hl_enumvalue" href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4a71899925122eb38a3d33ed5699dc3b7d">ALU_CC_EQUAL</a>);          <span class="comment">/* 2 */</span></div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>}</div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span> </div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span><span class="comment">/* =========================================================================</span></div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="comment"> * CMQ — Compare Quartets (0xF9)</span></div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span><span class="comment"> * §5.5.1.4: Compare digit nibbles of two fields. Neither altered.</span></div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span><span class="comment"> * &quot;Not considering the zones.&quot;</span></div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span><span class="comment"> * Both fields addressed from rightmost byte.</span></div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span><span class="comment"> * Comparison is left-to-right (most significant digit first),</span></div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span><span class="comment"> * consistent with treating the field as a multi-digit number.</span></div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span><span class="comment"> * CC result (§5.5.1.4) — COMPARE table:</span></div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span><span class="comment"> *   FA04 FA05  cc  meaning</span></div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span><span class="comment"> *    0    0     0  &quot;Not possible&quot; — never set</span></div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span><span class="comment"> *    0    1     1  OP1 &lt; OP2  → ALU_CC_LOW   (1)</span></div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span><span class="comment"> *    1    0     2  OP1 == OP2 → ALU_CC_EQUAL (2)</span></div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span><span class="comment"> *    1    1     3  OP1 &gt; OP2  → ALU_CC_HIGH  (3)</span></div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span><span class="comment"> * UNCERTAINTY: Same as MVQ regarding zone handling.</span></div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span><span class="comment"> * Confidence: MEDIUM-HIGH (§5.5.1.4 text and §5.10.2 table consistent)</span></div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span><span class="comment"> * =========================================================================*/</span></div>
+<div class="foldopen" id="foldopen00347" data-start="{" data-end="}">
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno"><a class="line" href="alu__reg_8c.html#a13e87643a70d789b380153af927bc8bc">  347</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="alu__reg_8c.html#a13e87643a70d789b380153af927bc8bc">alu_cmq</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structge.html">ge</a> *<a class="code hl_struct" href="structge.html">ge</a>, uint16_t a, uint16_t b, uint8_t len)</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>{</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>    uint8_t i;</div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span> </div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span><span class="comment">     * Compare left-to-right (most significant digit first).</span></div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span><span class="comment">     * Addresses a and b are the rightmost bytes, so the leftmost</span></div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span><span class="comment">     * byte of field &#39;a&#39; is at (a - len + 1).</span></div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <span class="keywordflow">for</span> (i = 0; i &lt; len; i++) {</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>        uint8_t da = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[(uint16_t)(a - (len - 1) + i)] &amp; 0x0F;</div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>        uint8_t db = <a class="code hl_struct" href="structge.html">ge</a>-&gt;<a class="code hl_variable" href="structge.html#a78c69e787972fdd3686486854b46d460">mem</a>[(uint16_t)(b - (len - 1) + i)] &amp; 0x0F;</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span> </div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>        <span class="keywordflow">if</span> (da &lt; db) {</div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>            <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, <a class="code hl_enumvalue" href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4ae890a3645c5d5b062e94c4c9cb32b00c">ALU_CC_LOW</a>);    <span class="comment">/* 1 */</span></div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>        }</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>        <span class="keywordflow">if</span> (da &gt; db) {</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>            <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, <a class="code hl_enumvalue" href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4afb431508a9303c56f690e1834a89d295">ALU_CC_HIGH</a>);   <span class="comment">/* 3 */</span></div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>        }</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>    }</div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span> </div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>    <span class="comment">/* All digit nibbles equal */</span></div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>    <a class="code hl_function" href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a>(<a class="code hl_struct" href="structge.html">ge</a>, <a class="code hl_enumvalue" href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4a71899925122eb38a3d33ed5699dc3b7d">ALU_CC_EQUAL</a>);          <span class="comment">/* 2 */</span></div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>}</div>
 </div>
 <div class="ttc" id="aalu__cc_8c_html_a9df1cd65223abbf75273c625056b06c0"><div class="ttname"><a href="alu__cc_8c.html#a9df1cd65223abbf75273c625056b06c0">alu_set_cc</a></div><div class="ttdeci">void alu_set_cc(struct ge *ge, uint8_t cc)</div><div class="ttdef"><b>Definition</b> <a href="alu__cc_8c_source.html#l00004">alu_cc.c:4</a></div></div>
 <div class="ttc" id="aalu__cc_8h_html"><div class="ttname"><a href="alu__cc_8h.html">alu_cc.h</a></div></div>
@@ -439,8 +441,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aalu__cc_8h_html_aee2ad5717c592571b30263509112dac4ae78590114500bd749e09b4dfd3980c8e"><div class="ttname"><a href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4ae78590114500bd749e09b4dfd3980c8e">ALU_CC_NEG</a></div><div class="ttdeci">@ ALU_CC_NEG</div><div class="ttdef"><b>Definition</b> <a href="alu__cc_8h_source.html#l00051">alu_cc.h:51</a></div></div>
 <div class="ttc" id="aalu__cc_8h_html_aee2ad5717c592571b30263509112dac4ae890a3645c5d5b062e94c4c9cb32b00c"><div class="ttname"><a href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4ae890a3645c5d5b062e94c4c9cb32b00c">ALU_CC_LOW</a></div><div class="ttdeci">@ ALU_CC_LOW</div><div class="ttdef"><b>Definition</b> <a href="alu__cc_8h_source.html#l00051">alu_cc.h:51</a></div></div>
 <div class="ttc" id="aalu__cc_8h_html_aee2ad5717c592571b30263509112dac4afb431508a9303c56f690e1834a89d295"><div class="ttname"><a href="alu__cc_8h.html#aee2ad5717c592571b30263509112dac4afb431508a9303c56f690e1834a89d295">ALU_CC_HIGH</a></div><div class="ttdeci">@ ALU_CC_HIGH</div><div class="ttdef"><b>Definition</b> <a href="alu__cc_8h_source.html#l00053">alu_cc.h:53</a></div></div>
-<div class="ttc" id="aalu__reg_8c_html_a077b86d45ca33d3f40d4a6489251bd62"><div class="ttname"><a href="alu__reg_8c.html#a077b86d45ca33d3f40d4a6489251bd62">alu_mvq</a></div><div class="ttdeci">void alu_mvq(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len)</div><div class="ttdoc">alu_mvq - Move Quartets (MVQ, 0xF8)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00303">alu_reg.c:303</a></div></div>
-<div class="ttc" id="aalu__reg_8c_html_a13e87643a70d789b380153af927bc8bc"><div class="ttname"><a href="alu__reg_8c.html#a13e87643a70d789b380153af927bc8bc">alu_cmq</a></div><div class="ttdeci">void alu_cmq(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)</div><div class="ttdoc">alu_cmq - Compare Quartets (CMQ, 0xF9)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00345">alu_reg.c:345</a></div></div>
+<div class="ttc" id="aalu__reg_8c_html_a077b86d45ca33d3f40d4a6489251bd62"><div class="ttname"><a href="alu__reg_8c.html#a077b86d45ca33d3f40d4a6489251bd62">alu_mvq</a></div><div class="ttdeci">void alu_mvq(struct ge *ge, uint16_t dst, uint16_t src, uint8_t len)</div><div class="ttdoc">alu_mvq - Move Quartets (MVQ, 0xF8)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00305">alu_reg.c:305</a></div></div>
+<div class="ttc" id="aalu__reg_8c_html_a13e87643a70d789b380153af927bc8bc"><div class="ttname"><a href="alu__reg_8c.html#a13e87643a70d789b380153af927bc8bc">alu_cmq</a></div><div class="ttdeci">void alu_cmq(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)</div><div class="ttdoc">alu_cmq - Compare Quartets (CMQ, 0xF9)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00347">alu_reg.c:347</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_a15ab04152eeb088f2f745cd5e5cdee98"><div class="ttname"><a href="alu__reg_8c.html#a15ab04152eeb088f2f745cd5e5cdee98">alu_lr</a></div><div class="ttdeci">void alu_lr(struct ge *ge, uint16_t *reg, uint16_t addr)</div><div class="ttdoc">alu_lr - Load Register (LR, 0xBC)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00048">alu_reg.c:48</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_a250376c1bee79a294069908ab4d72242"><div class="ttname"><a href="alu__reg_8c.html#a250376c1bee79a294069908ab4d72242">alu_cmr</a></div><div class="ttdeci">void alu_cmr(struct ge *ge, uint16_t reg_val, uint16_t value)</div><div class="ttdoc">alu_cmr - Compare Memory to Register (CMR, 0xBD)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00077">alu_reg.c:77</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_a5be684eb5e9d9048f7ee8f3500b725cb"><div class="ttname"><a href="alu__reg_8c.html#a5be684eb5e9d9048f7ee8f3500b725cb">alu_sr</a></div><div class="ttdeci">void alu_sr(struct ge *ge, uint16_t *r7, uint16_t field, uint16_t len, uint8_t model)</div><div class="ttdoc">alu_sr - Search Right (SR, 0xD9)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00228">alu_reg.c:228</a></div></div>
@@ -448,7 +450,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aalu__reg_8c_html_a923c591eec8ce8fa5f5a45a45a560701"><div class="ttname"><a href="alu__reg_8c.html#a923c591eec8ce8fa5f5a45a45a560701">mem_read16</a></div><div class="ttdeci">static uint16_t mem_read16(struct ge *ge, uint16_t addr)</div><div class="ttdoc">mem_read16 - read a big-endian 16-bit word from memory.</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00027">alu_reg.c:27</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_ab9d4ad710d3818f58fcd4375832d2fd1"><div class="ttname"><a href="alu__reg_8c.html#ab9d4ad710d3818f58fcd4375832d2fd1">alu_smr</a></div><div class="ttdeci">void alu_smr(struct ge *ge, uint16_t *reg, uint16_t value)</div><div class="ttdoc">alu_smr - Subtract Memory from Register (SMR, 0xBF)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00162">alu_reg.c:162</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_acc95e984bff43c9c8cad589fc3096499"><div class="ttname"><a href="alu__reg_8c.html#acc95e984bff43c9c8cad589fc3096499">alu_la</a></div><div class="ttdeci">void alu_la(struct ge *ge, uint16_t *reg, uint16_t addr)</div><div class="ttdoc">alu_la - Load Address (LA, 0x68)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00207">alu_reg.c:207</a></div></div>
-<div class="ttc" id="aalu__reg_8c_html_ae6751a7e47d2efbf764f154ffcecc94b"><div class="ttname"><a href="alu__reg_8c.html#ae6751a7e47d2efbf764f154ffcecc94b">alu_sl</a></div><div class="ttdeci">void alu_sl(struct ge *ge, uint16_t *r7, uint16_t field, uint16_t len, uint8_t model)</div><div class="ttdoc">alu_sl - Search Left (SL, 0xDB)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00262">alu_reg.c:262</a></div></div>
+<div class="ttc" id="aalu__reg_8c_html_ae6751a7e47d2efbf764f154ffcecc94b"><div class="ttname"><a href="alu__reg_8c.html#ae6751a7e47d2efbf764f154ffcecc94b">alu_sl</a></div><div class="ttdeci">void alu_sl(struct ge *ge, uint16_t *r7, uint16_t field, uint16_t len, uint8_t model)</div><div class="ttdoc">alu_sl - Search Left (SL, 0xDB)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00263">alu_reg.c:263</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_af28fd5deaff905c1eab178f280c1eafc"><div class="ttname"><a href="alu__reg_8c.html#af28fd5deaff905c1eab178f280c1eafc">alu_str</a></div><div class="ttdeci">void alu_str(struct ge *ge, uint16_t reg_val, uint16_t addr)</div><div class="ttdoc">alu_str - Store Register (STR, 0x84)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00059">alu_reg.c:59</a></div></div>
 <div class="ttc" id="aalu__reg_8c_html_af760b668c696609981ca8433aca58e05"><div class="ttname"><a href="alu__reg_8c.html#af760b668c696609981ca8433aca58e05">alu_amr</a></div><div class="ttdeci">void alu_amr(struct ge *ge, uint16_t *reg, uint16_t value)</div><div class="ttdoc">alu_amr - Add Memory to Register (AMR, 0xBE)</div><div class="ttdef"><b>Definition</b> <a href="alu__reg_8c_source.html#l00110">alu_reg.c:110</a></div></div>
 <div class="ttc" id="aalu__reg_8h_html"><div class="ttname"><a href="alu__reg_8h.html">alu_reg.h</a></div><div class="ttdoc">ALU helpers for GE-120/GE-130 register and memory-field operations.</div></div>
