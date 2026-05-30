@@ -142,7 +142,8 @@ int ge_disasm_one(const uint8_t *mem, uint16_t addr, char *out, size_t outn)
             snprintf(out, outn, "%s 0x%02X, %s", m->name, aux & 0xF0, a1);
             return 4;
         case D_REG:
-            snprintf(out, outn, "%s %d, %s", m->name, aux & 7, a1);
+            /* Register-code aux char is 1XXX0000: N = bits 4-6. */
+            snprintf(out, outn, "%s %d, %s", m->name, (aux >> 4) & 7, a1);
             return 4;
         case D_IMM:
         case D_PER:

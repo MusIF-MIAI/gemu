@@ -568,8 +568,9 @@ static int decode_at(long addr, int pass, FILE *out)
             }
             return 4;
         case D_REG:
+            /* Register-code aux char is 1XXX0000: register number = bits 4-6. */
             if (pass == 2) { fmt_addr(field, a1, sizeof a1);
-                fprintf(out, "        %-6s %d, %s\n", m->name, aux & 7, a1); }
+                fprintf(out, "        %-6s %d, %s\n", m->name, (aux >> 4) & 7, a1); }
             return 4;
         case D_IMM:
             if (pass == 2) { fmt_addr(field, a1, sizeof a1);

@@ -139,7 +139,10 @@ static void EXEC_TM (struct ge* ge) { alu_tm (ge, eff_v1_l2(ge), ge->rL1 & 0xff)
  * register code 1000..1111; the register index N = code & 7.
  * NOTE: the code is assumed to sit in the LOW nibble of the aux char —
  * verify against the funktionalcpu oracle. V1 holds the I1 memory address. */
-static uint16_t reg_addr_of(struct ge* ge) { return (uint16_t)(240 + (ge->rL1 & 0x07) * 2); }
+/* Register-op aux char format is 1XXX0000: bit 7 = 1, the register number is
+ * bits 4-6, low nibble 0 (confirmed against the funktionalcpu deck, step 0x37
+ * LR with aux 0xE0 -> register 6). N = (aux >> 4) & 7. */
+static uint16_t reg_addr_of(struct ge* ge) { return (uint16_t)(240 + ((ge->rL1 >> 4) & 0x07) * 2); }
 static uint16_t cr_rd16(struct ge* ge, uint16_t a) {
     return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
 }

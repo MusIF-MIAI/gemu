@@ -645,7 +645,7 @@ xlate_table:          ; TL (translate) table used by the self-test
         DB     0x01        ; .
         DB     0x00        ; .
         DB     0x0D        ; .
-        LA     3, 0x06F0
+        LA     7, 0x06F0
         DB     0xF3        ; .
         DB     0x1A        ; .
         DB     0x06        ; .
@@ -927,7 +927,7 @@ L_09A6:
 step_0x37_lr:          ; change-register op block start (steps 0x37..): LR/STR/AMR/
         CMI    0x95, step_0x37_lr
         MVC    3, 0x00FB, 0x061E
-        LR     0, 0x0622
+        LR     6, 0x0622
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
         CMC    3, 0x0620, 0x00FB
@@ -948,13 +948,13 @@ step_0x37_lr:          ; change-register op block start (steps 0x37..): LR/STR/A
         AD     1, 1, 0x0629, 0x062A
         JRT    0x70, oper_checkpoint
         MVC    2, 0x00F8, 0x062B
-        CMR    0, 0x062C
+        CMR    4, 0x062C
         JRT    0x80, oper_checkpoint
         JC     0x00, cold_start
         JC     0x00, cold_start
         MVI    0x3A, step_code
         MVC    2, 0x00F2, 0x062D
-        CMR    0, 0x062E
+        CMR    1, 0x062E
         CMC    2, 0x00F2, 0x062D
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
@@ -1158,12 +1158,12 @@ L_0D5C:
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
         MVI    0x58, step_code
-        LR     0, 0x06F7
+        LR     1, 0x06F7
         CMC    2, 0x06F4, 0x00A(1)
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
         MVI    0x59, step_code
-        LR     0, 0x0703
+        LR     2, 0x0703
         LR     0, 0x0705
         CMC    2, 0x001(2), 0x003(0)
         JRT    0xD0, oper_checkpoint
@@ -1349,7 +1349,7 @@ L_0EF4:
         NOP2  
 L_0F00:
         MVI    0x60, step_code
-        LA     0, L_1100
+        LA     1, L_1100
 L_0F08:
         LA     0, 0x2000
 L_0F0C:
@@ -1364,14 +1364,14 @@ L_0F22:
         AMR    0, 0x107B
         CMR    0, 0x107D
         JC     0xD0, L_0F22
-        CMR    0, 0x107F
+        CMR    1, 0x107F
         JC     0xD0, L_0F48
-        LA     0, 0x1200
+        LA     1, 0x1200
         JC     0xF0, L_0F08   ; JMP/JANY
 L_0F48:
-        CMR    0, 0x1081
+        CMR    1, 0x1081
         JC     0xD0, L_0F58
-        LA     0, 0x1300
+        LA     1, 0x1300
         JC     0xF0, L_0F08   ; JMP/JANY
 L_0F58:
         NOP2  
@@ -1386,11 +1386,11 @@ L_0F58:
         NOP2  
 L_0F70:
         LA     0, main
-        LA     0, 0x2100
+        LA     1, 0x2100
 L_0F78:
         MVC    256, 0x000(1), 0x000(0)
         AMR    0, 0x107B
-        AMR    0, 0x107B
+        AMR    1, 0x107B
         CMR    0, 0x1083
         JC     0xD0, L_0F78
         JC     0xF0, 0x2F9E   ; JMP/JANY
@@ -1411,7 +1411,7 @@ L_0F78:
         NOP2  
         NOP2  
         MVI    0x61, step_code_mem
-        LA     0, 0x3100
+        LA     1, 0x3100
         LA     0, main
         MVC    256, 0x000(0), 0x000(1)
         AMR    0, 0x307B
@@ -1426,13 +1426,13 @@ L_0F78:
         NOP2  
         NOP2  
         NOP2  
-        CMR    0, 0x308D
+        CMR    1, 0x308D
         JC     0xD0, 0x3004
-        LA     0, 0x3200
+        LA     1, 0x3200
         JC     0xF0, 0x2FBE   ; JMP/JANY
-        CMR    0, 0x308F
+        CMR    1, 0x308F
         JC     0xD0, 0x3014
-        LA     0, 0x3300
+        LA     1, 0x3300
         JC     0xF0, 0x2FBE   ; JMP/JANY
         JS2    0x2FB0
         JC     0xF0, 0x3670   ; JMP/JANY
@@ -1445,10 +1445,10 @@ L_0F78:
         NOP2  
         NOP2  
         LA     0, main
-        LA     0, 0x2100
+        LA     1, 0x2100
         MVC    256, 0x000(0), 0x000(1)
         AMR    0, 0x307B
-        AMR    0, 0x307B
+        AMR    1, 0x307B
         CMR    0, 0x3083
         JC     0xD0, 0x3038
         JC     0xF0, memtest_seg23_entry   ; JMP/JANY
@@ -2498,14 +2498,14 @@ L_161E:
         CMR    0, 0x107D
         JC     0xD0, L_161E
         MVI    0x63, step_code
-        LA     0, 0x3FFF
+        LA     1, 0x3FFF
 L_1642:
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x1095
+        SMR    1, 0x1095
         CMI    0x5C, 0x00F0
         JRT    0xD0, oper_checkpoint
-        CMR    0, 0x1097
+        CMR    1, 0x1097
         JC     0xD0, L_1642
         JS2    L_1600
         JC     0xF0, L_0F70   ; JMP/JANY
@@ -2525,13 +2525,13 @@ L_1642:
         CMR    0, 0x3099
         JC     0xD0, 0x367E
         MVI    0x65, step_code_mem
-        LA     0, 0x00EF
+        LA     1, 0x00EF
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x3095
+        SMR    1, 0x3095
         CMI    0x5C, 0x00F0
         JRT    0xD0, 0x305E
-        CMR    0, 0x309B
+        CMR    1, 0x309B
         JC     0xD0, 0x36A2
         NOP2  
         NOP2  
@@ -2551,13 +2551,13 @@ L_1642:
         CMR    0, 0x3087
         JC     0xD0, 0x36E2
         MVI    0x65, step_code_mem
-        LA     0, 0x1FFF
+        LA     1, 0x1FFF
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x3095
+        SMR    1, 0x3095
         CMI    0x5C, 0x00F0
         JRT    0xD0, 0x305E
-        CMR    0, 0x309D
+        CMR    1, 0x309D
         JC     0xD0, 0x3706
         JS2    0x3670
         JC     0xF0, 0x301E   ; JMP/JANY
@@ -2645,7 +2645,7 @@ memtest_4000:          ; core test of the 0x4000-0x5FFF range (option 0x40)
         JC     0x00, report_and_end
 L_1802:
         MVI    0x66, step_code
-        LA     0, L_1100
+        LA     1, L_1100
 mt4_fill_loop:          ; write 256-byte pattern, walk the address to the limit
         LA     0, 0x4000
 L_180E:
@@ -2660,14 +2660,14 @@ mt4_verify_loop:          ; read back and compare (CMC 255)
         AMR    0, 0x107B
         CMR    0, 0x109F
         JC     0xD0, mt4_verify_loop
-        CMR    0, 0x107F
+        CMR    1, 0x107F
         JC     0xD0, L_184A
-        LA     0, 0x1200
+        LA     1, 0x1200
         JC     0xF0, mt4_fill_loop   ; JMP/JANY
 L_184A:
-        CMR    0, 0x1081
+        CMR    1, 0x1081
         JC     0xD0, L_185A
-        LA     0, 0x1300
+        LA     1, 0x1300
         JC     0xF0, mt4_fill_loop   ; JMP/JANY
 L_185A:
         JS2    L_1802
@@ -2689,14 +2689,14 @@ L_187C:
         CMR    0, 0x109F
         JC     0xD0, L_187C
         MVI    0x68, step_code
-        LA     0, 0x5FFF
+        LA     1, 0x5FFF
 mt4_countdown:          ; descending re-verify
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x1095
+        SMR    1, 0x1095
         CMI    0x5C, 0x00F0
         JRT    0xD0, oper_checkpoint
-        CMR    0, 0x10A1
+        CMR    1, 0x10A1
         JC     0xD0, mt4_countdown
         JS2    mt4_marker_pass
         JC     0xF0, memtest_6000   ; JMP/JANY
@@ -2732,7 +2732,7 @@ memtest_6000:          ; core test of the 0x6000-0x7FFF range (option 0x20)
         NOP2  
 L_1900:
         MVI    0x69, step_code
-        LA     0, L_1100
+        LA     1, L_1100
 mt6_fill_loop:
         LA     0, 0x6000
 L_190C:
@@ -2747,14 +2747,14 @@ mt6_verify_loop:
         AMR    0, 0x107B
         CMR    0, 0x10A9
         JC     0xD0, mt6_verify_loop
-        CMR    0, 0x107F
+        CMR    1, 0x107F
         JC     0xD0, L_1948
-        LA     0, 0x1200
+        LA     1, 0x1200
         JC     0xF0, mt6_fill_loop   ; JMP/JANY
 L_1948:
-        CMR    0, 0x1081
+        CMR    1, 0x1081
         JC     0xD0, L_1958
-        LA     0, 0x1300
+        LA     1, 0x1300
         JC     0xF0, mt6_fill_loop   ; JMP/JANY
 L_1958:
         JS2    L_1900
@@ -2776,14 +2776,14 @@ L_197A:
         CMR    0, 0x10A9
         JC     0xD0, L_197A
         MVI    0x6B, step_code
-        LA     0, 0x7FFF
+        LA     1, 0x7FFF
 mt6_countdown:
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x1095
+        SMR    1, 0x1095
         CMI    0x5C, 0x00F0
         JRT    0xD0, oper_checkpoint
-        CMR    0, 0x10AB
+        CMR    1, 0x10AB
         JC     0xD0, mt6_countdown
         JS2    mt6_marker_pass
         NOP2  
@@ -2810,11 +2810,11 @@ report_restart:          ; verify mismatch: copy results, restart at cold_start
         DB     0x00        ; .
 memtest_move_lowhigh:          ; address-uniqueness move test (copy 0x0100<->0x2100)
         LA     0, main
-        LA     0, 0x2100
+        LA     1, 0x2100
 L_19FC:
         MVC    256, 0x000(1), 0x000(0)
         AMR    0, 0x107B
-        AMR    0, 0x107B
+        AMR    1, 0x107B
         CMR    0, 0x10B7
         JC     0xD0, L_19FC
         MVI    0x10, 0x1068
@@ -2823,7 +2823,7 @@ L_19FC:
         MVI    0x14, 0x1078
 memtest_0100:          ; core test of the 0x0100-0x0FFF range
         MVI    0x61, step_code_mem
-        LA     0, L_1100
+        LA     1, L_1100
 mt0_fill_loop:
         LA     0, main
 L_1A2E:
@@ -2838,8 +2838,8 @@ mt0_verify_loop:
         AMR    0, 0x107B
         CMR    0, 0x10B7
         JC     0xD0, mt0_verify_loop
-        AMR    0, 0x107B
-        CMR    0, 0x10B9
+        AMR    1, 0x107B
+        CMR    1, 0x10B9
         JC     0xD0, mt0_fill_loop
         JS2    memtest_0100
 mt0_marker_pass:
@@ -2855,14 +2855,14 @@ mt0_marker_chk:
         JC     0xF0, mt0_limit_chk   ; JMP/JANY
 mt0_countdown:
         MVI    0x65, step_code_mem
-        LA     0, 0x00EF
+        LA     1, 0x00EF
 L_1A98:
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x1095
+        SMR    1, 0x1095
         CMI    0x5C, 0x00F0
         JRT    0xD0, memtest_error_halt
-        CMR    0, 0x109B
+        CMR    1, 0x109B
         JC     0xD0, L_1A98
         MVI    0x64, step_code_mem
         LA     0, main
@@ -2881,22 +2881,22 @@ L_1AD2:
         CMR    0, 0x10B7
         JC     0xD0, L_1AD2
         MVI    0x65, step_code_mem
-        LA     0, 0x0FFF
+        LA     1, 0x0FFF
 mt0_countdown2:
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x1095
+        SMR    1, 0x1095
         CMI    0x5C, 0x00F0
         JRT    0xD0, memtest_error_halt
-        CMR    0, 0x109D
+        CMR    1, 0x109D
         JC     0xD0, mt0_countdown2
         JS2    mt0_marker_pass
         LA     0, main
-        LA     0, 0x2100
+        LA     1, 0x2100
 L_1B1E:
         MVC    256, 0x000(0), 0x000(1)
         AMR    0, 0x107B
-        AMR    0, 0x107B
+        AMR    1, 0x107B
         CMR    0, 0x10B7
         JC     0xD0, L_1B1E
         MVI    0x30, 0x1068
@@ -2904,18 +2904,18 @@ L_1B1E:
         MVI    0x30, 0x1074
         MVI    0x34, 0x1078
         LA     0, 0x1000
-        LA     0, 0x2000
+        LA     1, 0x2000
 L_1B4C:
         MVC    256, 0x000(1), 0x000(0)
         AMR    0, 0x107B
-        AMR    0, 0x107B
+        AMR    1, 0x107B
         CMR    0, 0x1083
         JC     0xD0, L_1B4C
         JC     0xF0, 0x2B66   ; JMP/JANY
 memtest_1000:          ; core test of the 0x1000-0x1FFF range (seg-2 mirror)
         MVI    0x61, step_code
         MVI    0x24, opt_subcode
-        LA     0, 0x2100
+        LA     1, 0x2100
         LA     0, 0x1000
         MVC    256, 0x000(0), 0x000(1)
         AMR    0, 0x207B
@@ -2927,8 +2927,8 @@ memtest_1000:          ; core test of the 0x1000-0x1FFF range (seg-2 mirror)
         AMR    0, 0x207B
         CMR    0, 0x2083
         JC     0xD0, 0x2B8C
-        AMR    0, 0x207B
-        CMR    0, 0x20BB
+        AMR    1, 0x207B
+        CMR    1, 0x20BB
         JC     0xD0, 0x2B72
         JS2    0x2B6E
         MVI    0x64, step_code
@@ -2946,21 +2946,21 @@ memtest_1000:          ; core test of the 0x1000-0x1FFF range (seg-2 mirror)
         CMR    0, 0x2083
         JC     0xD0, 0x2BD0
         MVI    0x65, step_code
-        LA     0, 0x1FFF
+        LA     1, 0x1FFF
         LA     0, 0xFFF(7)
         LR     0, 0x000(1)
-        SMR    0, 0x2095
+        SMR    1, 0x2095
         CMI    0x5C, 0x00F0
         JRT    0xD0, oper_checkpoint
-        CMR    0, 0x20BD
+        CMR    1, 0x20BD
         JC     0xD0, 0x2BF4
         JS2    0x2BB2
         MVI    0x14, opt_subcode
         LA     0, 0x1000
-        LA     0, 0x2000
+        LA     1, 0x2000
         MVC    256, 0x000(0), 0x000(1)
         AMR    0, 0x207B
-        AMR    0, 0x207B
+        AMR    1, 0x207B
         CMR    0, 0x2083
         JC     0xD0, 0x2C20
         JC     0xF0, memtest_4000_disp   ; JMP/JANY
