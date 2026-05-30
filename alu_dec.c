@@ -358,8 +358,11 @@ void alu_mp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     int ab = alen + 1;
     int bb = blen + 1;
 
-    /* Overflow conditions */
-    if (blen > 8 || blen >= alen) {
+    /* Overflow conditions: the multiplier field must be at most 8 bytes
+     * (bb counts bytes; the deck's step-0x25 MP 10,9 has a 9-byte multiplier
+     * and must overflow), and must be shorter than the result/multiplicand
+     * field. (blen is the 0-indexed length code, so the byte test is on bb.) */
+    if (bb > 8 || blen >= alen) {
         alu_set_cc(ge, ALU_CC_OVF);
         return;
     }
