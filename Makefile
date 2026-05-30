@@ -1,4 +1,4 @@
-OBJS=msl.o ge.o pulse.o msl-timings.o console.o console_socket.o peripherical.o log.o reader.o cap.o transcode.o cardreader.o binimage.o alu_cc.o alu_bin.o alu_logic.o alu_dec.o alu_reg.o
+OBJS=msl.o ge.o pulse.o msl-timings.o console.o console_socket.o peripherical.o log.o reader.o cap.o transcode.o cardreader.o binimage.o disasm.o alu_cc.o alu_bin.o alu_logic.o alu_dec.o alu_reg.o
 CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%.o,$(wildcard tests/*.c))

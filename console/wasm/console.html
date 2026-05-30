@@ -646,6 +646,26 @@ padding: 1px;
 .dial_label:nth-child(13) .dial_label_text  { transform: rotateZ(calc(-12 * var(--angle) - var(--phase))); }
 .dial_label:nth-child(14) .dial_label_text  { transform: rotateZ(calc(-13 * var(--angle) - var(--phase))); }
 
+/* live gdb-style disassembly window (in the strip where the log used to be) */
+#disasm {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.15em;
+  line-height: 1.45;
+  background: #060a06;
+  color: #3f6;                 /* green on black */
+  border-radius: 2px;
+  padding: 0.5em 0.8em;
+  height: 15em;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 1px #181818, inset 0 -2px 1px #2a2a2a;
+}
+#disasm .dline { white-space: pre; }
+#disasm .dline.cur {            /* currently-executing instruction */
+  background: #3f6;
+  color: #000;                 /* black on green */
+  font-weight: bold;
+}
+
 /* ---- simulator gadget (NOT part of the real console) ------------------- *
  * The real GE-120 has no file dialog: programs enter through a deck of cards
  * loaded into the reader. This panel is a simulator convenience, drawn well
@@ -813,6 +833,9 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
         <div class="vertical-strut strut-right"></div>    
     </div>
     <div class="horizontal-strut strut-bottom"></div>
+    <div class=strut-blue>
+      <div id=disasm></div>
+    </div>
     <div class=strut-blue>
         <div class=bottom-panel>
             <div class=buttons>
@@ -1252,6 +1275,21 @@ document.set_lamp = function(lamp, val) {
     else     e.classList.remove("on")
 
     if (val) console.log()
+}
+
+/* live disassembly: each line is "<marker><AAAA>: <hex>  <asm>"; the line whose
+ * marker is '>' is the currently-executing instruction (black on green). */
+document.set_disasm = function(text) {
+    const el = document.getElementById('disasm');
+    if (!el) return;
+    el.textContent = '';
+    for (const line of text.split('\n')) {
+        if (line === '') continue;
+        const d = document.createElement('div');
+        d.className = 'dline' + (line[0] === '>' ? ' cur' : '');
+        d.textContent = line;
+        el.appendChild(d);
+    }
 }
 
 document.set_switches = function() {

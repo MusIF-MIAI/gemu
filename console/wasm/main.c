@@ -9,6 +9,7 @@
 #include "../../ge.h"
 #include "../../console.h"
 #include "../../cardreader.h"
+#include "../../disasm.h"
 #include "../../bit.h"
 
 struct ge ge130;
@@ -27,6 +28,10 @@ static double cycle_budget = 0.0;
 
 EM_JS(void, set_lamp, (const char *lamp, int val), {
     document.set_lamp(UTF8ToString(lamp), val);
+});
+
+EM_JS(void, set_disasm, (const char *text), {
+    document.set_disasm(UTF8ToString(text));
 });
 
 void send_console() {
@@ -123,6 +128,13 @@ void send_console() {
     set_lamp("LOAD_1",         console.lamps.LOAD_1        );
     set_lamp("LOAD_2",         console.lamps.LOAD_2        );
     set_lamp("OPERATOR_CALL",  console.lamps.OPERATOR_CALL );
+
+    /* gdb-style disassembly window centred on the program counter (PO). */
+    {
+        static char dis[1536];
+        ge_disasm_window(ge->mem, ge->rPO, 5, 6, dis, sizeof dis);
+        set_disasm(dis);
+    }
 }
 
 
