@@ -45,6 +45,43 @@ defines it:
 
 ---
 
+## 0.5 Deck-validated corrections (funktionalcpu self-test bring-up)
+
+Running the `funktionalcpu` CPU self-test (option `0x40`) instruction-by-instruction
+in gemu and matching each sub-test's `JRT`/`CMC` checks against the deck forced a
+batch of ISA corrections. These are **high confidence** — each is validated by the
+hardware self-test itself (steps `0x01`..`0x60` all pass). Several **contradict the
+older parts of this document and the current disassembler/assembler**, which still
+need to be brought into line (the "fix in" column says where).
+
+| # | Finding | gemu | Fix in disasm/asm/compiler |
+|---|---------|------|----------------------------|
+| 1 | **CI (`0x96`) = OR Immediate** (`mem |= K`), NOT Compare. The compare-immediate op is **CMI (`0x95`)**. (NI `0x94`=AND, XI `0x97`=XOR, CI `0x96`=OR.) | fixed | disasm/asm should name `0x96`=CI/OI as a *logical-OR* (it modifies memory), distinct from CMI `0x95` |
+| 2 | **STR opcode = `0xB4`**, not `0x84`. `0x84` never appears in the deck. | fixed | opcodes/disasm/asm tables: STR = `0xB4` |
+| 3 | **Register-op aux char = `1XXX0000`**: register N = **bits 4-6** (not the low nibble). e.g. `LR` aux `0xE0` → register 6, aux `0xC0` → register 4. | fixed | disasm/asm: decode/encode the register from bits 4-6; assembler must emit `1<<7 | (N<<4)` |
+| 4 | **Register-op MEMORY operand is addressed by its RIGHTMOST byte**: the 16-bit value occupies `mem[addr-1 .. addr]` (read/written downward), NOT `[addr .. addr+1]`. (Change-register *storage* at `240+2N` is still high-byte-first.) Applies to LR/STR/AMR/SMR/CMR. | fixed | asm/compiler: operand address means the low byte; disasm note |
+| 5 | **LPSR (`0x9d`) is a PM instruction** (`OP \| C \| I1` → `FO \| L1₂,₁ \| V1`) that loads a PSR from its operand and JUMPS — same as interrupt restore but from the operand, not `0x0304`. PSR layout at the operand: byte0 = status (bit5→F104, bit4→F105, bit0→F106), byte1 = skip, byte2..3 = new PO (big-endian). Routes alpha→64\|65→C2. | fixed | disasm/asm already treat it as PM `aux, addr`; document the PSR-load + jump semantics |
+| 6 | **Decimal sign codes**: `0xC/0xA/0xE/0xF` = positive, **`0xD` and `0xB` = negative**. **MVP moves the source sign nibble VERBATIM** (not normalized to C/D). **AP/decimal overflow PRESERVES the destination's sign nibble.** | fixed | compiler/decimal-format docs |
+| 7 | **PK (Pack) processes UPWARD** from the given (leftmost) address, 2 digits/byte, **no sign nibble** (2L+2 zoned → L+1 packed). **UPK** is the inverse (1 packed byte → 2 zoned bytes, upward, zone preserved). | fixed | format/edit docs |
+| 8 | **AD/SD (zoned decimal) preserve the first operand's zone nibble** in the result; CC: AD → F104=carry/overflow, F105=nonzero; SD → sign-based (`<0`=cc1, `=0`=cc2, `>0`=cc3). | fixed | — |
+| 9 | **MVQ/CMQ field length = `alen`** (high-nibble length code +1), not the full `LL` byte. | fixed | asm: these are effectively two-length even though only one matters |
+| 10 | **SR/SL (Search)**: result address → **change register 7** (`mem[0xFE..0xFF]`); CC: **F105 = found(1)/not-found(0)**. **SL is the mirror of SR**: its address is the field's RIGHTMOST byte, it scans right-to-left, result = match-1 (SR: leftmost, →, match+1). | fixed | doc the result-register + CC |
+| 11 | **MP/DP overflow side-effects**: MP overflows when the multiplier field > 8 bytes OR ≥ the result field, and on overflow **clears the V2 (second-operand) field**; AP on overflow **writes the truncated low-order result**. CC overflow = `(F104,F105)=(0,0)`. | fixed | — |
+| 12 | **Indexed addressing `0xNNN(R)`** = `change_register[R] + displacement` (bit-15 = 1 modifier). The core-memory test (step `0x62`+) fills/verifies a range using an indexed SS destination (`MVC 256, 0x000(0), 0x1500`). **OPEN gemu bug**: the indexed SS *destination* doesn't resolve to `cr[R]+disp` (writes don't land), so the memory test fails — the next thing to fix. | OPEN | verify disasm/asm indexed-operand encoding (`disp(R)`, bit-15) |
+
+CC condition-code NOTE tables (from the microcode), for the jump-condition logic
+(`JC/JRT` mask bits M7..M4 vs FA04/FA05): **AD-AB**: F104=overflow, F105=nonzero.
+**SD-SB-CMQ** and **MP-DP**: sign-based (`(0,1)`=<0, `(1,0)`=0, `(1,1)`=>0;
+`(0,0)`=overflow for MP-DP, "impossible" for SD-SB). **CMC/CMI**: `(0,1)`=1ˢᵗ<2ⁿᵈ,
+`(1,0)`=equal, `(1,1)`=1ˢᵗ>2ⁿᵈ.
+
+> **Self-test status**: steps `0x01`..`0x60` (the full instruction set) pass; the deck
+> then enters the core-memory test (step `0x62`, `L_1600`) which is blocked on the
+> indexed-SS-destination bug (#12). See `disassembler/funktionalcpu.sym` for the
+> per-step op map and `project_funktional_selftest_decimal` in the agent memory.
+
+---
+
 ## 1. Machine model at a glance
 
 - **Memory**: flat, **byte-addressable**, **16-bit addresses** → up to **64 KiB**
@@ -471,7 +508,7 @@ the segment base from `L2`'s modifier (`eff_v1_l2`).
 | Mn | Op | Summary | CC | St |
 |----|----|---------|----|----|
 | **LR** | `BC` | Load Register: `reg[N] ← mem16[EA]` (big-endian 2-byte). | — | ✅ |
-| **STR** | `84` | Store Register: `mem16[EA] ← reg[N]`. | — | ✅ |
+| **STR** | `B4` | Store Register: `mem16[EA] ← reg[N]`. (Was wrongly `84`; corrected §0.5.) | — | ✅ |
 | **LA** | `68` | Load Address: `reg[N] ← EA` (no memory fetch; like S/360 LA). | — | ✅ |
 | **CMR** | `BD` | Compare reg[N] to memory word; set CC (1<,2=,3>). | set | ✅ |
 | **AMR** | `BE` | Add memory word to reg[N]; CC + carry (`URPE`/`URPU`). | set | ✅ |
@@ -488,13 +525,12 @@ The aux char **is** the immediate operand `K`; the address selects the target by
 | **MVI** | `92` | Move Immediate: `mem[EA] ← K`. | — | ✅ |
 | **NI** | `94` | AND Immediate: `mem[EA] &= K`. | — | ✅ |
 | **XI** | `97` | XOR Immediate: `mem[EA] ^= K`; CC=2 if 0 else 3. | set | ✅ |
-| **CI** | `96` | Compare Immediate: `mem[EA]` vs `K`; CC=1/2/3 (`<`/`=`/`>`). | set | ✅ |
-| **CMI** | `95` | Compare-logical Immediate (same compare as CI in this build). | set | ✅ |
-| **OI** | — | OR Immediate (manual §5.6.3.1) — **no opcode assigned** in `opcodes.h`. | — | ✗ |
+| **CI** (=OI) | `96` | **OR Immediate**: `mem[EA] |= K`; CC=2 if 0 else 3. *(deck-validated, §0.5 #1 — was wrongly modelled as Compare.)* | set | ✅ |
+| **CMI** | `95` | Compare Immediate: `mem[EA]` vs `K`; CC=1/2/3 (`<`/`=`/`>`); no write. | set | ✅ |
 
-> Note: `CI` and `CMI` are documented as distinct mnemonics but both route to
-> `alu_ci` here (`msl-commands.c:131`). If the real machine distinguishes signed
-> vs logical compare, that distinction is not yet modelled. Confidence: medium.
+> Resolved (§0.5 #1, deck step 0x32): `0x96` (CI) is the **OR-immediate** op (the
+> APS "OI"), it MODIFIES memory; the compare-immediate op is **CMI `0x95`**. The
+> older "both route to alu_ci" note is obsolete — `EXEC_CI`→`alu_oi`, `EXEC_CMI`→`alu_ci`.
 
 ### 6.5 Character / logical strings — SS format (6 bytes)
 
@@ -646,7 +682,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 | `47` | JU | PM | `9C` | PERI | PM | `E8` | MVP | SS |
 | `53` | JS1/JS2/JIE | PM | `9D` | LPSR | PM | `E9` | CMP | SS |
 | `68` | LA | PM | `9E` | PER | PM | `EA` | AP | SS |
-| `84` | STR | PM | `90` | RDC | PM | `EB` | SP | SS |
+| `B4` | STR | PM | `90` | RDC | PM | `EB` | SP | SS |
 | `BC` | LR | PM | `D2` | MVC | SS | `EC` | MP | SS |
 | `BD` | CMR | PM | `D4` | NC | SS | `ED` | DP | SS |
 | `BE` | AMR | PM | `D5` | CMC | SS | `EE` | PKS | SS |
@@ -769,7 +805,7 @@ follow §5.1 (cc1 `<`, cc2 `=`, cc3 `>`, cc0 overflow/special):
 | Mnemonic | Syntax | Op | Len | Meaning | St |
 |---|---|----|----|---|----|
 | `LR`  | `LR N, addr`  | `BC` | 4 | `reg[N] ← mem16[addr]`. | ✅ |
-| `STR` | `STR N, addr` | `84` | 4 | `mem16[addr] ← reg[N]`. | ✅ |
+| `STR` | `STR N, addr` | `B4` | 4 | `mem16[addr-1..addr] ← reg[N]` (operand = rightmost byte). | ✅ |
 | `LA`  | `LA N, addr`  | `68` | 4 | `reg[N] ← addr` (effective address, no fetch). | ✅ |
 | `CMR` | `CMR N, addr` | `BD` | 4 | Compare `reg[N]` to `mem16[addr]`; set CC. | ✅ |
 | `AMR` | `AMR N, addr` | `BE` | 4 | `reg[N] += mem16[addr]`; set CC. | ✅ |
@@ -784,8 +820,8 @@ follow §5.1 (cc1 `<`, cc2 `=`, cc3 `>`, cc0 overflow/special):
 | `MVI` | `MVI K, addr` | `92` | 4 | `mem[addr] ← K`. | ✅ |
 | `NI`  | `NI K, addr`  | `94` | 4 | `mem[addr] &= K`. | ✅ |
 | `XI`  | `XI K, addr`  | `97` | 4 | `mem[addr] ^= K`; set CC. | ✅ |
-| `CI`  | `CI K, addr`  | `96` | 4 | compare `mem[addr]` with `K`; set CC. | ✅ |
-| `CMI` | `CMI K, addr` | `95` | 4 | compare-logical immediate (routes to `CI`). | ✅ |
+| `CI`  | `CI K, addr`  | `96` | 4 | **OR-immediate** `mem[addr] |= K` (=APS `OI`); CC 2/3. | ✅ |
+| `CMI` | `CMI K, addr` | `95` | 4 | compare `mem[addr]` with `K`; set CC 1/2/3; no write. | ✅ |
 | `TM`  | `TM K, addr`  | `91` | 4 | test `mem[addr] & K`; set CC (no write). | ✅ |
 
 ### A.3.5 Peripheral / misc — PM format (4 bytes, generic `aux, addr`)
