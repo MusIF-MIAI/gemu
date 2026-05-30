@@ -30,6 +30,17 @@ extern void ge_log_set_active_types_from_spec(const char *spec);
  * The script is looked for next to the ge executable first (so it works from
  * any cwd), then relative to the current directory.
  */
+/* Interactive console switches driven by signals: SIGUSR1 toggles SWITCH 1
+ * (JS1), SIGUSR2 toggles SWITCH 2 (JS2). The handler only sets a flag; the
+ * run loop applies it between cycles (so we never touch ge state from a
+ * handler). Lets a human (or an automated harness) flip the diagnostic
+ * switches mid-run: e.g. start the funktionalcpu test with SWITCH 2 on, then
+ * `kill -USR2 <pid>` to release it and watch where the deck goes. */
+static volatile sig_atomic_t g_toggle_js1 = 0;
+static volatile sig_atomic_t g_toggle_js2 = 0;
+static void on_sigusr1(int sig) { (void)sig; g_toggle_js1 = 1; }
+static void on_sigusr2(int sig) { (void)sig; g_toggle_js2 = 1; }
+
 static pid_t spawn_tui(const char *argv0)
 {
     char path[4096];
@@ -79,6 +90,10 @@ static void print_usage(const char *argv0)
         "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000)\n"
         "  --console            Enable the console socket /tmp/gemu.console (no UI attached)\n"
         "  --tui                Implies --console and starts the ncurses console client\n"
+        "  --interactive, -i    Run until killed; SIGUSR1/SIGUSR2 toggle SWITCH 1/2 at\n"
+        "                       runtime (prints the pid + step/halt progress)\n"
+        "  --switch1            Start with SWITCH 1 (JS1) on\n"
+        "  --switch2            Start with SWITCH 2 (JS2) on\n"
         "                       (console/curses/console.py); runs until you quit the TUI\n"
         "  --help, -h           Print this help and exit\n",
         argv0);
@@ -98,6 +113,9 @@ int main(int argc, char *argv[])
     int raw = 0;
     long load_org = 0x0000;
     uint16_t poke_addr[32]; uint8_t poke_val[32]; int npoke = 0;
+    int interactive = 0;   /* --interactive: run until killed, switches via signals */
+    int sw1_init = 0;      /* --switch1: start with SWITCH 1 (JS1) on */
+    int sw2_init = 0;      /* --switch2: start with SWITCH 2 (JS2) on */
 
     /* --- argument parsing: --opt value style --- */
     for (int i = 1; i < argc; i++) {
@@ -132,6 +150,12 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "error: --max-cycles must be a positive integer\n");
                 return 1;
             }
+        } else if (strcmp(argv[i], "--interactive") == 0 || strcmp(argv[i], "-i") == 0) {
+            interactive = 1;
+        } else if (strcmp(argv[i], "--switch1") == 0) {
+            sw1_init = 1;
+        } else if (strcmp(argv[i], "--switch2") == 0) {
+            sw2_init = 1;
         } else if (strcmp(argv[i], "--raw") == 0) {
             raw = 1;
         } else if (strcmp(argv[i], "--org") == 0) {
@@ -256,7 +280,65 @@ int main(int argc, char *argv[])
     if (image_loaded)
         ge_enter(&ge, image_entry);
 
-    if (use_tui) {
+    /* Console switch initial state (after ge_start, which clears them). */
+    ge.JS1 = sw1_init;
+    ge.JS2 = sw2_init;
+
+    if (interactive) {
+        /* Signal-driven interactive run: flip the diagnostic switches with
+         * `kill -USR1/-USR2 <pid>` and watch the deck. Run until killed.
+         * Freeze PC on HLT (the GE-120 sequencer is frozen by ALTO when
+         * halted) so the stop address stays readable; signals are still
+         * serviced so you can record a switch change before restarting. */
+        signal(SIGUSR1, on_sigusr1);
+        signal(SIGUSR2, on_sigusr2);
+        if (!trace_set)
+            ge_log_set_active_types_from_spec("none");
+        long pid = (long)getpid();
+        printf("interactive: pid=%ld  SWITCH1=%d SWITCH2=%d\n", pid, ge.JS1, ge.JS2);
+        printf("  kill -USR1 %ld   # toggle SWITCH 1 (JS1)\n", pid);
+        printf("  kill -USR2 %ld   # toggle SWITCH 2 (JS2)\n", pid);
+        fflush(stdout);
+        uint8_t last_step = ge.mem[0x0010];
+        int was_halted = -1;
+        for (;;) {
+            if (g_toggle_js1) {
+                g_toggle_js1 = 0; ge.JS1 = !ge.JS1;
+                printf("[cyc %ld] SWITCH 1 -> %d   PO=%04x step=0x%02x%s\n",
+                       cycles, ge.JS1, ge.rPO, ge.mem[0x0010],
+                       ge.halted ? " (halted)" : "");
+                fflush(stdout);
+            }
+            if (g_toggle_js2) {
+                g_toggle_js2 = 0; ge.JS2 = !ge.JS2;
+                printf("[cyc %ld] SWITCH 2 -> %d   PO=%04x step=0x%02x%s\n",
+                       cycles, ge.JS2, ge.rPO, ge.mem[0x0010],
+                       ge.halted ? " (halted)" : "");
+                fflush(stdout);
+            }
+            if (ge.halted) {
+                if (was_halted != 1) {
+                    printf("[cyc %ld] HALT  PO=%04x step=0x%02x\n",
+                           cycles, ge.rPO, ge.mem[0x0010]);
+                    fflush(stdout);
+                    was_halted = 1;
+                }
+                usleep(5000);   /* frozen; still responsive to signals */
+                continue;
+            }
+            was_halted = 0;
+            ret = ge_run_cycle(&ge);
+            cycles++;
+            if (ret != 0)
+                break;
+            uint8_t st = ge.mem[0x0010];
+            if (st != last_step) {
+                printf("[cyc %ld] step -> 0x%02x   PO=%04x\n", cycles, st, ge.rPO);
+                fflush(stdout);
+                last_step = st;
+            }
+        }
+    } else if (use_tui) {
         /* Interactive session: launch the ncurses client and run the emulator
          * until the user quits the TUI. Ignore max-cycles, and keep cycling
          * even after a HLT so the console socket stays serviced and the panel
