@@ -65,7 +65,7 @@ static const struct dmnem DTAB[] = {
     { 0x41, "JRT",  D_PER,    4 },   /* reserved (no decode path)        */
     /* PM register / address */
     { 0xBC, "LR",   D_REG, 4 },
-    { 0x84, "STR",  D_REG, 4 },
+    { 0xB4, "STR",  D_REG, 4 },
     { 0x68, "LA",   D_REG, 4 },
     { 0xBD, "CMR",  D_REG, 4 },
     { 0xBE, "AMR",  D_REG, 4 },

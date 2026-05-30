@@ -50,7 +50,7 @@
 #define LPSR_OPCODE 0x9d
 #define PER_OPCODE  0x9e
 #define RDC_OPCODE  0x90   /* peripheral read-card, decimal-deck variant (PER-family) */
-#define STR_OPCODE  0x84
+#define STR_OPCODE  0xb4   /* Store Register; funktionalcpu step 0x38 (was wrongly 0x84) */
 #define LR_OPCODE   0xbc
 #define CMR_OPCODE  0xbd
 #define AMR_OPCODE  0xbe
