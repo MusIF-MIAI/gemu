@@ -52,10 +52,37 @@
 0x03D6  step_0x1f_sr      ; self-test step 0x1F: SR (Search Right) 0x0556,0x0558 ->
                          ; result addr to reg7; next op (0x03DC) reads mem[0x00FE].
                          ; SR/SL were unrouted before dec62e2 and derailed PC here.
-0x0790  selftest_decimal  ; decimal multiply/divide (MP/DP) test block
+# ---- self-test sub-test step map (each step MVI's step_code then runs an op;
+#      a fault halts at final_halt + step, so halt addr 0x14NN = failing step NN).
+#      Ops fixed while bringing the deck up are noted; CPU self-test 0x01..0x36 pass. ----
+0x0244  step_0x12_pk      ; PK (Pack) 1-byte; process UPWARD, 2 digits/byte, no sign.
+0x027E  step_0x14_ad      ; AD (Add Decimal); preserve 1st-operand zone, CC F104=carry
+                          ; (overflow) F105=nonzero.
+0x0432  step_0x19_sd      ; SD (Sub Decimal); preserve zone, CC sign-based (<0/=0/>0).
+0x0790  selftest_decimal  ; decimal MP/DP test block (steps 0x25..0x31).
+0x0794  step_0x25_mp_ovf  ; MP 10,9 -> overflow expected (cc=0). MP overflows when the
+                          ; multiplier field > 8 bytes (bb>8) or multiplier>=multiplicand.
+0x07B8  step_0x27_mp_ovf2 ; MP 6,5 -> overflow; on overflow MP CLEARS the V2(b) field
+                          ; (CMC 5,0x00E8,0x05A5 checks it ==0). Normal MP result -> A1.
+0x0838  step_0x2B_dp      ; DP (Divide) block (0x2B..); quotient->A1, JRT 0x70 wants cc=0.
+0x092A  step_0x32_ci      ; logical-immediate block start (steps 0x32..0x36).
+                          ; CI 0x96 = OR Immediate (mem|=K), NOT Compare. CMI 0x95 is the
+                          ; compare. Result checked by CMC. (NI=AND, XI=XOR, OI/CI=OR.)
+0x0946  step_0x33_xi      ; XI (XOR Immediate) 0xAA; result checked.
+0x0966  step_0x34_tm      ; TM (Test under Mask) 0xAA; CC only (JRT 0xC0).
+0x09AA  step_0x37_lr      ; change-register op block start (steps 0x37..): LR/STR/AMR/
+                          ; SMR/CMR. LR (Load change-Register) 0 <- mem[0x0622] (cr0=mem[0xF0..]).
+                          ; LR loads cr correctly + preserves CC (only AMR/SMR/CMR set
+                          ; F104/F105). OPEN: the result CMC 3,0x0620,0x00FB mismatches
+                          ; (deck data 0x0620=(95,04,c3) vs copy (95,00,95)); nothing
+                          ; writes 0x0620 and the .bin matches a fresh .cap depunch, so
+                          ; this is an unresolved LR-addressing / change-register-index
+                          ; (aux byte 0xE0) or test-data-semantics question. reg code
+                          ; nibble in reg_addr_of is also a flagged low-vs-high uncertainty.
 0x0E64  show_code_then_halt ; display fault code; SWITCH2=continue else final_halt
 0x0E72  op_resume         ; LOFF (lamp off) -> selftest_continue
-0x1402  final_halt        ; HLT
+0x1402  final_halt        ; HLT sled; show_code_then_halt lands at 0x1400+step_code, so
+                          ; the stop address encodes the failing step (0x1412 = step 0x12).
 
 # ---- test selector + engine ----
 0x172A  select_test       ; read opt_image, dispatch by bit 0x10/0x20/0x40/0x80

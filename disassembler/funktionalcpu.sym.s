@@ -5,6 +5,9 @@
 step_code          EQU 0x0010   ; progress code: which sub-test is running (shown on halt)
 scratch_fc         EQU 0x00FC   ; self-test scratch (shift results)
 reg7               EQU 0x00FE   ; change/segment register 7 = mem[0xFE..0xFF] BE (240+2*7).
+step_0x12_pk       EQU 0x0244   ; PK (Pack) 1-byte; process UPWARD, 2 digits/byte, no sign.
+step_0x14_ad       EQU 0x027E   ; AD (Add Decimal); preserve 1st-operand zone, CC F104=carry
+step_0x19_sd       EQU 0x0432   ; SD (Sub Decimal); preserve zone, CC sign-based (<0/=0/>0).
 opt_subcode        EQU 0x0E70   ; secondary option/sub-test code
 fault_step_disp    EQU 0x0E71   ; failing step code copied here for the console display
 fault_code_disp    EQU 0x0E76   ; fault code shown on the console
@@ -797,8 +800,9 @@ xlate_table:          ; TL (translate) table used by the self-test
         DB     0x00        ; .
         DB     0x00        ; .
         DB     0x00        ; .
-selftest_decimal:          ; decimal multiply/divide (MP/DP) test block
+selftest_decimal:          ; decimal MP/DP test block (steps 0x25..0x31).
         MVI    0x25, step_code
+step_0x25_mp_ovf:          ; MP 10,9 -> overflow expected (cc=0). MP overflows when the
         MP     10, 9, 0x05A2, 0x0598
         JRT    0x70, oper_checkpoint
         JC     0x00, cold_start
@@ -807,6 +811,7 @@ selftest_decimal:          ; decimal multiply/divide (MP/DP) test block
         JRT    0x70, oper_checkpoint
         JC     0x00, cold_start
         MVI    0x27, step_code
+step_0x27_mp_ovf2:          ; MP 6,5 -> overflow; on overflow MP CLEARS the V2(b) field
         MP     6, 5, 0x05AF, 0x05A9
         JRT    0x70, oper_checkpoint
         JC     0x00, cold_start
@@ -833,6 +838,7 @@ selftest_decimal:          ; decimal multiply/divide (MP/DP) test block
         MP     4, 2, 0x05C6, 0x05C8
         CMC    3, 0x05C9, 0x05C4
         JRT    0xD0, oper_checkpoint
+step_0x2B_dp:          ; DP (Divide) block (0x2B..); quotient->A1, JRT 0x70 wants cc=0.
         JC     0x00, cold_start
         MVI    0x2B, step_code
         DP     3, 2, 0x05D2, 0x05CF
@@ -884,12 +890,14 @@ selftest_decimal:          ; decimal multiply/divide (MP/DP) test block
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
         MVI    0x32, step_code
+step_0x32_ci:          ; logical-immediate block start (steps 0x32..0x36).
         MVC    2, 0x0610, 0x0614
         CI     0xAA, 0x0610
         CMC    2, 0x0610, 0x0612
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start
         MVI    0x33, step_code
+step_0x33_xi:          ; XI (XOR Immediate) 0xAA; result checked.
         MVC    2, 0x0616, 0x061A
         XI     0xAA, 0x0616
         CMC    2, 0x0616, 0x0618
@@ -897,6 +905,7 @@ selftest_decimal:          ; decimal multiply/divide (MP/DP) test block
         JC     0x00, cold_start
         JC     0x00, cold_start
         MVI    0x34, step_code
+step_0x34_tm:          ; TM (Test under Mask) 0xAA; CC only (JRT 0xC0).
         TM     0xAA, 0x061C
         JRT    0xC0, oper_checkpoint
         JC     0x00, cold_start
@@ -915,7 +924,8 @@ selftest_decimal:          ; decimal multiply/divide (MP/DP) test block
         JRT    0xF0, oper_checkpoint
 L_09A6:
         MVI    0x37, step_code
-        CMI    0x95, 0x09AA
+step_0x37_lr:          ; change-register op block start (steps 0x37..): LR/STR/AMR/
+        CMI    0x95, step_0x37_lr
         MVC    3, 0x00FB, 0x061E
         LR     0, 0x0622
         JRT    0xD0, oper_checkpoint
@@ -2086,7 +2096,7 @@ L_1100:
         SB     16, 16, 0xFFF(7), 0xFFF(7)
         SB     16, 16, 0xFFF(7), 0xFFF(7)
         SB     16, 16, 0xFFF(7), 0x0A0A
-final_halt:          ; HLT
+final_halt:          ; HLT sled; show_code_then_halt lands at 0x1400+step_code, so
         HLT   
         HLT   
         HLT   
