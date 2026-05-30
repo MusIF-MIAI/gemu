@@ -225,6 +225,11 @@ static void INDEX_NEXT(struct ge* ge) { ge->future_state = 0xee; }
 static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), mem_rd16_op(ge, eff_v1_l2(ge))); }
 static void EXEC_STR(struct ge* ge) { mem_wr16_op(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
 static void EXEC_LA (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), eff_v1_l2(ge)); }
+/* LPSR instruction (0x9d): load the PSR (status + PO) from its operand by
+ * entering the shared C-sequence (C2->C3->C0->C1), exactly like the interrupt
+ * restore but reading from the instruction's address operand (V1) instead of
+ * the interrupt-save area 0x0304. Per the LPSR flowchart: alpha -> 64|65 -> C2. */
+static void EXEC_LPSR(struct ge* ge) { ge->rV1 = eff_v1_l2(ge); ge->future_state = 0xc2; }
 /* JRT (Jump Return, op 0x41): deposits the address of the subsequent instruction
  * (rPO before the jump rewrites it at TI05/CI00s) into index register 7
  * (mem 254/255). Unconditional, per CPU[4] sec.5.5.6.2 / 5.6.5.1: the link is

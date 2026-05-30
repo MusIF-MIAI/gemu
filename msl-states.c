@@ -456,6 +456,7 @@ static uint8_t is_cmr(struct ge *ge) { return ge->rFO == CMR_OPCODE; }
 static uint8_t is_amr(struct ge *ge) { return ge->rFO == AMR_OPCODE; }
 static uint8_t is_smr(struct ge *ge) { return ge->rFO == SMR_OPCODE; }
 static uint8_t is_la (struct ge *ge) { return ge->rFO == LA_OPCODE;  }
+static uint8_t is_lpsr(struct ge *ge) { return ge->rFO == LPSR_OPCODE; }
 static uint8_t pm_reg_exec(struct ge *ge) {
     return is_lr(ge) || is_str(ge) || is_cmr(ge) || is_amr(ge) || is_smr(ge) || is_la(ge);
 }
@@ -517,6 +518,7 @@ static const struct msl_timing_chart state_64_65[] = {
     { TO65, EXEC_AMR, is_amr },
     { TO65, EXEC_SMR, is_smr },
     { TO65, EXEC_LA,  is_la  },
+    { TO65, EXEC_LPSR, is_lpsr },
     { TO65, JRT_LINK, is_jrt },
     { TO70, CI78, ens },
     { TO70, CI62, per_peri, DE07A0 },
