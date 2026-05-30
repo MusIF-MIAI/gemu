@@ -89,6 +89,9 @@ Functions</h2></td></tr>
 <tr class="separator:aee3e3f7e190f4c31a2fd5e26dfddbc2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80b7c87832fe1743a2e6685665370492" id="r_a80b7c87832fe1743a2e6685665370492"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8c.html#a80b7c87832fe1743a2e6685665370492">ge_odd_parity</a> (uint8_t data)</td></tr>
 <tr class="separator:a80b7c87832fe1743a2e6685665370492"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a03f9ddd2168fc81951413481e2274d" id="r_a5a03f9ddd2168fc81951413481e2274d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8c.html#a5a03f9ddd2168fc81951413481e2274d">ge_mem_store8</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t addr, uint8_t val)</td></tr>
+<tr class="memdesc:a5a03f9ddd2168fc81951413481e2274d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Store a byte with generated odd parity + mark-written (for the hybrid ALU/SS write paths that write ge-&gt;mem[] directly).  <br /></td></tr>
+<tr class="separator:a5a03f9ddd2168fc81951413481e2274d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec5f065e5185692f278bfdb6fcd3a4d2" id="r_aec5f065e5185692f278bfdb6fcd3a4d2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8c.html#aec5f065e5185692f278bfdb6fcd3a4d2">ge_load_image</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, const uint8_t *image, size_t size, uint16_t origin)</td></tr>
 <tr class="memdesc:aec5f065e5185692f278bfdb6fcd3a4d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load a flat image at <code>origin</code> (unified-format payload); origin-aware, not size-capped, primes the parity store.  <br /></td></tr>
 <tr class="separator:aec5f065e5185692f278bfdb6fcd3a4d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,7 +194,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00321">321</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00334">334</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -214,7 +217,7 @@ Functions</h2></td></tr>
 <p>Commit the future state. </p>
 <p>Transfers the results of the future state network in the various selectors. For now it's an ad hoc behaviour, not described in detail in the currently available docs. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00329">329</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00342">342</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -256,7 +259,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00241">241</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00254">254</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -276,7 +279,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00248">248</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00261">261</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -296,7 +299,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00253">253</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00266">266</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -319,7 +322,7 @@ Functions</h2></td></tr>
 <p>The clock period name name. </p>
 <p>Returns the string destribing the clock period </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00198">198</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00211">211</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -341,7 +344,7 @@ Functions</h2></td></tr>
 
 <p>Deinitialize the emulator. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00315">315</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00328">328</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -373,7 +376,7 @@ Functions</h2></td></tr>
 
 <p>Enter execution at <code>entry</code>: seed PO and drop into the alpha (fetch) phase, bypassing the peripheral LOAD bootstrap (direct binary-load path). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00120">120</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00133">133</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -417,7 +420,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00127">127</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00140">140</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -439,7 +442,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load 1" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00137">137</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00150">150</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -461,7 +464,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load 2" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00154">154</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00167">167</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -506,7 +509,7 @@ Functions</h2></td></tr>
 <p>Load a flat image at <code>origin</code> (unified-format payload); origin-aware, not size-capped, primes the parity store. </p>
 <p>Returns 0 on success, -1 on range error. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00096">96</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00109">109</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -545,6 +548,45 @@ Functions</h2></td></tr>
 <p>Copy a program at the start of memory. </p>
 
 <p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00071">71</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+
+</div>
+</div>
+<a id="a5a03f9ddd2168fc81951413481e2274d" name="a5a03f9ddd2168fc81951413481e2274d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a03f9ddd2168fc81951413481e2274d">&#9670;&#160;</a></span>ge_mem_store8()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ge_mem_store8 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Store a byte with generated odd parity + mark-written (for the hybrid ALU/SS write paths that write ge-&gt;mem[] directly). </p>
+<p>Keeps parity coherent so a later read doesn't trip a false MEM CHECK. </p>
+
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00097">97</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -592,7 +634,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00211">211</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00224">224</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -612,7 +654,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00224">224</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00237">237</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -640,7 +682,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00168">168</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00181">181</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -662,7 +704,7 @@ Functions</h2></td></tr>
 
 <p>Run all GE "mastri" clock periods until next clock cycle. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00304">304</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00317">317</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -684,7 +726,7 @@ Functions</h2></td></tr>
 
 <p>Run a single pulse (i.e. a single GE "mastri" clock periods) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00258">258</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00271">271</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -729,7 +771,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "start" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00159">159</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00172">172</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
