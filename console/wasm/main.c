@@ -259,9 +259,12 @@ void em_main_loop() {
     double elapsed = now - last_now_ms;
     last_now_ms = now;
 
-    /* Idle (powered off) or halted: don't run cycles and don't build a backlog
-     * of "owed" time, so resuming starts fresh instead of fast-forwarding. */
-    if (!running_loop || ge->halted) {
+    /* Powered off: don't run cycles and don't build a backlog of "owed" time,
+     * so resuming starts fresh instead of fast-forwarding. We do NOT stop on
+     * ge->halted: a real GE-120's delay line keeps running through a HLT (the
+     * CPU is frozen via ALTO, but the panel stays live), which is what lets
+     * console forcing/display work after a halt. */
+    if (!running_loop) {
         cycle_budget = 0.0;
         return;
     }
@@ -280,8 +283,9 @@ void em_main_loop() {
     for (long i = 0; i < n; i++) {
         if (ge_run_cycle(ge) != 0)            /* timing-chart error: stop */
             break;
-        if (ge->halted)                       /* HLT: nothing more until reset */
-            break;
+        /* keep cycling when halted: ALTO freezes the CPU at the HLT (PO stays
+         * put, HALT lamp lit), but the delay line still turns so the panel and
+         * console forcing/display stay live. */
     }
 
     send_console();                           /* refresh the panel once per frame */
