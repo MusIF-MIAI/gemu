@@ -84,19 +84,31 @@ UTEST(exec, xi_xors_immediate)
     ASSERT_EQ(g.mem[0x50], 0xF0);        /* 0xFF ^ 0x0F */
 }
 
-UTEST(exec, ci_compare_equal_sets_cc2)
+/* CI (0x96) is OR Immediate (deck step 0x32): mem |= K. */
+UTEST(exec, ci_or_immediate)
 {
-    uint8_t prog[] = { CI_OPCODE, 0x42, 0x00, 0x50 };
+    uint8_t prog[] = { CI_OPCODE, 0xAA, 0x00, 0x50 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x50] = 0x55;
+    run_one(&g);
+    ASSERT_EQ(g.mem[0x50], 0xFF);              /* 0x55 | 0xAA = 0xFF */
+    ASSERT_EQ(alu_get_cc(&g), 3);              /* result non-zero -> cc 3 */
+}
+
+/* CMI (0x95) is Compare Immediate (the comparison op). */
+UTEST(exec, cmi_compare_equal_sets_cc2)
+{
+    uint8_t prog[] = { CMI_OPCODE, 0x42, 0x00, 0x50 };
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[0x50] = 0x42;
     run_one(&g);
     ASSERT_EQ(alu_get_cc(&g), ALU_CC_EQUAL);   /* equal -> cc 2 */
-    ASSERT_EQ(g.mem[0x50], 0x42);              /* CI does not modify memory */
+    ASSERT_EQ(g.mem[0x50], 0x42);              /* CMI does not modify memory */
 }
 
-UTEST(exec, ci_compare_low_sets_cc1)
+UTEST(exec, cmi_compare_low_sets_cc1)
 {
-    uint8_t prog[] = { CI_OPCODE, 0x42, 0x00, 0x50 };
+    uint8_t prog[] = { CMI_OPCODE, 0x42, 0x00, 0x50 };
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[0x50] = 0x10;                        /* mem < immediate */
     run_one(&g);

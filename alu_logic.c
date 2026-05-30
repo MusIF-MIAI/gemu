@@ -107,8 +107,26 @@ void alu_xc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)
 
 void alu_ni(struct ge *ge, uint16_t addr, uint8_t imm)
 {
-    ge->mem[addr] &= imm;
+    ge_mem_store8(ge, addr, (uint8_t)(ge->mem[addr] & imm));
     /* "Qualitative result: it is not interested." — CC not altered */
+}
+
+/* ------------------------------------------------------------------ */
+/* OI / CI – OR Immediate (opcode 0x96; "CI" in this deck's mnemonics) */
+/* ------------------------------------------------------------------ */
+
+void alu_oi(struct ge *ge, uint16_t addr, uint8_t imm)
+{
+    uint8_t result = (uint8_t)(ge->mem[addr] | imm);
+    ge_mem_store8(ge, addr, result);
+
+    /*
+     * Qualitative result (FA04/FA05), symmetric to XI:
+     *   FA04=1, FA05=0 -> cc=2: result == 0
+     *   FA04=1, FA05=1 -> cc=3: result != 0
+     * Validated against funktionalcpu step 0x32 (CI 0xAA on 0x55 -> 0xFF).
+     */
+    alu_set_cc(ge, (result == 0) ? 2 : 3);
 }
 
 /* ------------------------------------------------------------------ */
@@ -117,10 +135,8 @@ void alu_ni(struct ge *ge, uint16_t addr, uint8_t imm)
 
 void alu_xi(struct ge *ge, uint16_t addr, uint8_t imm)
 {
-    uint8_t result;
-
-    ge->mem[addr] ^= imm;
-    result = ge->mem[addr];
+    uint8_t result = (uint8_t)(ge->mem[addr] ^ imm);
+    ge_mem_store8(ge, addr, result);
 
     /*
      * §5.6.3.3 qualitative result table (FA04/FA05):

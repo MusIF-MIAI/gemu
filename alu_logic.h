@@ -107,6 +107,7 @@ void alu_xc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len);
  * "Qualitative result: it is not interested." — CC is not altered.
  */
 void alu_ni(struct ge *ge, uint16_t addr, uint8_t imm);
+void alu_oi(struct ge *ge, uint16_t addr, uint8_t imm);
 
 /**
  * alu_xi – Exclusive-OR Immediate (XI, §5.6.3.3)

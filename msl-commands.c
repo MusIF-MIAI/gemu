@@ -129,8 +129,8 @@ static void CO49(struct ge* ge) {
 static uint16_t eff_v1_l2(struct ge* ge);
 static void EXEC_MVI(struct ge* ge) { alu_mvi(ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
 static void EXEC_NI (struct ge* ge) { alu_ni (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
-static void EXEC_CI (struct ge* ge) { alu_ci (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
-static void EXEC_CMI(struct ge* ge) { alu_ci (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
+static void EXEC_CI (struct ge* ge) { alu_oi (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }  /* CI 0x96 = OR Immediate */
+static void EXEC_CMI(struct ge* ge) { alu_ci (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }  /* CMI 0x95 = Compare Immediate */
 static void EXEC_XI (struct ge* ge) { alu_xi (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
 static void EXEC_TM (struct ge* ge) { alu_tm (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
 
