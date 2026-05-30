@@ -705,34 +705,26 @@ void alu_pk(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t sle
  * ---------------------------------------------------------------------- */
 
 /*
- * "Characters of the second operand are read from left to right; they are
- * expanded and each group of 4 bits goes to occupy the less significant half
- * of one of the 2L+2 positions of the receiving field, completed in the most
- * significant half by the pre-existing zone code."
- *
- * Source: packed field, slen+1 bytes, addressed by rightmost byte (src).
- * Dest:   zoned field, dlen+1 bytes; each byte: low nibble = digit, high nibble
- *         = whatever was already in ge->mem[dst_byte] (preserved).
- *
- * We expand 2*(slen+1)-1 packed digits into 2*(slen+1)-1 zoned bytes.
- * Destination length dlen+1 bytes: if dlen+1 < 2*(slen+1)-1 left digits dropped;
- * if longer, left-padded with zeros (digit=0, zone preserved).
+ * UPK is the inverse of PK and uses the same "process upward from the given
+ * (leftmost) address" convention (UPK microcode flowchart, states 64|65 ->
+ * 60-63, pointers increment).  Each packed source byte holds two digits and is
+ * expanded into two zoned destination bytes: high nibble -> first (more
+ * significant) zoned byte, low nibble -> second.  No sign is processed, so a
+ * source of slen+1 packed bytes yields 2*(slen+1) zoned digits.  The
+ * destination's existing zone (high nibble) is preserved; only the low nibble
+ * (digit) is written.  Validated against funktionalcpu steps 0x1D/0x1E.
  */
 void alu_upk(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t slen)
 {
-    int sb = slen + 1;
-    int sn = 2 * sb - 1;   /* source packed digits */
-    int db = dlen + 1;     /* destination zoned bytes */
+    (void)dlen;                 /* dest length is 2*(slen+1), derived from the source */
+    int sb = slen + 1;          /* packed source bytes */
+    int total = 2 * sb;         /* zoned destination bytes (2 digits per source byte) */
 
-    for (int i = 0; i < db; i++) {
-        /* i=0 → rightmost dest byte, digit[0] of source */
-        uint8_t digit;
-        if (i < sn) {
-            digit = dec_get_digit(ge->mem, src, sb, i) & 0x0F;
-        } else {
-            digit = 0;
-        }
-        uint16_t daddr = (uint16_t)(dst - i);
+    for (int d = 0; d < total; d++) {
+        uint8_t sbyte = ge->mem[(uint16_t)(src + d / 2)];        /* read upward */
+        uint8_t digit = (d & 1) ? (uint8_t)(sbyte & 0x0F)        /* 2nd: low nibble  */
+                                : (uint8_t)((sbyte >> 4) & 0x0F);/* 1st: high nibble */
+        uint16_t daddr = (uint16_t)(dst + d);                    /* write upward */
         /* Preserve high nibble (zone) of destination, put digit in low nibble */
         ge_mem_store8(ge, daddr, (uint8_t)((ge->mem[daddr] & 0xF0) | digit));
     }
