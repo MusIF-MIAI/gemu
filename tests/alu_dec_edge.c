@@ -215,15 +215,15 @@ UTEST(alu_dec_edge, mvp_zero_source)
     ASSERT_EQ(alu_get_cc(&g), ALU_CC_ZERO);   /* 2 */
 }
 
-UTEST(alu_dec_edge, mvp_b_sign_normalized)
+UTEST(alu_dec_edge, mvp_b_sign_verbatim)
 {
     /*
-     * MVP preserves the source sign's VALUE but emits it in generated form:
-     * alu_mvp sets result_sign = neg ? 0xD : 0xC. So a 0xB (negative) source
-     * sign lands as 0xD on the result (not copied verbatim).
+     * MVP moves the source sign nibble VERBATIM (deck step 0x4D): a 0xB
+     * source sign lands as 0xB on the result, not normalized to 0xD. 0xB is
+     * still a negative sign code, so the CC is NEG.
      *
-     * op2: 0x7B (digit[0]=7, sign=0xB = negative) → mem[0x0200]=0x7B
-     * After MVP: mem[0x0100]=0x7D (digit 7, generated negative sign), CC=NEG.
+     * op2: 0x7B (digit[0]=7, sign=0xB) → mem[0x0200]=0x7B
+     * After MVP: mem[0x0100]=0x7B (sign 0xB copied as-is), CC=NEG.
      */
     struct ge g;
     ge_init(&g);
@@ -234,8 +234,8 @@ UTEST(alu_dec_edge, mvp_b_sign_normalized)
 
     alu_mvp(&g, 0x0100, 0, 0x0200, 0);
 
-    ASSERT_EQ(g.mem[0x0100], 0x7D);          /* sign normalized 0xB -> 0xD */
-    ASSERT_EQ(alu_get_cc(&g), ALU_CC_NEG);   /* 1 */
+    ASSERT_EQ(g.mem[0x0100], 0x7B);          /* sign 0xB copied verbatim */
+    ASSERT_EQ(alu_get_cc(&g), ALU_CC_NEG);   /* 0xB is a negative sign code */
 }
 
 /* =========================================================================

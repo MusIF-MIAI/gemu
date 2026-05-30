@@ -632,8 +632,10 @@ void alu_mvp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     for (int i = 0; i < copy_n; i++)
         dec_set_digit(ge->mem, a, ab, i, b_d[i]);
 
-    /* Generate sign from source */
-    uint8_t result_sign = dec_sign_is_neg(b_sign) ? 0xD : 0xC;
+    /* MVP moves the source sign nibble VERBATIM (it is a move, not an
+     * arithmetic op) — deck step 0x4D moves source sign 0xA and expects 0xA,
+     * not a normalized 0xC. */
+    uint8_t result_sign = b_sign;
     dec_set_sign(ge->mem, a, result_sign);
 
     if (overflow) {
