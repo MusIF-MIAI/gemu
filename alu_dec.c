@@ -670,28 +670,34 @@ void alu_mvp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
  */
 void alu_pk(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t slen)
 {
-    int db = dlen + 1;   /* destination bytes (packed) */
-    int sb = slen + 1;  /* source bytes (zoned) */
+    int db = dlen + 1;   /* destination packed bytes (= L+1) */
+    (void)slen;          /* source is 2L+2 zoned chars, derived from dlen */
 
     /*
-     * Fill packed digits 0..2*db-2 from source low nibbles (right-to-left).
-     * Packed byte layout:
-     *   byte 0 (rightmost): [high nibble = digit 0] [low nibble = SIGN]
-     *   byte k>0:           [high nibble = digit 2k-1] [low nibble = digit 2k]
+     * Re-derived from the PK microcode (flowchart "PK Dalla Fase Alfa", states
+     * 64|65 -> 60-63 -> 40-43, dwg timing charts).  Both pointers INCREMENT
+     * (V2+1->V2 source, V1+1->V1 dest), so PK runs from the given (leftmost,
+     * most-significant) address UPWARD, not from a rightmost byte.
+     *
+     * The accumulate state (60-63) does MEM->RO, then routes the source digit
+     * (RO low nibble) to NI4 (high nibble) on one SA00 phase and NI3 (low
+     * nibble) on the alternate phase; the write state (40-43) does RO->MEM.
+     * So two consecutive zoned digits fill one packed byte: 1st (more
+     * significant) -> high nibble, 2nd -> low nibble.  PK does NOT process a
+     * sign, so every byte holds two full digits (2L+2 digits total).
      */
-    int total_digits = 2 * db - 1;  /* e.g. dlen=1 → 3 digits */
+    int total_digits = 2 * db;   /* 2 digits/byte, no sign nibble */
 
     for (int d = 0; d < total_digits; d++) {
-        /* source byte index from right: same position as digit index d */
-        uint8_t digit;
-        if (d < sb) {
-            digit = ge->mem[(uint16_t)(src - d)] & 0x0F;
-        } else {
-            digit = 0;  /* left-pad with zero */
-        }
-        dec_set_digit(ge->mem, dst, db, d, digit);
+        uint8_t digit = ge->mem[(uint16_t)(src + d)] & 0x0F;  /* read upward */
+        uint16_t daddr = (uint16_t)(dst + d / 2);             /* write upward */
+        uint8_t cur = ge->mem[daddr];
+        if (d & 1)
+            cur = (uint8_t)((cur & 0xF0) | digit);              /* 2nd digit -> low  */
+        else
+            cur = (uint8_t)((cur & 0x0F) | (uint8_t)(digit << 4)); /* 1st digit -> high */
+        ge_mem_store8(ge, daddr, cur);
     }
-    /* Sign nibble (low nibble of dst) is left unchanged by PK */
 }
 
 /* -------------------------------------------------------------------------

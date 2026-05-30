@@ -389,33 +389,35 @@ UTEST(dec, mvp_overflow)
 UTEST(dec, pk_basic)
 {
     /*
-     * Source (zoned): bytes "1" "2" "3" at 0x0200..0x0202
-     *   0xF1 0xF2 0xF3 (zone=F, digits=1,2,3)
-     *   slen=2 → src=rightmost=0x0202
-     * Destination (packed): dlen=1 → 2 bytes at 0x0100-0x00FF
-     *   Expected: digit[0]=3, digit[1]=2, digit[2]=1
-     *   mem[0x0100]=(3<<4)|(existing sign) → sign not changed by PK
-     *   Pre-set dst sign to 0xC so we can check it's preserved.
-     *   mem[0x0100] = 0x3C (sign kept as C)
-     *   mem[0x00FF] = (2<<4)|1 = 0x21
+     * PK semantics from the microcode flowchart ("PK Dalla Fase Alfa",
+     * 64|65 -> 60-63 -> 40-43) and validated against the funktionalcpu deck
+     * (step 0x12/0x13): both pointers INCREMENT, so PK reads the zoned source
+     * UPWARD from the given (leftmost, most-significant) address and writes the
+     * packed result UPWARD from the given dest address; two consecutive digits
+     * fill one packed byte (1st -> high nibble, 2nd -> low), with NO sign
+     * nibble (PK does not process a sign). dlen=L -> L+1 packed bytes from
+     * 2L+2 zoned digits (low nibbles).
      */
     struct ge g;
     ge_init(&g);
 
-    g.mem[0x0200] = 0xF1;  /* leftmost zoned digit = 1 */
-    g.mem[0x0201] = 0xF2;
-    g.mem[0x0202] = 0xF3;  /* rightmost zoned digit = 3 */
-    /* pre-set destination sign to C so we verify it's not trashed */
-    g.mem[0x0100] = 0x0C;
-    g.mem[0x00FF] = 0x00;
+    /* Single-byte case (the deck's step 0x12): zoned 5,6 -> packed 0x56. */
+    g.mem[0x0200] = 0x05;  /* digit 5 (more significant) */
+    g.mem[0x0201] = 0x06;  /* digit 6 */
+    g.mem[0x0100] = 0x00;
+    alu_pk(&g, 0x0100, 0, 0x0200, 0);
+    ASSERT_EQ(g.mem[0x0100], 0x56);
 
-    alu_pk(&g, 0x0100, 1, 0x0202, 2);
-
-    ASSERT_EQ(g.mem[0x0100] & 0x0F, 0x0C);        /* sign preserved */
-    ASSERT_EQ((g.mem[0x0100] >> 4) & 0x0F, 0x3);  /* units digit = 3 (rightmost byte hi nibble) */
-    /* value 123 packs as 0x12 0x3C: hundreds=1 in hi nibble, tens=2 in lo nibble */
-    ASSERT_EQ((g.mem[0x00FF] >> 4) & 0x0F, 0x1);  /* hundreds digit = 1 */
-    ASSERT_EQ(g.mem[0x00FF] & 0x0F, 0x2);         /* tens digit = 2 */
+    /* Multi-byte case: zoned 1,2,3,4 -> packed 0x12 0x34 (dest upward). */
+    g.mem[0x0210] = 0xF1;  /* zone ignored; digit 1 (most significant) */
+    g.mem[0x0211] = 0xF2;
+    g.mem[0x0212] = 0xF3;
+    g.mem[0x0213] = 0xF4;  /* digit 4 (least significant) */
+    g.mem[0x0110] = 0x00;
+    g.mem[0x0111] = 0x00;
+    alu_pk(&g, 0x0110, 1, 0x0210, 1);
+    ASSERT_EQ(g.mem[0x0110], 0x12);  /* first packed byte (high-order) */
+    ASSERT_EQ(g.mem[0x0111], 0x34);  /* second packed byte (low-order) */
 }
 
 /* =========================================================================
