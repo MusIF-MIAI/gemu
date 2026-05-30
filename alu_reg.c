@@ -233,49 +233,51 @@ void alu_sr(struct ge *ge, uint16_t *r7,
     for (i = 0; i < len; i++) {
         if (ge->mem[(uint16_t)(field + i)] == model) {
             *r7 = (uint16_t)(field + i + 1);
+            alu_set_cc(ge, 1u);   /* found -> FA05=1 */
             return;
         }
     }
 
     /* Not found: address following the field */
     *r7 = (uint16_t)(field + len);
+    alu_set_cc(ge, 0u);           /* not found -> FA05=0 */
 }
 
 /* =========================================================================
- * SL — Search Left (0xDB)
- * §5.5.4.2: scan field right-to-left for model byte; deposit result in r7.
+ * SL — Search Left (0xDB) — the mirror of SR.
+ * §5.5.4.2: scan field right-to-left for the model byte; deposit result in r7.
  *
- * Result address (symmetric to SR, direction right-to-left):
- *   Found at offset i (0=leftmost): r7 = field + i - 1
- *     (address "preceding" the match in left direction; field-1 if i==0)
- *   Not found: r7 = field - 1
+ * The field's given address (A1) is its RIGHTMOST byte; the field extends LEFT
+ * (lower addresses) for `len` bytes, i.e. [field-len+1 .. field], and is scanned
+ * right-to-left.  Result is the address "following" the match in the direction
+ * of search (leftward), i.e. match-1 — the mirror of SR's match+1.
  *
- * Qualitative result: "not interested" per §5.5.4.
+ *   Found at byte `pos`: r7 = pos - 1
+ *   Not found:          r7 = field - len   (past the left end of the field)
  *
- * UNCERTAINTY: The manual says the address stored is "the one of the character
- * following the end of the research field in the direction of the research."
- * For SL the direction is right-to-left, so "following end" = field - 1.
- * For a found character the symmetric definition gives field + i - 1.
- * This needs hardware verification; behaviour at i==0 (field-1) may wrap.
- * Confidence: MEDIUM
+ * CC: FA05 = found (1) / not found (0), as for SR.
+ *
+ * Validated against funktionalcpu step 0x22: SL 2,0x0557,0x0558 scans
+ * [0x0556..0x0557] right-to-left, finds 0x44 at 0x0557, returns 0x0556.
  * =========================================================================*/
 void alu_sl(struct ge *ge, uint16_t *r7,
             uint16_t field, uint16_t len, uint8_t model)
 {
     uint16_t i;
 
-    /* Scan right-to-left: start at rightmost byte (field + len - 1) */
-    for (i = len; i > 0; i--) {
-        uint16_t pos = (uint16_t)(field + i - 1); /* current byte position */
+    /* Scan right-to-left from the rightmost byte (field) toward lower addresses */
+    for (i = 0; i < len; i++) {
+        uint16_t pos = (uint16_t)(field - i);
         if (ge->mem[pos] == model) {
-            /* "address preceding the match" in the left direction */
-            *r7 = (uint16_t)(field + i - 2); /* = pos - 1 */
+            *r7 = (uint16_t)(pos - 1); /* address following the match (leftward) */
+            alu_set_cc(ge, 1u);   /* found -> FA05=1 */
             return;
         }
     }
 
-    /* Not found: one before the field start */
-    *r7 = (uint16_t)(field - 1);
+    /* Not found: past the left end of the field */
+    *r7 = (uint16_t)(field - len);
+    alu_set_cc(ge, 0u);           /* not found -> FA05=0 */
 }
 
 /* =========================================================================

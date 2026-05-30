@@ -326,41 +326,36 @@ UTEST(reg, sr_not_found)
  * "Direction of research" = right-to-left → "following" = one byte before.
  * Confidence: MEDIUM — human review of §5.5.4.2 page image recommended.
  * =========================================================================*/
-UTEST(reg, sl_found_last)
+/* SL addresses the field by its RIGHTMOST byte (A1) and scans LEFT; result is
+ * the address following the match in the search direction = match-1 (mirror of
+ * SR's match+1). Validated against funktionalcpu step 0x22. */
+UTEST(reg, sl_found_rightmost)
 {
     struct ge g;
     ge_init(&g);
-    /* field at 0x100, len=4: 0x01 0x02 0x03 0x42 */
+    /* field [0x100..0x103], A1=0x103 (rightmost): 0x01 0x02 0x03 0x42 */
     g.mem[0x100] = 0x01;
     g.mem[0x101] = 0x02;
     g.mem[0x102] = 0x03;
-    g.mem[0x103] = 0x42;  /* match at offset 3 (rightmost), i.e. i=4 in loop */
+    g.mem[0x103] = 0x42;  /* match at the rightmost byte */
 
     uint16_t r7 = 0;
-    alu_sl(&g, &r7, 0x100, 4, 0x42);
-    /*
-     * SL scans right-to-left; rightmost = offset 3.
-     * i=4 in loop (pos = 0x103, offset 3): match found.
-     * r7 = field + i - 2 = 0x100 + 4 - 2 = 0x102
-     */
+    alu_sl(&g, &r7, 0x103, 4, 0x42);
+    /* found at 0x103 -> r7 = 0x103 - 1 = 0x102 */
     ASSERT_EQ(r7, (uint16_t)0x102);
 }
 
-UTEST(reg, sl_found_first)
+UTEST(reg, sl_found_leftmost)
 {
     struct ge g;
     ge_init(&g);
-    g.mem[0x100] = 0x42;  /* match at leftmost offset 0 */
+    g.mem[0x100] = 0x42;  /* match at the leftmost byte */
     g.mem[0x101] = 0x01;
     g.mem[0x102] = 0x02;
 
     uint16_t r7 = 0xFFFF;
-    alu_sl(&g, &r7, 0x100, 3, 0x42);
-    /*
-     * i=1 in loop (pos = 0x100, offset 0): match found.
-     * r7 = field + i - 2 = 0x100 + 1 - 2 = 0x0FF (field - 1).
-     * UNCERTAINTY: wrapping at field start. Expected: 0x00FF.
-     */
+    alu_sl(&g, &r7, 0x102, 3, 0x42); /* A1=0x102, field [0x100..0x102] */
+    /* scan 0x102,0x101,0x100 -> found at 0x100 -> r7 = 0x100 - 1 = 0x00FF */
     ASSERT_EQ(r7, (uint16_t)0x00FF);
 }
 
@@ -373,8 +368,8 @@ UTEST(reg, sl_not_found)
     g.mem[0x202] = 0x03;
 
     uint16_t r7 = 0;
-    alu_sl(&g, &r7, 0x200, 3, 0xFF);
-    /* not found: r7 = field - 1 = 0x1FF */
+    alu_sl(&g, &r7, 0x202, 3, 0xFF); /* A1=0x202, field [0x200..0x202] */
+    /* not found: r7 = field - len = 0x202 - 3 = 0x1FF */
     ASSERT_EQ(r7, (uint16_t)0x1FF);
 }
 
