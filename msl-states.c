@@ -944,8 +944,15 @@ static const struct msl_timing_chart state_b1[] = {
 SIG(RIG1) { return ge->RIG1; }
 SIG(RIG3) { return ge->RIG3; }
 
-SIG(RENIA) { return 1; } // TODO
-SIG(RILIA) { return 1; } // TODO
+/* RENIA/RILIA: channel-1 read length-count "not exhausted". The length is in L1,
+ * decremented per character (CI15->count->CI05, gated L204; CPU[7] B9 timing),
+ * and a length-counted transfer ends at L1+1 chars (CPU[4] §5.8.4.3a). Left as 1
+ * for now: the funktionalcpu boot does NOT stall on this — it stalls earlier,
+ * executing loaded data as code at PO=0x000e (the IPL load/entry is wrong), so
+ * wiring the count terminal here was verified inert. Needs the RENIA/RILIA
+ * combinational equation (terminal-count -> RIVE) before enabling. */
+SIG(RENIA) { return 1; } // TODO: L1 terminal count (see note above)
+SIG(RILIA) { return 1; } // TODO: 2nd-length count (decimal SS transfers)
 
 SIG(RIG1A) { return !ge->RIG1; }
 SIG(RIVE1) { return !(RIG1A(ge) && RENIA(ge) && RILIA(ge)); }
