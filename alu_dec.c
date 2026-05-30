@@ -255,11 +255,10 @@ void alu_ap(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     int ab = alen + 1;   /* bytes in operand 1 */
     int bb = blen + 1;   /* bytes in operand 2 */
 
-    /* Overflow: L1 < L2 (manual §5.6.1.1) */
-    if (alen < blen) {
-        alu_set_cc(ge, ALU_CC_OVF);
-        return;
-    }
+    /* Overflow: L1 < L2 (manual §5.6.1.1). The deck (step 0x45) shows the
+     * result field is STILL written (truncated to L1) and cc=0 is reported,
+     * so flag it and fall through rather than returning early. */
+    int len_ovf = (alen < blen);
 
     int an = 2 * ab - 1;  /* digits in operand 1 */
     int bn = 2 * bb - 1;  /* digits in operand 2 */
@@ -302,11 +301,15 @@ void alu_ap(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
         }
     }
 
-    if (overflow) {
-        alu_set_cc(ge, ALU_CC_OVF);
-        /* write incomplete result anyway */
+    if (overflow || len_ovf) {
+        /* write the (possibly truncated) result anyway */
         dec_write_digits(ge->mem, a, ab, r_d, an);
-        dec_set_sign(ge->mem, a, result_sign);
+        /* A length-overflow (L1<L2) preserves the destination's existing sign
+         * nibble (deck step 0x45: 0x45 + 0x0025 -> 0x65, sign 5 kept); a
+         * magnitude carry uses the computed algebraic sign. */
+        if (!len_ovf)
+            dec_set_sign(ge->mem, a, result_sign);
+        alu_set_cc(ge, ALU_CC_OVF);
         return;
     }
 
