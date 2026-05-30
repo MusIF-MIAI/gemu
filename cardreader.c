@@ -226,11 +226,15 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
                                     ? ctx->mode : TC_BINARY;
         uint8_t byte = transcode_column(cols[ctx->col_idx], m);
 
-        /* End-of-card: the GE reader raises FINI at every physical card
-         * boundary, and (since the read length counter RAMO/RAMI is not yet
-         * modelled) end-of-card is what terminates a PER read.  Signal end
-         * on the last column of the CURRENT card, not the last column of the
-         * whole deck, so each card read is bounded correctly. */
+        /* End-of-card: the GE reader raises FINI (the controller "end" RIG1)
+         * at every physical card boundary. Per CPU[4] §5.8.4.3 a transfer ends
+         * on (a) the instruction length L1+1 being exhausted, or (b) this
+         * peripheral "end". gemu now counts L1 down (the counting network honours
+         * the decrement), but the L1-exhausted -> RIVE path isn't fully wired for
+         * the integrated-reader handshake yet, so end-of-card (b) still bounds a
+         * read here. (Note: RAMO/RAMI is the CPU cycle-period counter, §6.7.5, not
+         * the read-length counter.) Signal end on the last column of the CURRENT
+         * card, not the whole deck. */
         int is_last = (ctx->col_idx == ncols - 1);
 
         ge_log(LOG_READER,

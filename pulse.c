@@ -48,8 +48,11 @@ static void on_TO00(struct ge *ge) {
     ge->kNI.ni4 = NS_CN4;
 
     /* CO41 used to set from_zero is issued in TO10, so this looks
-     * like a reasonable place to reset this */
+     * like a reasonable place to reset this. CO40 (decreasing) must be reset
+     * here too, otherwise a stale "decreasing" from one decrement turns every
+     * later +1 advance into a -1 (now that the counting network honours it). */
     ge->counting_network.cmds.from_zero = 0;
+    ge->counting_network.cmds.decresing = 0;
 }
 
 static void on_TO10(struct ge *ge) {
@@ -182,6 +185,7 @@ static void on_TO65(struct ge *ge) {
     /* "enables the second phase commands for count selection"
      * (cpu fo. 142), not sure this is what it means */
     ge->counting_network.cmds.from_zero = 0;
+    ge->counting_network.cmds.decresing = 0;
 }
 
 static void on_TO70(struct ge *ge) {

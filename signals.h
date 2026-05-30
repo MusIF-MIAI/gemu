@@ -144,11 +144,15 @@ SIG(AF53) { return ge->register_selector == RS_FO;      }
 
 static inline uint16_t ge_counting_network_output(struct ge *ge) {
     if (ge->counting_network.cmds.from_zero) {
+        /* The flow charts spell an increment as CO41 (from_zero) alone and a
+         * decrement as CO40+CO41 (decreasing+from_zero): V1+1->V1 is "...41...",
+         * V1-1->V1 and L1-1->L1 are "...40-41...". So `decreasing` selects -1;
+         * without it, +1. (CPU[7] p33 external-sequence charts.) */
+        if (ge->counting_network.cmds.decresing)
+            return ge->rBO - 1;
         return ge->rBO + 1;
     }
-    else {
-        return ge->rBO;
-    }
+    return ge->rBO;
 }
 
 /**
