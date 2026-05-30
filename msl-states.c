@@ -191,6 +191,8 @@ static uint8_t is_ss_data_op(struct ge *ge) {
         case SD_OPCODE:
         case MVQ_OPCODE:
         case CMQ_OPCODE:
+        case SR_OPCODE:
+        case SL_OPCODE:
             return 1;
         default:
             return 0;

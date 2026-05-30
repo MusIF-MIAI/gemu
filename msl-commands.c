@@ -318,6 +318,29 @@ static void EXEC_SS(struct ge *ge)
         case CMQ_OPCODE:
             alu_cmq(ge, dst, src, len);
             break;
+        /* Search Right/Left (SR=0xD9, SL=0xDB), SS1 format "SR len, A1, A2":
+         *   A1 (V1=dst) = leftmost byte of the search field
+         *   A2 (V2=src) = address of the 1-byte model to search for
+         *   result address -> change/segment register 7 (mem[0xFE..0xFF], BE)
+         * The result-register location is confirmed by the funktionalcpu deck
+         * (the instruction following SR at 0x03dc reads mem[0x00FE]); the
+         * model-byte source (mem[A2]) is the best-supported reading of the
+         * SS1 two-address form and remains MEDIUM confidence pending the
+         * search-instruction page image (docs/ISA.md §6.10). */
+        case SR_OPCODE: {
+            uint16_t r7 = (uint16_t)((ge->mem[0xFE] << 8) | ge->mem[0xFF]);
+            alu_sr(ge, &r7, dst, len, ge->mem[src]);
+            ge_mem_store8(ge, 0xFE, (uint8_t)(r7 >> 8));
+            ge_mem_store8(ge, 0xFF, (uint8_t)(r7 & 0xFF));
+            break;
+        }
+        case SL_OPCODE: {
+            uint16_t r7 = (uint16_t)((ge->mem[0xFE] << 8) | ge->mem[0xFF]);
+            alu_sl(ge, &r7, dst, len, ge->mem[src]);
+            ge_mem_store8(ge, 0xFE, (uint8_t)(r7 >> 8));
+            ge_mem_store8(ge, 0xFF, (uint8_t)(r7 & 0xFF));
+            break;
+        }
         default:
             ge_log(LOG_ERR, "EXEC_SS: unknown SS opcode 0x%02x\n", ge->rFO);
             break;
