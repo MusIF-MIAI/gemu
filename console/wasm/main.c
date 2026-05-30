@@ -16,6 +16,15 @@ struct ge* ge = &ge130;
 
 int running_loop = 0;
 
+/* Run-speed pacing. The GE-120 elementary (memory) cycle is a nominal 4 us
+ * (CPU[4]: "memory cycle of nominal 2/4/6 us for 130/120/115/3"), and one
+ * ge_run_cycle is one such cycle — so nominal real time is 250 cycles/ms.
+ * run_speed scales that: 1.0 = nominal wall-clock real time. */
+#define GE120_CYCLE_US 4.0
+static double run_speed    = 1.0;
+static double last_now_ms  = 0.0;
+static double cycle_budget = 0.0;
+
 EM_JS(void, set_lamp, (const char *lamp, int val), {
     document.set_lamp(UTF8ToString(lamp), val);
 });
@@ -196,12 +205,42 @@ void EMSCRIPTEN_KEEPALIVE set_load_unit(int load1) {
     send_console();
 }
 
+/* Run speed multiplier: 1.0 = nominal real time, <1 slow-mo, >1 fast-forward. */
+void EMSCRIPTEN_KEEPALIVE set_speed(double mult) {
+    run_speed = mult < 0.0 ? 0.0 : mult;
+}
+
 void em_main_loop() {
-    if (!running_loop) 
+    double now = emscripten_get_now();        /* high-res wall clock, ms */
+    double elapsed = now - last_now_ms;
+    last_now_ms = now;
+
+    /* Idle (powered off) or halted: don't run cycles and don't build a backlog
+     * of "owed" time, so resuming starts fresh instead of fast-forwarding. */
+    if (!running_loop || ge->halted) {
+        cycle_budget = 0.0;
         return;
-    
-    ge_run_cycle(ge);
-    send_console();
+    }
+
+    /* Cap catch-up so a backgrounded tab doesn't burst a huge batch on return. */
+    if (elapsed > 100.0)
+        elapsed = 100.0;
+
+    /* Nominal real time: 1000/4 = 250 cycles per ms, scaled by run_speed. The
+     * fractional remainder is carried in cycle_budget so timing doesn't drift. */
+    cycle_budget += elapsed * (1000.0 / GE120_CYCLE_US) * run_speed;
+
+    long n = (long)cycle_budget;
+    cycle_budget -= (double)n;
+
+    for (long i = 0; i < n; i++) {
+        if (ge_run_cycle(ge) != 0)            /* timing-chart error: stop */
+            break;
+        if (ge->halted)                       /* HLT: nothing more until reset */
+            break;
+    }
+
+    send_console();                           /* refresh the panel once per frame */
 }
 
 int main() {
@@ -210,8 +249,10 @@ int main() {
 
     send_console();
 
-    /* run the main loop at 1Hz, just for show */
-    emscripten_set_main_loop(em_main_loop, 1, 0);
+    /* requestAnimationFrame-driven loop (fps arg 0); em_main_loop paces the
+     * cycle count to nominal GE-120 wall-clock time itself. */
+    last_now_ms = emscripten_get_now();
+    emscripten_set_main_loop(em_main_loop, 0, 0);
     return 0;
 }
 

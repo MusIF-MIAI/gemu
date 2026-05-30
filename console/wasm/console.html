@@ -741,6 +741,15 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
   font-size: 11pt;
 }
 #simpanel input[type=number] { width: 4.5em; }
+#simpanel select {
+  background: #0c0d10;
+  color: #cdd6bb;
+  border: 1px solid #3a4030;
+  border-radius: 3px;
+  padding: 0.25em;
+  font: inherit;
+  font-size: 11pt;
+}
 #simpanel .sim-check { display: flex; gap: 0.4em; align-items: center; font-size: 11pt; white-space: nowrap; }
 #simpanel button {
   padding: 0.6em 1.4em;
@@ -941,6 +950,14 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
     <button id=mount_button disabled>Insert deck in reader</button>
     <span class=sim-status id=mount_status>No deck loaded.</span>
     <span class=sim-seq>then on the console: <b>CLEAR -&gt; LOAD -&gt; START</b></span>
+    <label class=sim-check>speed
+        <select id=speed_sel>
+            <option value="0.1">0.1x</option>
+            <option value="1" selected>real time</option>
+            <option value="10">10x</option>
+            <option value="50">50x</option>
+        </select>
+    </label>
 </aside>
 
 
@@ -1255,6 +1272,9 @@ switch_2_button.addEventListener("click", () => { if (!module) return; sw2 ^= 1;
 let load1 = 1;
 load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 1; module._set_load_unit(load1); });
 
+/* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
+speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
+
 /* ---- simulator gadget: mount a .cap deck into the reader's MEMFS ------- */
 let deck_bytes = null;
 
@@ -1322,6 +1342,7 @@ GE_Module({ print: log_add })
         module = m
         mount_button.disabled = false
         module._set_load_unit(load1)   /* sync the LOAD selector lamp to the default */
+        module._set_speed(parseFloat(speed_sel.value))   /* default: nominal real time */
         log_add("ok.")
     })
 
