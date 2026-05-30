@@ -157,6 +157,13 @@ static void put(long addr, uint8_t b)
  * not re-assemble. Out-of-image targets are printed as absolute hex instead. */
 static uint8_t labels[65536];
 
+/* starts[] marks every address that begins an emitted line (instruction or DB)
+ * in the decoded stream. A branch target only gets an L_xxxx: definition if it
+ * lands on a start; a target that falls *inside* an instruction (or otherwise
+ * off a line boundary) has no definition line, so it must be printed as a raw
+ * hex address instead — which re-assembles identically. */
+static uint8_t starts[65536];
+
 static void mark_label(uint16_t field)
 {
     /* Modified fields (bit 15 set) are disp(N), not an address — never a label. */
@@ -397,7 +404,7 @@ static void fmt_addr(uint16_t field, char *buf, size_t n)
 {
     if (field & 0x8000) {
         snprintf(buf, n, "0x%03X(%d)", field & 0x0FFF, (field >> 12) & 7);
-    } else if (labels[field]) {
+    } else if (labels[field] && starts[field]) {
         snprintf(buf, n, "L_%04X", field);
     } else {
         snprintf(buf, n, "0x%04X", field);
@@ -548,9 +555,10 @@ static void disassemble(FILE *out, const char *src)
 {
     if (img_min < 0) { fprintf(stderr, "gdis: empty image\n"); return; }
 
-    /* Pass 1: collect branch-target labels. */
+    /* Pass 1: collect branch-target labels and record every line start. */
     for (long a = img_min; a < img_max; ) {
         if (!present[a]) { a++; continue; }
+        starts[a] = 1;
         a += decode_at(a, 1, NULL);
     }
 
