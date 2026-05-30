@@ -362,10 +362,8 @@ void alu_mp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
      * (bb counts bytes; the deck's step-0x25 MP 10,9 has a 9-byte multiplier
      * and must overflow), and must be shorter than the result/multiplicand
      * field. (blen is the 0-indexed length code, so the byte test is on bb.) */
-    if (bb > 8 || blen >= alen) {
-        alu_set_cc(ge, ALU_CC_OVF);
-        return;
-    }
+    if (bb > 8 || blen >= alen)
+        goto overflow;
 
     int an = 2 * ab - 1;
     int bn = 2 * bb - 1;
@@ -393,10 +391,8 @@ void alu_mp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
      * indices an-1 down to bn) must all be zero.
      */
     for (int i = bn; i < an; i++) {
-        if (a_d[i] != 0) {
-            alu_set_cc(ge, ALU_CC_OVF);
-            return;
-        }
+        if (a_d[i] != 0)
+            goto overflow;
     }
 
     /* Multiply: r[i+j] += a_d[i] * b_d[j] (with BCD correction) */
@@ -415,10 +411,8 @@ void alu_mp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
 
     /* Check result fits in an digits */
     for (int i = an; i < 33; i++) {
-        if (r_d[i]) {
-            alu_set_cc(ge, ALU_CC_OVF);
-            return;
-        }
+        if (r_d[i])
+            goto overflow;
     }
 
     /* Sign: algebraic product */
@@ -429,6 +423,16 @@ void alu_mp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     dec_write_digits(ge->mem, a, ab, r_d, an);
     dec_set_sign(ge->mem, a, result_sign);
     alu_set_cc(ge, dec_result_cc(bcd_is_zero(r_d, an), result_sign));
+    return;
+
+overflow:
+    /* On overflow MP clears the second-operand (V2 = b) field and reports
+     * cc=0 (the MP-DP NOTE table's overflow slot). funktionalcpu step 0x27
+     * checks the cleared b field (CMC 5,0x00E8,0x05A5) after an overflowing
+     * MP 6,5; steps 0x25/0x26 only check the cc. */
+    for (int k = 0; k < bb; k++)
+        ge_mem_store8(ge, (uint16_t)(b - k), 0x00);
+    alu_set_cc(ge, ALU_CC_OVF);
 }
 
 /* -------------------------------------------------------------------------
