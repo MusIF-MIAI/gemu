@@ -394,30 +394,32 @@ static uint8_t jc_js1_js2_jie(struct ge *ge) {
             (ge->rFO == JU_OPCODE) ||
             (ge->rFO == JCC_OPCODE) ||
             (ge->rFO == JRT_OPCODE) ||
-            (ge->rFO == JS1_OPCODE && ge->rL1 == JS1_2NDCHAR) ||
-            (ge->rFO == JS2_OPCODE && ge->rL1 == JS2_2NDCHAR) ||
-            (ge->rFO == JIE_OPCODE && ge->rL1 == JIE_2NDCHAR));
+            (ge->rFO == JS1_OPCODE && (ge->rL1 & 0xFF) ==JS1_2NDCHAR) ||
+            (ge->rFO == JS2_OPCODE && (ge->rL1 & 0xFF) ==JS2_2NDCHAR) ||
+            (ge->rFO == JIE_OPCODE && (ge->rL1 & 0xFF) ==JIE_2NDCHAR));
 }
 
 static uint8_t lon_loll(struct ge *ge) {
-    return ((ge->rFO == LON_OPCODE && ge->rL1 == LON_2NDCHAR) ||
-            (ge->rFO == LOLL_OPCODE && ge->rL1 == LOLL_OPCODE));
+    /* The 2nd char is an 8-bit field; mask L1 to its low byte (in real execution
+     * L1's high byte carries leftover bits, unlike the console-forced case). */
+    return ((ge->rFO == LON_OPCODE  && (ge->rL1 & 0xFF) == LON_2NDCHAR) ||
+            (ge->rFO == LOLL_OPCODE && (ge->rL1 & 0xFF) == LOLL_OPCODE));
 }
 
 static uint8_t ins(struct ge *ge) {
-    return ge->rFO == INS_OPCODE && ge->rL1 == INS_2NDCHAR;
+    return ge->rFO == INS_OPCODE && (ge->rL1 & 0xFF) ==INS_2NDCHAR;
 }
 
 static uint8_t jie(struct ge *ge) {
-    return ge->rFO == JIE_OPCODE && ge->rL1 == JIE_2NDCHAR;
+    return ge->rFO == JIE_OPCODE && (ge->rL1 & 0xFF) ==JIE_2NDCHAR;
 }
 
 static uint8_t ens(struct ge *ge) {
-    return ge->rFO == ENS_OPCODE && ge->rL1 == ENS_2NDCHAR;
+    return ge->rFO == ENS_OPCODE && (ge->rL1 & 0xFF) ==ENS_2NDCHAR;
 }
 
 static uint8_t loff(struct ge *ge) {
-    return ge->rFO == LOFF_OPCODE && ge->rL1 == LOFF_2NDCHAR;
+    return ge->rFO == LOFF_OPCODE && (ge->rL1 & 0xFF) ==LOFF_2NDCHAR;
 }
 
 static uint8_t jc_js1_js2_jie_condition_verified(struct ge *ge) {

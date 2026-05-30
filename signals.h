@@ -89,8 +89,8 @@ SIG(verified_condition) {
               (M6 && !FA4 &&  FA5) ||
               (M5 &&  FA4 && !FA5) ||
               (M4 &&  FA4 &&  FA5))) ||
-            (ge->rFO == JS1_OPCODE && ge->rL1 == JS1_2NDCHAR && ge->JS1) ||
-            (ge->rFO == JS2_OPCODE && ge->rL1 == JS2_2NDCHAR && ge->JS2) ||
+            (ge->rFO == JS1_OPCODE && (ge->rL1 & 0xFF) ==JS1_2NDCHAR && ge->JS1) ||
+            (ge->rFO == JS2_OPCODE && (ge->rL1 & 0xFF) ==JS2_2NDCHAR && ge->JS2) ||
             0);
 }
 
