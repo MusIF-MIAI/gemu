@@ -302,8 +302,8 @@ UTEST(exec, ad_adds_unpacked_decimal)
     g.mem[0x70] = 0xF5;   /* zoned '5' */
     g.mem[0x80] = 0xF3;   /* zoned '3' */
     run_one_ss(&g);
-    ASSERT_EQ(g.mem[0x70], 0x08);              /* digit 8, zone cleared */
-    ASSERT_EQ(alu_get_cc(&g), 1);              /* nonzero */
+    ASSERT_EQ(g.mem[0x70], 0xF8);              /* digit 8, first-operand zone (F) preserved */
+    ASSERT_EQ(alu_get_cc(&g), 1);              /* no overflow, nonzero */
 }
 
 /* SD – Subtract Decimal (zoned). */
@@ -314,8 +314,8 @@ UTEST(exec, sd_subtracts_unpacked_decimal)
     g.mem[0x70] = 0xF8;   /* zoned '8' */
     g.mem[0x80] = 0xF3;   /* zoned '3' */
     run_one_ss(&g);
-    ASSERT_EQ(g.mem[0x70], 0x05);
-    ASSERT_EQ(alu_get_cc(&g), 1);
+    ASSERT_EQ(g.mem[0x70], 0xF5);              /* digit 5, first-operand zone (F) preserved */
+    ASSERT_EQ(alu_get_cc(&g), 3);              /* result > 0 */
 }
 
 /* MVQ – Move Quartets: copy digit nibble from src, preserve dst zone. */

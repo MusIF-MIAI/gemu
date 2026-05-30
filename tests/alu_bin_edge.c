@@ -169,7 +169,7 @@ UTEST(alu_bin_edge, ab_len_mismatch_b_shorter)
  * Zones are ignored during arithmetic; result digit = 5+3 = 8.
  * Result stored with zone cleared to 0x00: mem[0x50] == 0x08.  cc=1.
  */
-UTEST(alu_bin_edge, ad_zone_cleared_sign_zone)
+UTEST(alu_bin_edge, ad_zone_preserved_sign_zone)
 {
     struct ge g;
     ge_init(&g);
@@ -180,6 +180,6 @@ UTEST(alu_bin_edge, ad_zone_cleared_sign_zone)
 
     alu_ad(&g, 0x50, 1, 0x60, 1);
 
-    ASSERT_EQ(g.mem[0x50], (uint8_t)0x08); /* digit only, zone cleared */
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1); /* nonzero */
+    ASSERT_EQ(g.mem[0x50], (uint8_t)0xF8); /* digit 8, first-operand zone (0xF) preserved */
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1); /* no overflow, nonzero */
 }

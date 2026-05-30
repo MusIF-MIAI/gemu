@@ -209,23 +209,28 @@ void alu_ad(struct ge *ge,
     uint8_t result_nonzero = 0;
 
     for (uint8_t pos = 0; pos < a_len; pos++) {
-        uint8_t sum = dec_digit(ge, a_addr, a_len, pos)
+        uint8_t aorig = field_byte(ge, a_addr, a_len, pos);
+        uint8_t sum = (uint8_t)((aorig & 0x0F)
                     + dec_digit(ge, b_addr, b_len, pos)
-                    + carry;
+                    + carry);
         carry = sum / 10;
         uint8_t digit = sum % 10;
         /*
-         * Write back just the digit in the low nibble; zone (high nibble) is
-         * set to 0x00 because the manual states zones are not processed.
-         * The CPU microsequencer is responsible for zone restoration if needed.
+         * Per the AD microcode (AB-SB-AD-SD-MVQ-CMQ flowchart, box 50-52
+         * "RO2 -> L1.4"): the result's high nibble is the FIRST operand's zone
+         * (RO2), preserved unchanged; only the low nibble (digit) is computed.
          */
-        field_byte_set(ge, a_addr, a_len, pos, digit);
+        field_byte_set(ge, a_addr, a_len, pos, (uint8_t)((aorig & 0xF0) | digit));
         if (digit != 0)
             result_nonzero = 1;
     }
-    /* carry beyond field boundary is silently dropped (§5.5.1) */
 
-    alu_set_cc(ge, result_nonzero ? 1u : 0u);
+    /*
+     * CC per the flowchart NOTE table (AD-AB column): F104 = overflow (a carry
+     * out of the most-significant digit of the field), F105 = result nonzero.
+     * alu_set_cc maps cc bit1 -> F104, bit0 -> F105.
+     */
+    alu_set_cc(ge, (uint8_t)((carry ? 2u : 0u) | (result_nonzero ? 1u : 0u)));
 }
 
 /* ------------------------------------------------------------------ */
@@ -253,7 +258,8 @@ void alu_sd(struct ge *ge,
     uint8_t result_nonzero = 0;
 
     for (uint8_t pos = 0; pos < a_len; pos++) {
-        int8_t diff = (int8_t)(dec_digit(ge, a_addr, a_len, pos))
+        uint8_t aorig = field_byte(ge, a_addr, a_len, pos);
+        int8_t diff = (int8_t)(aorig & 0x0F)
                     - (int8_t)(dec_digit(ge, b_addr, b_len, pos))
                     - (int8_t)borrow;
         if (diff < 0) {
@@ -263,11 +269,24 @@ void alu_sd(struct ge *ge,
             borrow = 0;
         }
         uint8_t digit = (uint8_t)diff;
-        field_byte_set(ge, a_addr, a_len, pos, digit);
+        /* Preserve the first operand's zone (high nibble), like AD. */
+        field_byte_set(ge, a_addr, a_len, pos, (uint8_t)((aorig & 0xF0) | digit));
         if (digit != 0)
             result_nonzero = 1;
     }
-    /* borrow beyond field: result wrapped modulo 10^a_len */
 
-    alu_set_cc(ge, result_nonzero ? 1u : 0u);
+    /*
+     * CC per the flowchart NOTE table (SD-SB-CMQ column): result<0 -> F104=0
+     * F105=1 (cc=1); result=0 -> F104=1 F105=0 (cc=2); result>0 -> F104=1
+     * F105=1 (cc=3). A borrow out of the MSP means the true result is negative
+     * (stored ten's-complement).
+     */
+    uint8_t cc;
+    if (borrow)
+        cc = 1u;                 /* result < 0 */
+    else if (!result_nonzero)
+        cc = 2u;                 /* result = 0 */
+    else
+        cc = 3u;                 /* result > 0 */
+    alu_set_cc(ge, cc);
 }

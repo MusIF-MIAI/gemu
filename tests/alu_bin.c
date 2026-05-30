@@ -330,7 +330,7 @@ UTEST(bin, ad_decimal_carry)
 
 /* Zone nibble in operand is ignored (zone = 0x4 per EBCDIC convention) */
 /* 3 + 4 = 7; both operands have zone 0x4 in high nibble               */
-UTEST(bin, ad_zone_ignored)
+UTEST(bin, ad_zone_preserved)
 {
     struct ge g;
     ge_init(&g);
@@ -340,9 +340,10 @@ UTEST(bin, ad_zone_ignored)
 
     alu_ad(&g, 0x100, 1, 0x200, 1);
 
-    /* Result digit = 7, zone set to 0x00 (zones not processed) */
-    ASSERT_EQ(g.mem[0x100], (uint8_t)0x07);
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);
+    /* Digit=7; the first operand's zone (4) is preserved in the high nibble
+     * (AD microcode RO2->L1.4), and validated by funktionalcpu step 0x14. */
+    ASSERT_EQ(g.mem[0x100], (uint8_t)0x47);
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1); /* no overflow, non-zero */
 }
 
 /* Unequal lengths: A=2 digits, B=1 digit (B zero-extended on left)
@@ -367,9 +368,9 @@ UTEST(bin, ad_unequal_len)
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);
 }
 
-/* Carry beyond field is silently dropped (no overflow CC) */
-/* 1-digit: 9 + 9 = 18 → digit=8, carry dropped, cc=1 (non-zero) */
-UTEST(bin, ad_carry_dropped)
+/* Carry out of the field sets the overflow CC (NOTE table AD-AB: F104=OF). */
+/* 1-digit: 9 + 9 = 18 → digit=8, carry out → overflow; result non-zero → cc=3 */
+UTEST(bin, ad_carry_sets_overflow)
 {
     struct ge g;
     ge_init(&g);
@@ -379,8 +380,8 @@ UTEST(bin, ad_carry_dropped)
 
     alu_ad(&g, 0x100, 1, 0x200, 1);
 
-    ASSERT_EQ(g.mem[0x100], (uint8_t)0x08); /* 18 mod 10 = 8 */
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);  /* non-zero, no overflow CC */
+    ASSERT_EQ(g.mem[0x100], (uint8_t)0x08); /* 18 mod 10 = 8, zone 0 preserved */
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)3);  /* F104=overflow, F105=non-zero */
 }
 
 /* Second operand is not altered */
@@ -413,10 +414,10 @@ UTEST(bin, sd_simple)
     alu_sd(&g, 0x100, 1, 0x200, 1);
 
     ASSERT_EQ(g.mem[0x100], (uint8_t)0x04);
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1); /* non-zero */
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)3); /* result > 0 (NOTE: SD F104=1 F105=1) */
 }
 
-/* Zero result: 5 - 5 = 0, cc=0 */
+/* Zero result: 5 - 5 = 0, cc=2 (NOTE table SD: result=0 -> F104=1 F105=0) */
 UTEST(bin, sd_zero_result)
 {
     struct ge g;
@@ -428,7 +429,7 @@ UTEST(bin, sd_zero_result)
     alu_sd(&g, 0x100, 1, 0x200, 1);
 
     ASSERT_EQ(g.mem[0x100], (uint8_t)0x00);
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)0); /* zero */
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)2); /* result = 0 */
 }
 
 /* Decimal borrow: 2-digit 10 - 01 = 09
@@ -451,11 +452,11 @@ UTEST(bin, sd_decimal_borrow)
 
     ASSERT_EQ(g.mem[0x100], (uint8_t)0x00); /* tens = 0 */
     ASSERT_EQ(g.mem[0x101], (uint8_t)0x09); /* units = 9 */
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);  /* non-zero */
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)3);  /* result > 0 */
 }
 
-/* Zone nibble ignored: digit 0x47 (zone=4,digit=7) - digit 0x43 (zone=4,digit=3) = 4 */
-UTEST(bin, sd_zone_ignored)
+/* Zone preserved: 0x47 (zone=4,digit=7) - 0x43 (zone=4,digit=3) = digit 4, zone 4 */
+UTEST(bin, sd_zone_preserved)
 {
     struct ge g;
     ge_init(&g);
@@ -465,8 +466,8 @@ UTEST(bin, sd_zone_ignored)
 
     alu_sd(&g, 0x100, 1, 0x200, 1);
 
-    ASSERT_EQ(g.mem[0x100], (uint8_t)0x04); /* digit 4, zone cleared */
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);
+    ASSERT_EQ(g.mem[0x100], (uint8_t)0x44); /* digit 4, first-operand zone (4) preserved */
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)3);  /* result > 0 */
 }
 
 /* Unequal lengths: A=2 digits, B=1 digit.
@@ -486,7 +487,7 @@ UTEST(bin, sd_unequal_len)
 
     ASSERT_EQ(g.mem[0x100], (uint8_t)0x01); /* tens = 1 */
     ASSERT_EQ(g.mem[0x101], (uint8_t)0x03); /* units = 3 */
-    ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);
+    ASSERT_EQ(alu_get_cc(&g), (uint8_t)3);  /* result > 0 */
 }
 
 /* Second operand is not altered */
