@@ -1,11 +1,31 @@
 # funktionalcpu.sym — human names for the GE-130 CPU functional-test deck.
 # Format: ADDR  NAME  ; comment      (see gdis --symbols; reverse-engineered,
 # documented in software/gemu/docs/funktionalcpu-disasm.md).
+#
+# ---- operator protocol (how the deck loops vs. finishes) ----
+# This is an interactive field-engineer exerciser. It does NOT auto-complete;
+# the operator drives it with the two console switches. Three gates:
+#   * each self-test checkpoint  -> show_code_then_halt (0x0E64): JS2 (SWITCH 2)
+#       ON  = acknowledge lamp + continue to next sub-test;
+#       OFF = halt at final_halt (0x1402).
+#   * end of CPU self-test (step 0x24) -> selftest_switch_restart (0x0496):
+#       JS2 ON  = restart the whole self-test (this is the perpetual 0x01..0x24
+#                 loop + OPER-CALL blink seen when SWITCH 2 is held high);
+#       JS2 OFF = fall through to the decimal + core-memory tests.
+#   * end of memory tests -> report_and_end (0x19C6): JS1 (SWITCH 1)
+#       ON  = re-run from cpu_selftest (continuous mode, for scoping);
+#       OFF = final 40-byte verify -> end_halt (0x19DE, success) or
+#             report_restart (0x19E4 -> cold_start) on mismatch.
+#   To reach the success End-HLT 0x19DE: hold SWITCH 2 through the self-test,
+#   release before 0x0496, then SWITCH 1 OFF at 0x19C6.
 
 # ---- variables / console cells ----
 0x0010  step_code        ; progress code: which sub-test is running (shown on halt)
 0x2010  step_code_mem     ; progress code for the memory-test phase
-0x00FE  reg7             ; index/link register 7 (JRT deposits return addr here)
+0x00FE  reg7             ; change/segment register 7 = mem[0xFE..0xFF] BE (240+2*7).
+                         ; JRT deposits its return addr here; SR/SL (Search) deposit
+                         ; the result address here (confirmed: op after the SR at
+                         ; step_0x1f_sr reads mem[0x00FE]).
 0x00FC  scratch_fc        ; self-test scratch (shift results)
 0x0E00  opt_image        ; test-selection option image (operator sets from console)
 0x0E70  opt_subcode       ; secondary option/sub-test code
@@ -18,11 +38,20 @@
 0x0000  cold_start       ; reset entry: NOP NOP -> main
 0x0100  main             ; -> select_test
 0x0104  cpu_selftest     ; seed reg7, run the instruction self-test
-0x010E  error_halt       ; FAULT: lamp on (LON), save step code to display, -> halt
+0x010E  oper_checkpoint  ; operator-call / single-step checkpoint (also the fault
+                         ; path): save reg7, LON (light OPER CALL), copy step_code to
+                         ; the display, -> show_code_then_halt. Reached after sub-tests
+                         ; via JRT; with SWITCH 2 held it acks (LOFF) and continues, so
+                         ; OPER CALL strobes once per checkpoint as the self-test loops.
 0x0120  selftest_begin   ; instruction self-test, step 0x02 onward (walks the ISA)
 0x012C  selftest_continue ; resume point after operator "continue"
 0x013E  chk_jrt_retaddr   ; subroutine: verify JRT deposited the right return address
-0x0496  selftest_switch_restart ; SWITCH 2 -> restart at main
+0x0496  selftest_switch_restart ; end of CPU self-test (after step 0x24): JS2 main
+                         ; -> SWITCH 2 ON restarts the self-test (perpetual loop);
+                         ; OFF falls through to selftest_decimal + the memory tests.
+0x03D6  step_0x1f_sr      ; self-test step 0x1F: SR (Search Right) 0x0556,0x0558 ->
+                         ; result addr to reg7; next op (0x03DC) reads mem[0x00FE].
+                         ; SR/SL were unrouted before dec62e2 and derailed PC here.
 0x0790  selftest_decimal  ; decimal multiply/divide (MP/DP) test block
 0x0E64  show_code_then_halt ; display fault code; SWITCH2=continue else final_halt
 0x0E72  op_resume         ; LOFF (lamp off) -> selftest_continue
@@ -52,9 +81,11 @@
 0x1922  mt6_verify_loop
 0x195C  mt6_marker_pass
 0x199E  mt6_countdown
-0x19C6  report_and_end    ; print results (PER), compare result table, End HLT 0x19DE
-0x19DE  end_halt          ; End HLT (normal completion code 19DE)
-0x19E4  report_restart    ; copy results, restart at cold_start
+0x19C6  report_and_end    ; JS1 cpu_selftest -> SWITCH 1 ON = re-run continuously;
+                         ; OFF = print results (PER), final 40-byte verify
+                         ; (CMC 40, sysconst_1100, 0x0036) -> end_halt or report_restart.
+0x19DE  end_halt          ; End HLT (normal/success completion code 19DE)
+0x19E4  report_restart    ; verify mismatch: copy results, restart at cold_start
 0x19F4  memtest_move_lowhigh ; address-uniqueness move test (copy 0x0100<->0x2100)
 0x1A22  memtest_0100      ; core test of the 0x0100-0x0FFF range
 0x1A2A  mt0_fill_loop
