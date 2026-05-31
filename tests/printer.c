@@ -143,3 +143,52 @@ UTEST(printer, keyboard_queue)
 
     ge_deinit(&g);
 }
+
+/* --------------------------------------------------------------------------
+ * printer.channel2_output_transfer
+ *
+ * Drive the channel-2 OUTPUT data-transfer microcode directly: with the printer
+ * registered (channel2.sink), a held channel-2 request (RC02) makes NA_knot route
+ * each cycle to rSI state 0x02, which reads mem[V4] -> RO and hands it to the
+ * printer via CE16 ("Load Printer Buffer"), advancing V4. The bytes are GE
+ * internal graphic codes; the sink renders them through the glyph table. This is
+ * the faithful memory->printer datapath (flow chart 14023130_1 sheet 36); the
+ * org-phase routing that sets up rSI/RC02 from a real output PER is wired
+ * separately.
+ * -------------------------------------------------------------------------- */
+UTEST(printer, channel2_output_transfer)
+{
+    struct ge g;
+    ge_init(&g);
+    ge_clear(&g);
+    printer_register(&g);   /* attaches channel2.sink */
+
+    /* "HELLO" in the GE 100-series graphic code: H=0x58 E=0x55 L=0xA3 O=0xA6 */
+    static const uint8_t s[5] = { 0x58, 0x55, 0xA3, 0xA3, 0xA6 };
+    const uint16_t buf = 0x0200;
+    for (int i = 0; i < 5; i++) {
+        g.mem[buf + i] = s[i];
+        g.mem_parity[buf + i] = __builtin_parity(s[i]) ? 0 : 1;
+        g.mem_written[buf + i] = 1;
+    }
+
+    g.rV4 = buf;
+    ge_start(&g);
+
+    /* Five channel-2 (RES2) cycles; each runs rSI state 0x02 and emits one byte. */
+    for (int i = 0; i < 5; i++) {
+        g.RC02 = 1;      /* channel-2 request -> RIA2 -> RES2 */
+        g.rSI  = 0x02;   /* channel-2 output transfer state */
+        ge_run_cycle(&g);
+    }
+
+    ASSERT_EQ(printer_output_len(&g), 5);
+    const char *o = printer_output(&g);
+    ASSERT_EQ(o[0], 'H');
+    ASSERT_EQ(o[1], 'E');
+    ASSERT_EQ(o[2], 'L');
+    ASSERT_EQ(o[3], 'L');
+    ASSERT_EQ(o[4], 'O');
+
+    ge_deinit(&g);
+}

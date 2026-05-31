@@ -128,12 +128,28 @@ static int printer_deinit(struct ge *ge, void *opaque)
     return 0;
 }
 
+/* Channel-2 OUTPUT sink: the CPU's channel-2 transfer microcode hands one
+ * character to the printer here (command CE16 "Load Printer Buffer", rSI state
+ * 02/03). The byte is the machine's internal GE graphic code; render it through
+ * the GE 100-series glyph table into the paper-feed buffer (same buffer the
+ * front-ends drain). See docs/peripherals.md "CAN2 data-transfer phase". */
+static void printer_sink(struct ge *ge, struct ge_channel *ch, uint8_t c)
+{
+    struct ge_integrated_printer *p = &ge->integrated_printer;
+    (void)ch;
+
+    if (p->out_len < (int)sizeof(p->out) - 1)
+        p->out[p->out_len++] = ge_glyph(c);
+    p->out[p->out_len] = '\0';
+}
+
 int printer_register(struct ge *ge)
 {
     struct printer_ctx *ctx = calloc(1, sizeof(*ctx));
     if (!ctx)
         return -1;
 
+    ge->channel2.sink = printer_sink;
     ge->integrated_printer.present = 1;
     ge->integrated_printer.out_len = 0;
     ge->integrated_printer.out[0] = '\0';

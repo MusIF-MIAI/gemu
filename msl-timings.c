@@ -9,8 +9,8 @@
 struct msl_timing_state msl_timings[0xff] = {
     /* 00 */ {state_00},
     /* 01 */ { },
-    /* 02 */ { },
-    /* 03 */ { },
+    /* 02 */ {state_02},   /* channel-2 OUTPUT data transfer (printer) */
+    /* 03 */ {state_02},   /* 02|03 share the chart per the flow sheet */
     /* 04 */ { },
     /* 05 */ { },
     /* 06 */ { },

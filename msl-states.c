@@ -814,6 +814,22 @@ static const struct msl_timing_chart state_cc[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+/* Channel-2 OUTPUT data-transfer (rSI state 02/03; flow chart 14023130₁, CPU[7]
+ * render-pg 36 "CHANNEL 2 DATA TRANSFER PHASE"). One character per RES2 cycle:
+ *   NO <- V4 (CO14); memory read RO <- mem[VO=V4] (CO30); V4 <- V4+1 (CO41/CO04);
+ *   "Load Printer Buffer" (CE16) hands RO to the integrated printer.
+ * Reached via NA_knot (RES2 -> rSA = rSI & 0x0f = 0x02) while the printer holds
+ * the channel-2 request; the per-character loop persists because the cycle leaves
+ * future_state = 0x02 and the channel-2 length terminates the request. */
+static const struct msl_timing_chart state_02[] = {
+    { TO10, CO14, 0 },   /* NO <- V4 (channel-2 operand addresser) */
+    { TO10, CO41, 0 },   /* counting network: V4 + 1 on NI */
+    { TO25, CO30, 0 },   /* memory read: RO <- mem[VO = V4] */
+    { TO40, CO04, 0 },   /* V4 <- NI (advance to next byte) */
+    { TI06, CE16, 0 },   /* Load Printer Buffer: emit RO to channel 2 */
+    { END_OF_STATUS, 0, 0 },
+};
+
 /* TPER - CPER */
 /* ----------- */
 

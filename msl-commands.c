@@ -591,6 +591,15 @@ static void CE09(struct ge *ge) {
         reader_send_tu10(ge);
 }
 
+/* CE16 — "Carica Buffer Stampante / Load Printer Buffer" (channel-2 OUTPUT, rSI
+ * transfer state 02/03; flow chart 14023130₁, CPU[7] render-pg 36). Hands the
+ * character just read from memory into RO to the integrated printer over the
+ * channel-2 output line. The printer sink renders it through the GE graphic set.
+ * No-op if no channel-2 sink is attached. */
+static void CE16(struct ge *ge) {
+    channel_accept_output(ge, &ge->channel2, (uint8_t)(ge->rRO & 0xff));
+}
+
 static void CE10(struct ge *ge) {
     /* send command */
 
