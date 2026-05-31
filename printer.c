@@ -117,7 +117,11 @@ static int printer_on_clock(struct ge *ge, void *opaque)
             ge->rSI  = 0x02;
             p->out_remaining--;
         } else {
+            /* Transfer done: drop the request (so this cycle is no longer a
+             * channel-2 cycle and the CPU resumes), restore the CPU sequencer
+             * the stolen cycles clobbered, and end the line. */
             ge->RC02 = 0;
+            ge->rSO  = p->out_saved_so;
             if (p->out_len < (int)sizeof(p->out) - 1) {
                 p->out[p->out_len++] = '\n';   /* end-of-print (models 0A/0B/FIRU) */
                 p->out[p->out_len] = '\0';
@@ -194,6 +198,7 @@ void printer_begin_output(struct ge *ge, uint16_t buffer, int length)
     ge->rV4 = buffer;
     ge->integrated_printer.out_active    = 1;
     ge->integrated_printer.out_remaining = length;
+    ge->integrated_printer.out_saved_so  = ge->rSO;  /* resume here when done */
 }
 
 void printer_feed_key(struct ge *ge, uint8_t c)

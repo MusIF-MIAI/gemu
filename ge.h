@@ -585,9 +585,13 @@ struct ge {
         int      kbd_head, kbd_tail;
         /* Channel-2 OUTPUT transfer engine (printer.c): while out_active, the
          * printer requests a channel-2 cycle (RC02) per character so the rSI
-         * output state (0x02) drains out_remaining bytes from V4, then ends. */
+         * output state (0x02) drains out_remaining bytes from V4, then ends.
+         * out_saved_so preserves the CPU sequencer across the (overlapped)
+         * transfer — fsn advances SO on RIA0, which the stolen channel-2 cycles
+         * would otherwise clobber; we restore it when the transfer ends. */
         int      out_active;
         int      out_remaining;
+        uint8_t  out_saved_so;
     } integrated_printer;
 
     /**
