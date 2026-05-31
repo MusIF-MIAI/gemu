@@ -82,6 +82,17 @@ struct cardreader_ctx {
      * Used to transition to CR_CARD_DONE after CR_PRESENTED is cleared. */
     int end_of_card_presented;
 
+    /* Packed / self-loading mode (cardreader_register_packed). The channel-1
+     * input-transfer microcode always packs TWO presented nibbles into one
+     * memory byte. A self-loading SMAC .cap holds the program as full COLBIN
+     * bytes (1 col -> 1 byte), so to land each byte intact we present it as a
+     * hi-then-lo nibble pair; the packer rebuilds the original byte. (This is
+     * also how the real machine reads: the IPL packs the hex loader card, and
+     * after "set by-pass" each binary column delivers a full byte — equivalent
+     * to two packed nibbles here.) `half` tracks which nibble is pending. */
+    int pack;
+    int half;   /* 0 = high nibble pending, 1 = low nibble pending */
+
     /* the ge_peri node we allocated (kept for potential future use) */
     struct ge_peri peri;
 };
@@ -220,10 +231,13 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
         }
 
         const uint16_t *cols = cap_card_columns(ctx->deck, ctx->card_idx);
-        /* Loader card uses the registered mode (TC_HEX); program cards that
-         * follow are read in binary ("by-pass"). */
-        enum transcode_mode m = (ctx->card_idx == ctx->loader_card)
-                                    ? ctx->mode : TC_BINARY;
+        /* Read mode: in packed self-loading mode every card is decoded in the
+         * registered COLBIN mode (and presented as nibble pairs, below). In the
+         * legacy mode the loader card uses the registered mode (TC_HEX) and the
+         * following program cards are read in binary ("by-pass"). */
+        enum transcode_mode m = ctx->pack
+            ? ctx->mode
+            : (ctx->card_idx == ctx->loader_card ? ctx->mode : TC_BINARY);
         uint8_t byte = transcode_column(cols[ctx->col_idx], m);
 
         /* End-of-card: the GE reader raises FINI (the controller "end" RIG1)
@@ -235,22 +249,41 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
          * read here. (Note: RAMO/RAMI is the CPU cycle-period counter, §6.7.5, not
          * the read-length counter.) Signal end on the last column of the CURRENT
          * card, not the whole deck. */
-        int is_last = (ctx->col_idx == ncols - 1);
+        int is_last_col = (ctx->col_idx == ncols - 1);
+
+        /* The channel-1 input transfer packs TWO presented nibbles into one
+         * memory byte. In packed mode the .cap holds full COLBIN bytes, so we
+         * present each as a hi-then-lo nibble pair and the packer rebuilds the
+         * byte (1 col -> 1 byte). FINI rides the LOW nibble of the last column.
+         * In legacy mode one full value is presented per column. */
+        uint8_t present;
+        int     is_last;
+        if (ctx->pack) {
+            present = (ctx->half == 0) ? (uint8_t)((byte >> 4) & 0x0f)
+                                       : (uint8_t)(byte & 0x0f);
+            is_last = (ctx->half == 1) && is_last_col;
+        } else {
+            present = byte;
+            is_last = is_last_col;
+        }
 
         ge_log(LOG_READER,
-               "cardreader: presenting card %d col %d byte=0x%02x end=%d\n",
-               ctx->card_idx, ctx->col_idx, byte, is_last);
+               "cardreader: presenting card %d col %d half %d byte=0x%02x val=0x%02x end=%d\n",
+               ctx->card_idx, ctx->col_idx, ctx->half, byte, present, is_last);
 
-        reader_setup_to_send(ge, byte, is_last ? 1 : 0);
+        reader_setup_to_send(ge, present, is_last ? 1 : 0);
         ctx->end_of_card_presented = is_last;
         ctx->state = CR_PRESENTED;
 
-        /* Advance pointer so next IDLE knows which byte comes next.
-         * For a multi-card deck this moves to (card+1, col 0) which is
-         * ready to be presented when the machine starts the next PER read. */
-        if (!cr_advance(ctx)) {
-            /* Whole deck exhausted; the state will become CR_DONE via
-             * CR_CARD_DONE once the end byte is consumed and RASI drops. */
+        /* Advance. In packed mode present the LOW nibble of the same column on
+         * the next call (do not move the pointer); only after the low nibble do
+         * we advance to the next column / card. For a multi-card deck cr_advance
+         * moves to (card+1, col 0), ready for the next PER read. */
+        if (ctx->pack && ctx->half == 0) {
+            ctx->half = 1;
+        } else {
+            ctx->half = 0;
+            cr_advance(ctx);
         }
     }
 
@@ -272,14 +305,33 @@ static int cardreader_deinit(struct ge *ge, void *opaque)
  * Public API
  * ------------------------------------------------------------------------- */
 
+static int cr_register(struct ge *ge, const char *cap_path,
+                       enum transcode_mode mode, int first_card, int pack);
+
 int cardreader_register(struct ge *ge, const char *cap_path,
                         enum transcode_mode mode)
 {
-    return cardreader_register_from(ge, cap_path, mode, 0);
+    return cr_register(ge, cap_path, mode, 0, 0);
 }
 
 int cardreader_register_from(struct ge *ge, const char *cap_path,
                              enum transcode_mode mode, int first_card)
+{
+    return cr_register(ge, cap_path, mode, first_card, 0);
+}
+
+/* Self-loading SMAC deck: feed every card's COLBIN bytes as hi/lo nibble pairs
+ * so the channel-1 packing transfer reconstructs the full bytes (1 col -> 1
+ * byte), letting the deck's own loader chain (PER reads + MVC relocation)
+ * assemble the program in memory. */
+int cardreader_register_packed(struct ge *ge, const char *cap_path,
+                               enum transcode_mode mode)
+{
+    return cr_register(ge, cap_path, mode, 0, 1);
+}
+
+static int cr_register(struct ge *ge, const char *cap_path,
+                       enum transcode_mode mode, int first_card, int pack)
 {
     struct cap_deck *deck = cap_load(cap_path);
     if (!deck) {
@@ -295,6 +347,8 @@ int cardreader_register_from(struct ge *ge, const char *cap_path,
 
     ctx->deck  = deck;
     ctx->mode  = mode;
+    ctx->pack  = pack;
+    ctx->half  = 0;
     ctx->state = CR_IDLE;
 
     /* Find the first non-empty card at or after first_card */

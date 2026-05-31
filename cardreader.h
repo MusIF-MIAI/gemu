@@ -57,4 +57,18 @@ int cardreader_register(struct ge *ge, const char *cap_path,
 int cardreader_register_from(struct ge *ge, const char *cap_path,
                              enum transcode_mode mode, int first_card);
 
+/*
+ * cardreader_register_packed - register a SELF-LOADING SMAC deck whose cards
+ * hold the program as full COLBIN bytes (1 column -> 1 byte).
+ *
+ * The channel-1 input-transfer microcode packs two presented nibbles into one
+ * memory byte, so each card byte is fed as a hi-then-lo nibble pair and the
+ * packer rebuilds it intact. This lets the deck's own loader chain run via the
+ * reader: the bootstrap card's PERs read each subsequent card and its MVCs
+ * relocate the payload to its embedded load address. `mode` is the per-byte
+ * decode (TC_COLBIN for these decks).
+ */
+int cardreader_register_packed(struct ge *ge, const char *cap_path,
+                               enum transcode_mode mode);
+
 #endif /* CARDREADER_H */
