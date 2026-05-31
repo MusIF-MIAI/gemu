@@ -583,6 +583,11 @@ struct ge {
         int      out_len;
         uint8_t  kbd[256];      /* operator keyboard input queue */
         int      kbd_head, kbd_tail;
+        /* Channel-2 OUTPUT transfer engine (printer.c): while out_active, the
+         * printer requests a channel-2 cycle (RC02) per character so the rSI
+         * output state (0x02) drains out_remaining bytes from V4, then ends. */
+        int      out_active;
+        int      out_remaining;
     } integrated_printer;
 
     /**

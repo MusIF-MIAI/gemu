@@ -360,7 +360,13 @@ void fsn_last_clock(struct ge *ge)
     uint8_t sel_norm = ge->register_selector == RS_NORM;
     uint8_t sel_so   = ge->register_selector == RS_SO;
     uint8_t advance_so = sel_norm ? !ge->console_switches.RICI : sel_so;
-    if (ge->RIA0 && advance_so) {
+    /* The program sequencer SO advances only on a cycle attributed to the CPU
+     * or channel 1 (RES0 || RIUC). A channel-2 cycle (RES2) advances SI instead
+     * (below), leaving SO untouched — that is what makes a channel-2 transfer an
+     * overlapped, stolen cycle rather than corrupting the CPU program counter.
+     * (Gating on RIA0 alone leaked the channel-2 transfer state into SO when the
+     * CPU request happened to be up.) cpu fo. 127. */
+    if ((RES0(ge) || RIUC(ge)) && advance_so) {
         ge_log(LOG_FUTURE, "last clock cpu, %02x in SO\n", ge->future_state);
         ge->rSO = ge->future_state;
     } else {
@@ -398,8 +404,9 @@ void fsn_last_clock(struct ge *ge)
         ge->ALTO = 1;
 
     /* after the execution of a channel 2 cycle, load the first
-     * 4 bits of the future status network in SI. (cpu fo. 127) */
-    if (ge->RIA2) {
+     * 4 bits of the future status network in SI. (cpu fo. 127) Gated on the
+     * cycle actually being attributed to channel 2 (RES2), not merely RIA2 up. */
+    if (RES2(ge)) {
         ge_log(LOG_FUTURE, "last clock ch2, %02x in SI\n", ge->future_state);
         ge->rSI = ge->future_state;
     }

@@ -101,9 +101,31 @@ static void capture_line(struct ge *ge)
 static int printer_on_clock(struct ge *ge, void *opaque)
 {
     struct printer_ctx *ctx = (struct printer_ctx *)opaque;
+    struct ge_integrated_printer *p = &ge->integrated_printer;
 
-    if (!ge->integrated_printer.present)
+    if (!p->present)
         return 0;
+
+    /* Channel-2 OUTPUT transfer engine: drive one character per cycle. While
+     * bytes remain, hold the channel-2 request (RC02) and the rSI output state
+     * so NA_knot routes this cycle to state_02 (mem[V4] -> RO -> CE16 -> sink).
+     * RC02 is asserted at TO00, before pulse() latches RIA2 = RC02. When the
+     * count is exhausted, drop the request and end the line. */
+    if (p->out_active) {
+        if (p->out_remaining > 0) {
+            ge->RC02 = 1;
+            ge->rSI  = 0x02;
+            p->out_remaining--;
+        } else {
+            ge->RC02 = 0;
+            if (p->out_len < (int)sizeof(p->out) - 1) {
+                p->out[p->out_len++] = '\n';   /* end-of-print (models 0A/0B/FIRU) */
+                p->out[p->out_len] = '\0';
+            }
+            p->out_active = 0;
+        }
+        return 0;
+    }
 
     if (!in_channel2_print_wait(ge)) {
         ctx->stall = 0;
@@ -165,6 +187,13 @@ int printer_register(struct ge *ge)
     ctx->peri.ctx      = ctx;
 
     return ge_register_peri(ge, &ctx->peri);
+}
+
+void printer_begin_output(struct ge *ge, uint16_t buffer, int length)
+{
+    ge->rV4 = buffer;
+    ge->integrated_printer.out_active    = 1;
+    ge->integrated_printer.out_remaining = length;
 }
 
 void printer_feed_key(struct ge *ge, uint8_t c)

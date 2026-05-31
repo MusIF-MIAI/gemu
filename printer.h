@@ -32,6 +32,13 @@
  * present == 0 and are unaffected. Returns 0 on success, -1 on error. */
 int printer_register(struct ge *ge);
 
+/* Begin a channel-2 OUTPUT transfer: print `length` characters starting at
+ * memory address `buffer`. The printer then requests a channel-2 cycle per
+ * character (RC02 + rSI state 0x02) so the machine's microcode drains the buffer
+ * to the printer, ending the line when done. (Seam for the org-phase PER hook;
+ * also used directly by tests.) */
+void printer_begin_output(struct ge *ge, uint16_t buffer, int length);
+
 /* Push one operator-keyboard byte into the input queue (two-way chat). */
 void printer_feed_key(struct ge *ge, uint8_t c);
 

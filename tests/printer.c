@@ -192,3 +192,45 @@ UTEST(printer, channel2_output_transfer)
 
     ge_deinit(&g);
 }
+
+/* --------------------------------------------------------------------------
+ * printer.channel2_output_driven
+ *
+ * Same datapath, but the printer drives the transfer itself: printer_begin_output
+ * arms it with a buffer + length, and printer_on_clock holds the channel-2 request
+ * (RC02) + rSI=0x02 for each of the `length` characters, then drops the request
+ * and ends the line. The caller just runs cycles; the transfer self-terminates.
+ * -------------------------------------------------------------------------- */
+UTEST(printer, channel2_output_driven)
+{
+    struct ge g;
+    ge_init(&g);
+    ge_clear(&g);
+    printer_register(&g);
+
+    /* "HI" in GE graphic code: H=0x58 I=0x59 */
+    const uint16_t buf = 0x0300;
+    g.mem[buf + 0] = 0x58;
+    g.mem[buf + 1] = 0x59;
+    g.mem_parity[buf + 0] = __builtin_parity(0x58) ? 0 : 1;
+    g.mem_parity[buf + 1] = __builtin_parity(0x59) ? 0 : 1;
+    g.mem_written[buf + 0] = 1;
+    g.mem_written[buf + 1] = 1;
+
+    ge_start(&g);
+    printer_begin_output(&g, buf, 2);
+
+    /* Run enough cycles for the 2 transfers + the end cycle; it self-terminates. */
+    for (int i = 0; i < 6; i++)
+        ge_run_cycle(&g);
+
+    ASSERT_EQ(g.integrated_printer.out_active, 0);   /* self-terminated */
+    ASSERT_EQ((int)g.RC02, 0);                        /* request dropped */
+    ASSERT_EQ(printer_output_len(&g), 3);             /* "HI" + newline */
+    const char *o = printer_output(&g);
+    ASSERT_EQ(o[0], 'H');
+    ASSERT_EQ(o[1], 'I');
+    ASSERT_EQ(o[2], '\n');
+
+    ge_deinit(&g);
+}
