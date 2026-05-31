@@ -69,252 +69,377 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment"> */</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;<a class="code" href="cap_8h.html">cap.h</a>&quot;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;string.h&gt;</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;ctype.h&gt;</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"> * Internal data structures</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="foldopen" id="foldopen00025" data-start="{" data-end="};">
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="structcap__card.html">   25</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> {</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">   26</a></span>    uint16_t *<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>;   <span class="comment">/* dynamically allocated column data */</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">   27</a></span>    <span class="keywordtype">int</span>       <a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>;  <span class="comment">/* number of columns stored */</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">   28</a></span>    <span class="keywordtype">int</span>       <a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>;    <span class="comment">/* allocated capacity */</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>};</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;<a class="code" href="transcode_8h.html">transcode.h</a>&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;string.h&gt;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &lt;ctype.h&gt;</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> * Internal data structures</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="foldopen" id="foldopen00026" data-start="{" data-end="};">
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="structcap__card.html">   26</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">   27</a></span>    uint16_t *<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>;   <span class="comment">/* dynamically allocated column data */</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">   28</a></span>    <span class="keywordtype">int</span>       <a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>;  <span class="comment">/* number of columns stored */</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">   29</a></span>    <span class="keywordtype">int</span>       <a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>;    <span class="comment">/* allocated capacity */</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>};</div>
 </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="foldopen" id="foldopen00031" data-start="{" data-end="};">
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="structcap__deck.html">   31</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> {</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">   32</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> *<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>;  <span class="comment">/* dynamically allocated card array */</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">   33</a></span>    <span class="keywordtype">int</span>              <a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>; <span class="comment">/* number of cards stored */</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">   34</a></span>    <span class="keywordtype">int</span>              <a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>;    <span class="comment">/* allocated capacity */</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>};</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="foldopen" id="foldopen00032" data-start="{" data-end="};">
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="structcap__deck.html">   32</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> {</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">   33</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> *<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>;  <span class="comment">/* dynamically allocated card array */</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">   34</a></span>    <span class="keywordtype">int</span>              <a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>; <span class="comment">/* number of cards stored */</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">   35</a></span>    <span class="keywordtype">int</span>              <a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>;    <span class="comment">/* allocated capacity */</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>};</div>
 </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment"> * Internal helpers</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment">/* Grow the card array in the deck by one slot. Returns 0 on success. */</span></div>
-<div class="foldopen" id="foldopen00042" data-start="{" data-end="}">
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">   42</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d)</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>{</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keywordflow">if</span> (d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a> &gt;= d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>) {</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordtype">int</span> newcap = d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> ? d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> * 2 : 16;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> *tmp = realloc(d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>,</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                                       (<span class="keywordtype">size_t</span>)newcap * <span class="keyword">sizeof</span>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__card.html">cap_card</a>));</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <span class="keywordflow">if</span> (!tmp)</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>            <span class="keywordflow">return</span> -1;</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a> = tmp;</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>   = newcap;</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    }</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>].<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>  = NULL;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>].<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a> = 0;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>].<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>   = 0;</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>++;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>}</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment"> * Internal helpers</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">/* Grow the card array in the deck by one slot. Returns 0 on success. */</span></div>
+<div class="foldopen" id="foldopen00043" data-start="{" data-end="}">
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">   43</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d)</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>{</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keywordflow">if</span> (d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a> &gt;= d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>) {</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keywordtype">int</span> newcap = d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> ? d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> * 2 : 16;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> *tmp = realloc(d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>,</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                                       (<span class="keywordtype">size_t</span>)newcap * <span class="keyword">sizeof</span>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__card.html">cap_card</a>));</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">if</span> (!tmp)</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            <span class="keywordflow">return</span> -1;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a> = tmp;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        d-&gt;<a class="code hl_variable" href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>   = newcap;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    }</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>].<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>  = NULL;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>].<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a> = 0;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>].<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>   = 0;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>++;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>}</div>
 </div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="comment">/* Append one column value to the current (last) card. Returns 0 on success. */</span></div>
-<div class="foldopen" id="foldopen00061" data-start="{" data-end="}">
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">   61</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">card_add_col</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__card.html">cap_card</a> *c, uint16_t val)</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>{</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordflow">if</span> (c-&gt;<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a> &gt;= c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>) {</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <span class="keywordtype">int</span> newcap = c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> ? c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> * 2 : 80;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        uint16_t *tmp = realloc(c-&gt;<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>, (<span class="keywordtype">size_t</span>)newcap * <span class="keyword">sizeof</span>(uint16_t));</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        <span class="keywordflow">if</span> (!tmp)</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keywordflow">return</span> -1;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        c-&gt;<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a> = tmp;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>  = newcap;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    }</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    c-&gt;<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>[c-&gt;<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>++] = val &amp; 0x1FFFu; <span class="comment">/* keep 13 bits (12-bit hole + spare) */</span></div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>}</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="comment">/* Append one column value to the current (last) card. Returns 0 on success. */</span></div>
+<div class="foldopen" id="foldopen00062" data-start="{" data-end="}">
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">   62</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">card_add_col</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__card.html">cap_card</a> *c, uint16_t val)</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>{</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordflow">if</span> (c-&gt;<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a> &gt;= c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>) {</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <span class="keywordtype">int</span> newcap = c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> ? c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a> * 2 : 80;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        uint16_t *tmp = realloc(c-&gt;<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>, (<span class="keywordtype">size_t</span>)newcap * <span class="keyword">sizeof</span>(uint16_t));</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        <span class="keywordflow">if</span> (!tmp)</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>            <span class="keywordflow">return</span> -1;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        c-&gt;<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a> = tmp;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        c-&gt;<a class="code hl_variable" href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap</a>  = newcap;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    }</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    c-&gt;<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>[c-&gt;<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>++] = val &amp; 0x1FFFu; <span class="comment">/* keep 13 bits (12-bit hole + spare) */</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>}</div>
 </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment">/*</span></div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment"> * Return non-zero if `s` is a valid 4-hex-digit token (exactly 4 chars,</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment"> * all hexadecimal digits).</span></div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment"> */</span></div>
-<div class="foldopen" id="foldopen00079" data-start="{" data-end="}">
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">   79</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">is_hex4</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *s)</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>{</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keywordflow">if</span> (!s || strlen(s) != 4)</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordflow">return</span> isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[0]) &amp;&amp;</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>           isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[1]) &amp;&amp;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>           isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[2]) &amp;&amp;</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>           isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[3]);</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>}</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment">/*</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment"> * Return non-zero if `s` is a valid 4-hex-digit token (exactly 4 chars,</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment"> * all hexadecimal digits).</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="comment"> */</span></div>
+<div class="foldopen" id="foldopen00080" data-start="{" data-end="}">
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno"><a class="line" href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">   80</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">is_hex4</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *s)</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>{</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keywordflow">if</span> (!s || strlen(s) != 4)</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordflow">return</span> isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[0]) &amp;&amp;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>           isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[1]) &amp;&amp;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>           isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[2]) &amp;&amp;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>           isxdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)s[3]);</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>}</div>
 </div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="comment">/*</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="comment"> * Return non-zero if line begins with &quot;Card n. &quot; (case-sensitive).</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="comment"> * If it does, *card_num receives the card number (&gt;= 1).</span></div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="comment"> */</span></div>
-<div class="foldopen" id="foldopen00093" data-start="{" data-end="}">
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">   93</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">parse_card_header</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *line, <span class="keywordtype">int</span> *card_num)</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>{</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> prefix[] = <span class="stringliteral">&quot;Card n. &quot;</span>;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keyword">const</span> <span class="keywordtype">size_t</span> plen   = <span class="keyword">sizeof</span>(prefix) - 1;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordflow">if</span> (strncmp(line, prefix, plen) != 0)</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *p = line + plen;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="comment">/* Require at least one digit immediately after the prefix */</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordflow">if</span> (!isdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)*p))</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">char</span> *end;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordtype">long</span> n = strtol(p, &amp;end, 10);</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordflow">if</span> (n &lt; 1)</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="comment">/* Allow trailing whitespace/newline only */</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordflow">while</span> (*end &amp;&amp; (isspace((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)*end) || *end == <span class="charliteral">&#39;\r&#39;</span>))</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        end++;</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    <span class="keywordflow">if</span> (*end != <span class="charliteral">&#39;\0&#39;</span>)</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    *card_num = (int)n;</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordflow">return</span> 1;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>}</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="comment">/*</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="comment"> * Return non-zero if line begins with &quot;Card n. &quot; (case-sensitive).</span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="comment"> * If it does, *card_num receives the card number (&gt;= 1).</span></div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="comment"> */</span></div>
+<div class="foldopen" id="foldopen00094" data-start="{" data-end="}">
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">   94</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">parse_card_header</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *line, <span class="keywordtype">int</span> *card_num)</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>{</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> prefix[] = <span class="stringliteral">&quot;Card n. &quot;</span>;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keyword">const</span> <span class="keywordtype">size_t</span> plen   = <span class="keyword">sizeof</span>(prefix) - 1;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keywordflow">if</span> (strncmp(line, prefix, plen) != 0)</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *p = line + plen;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="comment">/* Require at least one digit immediately after the prefix */</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordflow">if</span> (!isdigit((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)*p))</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordtype">char</span> *end;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordtype">long</span> n = strtol(p, &amp;end, 10);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordflow">if</span> (n &lt; 1)</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="comment">/* Allow trailing whitespace/newline only */</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordflow">while</span> (*end &amp;&amp; (isspace((<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>)*end) || *end == <span class="charliteral">&#39;\r&#39;</span>))</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>        end++;</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordflow">if</span> (*end != <span class="charliteral">&#39;\0&#39;</span>)</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    *card_num = (int)n;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordflow">return</span> 1;</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>}</div>
 </div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="comment"> * Public API</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
-<div class="foldopen" id="foldopen00120" data-start="{" data-end="}">
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno"><a class="line" href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">  120</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *<a class="code hl_function" href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">cap_load</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path)</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>{</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordflow">if</span> (!path)</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    FILE *fp = fopen(path, <span class="stringliteral">&quot;r&quot;</span>);</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordflow">if</span> (!fp)</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d = calloc(1, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a>));</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keywordflow">if</span> (!d) {</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>        fclose(fp);</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    }</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordtype">int</span> in_card = 0;  <span class="comment">/* whether we are inside a card&#39;s data section */</span></div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keywordtype">char</span> line[4096];</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordflow">while</span> (fgets(line, <span class="keyword">sizeof</span>(line), fp)) {</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <span class="comment">/* Strip trailing newline/CR */</span></div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        <span class="keywordtype">size_t</span> len = strlen(line);</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="keywordflow">while</span> (len &gt; 0 &amp;&amp; (line[len-1] == <span class="charliteral">&#39;\n&#39;</span> || line[len-1] == <span class="charliteral">&#39;\r&#39;</span>))</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>            line[--len] = <span class="charliteral">&#39;\0&#39;</span>;</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span> </div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        <span class="comment">/* Check for card header */</span></div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <span class="keywordtype">int</span> card_num = 0;</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">parse_card_header</a>(line, &amp;card_num)) {</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a>(d) != 0)</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                <span class="keywordflow">goto</span> oom;</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>            in_card = 1;</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>            <span class="keywordflow">continue</span>;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        }</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        <span class="comment">/* If we are not yet inside any card, skip non-card lines */</span></div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="keywordflow">if</span> (!in_card)</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>            <span class="keywordflow">continue</span>;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span> </div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        <span class="comment">/*</span></div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span><span class="comment">         * We are inside a card data section.  Tokenize the line and</span></div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="comment">         * collect 4-hex-digit tokens; ignore anything else (counters,</span></div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="comment">         * &quot;FEED ON/OFF&quot;, blank lines, etc.).</span></div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span><span class="comment">         */</span></div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        <span class="keywordtype">char</span> *buf = line;</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordtype">char</span> *tok;</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="comment">/* Use a copy because strtok modifies its argument */</span></div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        <span class="keywordtype">char</span> linecopy[4096];</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        strncpy(linecopy, line, <span class="keyword">sizeof</span>(linecopy) - 1);</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        linecopy[<span class="keyword">sizeof</span>(linecopy) - 1] = <span class="charliteral">&#39;\0&#39;</span>;</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        tok = strtok(linecopy, <span class="stringliteral">&quot; \t\r\n&quot;</span>);</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        <span class="keywordflow">while</span> (tok) {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">is_hex4</a>(tok)) {</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>                uint16_t val = (uint16_t)strtoul(tok, NULL, 16);</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>                <span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> *cur = &amp;d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a> - 1];</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>                <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">card_add_col</a>(cur, val) != 0)</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>                    <span class="keywordflow">goto</span> oom;</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>            }</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            tok = strtok(NULL, <span class="stringliteral">&quot; \t\r\n&quot;</span>);</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        }</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        (void)buf; <span class="comment">/* suppress unused-variable warning */</span></div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    }</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span> </div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    fclose(fp);</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="keywordflow">return</span> d;</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>oom:</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    fclose(fp);</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <a class="code hl_function" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a>(d);</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>}</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="comment"> * Public API</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
+<div class="foldopen" id="foldopen00121" data-start="{" data-end="}">
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno"><a class="line" href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">  121</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *<a class="code hl_function" href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">cap_load</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path)</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>{</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordflow">if</span> (!path)</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    FILE *fp = fopen(path, <span class="stringliteral">&quot;r&quot;</span>);</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordflow">if</span> (!fp)</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d = calloc(1, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a>));</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="keywordflow">if</span> (!d) {</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        fclose(fp);</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    }</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    <span class="keywordtype">int</span> in_card = 0;  <span class="comment">/* whether we are inside a card&#39;s data section */</span></div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordtype">char</span> line[4096];</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    <span class="keywordflow">while</span> (fgets(line, <span class="keyword">sizeof</span>(line), fp)) {</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        <span class="comment">/* Strip trailing newline/CR */</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="keywordtype">size_t</span> len = strlen(line);</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        <span class="keywordflow">while</span> (len &gt; 0 &amp;&amp; (line[len-1] == <span class="charliteral">&#39;\n&#39;</span> || line[len-1] == <span class="charliteral">&#39;\r&#39;</span>))</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            line[--len] = <span class="charliteral">&#39;\0&#39;</span>;</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <span class="comment">/* Check for card header */</span></div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        <span class="keywordtype">int</span> card_num = 0;</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">parse_card_header</a>(line, &amp;card_num)) {</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a>(d) != 0)</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>                <span class="keywordflow">goto</span> oom;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>            in_card = 1;</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        }</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span> </div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="comment">/* If we are not yet inside any card, skip non-card lines */</span></div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        <span class="keywordflow">if</span> (!in_card)</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        <span class="comment">/*</span></div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="comment">         * We are inside a card data section.  Tokenize the line and</span></div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="comment">         * collect 4-hex-digit tokens; ignore anything else (counters,</span></div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span><span class="comment">         * &quot;FEED ON/OFF&quot;, blank lines, etc.).</span></div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span><span class="comment">         */</span></div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordtype">char</span> *buf = line;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="keywordtype">char</span> *tok;</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        <span class="comment">/* Use a copy because strtok modifies its argument */</span></div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keywordtype">char</span> linecopy[4096];</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        strncpy(linecopy, line, <span class="keyword">sizeof</span>(linecopy) - 1);</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        linecopy[<span class="keyword">sizeof</span>(linecopy) - 1] = <span class="charliteral">&#39;\0&#39;</span>;</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span> </div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        tok = strtok(linecopy, <span class="stringliteral">&quot; \t\r\n&quot;</span>);</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="keywordflow">while</span> (tok) {</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">is_hex4</a>(tok)) {</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>                uint16_t val = (uint16_t)strtoul(tok, NULL, 16);</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>                <span class="keyword">struct </span><a class="code hl_struct" href="structcap__card.html">cap_card</a> *cur = &amp;d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a> - 1];</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>                <span class="keywordflow">if</span> (<a class="code hl_function" href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">card_add_col</a>(cur, val) != 0)</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>                    <span class="keywordflow">goto</span> oom;</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            }</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>            tok = strtok(NULL, <span class="stringliteral">&quot; \t\r\n&quot;</span>);</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        }</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>        (void)buf; <span class="comment">/* suppress unused-variable warning */</span></div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    }</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    fclose(fp);</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordflow">return</span> d;</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>oom:</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    fclose(fp);</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <a class="code hl_function" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a>(d);</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>}</div>
 </div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
-<div class="foldopen" id="foldopen00191" data-start="{" data-end="}">
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno"><a class="line" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">  191</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d)</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>{</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="keywordflow">if</span> (!d)</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="keywordflow">return</span> d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>;</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>}</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
+<div class="foldopen" id="foldopen00192" data-start="{" data-end="}">
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno"><a class="line" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">  192</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d)</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>{</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <span class="keywordflow">if</span> (!d)</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="keywordflow">return</span> d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>;</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>}</div>
 </div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
-<div class="foldopen" id="foldopen00198" data-start="{" data-end="}">
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno"><a class="line" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">  198</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d, <span class="keywordtype">int</span> i)</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>{</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    <span class="keywordflow">if</span> (!d || i &lt; 0 || i &gt;= d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>)</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    <span class="keywordflow">return</span> d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[i].<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>;</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>}</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
+<div class="foldopen" id="foldopen00199" data-start="{" data-end="}">
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno"><a class="line" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">  199</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d, <span class="keywordtype">int</span> i)</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>{</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    <span class="keywordflow">if</span> (!d || i &lt; 0 || i &gt;= d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>)</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <span class="keywordflow">return</span> d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[i].<a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>;</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>}</div>
 </div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="foldopen" id="foldopen00205" data-start="{" data-end="}">
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno"><a class="line" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">  205</a></span><span class="keyword">const</span> uint16_t *<a class="code hl_function" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d, <span class="keywordtype">int</span> i)</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>{</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    <span class="keywordflow">if</span> (!d || i &lt; 0 || i &gt;= d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>)</div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="keywordflow">return</span> d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[i].<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>;</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>}</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
+<div class="foldopen" id="foldopen00206" data-start="{" data-end="}">
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno"><a class="line" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">  206</a></span><span class="keyword">const</span> uint16_t *<a class="code hl_function" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a>(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d, <span class="keywordtype">int</span> i)</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>{</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>    <span class="keywordflow">if</span> (!d || i &lt; 0 || i &gt;= d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>)</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>        <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    <span class="keywordflow">return</span> d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[i].<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>;</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>}</div>
 </div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span> </div>
-<div class="foldopen" id="foldopen00212" data-start="{" data-end="}">
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno"><a class="line" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">  212</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d)</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>{</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    <span class="keywordflow">if</span> (!d)</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>; i++)</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        free(d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[i].<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>);</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    free(d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>);</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    free(d);</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>}</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span> </div>
+<div class="foldopen" id="foldopen00213" data-start="{" data-end="}">
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno"><a class="line" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">  213</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d)</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>{</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <span class="keywordflow">if</span> (!d)</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; d-&gt;<a class="code hl_variable" href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">ncards</a>; i++)</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        free(d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>[i].<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>);</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    free(d-&gt;<a class="code hl_variable" href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cards</a>);</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    free(d);</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>}</div>
 </div>
-<div class="ttc" id="acap_8c_html_a070640b4b53efca317718eb0bd54c6d0"><div class="ttname"><a href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a></div><div class="ttdeci">const uint16_t * cap_card_columns(const struct cap_deck *d, int i)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00205">cap.c:205</a></div></div>
-<div class="ttc" id="acap_8c_html_a0c77cd7f01891cd8d28ce590f26ae81f"><div class="ttname"><a href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">is_hex4</a></div><div class="ttdeci">static int is_hex4(const char *s)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00079">cap.c:79</a></div></div>
-<div class="ttc" id="acap_8c_html_a1251ee8c913fe2dd926be9242f329a08"><div class="ttname"><a href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">parse_card_header</a></div><div class="ttdeci">static int parse_card_header(const char *line, int *card_num)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00093">cap.c:93</a></div></div>
-<div class="ttc" id="acap_8c_html_a583a35c8a501eeb8831750eb19653340"><div class="ttname"><a href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">card_add_col</a></div><div class="ttdeci">static int card_add_col(struct cap_card *c, uint16_t val)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00061">cap.c:61</a></div></div>
-<div class="ttc" id="acap_8c_html_a7bac641a123ee0c90b8ffcee385dddfa"><div class="ttname"><a href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a></div><div class="ttdeci">int cap_card_ncols(const struct cap_deck *d, int i)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00198">cap.c:198</a></div></div>
-<div class="ttc" id="acap_8c_html_aa8ab1f924a5ed22882faceae6b57b904"><div class="ttname"><a href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a></div><div class="ttdeci">int cap_num_cards(const struct cap_deck *d)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00191">cap.c:191</a></div></div>
-<div class="ttc" id="acap_8c_html_aab96e324bbfbb1f18be40b5011ba1745"><div class="ttname"><a href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a></div><div class="ttdeci">void cap_free(struct cap_deck *d)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00212">cap.c:212</a></div></div>
-<div class="ttc" id="acap_8c_html_ab16982f054d631e4d447ba9c3330718b"><div class="ttname"><a href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">cap_load</a></div><div class="ttdeci">struct cap_deck * cap_load(const char *path)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00120">cap.c:120</a></div></div>
-<div class="ttc" id="acap_8c_html_af1c09ebe098fe5c6f3bcfbf8424d4544"><div class="ttname"><a href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a></div><div class="ttdeci">static int deck_add_card(struct cap_deck *d)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00042">cap.c:42</a></div></div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span><span class="comment">/* -------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span><span class="comment"> * Self-addressed scatter load (mirrors gdis --image; see cap.h).</span></div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span><span class="comment"> * ------------------------------------------------------------------------- */</span></div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span> </div>
+<div class="foldopen" id="foldopen00227" data-start="{" data-end="}">
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno"><a class="line" href="cap_8c.html#a7870d2f7516e66831e2259233c19ffdc">  227</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a7870d2f7516e66831e2259233c19ffdc">scat_decode_card</a>(<span class="keyword">const</span> uint16_t *<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>, <span class="keywordtype">int</span> <a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a>, <span class="keywordtype">int</span> mode,</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>                            uint8_t out[80])</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>{</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="keywordtype">int</span> n = <a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a> &lt; 80 ? <a class="code hl_variable" href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">ncols</a> : 80;</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span> </div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n; i++)</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        out[i] = <a class="code hl_function" href="transcode_8c.html#a16f4bc947a08873bec5808afb8f8e05f">transcode_column</a>(<a class="code hl_variable" href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cols</a>[i], (<span class="keyword">enum</span> <a class="code hl_enumeration" href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a>)mode);</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span> </div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <span class="keywordflow">return</span> n;</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>}</div>
+</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span> </div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="comment">/* Detect the deck&#39;s dominant 8-byte data-card prefix (cols 0-7). Returns the</span></div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment"> * match count and copies it into out[8]; 0 if no eligible cards. */</span></div>
+<div class="foldopen" id="foldopen00240" data-start="{" data-end="}">
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno"><a class="line" href="cap_8c.html#a0bd2754812055a6ebb336f6aa6f7a378">  240</a></span><span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#a0bd2754812055a6ebb336f6aa6f7a378">scat_detect_prefix</a>(<span class="keyword">struct</span> <a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d, <span class="keywordtype">int</span> mode, uint8_t out[8])</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>{</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <span class="keywordtype">int</span> nc = <a class="code hl_function" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a>(d);</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <span class="keyword">struct </span>{ uint8_t p[8]; <span class="keywordtype">int</span> cnt; } tab[1024];</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    <span class="keywordtype">int</span> ntab = 0, best = -1;</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span> </div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nc; i++) {</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>        <span class="keywordtype">int</span> ncols = <a class="code hl_function" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a>(d, i);</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        <span class="keyword">const</span> uint16_t *cols = <a class="code hl_function" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a>(d, i);</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>        <span class="keywordflow">if</span> (ncols &lt; 11 || !cols)</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>        uint8_t b[80];</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>        <a class="code hl_function" href="cap_8c.html#a7870d2f7516e66831e2259233c19ffdc">scat_decode_card</a>(cols, ncols, mode, b);</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span> </div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>        <span class="keywordtype">int</span> j;</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>        <span class="keywordflow">for</span> (j = 0; j &lt; ntab; j++) {</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>            <span class="keywordflow">if</span> (memcmp(tab[j].p, b, 8) == 0) {</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>                tab[j].cnt++;</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>            }</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>        }</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        <span class="keywordflow">if</span> (j == ntab &amp;&amp; ntab &lt; 1024) {</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>            memcpy(tab[ntab].p, b, 8);</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>            tab[ntab].cnt = 1;</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>            ntab++;</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>        }</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    }</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span> </div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j = 0; j &lt; ntab; j++) {</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        <span class="keywordflow">if</span> (best &lt; 0 || tab[j].cnt &gt; tab[best].cnt)</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            best = j;</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    }</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keywordflow">if</span> (best &lt; 0)</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span> </div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    memcpy(out, tab[best].p, 8);</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    <span class="keywordflow">return</span> tab[best].cnt;</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>}</div>
+</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span> </div>
+<div class="foldopen" id="foldopen00280" data-start="{" data-end="}">
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno"><a class="line" href="cap_8c.html#adee79b64da5b2e2f3ac78148616e8a25">  280</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="cap_8c.html#adee79b64da5b2e2f3ac78148616e8a25">cap_load_scattered</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path, <span class="keywordtype">int</span> mode, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *image,</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>                       <span class="keywordtype">unsigned</span> *lo, <span class="keywordtype">unsigned</span> *hi)</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>{</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structcap__deck.html">cap_deck</a> *d = <a class="code hl_function" href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">cap_load</a>(path);</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    <span class="keywordflow">if</span> (!d)</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>        <span class="keywordflow">return</span> -1;</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span> </div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    uint8_t want[8];</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>    <span class="keywordtype">int</span> have_prefix = (<a class="code hl_function" href="cap_8c.html#a0bd2754812055a6ebb336f6aa6f7a378">scat_detect_prefix</a>(d, mode, want) &gt;= 4);</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keywordtype">int</span> loose = !have_prefix;  <span class="comment">/* no dominant prefix: accept any fitting record */</span></div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span> </div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    <span class="keywordtype">int</span> nc = <a class="code hl_function" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a>(d);</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>    <span class="keywordtype">int</span> loaded = 0;</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>    <span class="keywordtype">long</span> min_a = -1, max_a = -1;</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span> </div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; nc; i++) {</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>        <span class="keywordtype">int</span> ncols = <a class="code hl_function" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a>(d, i);</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>        <span class="keyword">const</span> uint16_t *cols = <a class="code hl_function" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a>(d, i);</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>        <span class="keywordflow">if</span> (ncols &lt; 11 || !cols)</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span> </div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>        uint8_t b[80];</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>        <span class="keywordtype">int</span> n = <a class="code hl_function" href="cap_8c.html#a7870d2f7516e66831e2259233c19ffdc">scat_decode_card</a>(cols, ncols, mode, b);</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span> </div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>        <span class="keywordtype">int</span> match = (have_prefix &amp;&amp; n &gt;= 8 &amp;&amp; memcmp(b, want, 8) == 0);</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>        <span class="keywordtype">int</span> ll    = b[8];</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>        <span class="keywordtype">long</span> addr = ((long)b[9] &lt;&lt; 8) | b[10];</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        <span class="keywordtype">int</span> paylen = ll + 1;</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>        <span class="keywordtype">int</span> fits = (11 + ll &lt; n) &amp;&amp; (addr + ll &lt;= 0xFFFF);</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span> </div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>        <span class="keywordflow">if</span> (!(loose ? fits : (match &amp;&amp; fits)))</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>            <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span> </div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; paylen; k++)</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>            image[addr + k] = b[11 + k];</div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span> </div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>        <span class="keywordflow">if</span> (min_a &lt; 0 || addr &lt; min_a)</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>            min_a = addr;</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>        <span class="keywordflow">if</span> (addr + ll &gt; max_a)</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>            max_a = addr + ll;</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>        loaded++;</div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>    }</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span> </div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>    <a class="code hl_function" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a>(d);</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span> </div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>    <span class="keywordflow">if</span> (loaded == 0 || min_a &lt; 0)</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>        <span class="keywordflow">return</span> -1;</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>    <span class="keywordflow">if</span> (lo)</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>        *lo = (unsigned)min_a;</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    <span class="keywordflow">if</span> (hi)</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>        *hi = (unsigned)max_a;</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>    <span class="keywordflow">return</span> loaded;</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>}</div>
+</div>
+<div class="ttc" id="acap_8c_html_a070640b4b53efca317718eb0bd54c6d0"><div class="ttname"><a href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a></div><div class="ttdeci">const uint16_t * cap_card_columns(const struct cap_deck *d, int i)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00206">cap.c:206</a></div></div>
+<div class="ttc" id="acap_8c_html_a0bd2754812055a6ebb336f6aa6f7a378"><div class="ttname"><a href="cap_8c.html#a0bd2754812055a6ebb336f6aa6f7a378">scat_detect_prefix</a></div><div class="ttdeci">static int scat_detect_prefix(struct cap_deck *d, int mode, uint8_t out[8])</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00240">cap.c:240</a></div></div>
+<div class="ttc" id="acap_8c_html_a0c77cd7f01891cd8d28ce590f26ae81f"><div class="ttname"><a href="cap_8c.html#a0c77cd7f01891cd8d28ce590f26ae81f">is_hex4</a></div><div class="ttdeci">static int is_hex4(const char *s)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00080">cap.c:80</a></div></div>
+<div class="ttc" id="acap_8c_html_a1251ee8c913fe2dd926be9242f329a08"><div class="ttname"><a href="cap_8c.html#a1251ee8c913fe2dd926be9242f329a08">parse_card_header</a></div><div class="ttdeci">static int parse_card_header(const char *line, int *card_num)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00094">cap.c:94</a></div></div>
+<div class="ttc" id="acap_8c_html_a583a35c8a501eeb8831750eb19653340"><div class="ttname"><a href="cap_8c.html#a583a35c8a501eeb8831750eb19653340">card_add_col</a></div><div class="ttdeci">static int card_add_col(struct cap_card *c, uint16_t val)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00062">cap.c:62</a></div></div>
+<div class="ttc" id="acap_8c_html_a7870d2f7516e66831e2259233c19ffdc"><div class="ttname"><a href="cap_8c.html#a7870d2f7516e66831e2259233c19ffdc">scat_decode_card</a></div><div class="ttdeci">static int scat_decode_card(const uint16_t *cols, int ncols, int mode, uint8_t out[80])</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00227">cap.c:227</a></div></div>
+<div class="ttc" id="acap_8c_html_a7bac641a123ee0c90b8ffcee385dddfa"><div class="ttname"><a href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a></div><div class="ttdeci">int cap_card_ncols(const struct cap_deck *d, int i)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00199">cap.c:199</a></div></div>
+<div class="ttc" id="acap_8c_html_aa8ab1f924a5ed22882faceae6b57b904"><div class="ttname"><a href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a></div><div class="ttdeci">int cap_num_cards(const struct cap_deck *d)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00192">cap.c:192</a></div></div>
+<div class="ttc" id="acap_8c_html_aab96e324bbfbb1f18be40b5011ba1745"><div class="ttname"><a href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a></div><div class="ttdeci">void cap_free(struct cap_deck *d)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00213">cap.c:213</a></div></div>
+<div class="ttc" id="acap_8c_html_ab16982f054d631e4d447ba9c3330718b"><div class="ttname"><a href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">cap_load</a></div><div class="ttdeci">struct cap_deck * cap_load(const char *path)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00121">cap.c:121</a></div></div>
+<div class="ttc" id="acap_8c_html_adee79b64da5b2e2f3ac78148616e8a25"><div class="ttname"><a href="cap_8c.html#adee79b64da5b2e2f3ac78148616e8a25">cap_load_scattered</a></div><div class="ttdeci">int cap_load_scattered(const char *path, int mode, unsigned char *image, unsigned *lo, unsigned *hi)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00280">cap.c:280</a></div></div>
+<div class="ttc" id="acap_8c_html_af1c09ebe098fe5c6f3bcfbf8424d4544"><div class="ttname"><a href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a></div><div class="ttdeci">static int deck_add_card(struct cap_deck *d)</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00043">cap.c:43</a></div></div>
 <div class="ttc" id="acap_8h_html"><div class="ttname"><a href="cap_8h.html">cap.h</a></div></div>
-<div class="ttc" id="astructcap__card_html"><div class="ttname"><a href="structcap__card.html">cap_card</a></div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00025">cap.c:25</a></div></div>
-<div class="ttc" id="astructcap__card_html_a3c24e53d783fda16adfb5343473e15f5"><div class="ttname"><a href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cap_card::cols</a></div><div class="ttdeci">uint16_t * cols</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00026">cap.c:26</a></div></div>
-<div class="ttc" id="astructcap__card_html_a7c4b990ebe8d2c098f3974f6ffe0c9b4"><div class="ttname"><a href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">cap_card::ncols</a></div><div class="ttdeci">int ncols</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00027">cap.c:27</a></div></div>
-<div class="ttc" id="astructcap__card_html_acf9933ba9a016c4f3e65bfb6e6800af1"><div class="ttname"><a href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap_card::cap</a></div><div class="ttdeci">int cap</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00028">cap.c:28</a></div></div>
-<div class="ttc" id="astructcap__deck_html"><div class="ttname"><a href="structcap__deck.html">cap_deck</a></div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00031">cap.c:31</a></div></div>
-<div class="ttc" id="astructcap__deck_html_a1e3ce9aec852b81c22fd6c5caaf88d83"><div class="ttname"><a href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">cap_deck::ncards</a></div><div class="ttdeci">int ncards</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00033">cap.c:33</a></div></div>
-<div class="ttc" id="astructcap__deck_html_a95e7e536f589c58889aa55361b5eb28b"><div class="ttname"><a href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cap_deck::cards</a></div><div class="ttdeci">struct cap_card * cards</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00032">cap.c:32</a></div></div>
-<div class="ttc" id="astructcap__deck_html_acf9933ba9a016c4f3e65bfb6e6800af1"><div class="ttname"><a href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap_deck::cap</a></div><div class="ttdeci">int cap</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00034">cap.c:34</a></div></div>
+<div class="ttc" id="astructcap__card_html"><div class="ttname"><a href="structcap__card.html">cap_card</a></div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00026">cap.c:26</a></div></div>
+<div class="ttc" id="astructcap__card_html_a3c24e53d783fda16adfb5343473e15f5"><div class="ttname"><a href="structcap__card.html#a3c24e53d783fda16adfb5343473e15f5">cap_card::cols</a></div><div class="ttdeci">uint16_t * cols</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00027">cap.c:27</a></div></div>
+<div class="ttc" id="astructcap__card_html_a7c4b990ebe8d2c098f3974f6ffe0c9b4"><div class="ttname"><a href="structcap__card.html#a7c4b990ebe8d2c098f3974f6ffe0c9b4">cap_card::ncols</a></div><div class="ttdeci">int ncols</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00028">cap.c:28</a></div></div>
+<div class="ttc" id="astructcap__card_html_acf9933ba9a016c4f3e65bfb6e6800af1"><div class="ttname"><a href="structcap__card.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap_card::cap</a></div><div class="ttdeci">int cap</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00029">cap.c:29</a></div></div>
+<div class="ttc" id="astructcap__deck_html"><div class="ttname"><a href="structcap__deck.html">cap_deck</a></div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00032">cap.c:32</a></div></div>
+<div class="ttc" id="astructcap__deck_html_a1e3ce9aec852b81c22fd6c5caaf88d83"><div class="ttname"><a href="structcap__deck.html#a1e3ce9aec852b81c22fd6c5caaf88d83">cap_deck::ncards</a></div><div class="ttdeci">int ncards</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00034">cap.c:34</a></div></div>
+<div class="ttc" id="astructcap__deck_html_a95e7e536f589c58889aa55361b5eb28b"><div class="ttname"><a href="structcap__deck.html#a95e7e536f589c58889aa55361b5eb28b">cap_deck::cards</a></div><div class="ttdeci">struct cap_card * cards</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00033">cap.c:33</a></div></div>
+<div class="ttc" id="astructcap__deck_html_acf9933ba9a016c4f3e65bfb6e6800af1"><div class="ttname"><a href="structcap__deck.html#acf9933ba9a016c4f3e65bfb6e6800af1">cap_deck::cap</a></div><div class="ttdeci">int cap</div><div class="ttdef"><b>Definition</b> <a href="cap_8c_source.html#l00035">cap.c:35</a></div></div>
+<div class="ttc" id="atranscode_8c_html_a16f4bc947a08873bec5808afb8f8e05f"><div class="ttname"><a href="transcode_8c.html#a16f4bc947a08873bec5808afb8f8e05f">transcode_column</a></div><div class="ttdeci">uint8_t transcode_column(uint16_t column, enum transcode_mode mode)</div><div class="ttdef"><b>Definition</b> <a href="transcode_8c_source.html#l00564">transcode.c:564</a></div></div>
+<div class="ttc" id="atranscode_8h_html"><div class="ttname"><a href="transcode_8h.html">transcode.h</a></div></div>
+<div class="ttc" id="atranscode_8h_html_a0537f914f7639fb4485a2963402ea69a"><div class="ttname"><a href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a></div><div class="ttdeci">transcode_mode</div><div class="ttdef"><b>Definition</b> <a href="transcode_8h_source.html#l00018">transcode.h:18</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
