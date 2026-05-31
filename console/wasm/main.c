@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <emscripten.h>
 
 #ifndef EMSCRIPTEN_KEEPALIVE
@@ -12,6 +13,8 @@
 #include "../../printer.h"
 #include "../../disasm.h"
 #include "../../binimage.h"
+#include "../../cap.h"
+#include "../../transcode.h"
 #include "../../bit.h"
 
 struct ge ge130;
@@ -191,6 +194,28 @@ int EMSCRIPTEN_KEEPALIVE stage_image(void) {
     fclose(f);
     staged = (rc == BINIMAGE_OK);
     return rc;
+}
+
+/* Stage a .cap deck (written to /deck.cap by the page) by scattering each card's
+ * payload to its embedded load address — the same self-addressed deck format as
+ * the CLI default (cap_load_scattered). The populated span is moved down to the
+ * start of staged_img so press_start's ge_load_image(origin) path is shared with
+ * the .bin loader. Returns 0 on success, -1 on parse/empty error. */
+int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
+    unsigned lo = 0, hi = 0;
+
+    memset(staged_img, 0, sizeof staged_img);
+    int nc = cap_load_scattered("/deck.cap", TC_COLBIN, staged_img, &lo, &hi);
+    if (nc < 0)
+        return -1;
+
+    unsigned len = hi - lo + 1;
+    memmove(staged_img, staged_img + lo, len);
+    staged_origin = (uint16_t)lo;
+    staged_entry  = (uint16_t)lo;
+    staged_len    = (uint16_t)len;
+    staged = 1;
+    return 0;
 }
 
 void EMSCRIPTEN_KEEPALIVE press_start() {
