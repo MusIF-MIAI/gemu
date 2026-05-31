@@ -18,8 +18,20 @@
 
 /* Run whole cycles until the machine returns to alpha (e2/e3) right after a
  * beta phase (64/65) — i.e. one instruction has completed. */
+/* Establish the change-register cache from the shadow RAM a test set up before
+ * running (addressing reads the cache, not mem[240+2N]; see struct ge::cr_cache).
+ * This mirrors program load establishing the registers; in-execution writes to
+ * the shadow RAM still do NOT update the cache. */
+static void sync_cr_cache(struct ge *g)
+{
+    for (int n = 0; n < 8; n++)
+        g->cr_cache[n] = (uint16_t)((g->mem[240 + 2 * n] << 8) |
+                                     g->mem[240 + 2 * n + 1]);
+}
+
 static void run_one(struct ge *g)
 {
+    sync_cr_cache(g);
     int last = -1;
     for (int i = 0; i < 40; i++) {
         ge_run_cycle(g);
@@ -35,6 +47,7 @@ static void run_one(struct ge *g)
  * has completed via Mechanism B. */
 static void run_one_ss(struct ge *g)
 {
+    sync_cr_cache(g);
     int last = -1;
     for (int i = 0; i < 40; i++) {
         ge_run_cycle(g);

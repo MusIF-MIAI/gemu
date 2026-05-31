@@ -149,6 +149,13 @@ static uint16_t cr_rd16(struct ge* ge, uint16_t a) {
 static void cr_wr16(struct ge* ge, uint16_t a, uint16_t v) {
     ge_mem_store8(ge, a, (uint8_t)(v >> 8));
     ge_mem_store8(ge, (uint16_t)(a + 1), (uint8_t)(v & 0xff));
+    /* cr_wr16 is the register-instruction write path (LR/LA/AMR/SMR/JRT, always
+     * to a change-register slot 240+2N). Keep the addressing cache in sync here
+     * so a register instruction updates live addressing — but a GENERAL memory
+     * write to 0xF0-0xFF (e.g. a destructive memory test) does NOT, leaving
+     * addressing intact. See struct ge::cr_cache. */
+    if (a >= 240 && a <= 254 && !(a & 1))
+        ge->cr_cache[(a - 240) >> 1] = v;
 }
 
 /* Register-op MEMORY operand: the instruction address (V1) points to the
@@ -184,10 +191,12 @@ static void mem_wr16_op(struct ge* ge, uint16_t a, uint16_t v) {
  * 15-bit address space. The change registers live at mem[240+2N] and default to
  * base[N] = N<<12 at reset (ge_clear); programs reload a base via LR/LA/AMR. */
 
-/* Read change register N (16-bit big-endian at mem[240+2N]). */
+/* Read change register N for modified-address resolution. Reads the hardware
+ * CACHE (cr_cache), not the mem[240+2N] shadow RAM, so a destructive memory test
+ * writing 0xF0-0xFF does not corrupt live addressing. The cache is kept in sync
+ * with register-instruction writes by cr_wr16 and seeded by ge_seed_segment_bases. */
 static uint16_t cr_base(struct ge* ge, int n) {
-    uint16_t a = (uint16_t)(240 + (n & 7) * 2);
-    return (uint16_t)((ge->mem[a] << 8) | ge->mem[(uint16_t)(a + 1)]);
+    return ge->cr_cache[n & 7];
 }
 
 /* Effective V1 for single-address PM/SI ops: V1 already holds the resolved EA

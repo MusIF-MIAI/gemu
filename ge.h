@@ -126,6 +126,20 @@ struct ge {
     uint16_t rV4; ///< Addresser for external instructions using channel 2
 
     /**
+     * Change/segment-register CACHE used for modified-address resolution.
+     * The eight change registers are hardware-cached: addressing (EXEC_INDEX ->
+     * cr_base) reads this cache, which is updated only by the register
+     * instructions (LR/LA/AMR/SMR/JRT, via cr_wr16) and by ge_seed_segment_bases
+     * — NOT by general memory writes. This mirrors real hardware: a destructive
+     * memory test that writes the change-register shadow RAM at mem[240+2N]
+     * (0xF0-0xFF) as part of testing the 0-8K region does NOT corrupt live
+     * addressing (the CPU keeps using the cached registers), so the test's own
+     * save/restore logic can run. mem[240+2N] remains the shadow RAM the
+     * register instructions read/write and that the test exercises.
+     */
+    uint16_t cr_cache[8];
+
+    /**
      * Photoprint register
      * 8-bit register used to store the photodisc codes.
      */

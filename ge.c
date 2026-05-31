@@ -67,6 +67,7 @@ void ge_seed_segment_bases(struct ge *ge)
         uint16_t v = (uint16_t)(n << 12);
         ge->mem[240 + 2 * n]     = (uint8_t)(v >> 8);
         ge->mem[240 + 2 * n + 1] = (uint8_t)(v & 0xff);
+        ge->cr_cache[n]          = v;   /* seed the addressing cache to match */
     }
 }
 
