@@ -157,10 +157,13 @@ void send_console() {
     set_lamp("LOAD_2",         console.lamps.LOAD_2        );
     set_lamp("OPERATOR_CALL",  console.lamps.OPERATOR_CALL );
 
-    /* gdb-style disassembly window centred on the program counter (PO). */
+    /* gdb-style disassembly window centred on the instruction-start PC
+     * (latched in the alpha fetch), so the highlight stays on the instruction
+     * being executed instead of drifting onto operand bytes / the next line as
+     * the live PO advances mid-instruction (e.g. while computing a jump). */
     {
         static char dis[1536];
-        ge_disasm_window(ge->mem, ge->rPO, 5, 6, dis, sizeof dis);
+        ge_disasm_window(ge->mem, ge->instr_pc, 5, 6, dis, sizeof dis);
         set_disasm(dis);
     }
 }

@@ -305,6 +305,16 @@ int ge_run_pulse(struct ge *ge)
         return 1;
     }
 
+    /* Latch the instruction-start PC for the disassembly display. In the alpha
+     * fetch (e2/e3) PO addresses the opcode and is NOT advanced within the state
+     * (operand fetch / PO recomputation happens in the later e0/e4/e6 states), so
+     * this is the address of the instruction now executing. It stays put while
+     * operands are read and PO is recomputed (e.g. across a jump), so a UI
+     * highlight tracking it does not drift onto operand (DB) bytes or the next
+     * line — it only moves when the next instruction is actually fetched. */
+    if (ge->rSA == 0xe2 || ge->rSA == 0xe3)
+        ge->instr_pc = ge->rPO;
+
     msl_run_state(ge, state);
 
     if (ge_clock_is_last(ge)) {

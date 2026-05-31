@@ -112,6 +112,14 @@ struct ge {
      */
     uint16_t rPO;
 
+    /**
+     * Instruction-start PC (display aid, not a real register). Latched in the
+     * alpha fetch (state e2/e3) to the address of the opcode being executed, so
+     * UI disassembly can highlight the current instruction without drifting onto
+     * operands or the next line as rPO advances mid-instruction.
+     */
+    uint16_t instr_pc;
+
     uint16_t rV1; ///< Addresser for the first operand
     uint16_t rV2; ///< Addresser for the second operand
     uint16_t rV3; ///< Addresser for external instructions using channel 3
