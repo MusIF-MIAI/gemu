@@ -29,6 +29,7 @@
 #include "../ge.h"
 #include "../printer.h"
 #include "../binimage.h"
+#include "../opcodes.h"
 #include "../log.h"
 
 #include <stdio.h>
@@ -108,10 +109,13 @@ UTEST(printer, present_completes_channel2_per)
         UTEST_SKIP("fixture ../DUMP1/funktionalcpu.bin not present");
         return;
     }
-    /* The print PER completed and execution returned to the post-PER code. */
+    /* The print PER completed and execution returned to the post-PER code
+     * (the machine did not park forever in the b8 external request-wait). */
     ASSERT_EQ(r, 1);
-    /* Something was captured into the paper-feed buffer. */
-    ASSERT_GT(out_len, 0);
+    /* funktionalcpu's report PER is a control/order op, not a data transfer, so
+     * nothing is printed — the one-shot completes it but emits no text (real
+     * output comes only from an armed transfer; see output_per_prints). */
+    ASSERT_EQ(out_len, 0);
 }
 
 UTEST(printer, absent_leaves_machine_waiting)
@@ -231,6 +235,52 @@ UTEST(printer, channel2_output_driven)
     ASSERT_EQ(o[0], 'H');
     ASSERT_EQ(o[1], 'I');
     ASSERT_EQ(o[2], '\n');
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * printer.output_per_prints  (end-to-end)
+ *
+ * The machine executes a real channel-2 output PER; the printer detects the put
+ * command + order block, arms the transfer, and the rSI output microcode drains
+ * the buffer to the typewriter. Order block {z, cmd, len_hi, len_lo, buf_hi,
+ * buf_lo}; put command (bit 7) + plausible length triggers the print.
+ * -------------------------------------------------------------------------- */
+UTEST(printer, output_per_prints)
+{
+    struct ge g;
+    ge_init(&g);
+
+    /* PER connector-2, order block @ 0x10. */
+    g.mem[0] = PER_OPCODE; g.mem[1] = 0x80; g.mem[2] = 0x00; g.mem[3] = 0x10;
+    /* z=0x80 (L207 output), cmd=0x85 (put), len=5, buffer=0x0200 */
+    g.mem[0x10] = 0x80; g.mem[0x11] = 0x85;
+    g.mem[0x12] = 0x00; g.mem[0x13] = 0x05;
+    g.mem[0x14] = 0x02; g.mem[0x15] = 0x00;
+    /* "HELLO" in GE graphic code. */
+    g.mem[0x200] = 0x58; g.mem[0x201] = 0x55; g.mem[0x202] = 0xA3;
+    g.mem[0x203] = 0xA3; g.mem[0x204] = 0xA6;
+
+    ge_clear(&g);
+    printer_register(&g);
+    ge_start(&g);
+
+    for (int i = 0; i < 80; i++) {
+        if (ge_run_cycle(&g))
+            break;
+        if (g.halted)
+            break;
+    }
+
+    const char *o = printer_output(&g);
+    ASSERT_EQ(printer_output_len(&g), 6);   /* "HELLO" + newline */
+    ASSERT_EQ(o[0], 'H');
+    ASSERT_EQ(o[1], 'E');
+    ASSERT_EQ(o[2], 'L');
+    ASSERT_EQ(o[3], 'L');
+    ASSERT_EQ(o[4], 'O');
+    ASSERT_EQ(o[5], '\n');
 
     ge_deinit(&g);
 }

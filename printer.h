@@ -10,13 +10,14 @@
  * state_b8 microcode (CU01/CU13/CU14/CU06) routes B8 -> alpha with the CPU
  * context intact. No state is forced from outside.
  *
- * Capture is best-effort: at completion the print order block referenced by the
- * channel-2 operand addresser (rV2) is read into the paper-feed buffer, each
- * byte rendered through the GE 100-series internal graphic set (gecode.c) — the
- * machine's own character code, not ASCII. The per-character channel-2 transfer
- * itself is not modelled, so what rV2 points at may be the order block rather
- * than the text buffer (e.g. the funktionalcpu PER -> non-graphic control bytes,
- * rendered '.'); a faithful line needs the channel-2 transfer states wired.
+ * Output is a real per-character transfer: an output PER's order block (entry at
+ * state c8, base = rV1; {z, cmd, len_hi, len_lo, buf_hi, buf_lo}) arms the
+ * transfer engine when the command is a put (bit 7) with a plausible length, and
+ * the rSI output microcode (state 02, CE16) drains mem[buf..] over channel 2 to
+ * the sink, each byte rendered through the GE 100-series graphic set (gecode.c) —
+ * the machine's own code, not ASCII. A channel-2 PER that parks at the b8 wait
+ * but is NOT an armed data transfer (a control/order PER, e.g. funktionalcpu's
+ * banner/report) is completed but prints nothing.
  *
  * Two-way: kbd[] is the operator-keyboard input queue (printer_feed_key); the
  * wasm/interactive front-end pushes typed characters here.

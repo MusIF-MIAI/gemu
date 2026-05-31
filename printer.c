@@ -41,14 +41,19 @@
  * 256 is comfortably above any inter-byte gap yet imperceptible to the user. */
 #define STALL_THRESHOLD 256
 
-/* Bound on bytes read from the print order block per completed PER. A printer
- * line is at most ~132 columns; cap well above that and stop at a NUL. */
-#define CAPTURE_MAX 160
-
 struct printer_ctx {
-    int            stall;     /* consecutive idle channel-2 wait cycles */
+    int            stall;       /* consecutive idle channel-2 wait cycles */
+    int            per_pending; /* a channel-2 PER org-phase is in progress */
+    uint16_t       per_base;    /* its order-block base (rV1 at state c8) */
     struct ge_peri peri;
 };
+
+/* A channel-2 PER order block is {z, cmd, len_hi, len_lo, buf_hi, buf_lo}
+ * (perperi-validated). A put/print command has bit 7 set; a length beyond a
+ * print line is taken as a control PER (e.g. funktionalcpu's banner, whose
+ * 2-byte order overlaps the following code) and ignored. */
+#define PRINT_CMD_IS_PUT(cmd) ((cmd) & 0x80)
+#define PRINT_LEN_MAX 256
 
 /* Is the machine parked in the channel-2 org-phase external request-wait?
  * rSO=b8 pending, rSA=0 (CPU suspended/idle), CPU-active request not raised,
@@ -60,35 +65,6 @@ static int in_channel2_print_wait(struct ge *ge)
            ge->rSA == 0x00 &&
            !ge->RC00 &&
            ge->integrated_reader.lu08 == 0;
-}
-
-/* Best-effort capture of the print order block at completion: read up to
- * CAPTURE_MAX bytes from the channel-2 operand addresser (rV2), rendering each
- * through the GE 100-series internal graphic set (gecode.c) — the machine's own
- * character code, NOT ASCII — and stopping at a NUL. Non-graphic codes render
- * '.'. Honest about its limits — see printer.h. */
-static void capture_line(struct ge *ge)
-{
-    struct ge_integrated_printer *p = &ge->integrated_printer;
-    uint16_t addr = ge->rV2;
-    int n = 0;
-
-    for (n = 0; n < CAPTURE_MAX; n++) {
-        uint16_t a = (uint16_t)(addr + n);
-        uint8_t b = ge->mem[a];
-        if (b == 0x00)
-            break;
-        if (p->out_len >= (int)sizeof(p->out) - 2)
-            break;
-        p->out[p->out_len++] = ge_glyph(b);
-    }
-    if (p->out_len < (int)sizeof(p->out) - 1)
-        p->out[p->out_len++] = '\n';
-    p->out[p->out_len] = '\0';
-
-    ge_log(LOG_PERI,
-           "printer: completed channel-2 PER, captured %d byte(s) from V2=0x%04x\n",
-           n, addr);
 }
 
 /*
@@ -131,6 +107,25 @@ static int printer_on_clock(struct ge *ge, void *opaque)
         return 0;
     }
 
+    /* Arm an output transfer from a channel-2 print PER. At the org-phase entry
+     * (SO=0xc8) rV1 is the order-block base; when the PER returns to alpha (e2),
+     * decode the order and, for a put command with a plausible length, start the
+     * transfer engine (which then drains the buffer over channel 2). */
+    if (ge->rSO == 0xc8) {
+        ctx->per_pending = 1;
+        ctx->per_base = ge->rV1;
+    } else if (ctx->per_pending && ge->rSO == 0xe2) {
+        uint16_t base = ctx->per_base;
+        uint8_t  cmd  = ge->mem[(uint16_t)(base + 1)];
+        int      len  = (ge->mem[(uint16_t)(base + 2)] << 8) |
+                         ge->mem[(uint16_t)(base + 3)];
+        uint16_t buf  = (ge->mem[(uint16_t)(base + 4)] << 8) |
+                         ge->mem[(uint16_t)(base + 5)];
+        ctx->per_pending = 0;
+        if (PRINT_CMD_IS_PUT(cmd) && len >= 1 && len <= PRINT_LEN_MAX)
+            printer_begin_output(ge, buf, len);
+    }
+
     if (!in_channel2_print_wait(ge)) {
         ctx->stall = 0;
         return 0;
@@ -139,8 +134,11 @@ static int printer_on_clock(struct ge *ge, void *opaque)
     if (++ctx->stall < STALL_THRESHOLD)
         return 0;
 
-    /* Genuine channel-2 print-wait: capture + complete via the native path. */
-    capture_line(ge);
+    /* A channel-2 PER parked at the b8 external request-wait that is NOT a data
+     * print (no order-block transfer was armed above) — e.g. a control/order PER
+     * such as funktionalcpu's banner/report. Complete it via the native path so
+     * the CPU resumes, but emit nothing: real printed text comes only from an
+     * armed output transfer, not from heuristically scraping the order block. */
     ge->PUC2 = 1;   /* channel-2 unit ready  -> DU97 = 1 (PUC2 ^ L2.3) */
     ge->RC00 = 1;   /* CPU-active request    -> NA_knot routes rSO=b8 into rSA */
     ctx->stall = 0; /* one-shot; rSO leaves b8 next cycle */
