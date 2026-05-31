@@ -176,18 +176,44 @@ void EMSCRIPTEN_KEEPALIVE press_power_off() { running_loop = 0; send_console(); 
 /* Push the real lamp states again (used to restore the panel after a momentary
  * LAMPS CHECK bulb-test, which forces every lamp on from the JS side). */
 void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { send_console(); }
-void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
-void EMSCRIPTEN_KEEPALIVE press_load()  { ge_load(ge);  send_console(); }
-
-/* Simplified loader (temporary): a unified-format image staged by the page is
- * dropped straight into memory on the CLEAR-LOAD-START sequence, bypassing the
- * (not-yet-faithful) card-reader bootstrap. We detect the sequence by AINI,
- * which LOAD sets: a START with AINI set + an image staged => magic-load it and
- * enter at its entry point. A bare START (resume, AINI=0) just runs. */
+/* A unified-format image (.bin) or scattered .cap deck staged by the page; LOAD
+ * drops it into memory (see press_load / stage_image / stage_cap). */
 static uint8_t  staged_img[MEM_SIZE];
 static uint16_t staged_origin, staged_entry, staged_len;
 static int      staged = 0;
 
+void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
+
+/* LOAD.
+ *
+ * If a deck has been staged (file picker -> stage_cap/stage_image), LOAD now
+ * magic-loads it into memory and positions PO at its entry, but does NOT run.
+ * This leaves the authentic operator window between LOAD and START to force
+ * values into memory via the register dials (e.g. the test-select option at
+ * 0x0E00: dial V1 <- 0x0E00, V1_SCR <- 0x40), which then survive into the run
+ * because START no longer reloads the image.
+ *
+ * With no staged deck, LOAD is the real card-reader bootstrap: set AINI so the
+ * 80 -> c8 IPL sequence pulls the mounted deck in through the reader. */
+void EMSCRIPTEN_KEEPALIVE press_load()  {
+    if (staged) {
+        ge_load_image(ge, staged_img, staged_len, staged_origin);
+        ge_seed_segment_bases(ge);
+        ge_enter(ge, staged_entry);
+        ge->halted = 0;
+        ge->AINI   = 0;   /* magic-loaded: no bootstrap IPL */
+    } else {
+        ge_load(ge);      /* authentic bootstrap: AINI drives the reader IPL */
+    }
+    send_console();
+}
+
+/* Simplified loader (temporary): a unified-format image (or scattered .cap)
+ * staged by the page is dropped straight into memory by LOAD (press_load),
+ * bypassing the (not-yet-faithful) card-reader bootstrap, with PO positioned at
+ * its entry. START then just runs it. LOAD-loads / START-runs keeps the operator
+ * window for console memory-forcing between the two, and lets START resume a
+ * halted machine without re-wiping forced values. */
 int EMSCRIPTEN_KEEPALIVE stage_image(void) {
     FILE *f = fopen("/image.bin", "rb");
     if (!f)
@@ -202,7 +228,7 @@ int EMSCRIPTEN_KEEPALIVE stage_image(void) {
 /* Stage a .cap deck (written to /deck.cap by the page) by scattering each card's
  * payload to its embedded load address — the same self-addressed deck format as
  * the CLI default (cap_load_scattered). The populated span is moved down to the
- * start of staged_img so press_start's ge_load_image(origin) path is shared with
+ * start of staged_img so press_load's ge_load_image(origin) path is shared with
  * the .bin loader. Returns 0 on success, -1 on parse/empty error. */
 int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
     unsigned lo = 0, hi = 0;
@@ -222,13 +248,12 @@ int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
 }
 
 void EMSCRIPTEN_KEEPALIVE press_start() {
-    if (staged && ge->AINI) {              /* CLEAR-LOAD-START: magic-load */
-        ge_load_image(ge, staged_img, staged_len, staged_origin);
-        ge_seed_segment_bases(ge);
-        ge_enter(ge, staged_entry);
-        ge->AINI = 0;                      /* consume the load request */
-        running_loop = 1;                  /* power on + run */
-    }
+    /* START always runs the machine (NORM). The deck is already resident and
+     * entered by LOAD, so START just releases the CPU. Clearing `halted` lets a
+     * START after a HLT resume — and because LOAD (not START) loads the image,
+     * anything the operator forced into memory after LOAD survives the run. */
+    ge->halted   = 0;
+    running_loop = 1;
     ge_start(ge);
     send_console();
 }
