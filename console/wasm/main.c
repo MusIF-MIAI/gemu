@@ -9,6 +9,7 @@
 #include "../../ge.h"
 #include "../../console.h"
 #include "../../cardreader.h"
+#include "../../printer.h"
 #include "../../disasm.h"
 #include "../../binimage.h"
 #include "../../bit.h"
@@ -34,6 +35,29 @@ EM_JS(void, set_lamp, (const char *lamp, int val), {
 EM_JS(void, set_disasm, (const char *text), {
     document.set_disasm(UTF8ToString(text));
 });
+
+/* Integrated printer/typewriter (channel 2) -> the chat transcript. */
+EM_JS(void, printer_emit, (const char *text), {
+    if (document.gemu_printer_emit) document.gemu_printer_emit(UTF8ToString(text));
+});
+
+/* Bytes the machine has already printed and echoed to the chat panel. */
+static int printer_echoed = 0;
+
+/* Push any newly-captured printer output to the JS chat transcript. */
+static void drain_printer(void) {
+    int olen = printer_output_len(ge);
+    if (olen <= printer_echoed)
+        return;
+    /* printer_output() is NUL-terminated; emit only the new tail. */
+    printer_emit(printer_output(ge) + printer_echoed);
+    printer_echoed = olen;
+}
+
+/* Feed one operator-keyboard byte (two-way chat input). Exposed to JS. */
+void EMSCRIPTEN_KEEPALIVE printer_key(int c) {
+    printer_feed_key(ge, (uint8_t)c);
+}
 
 void send_console() {
     struct ge_console console = { 0 };
@@ -288,6 +312,7 @@ void em_main_loop() {
          * console forcing/display stay live. */
     }
 
+    drain_printer();                          /* push any printed output to the chat */
     send_console();                           /* refresh the panel once per frame */
 }
 
@@ -297,6 +322,10 @@ int main() {
      * (ge_log early-returns on a type miss, so this is also the fast path). */
     ge_log_set_active_types(0);
     ge_init(ge);
+
+    /* Integrated printer/typewriter on channel 2: completes print PERs so the
+     * machine does not hang on output, and captures characters into the chat. */
+    printer_register(ge);
 
     send_console();
 

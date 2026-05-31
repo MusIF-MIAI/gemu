@@ -20,6 +20,8 @@ void ge_init(struct ge *ge)
 
     ge->ST3.name = "ST3";
     ge->ST4.name = "ST4";
+
+    ge->channel2.name = "CAN2";
 }
 
 void ge_clear(struct ge *ge)

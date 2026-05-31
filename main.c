@@ -9,9 +9,11 @@
 #include "ge.h"
 #include "console_socket.h"
 #include "cardreader.h"
+#include "printer.h"
 #include "transcode.h"
 #include "binimage.h"
 #include "log.h"
+#include <fcntl.h>
 
 /*
  * Forward declaration for ge_log_set_active_types_from_spec, which is being
@@ -156,6 +158,13 @@ int main(int argc, char *argv[])
             sw1_init = 1;
         } else if (strcmp(argv[i], "--switch2") == 0) {
             sw2_init = 1;
+        } else if (strcmp(argv[i], "--bin") == 0) {
+            /* Force direct binary (unified-format) load — debugging path. */
+            if (i + 1 >= argc) {
+                fprintf(stderr, "error: --bin requires an argument\n");
+                return 1;
+            }
+            image_path = argv[++i];
         } else if (strcmp(argv[i], "--raw") == 0) {
             raw = 1;
         } else if (strcmp(argv[i], "--org") == 0) {
@@ -182,8 +191,18 @@ int main(int argc, char *argv[])
             fprintf(stderr, "error: unknown option '%s'\n", argv[i]);
             print_usage(argv[0]);
             return 1;
-        } else if (!image_path) {
-            image_path = argv[i];   /* positional: unified-format image */
+        } else if (!image_path && !deck_path) {
+            /* Positional input. The DEFAULT is the authentic card-reader flow:
+             * a `.cap` deck is fed through the reader (CLEAR/LOAD/START
+             * bootstrap). Any other file (e.g. a `.bin`) is a direct
+             * unified-format binary load — the debugging path. `--deck` / `--bin`
+             * force the respective path explicitly. */
+            const char *p = argv[i];
+            size_t n = strlen(p);
+            if (n >= 4 && strcmp(p + n - 4, ".cap") == 0)
+                deck_path = p;
+            else
+                image_path = p;
         } else {
             fprintf(stderr, "error: unexpected argument '%s'\n", argv[i]);
             print_usage(argv[0]);
@@ -294,14 +313,39 @@ int main(int argc, char *argv[])
         signal(SIGUSR2, on_sigusr2);
         if (!trace_set)
             ge_log_set_active_types_from_spec("none");
+        /* Integrated printer/typewriter on channel 2: completes print PERs (so
+         * the machine does not hang waiting for a device gemu does not drive at
+         * signal level) and captures output. Two-way: bytes typed on stdin are
+         * fed to the operator keyboard queue (non-blocking). */
+        printer_register(&ge);
+        int kbd_fl = fcntl(0, F_GETFL, 0);
+        if (kbd_fl != -1)
+            fcntl(0, F_SETFL, kbd_fl | O_NONBLOCK);
+        int printed = 0;   /* bytes of printer output already echoed to stdout */
         long pid = (long)getpid();
         printf("interactive: pid=%ld  SWITCH1=%d SWITCH2=%d\n", pid, ge.JS1, ge.JS2);
         printf("  kill -USR1 %ld   # toggle SWITCH 1 (JS1)\n", pid);
         printf("  kill -USR2 %ld   # toggle SWITCH 2 (JS2)\n", pid);
+        printf("  type to feed the operator keyboard; printer output appears as 'PRN> ...'\n");
         fflush(stdout);
         uint8_t last_step = ge.mem[0x0010];
         int was_halted = -1;
         for (;;) {
+            /* Drain newly-printed characters to the terminal. */
+            int olen = printer_output_len(&ge);
+            if (olen > printed) {
+                const char *o = printer_output(&ge);
+                printf("PRN> %.*s", olen - printed, o + printed);
+                printed = olen;
+                fflush(stdout);
+            }
+            /* Feed any typed bytes to the operator keyboard queue. */
+            {
+                unsigned char kb[64];
+                ssize_t r = read(0, kb, sizeof kb);
+                for (ssize_t k = 0; k < r; k++)
+                    printer_feed_key(&ge, kb[k]);
+            }
             if (g_toggle_js1) {
                 g_toggle_js1 = 0; ge.JS1 = !ge.JS1;
                 printf("[cyc %ld] SWITCH 1 -> %d   PO=%04x step=0x%02x%s\n",

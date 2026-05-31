@@ -758,7 +758,20 @@ static uint8_t state_cc_TO50_CE00(struct ge *ge) {
 
 
 static uint8_t state_cc_TI06_CU13(struct ge *ge) {
-    return (PCOV(ge) && DU96(ge) && !DU95(ge)) || BIT(ge->ffFA, 0);
+    /* CU13 resets future_state bit 3. The original `|| FA00` term cleared bit 3
+     * on a unit-busy (FA00) exit, which sent CC -> 0xd2 (an interrupt-save
+     * state) instead of recycling to D8 to wait for the unit. Per the PER-PERI
+     * preliminary-phase flow chart (14023130F, CPU[7] render-pg 32): when FA05
+     * is clear and FA00 is set ("UNITA' OCCUPATA / UNIT BUSY") the sequence goes
+     * "again back to D8". Dropping FA00 here keeps bit 3 set so CC -> 0xd8 (with
+     * the CU11/CU04 below). The FA00=0 bootstrap path is unchanged. */
+    return (PCOV(ge) && DU96(ge) && !DU95(ge));
+}
+
+/* Unit-busy recycle: FA05 clear, FA00 set -> reset future_state bit 1 so the
+ * CC exit lands on 0xd8 (D8) rather than 0xda. (CU04 below sets bit 4.) */
+static uint8_t state_cc_TI06_CU11_busy(struct ge *ge) {
+    return !BIT(ge->ffFA, 5) && BIT(ge->ffFA, 0);
 }
 
 static uint8_t state_cc_TI06_CU05(struct ge *ge) {
@@ -797,6 +810,7 @@ static const struct msl_timing_chart state_cc[] = {
     { TI06, CU05, state_cc_TI06_CU05 },
     { TI06, CU04, state_cc_TI06_CU04 },
     { TI06, CU01, state_cc_TI06_CU01 },
+    { TI06, CU11, state_cc_TI06_CU11_busy },  /* FA00 unit-busy -> recycle to D8 */
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -908,6 +922,16 @@ static uint8_t state_b8_TI06_CI72(struct ge *ge) { return BIT(ge->rL2, 0) && BIT
 static uint8_t DU97_or_DU98(struct ge *ge) { return DU97(ge) || DU98(ge); }
 static uint8_t state_b8_TI10_CE09(struct ge *ge) { return !BIT(ge->ffFA, 0) && !BIT(ge->rL2, 3) && !ge->RACI; }
 
+/* State b8 is the org-phase external request-wait for a channel-2 transfer.
+ * The natural exit to alpha is gated on DU97 (= PUC2 ^ L2.3): when the channel-2
+ * unit signals "ready/done" (PUC2), CU01/CU13/CU14/CU06 build the PER-completion
+ * future_state and the sequencer returns to alpha with the CPU context intact.
+ * gemu does not drive channel-2 timing at signal level, so for an integrated
+ * printer/typewriter the printer peripheral (printer.c) asserts PUC2 (and the
+ * CPU-active request RC00) at this wait; the completion is then performed by the
+ * machine's own microcode here, NOT by forcing the state from outside. The
+ * bootstrap/reader tests register no printer and never assert PUC2, so they are
+ * unaffected. See the LPSR/TPER channel-2 flow charts (B8 -> E2|E3 via DU97). */
 static const struct msl_timing_chart state_b8[] = {
     { TI06, CI72, state_b8_TI06_CI72 },
     { TI06, CI70, 0 },

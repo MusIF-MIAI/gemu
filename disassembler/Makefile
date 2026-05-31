@@ -5,8 +5,8 @@
 CC      ?= cc
 CFLAGS  ?= -std=c99 -Wall -Wextra -O2 -I..
 
-gdis: gdis.c ../cap.c ../transcode.c ../binimage.c
-	$(CC) $(CFLAGS) -o $@ gdis.c ../cap.c ../transcode.c ../binimage.c
+gdis: gdis.c ../cap.c ../transcode.c ../binimage.c ../gecode.c
+	$(CC) $(CFLAGS) -o $@ gdis.c ../cap.c ../transcode.c ../binimage.c ../gecode.c
 
 # Regenerate the named (annotated) disassembly of the CPU functional-test deck
 # from its checked-in .sym symbol file. funktionalcpu.sym.s is committed so the

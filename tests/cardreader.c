@@ -252,6 +252,16 @@ UTEST(cardreader, funktionalcpu_first_card)
     fclose(probe);
     ASSERT_EQ((int)nr, 80);
 
+    /* STALE-ORACLE GUARD (see bootstrap.c): funktionalcpu.bin is now a
+     * unified-format scatter image ("GE12" header), not a raw card-0 dump, so a
+     * .bin-derived card-0 oracle no longer holds. The authentic load is covered
+     * by bootstrap.channel_state_sequence. Skip until repointed to a .cap oracle. */
+    if (bin[0] == 'G' && bin[1] == 'E' && bin[2] == '1' && bin[3] == '2') {
+        printf("  [SKIP] funktionalcpu.bin is a unified-format scatter image; "
+               ".bin-derived card-0 oracle is stale\n");
+        return;
+    }
+
     /* Compute oracle mem[0..39] */
     uint8_t oracle[40];
     for (int i = 0; i < 40; i++)

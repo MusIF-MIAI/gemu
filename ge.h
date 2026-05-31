@@ -6,6 +6,7 @@
 #include "opcodes.h"
 #include "console.h"
 #include "reader.h"
+#include "channel.h"
 
 #define CLOCK_PERIOD 14000 /* in usec, interval between pulse lines */
 #define MEM_SIZE 65536
@@ -569,6 +570,22 @@ struct ge {
     struct ge_integrated_reader integrated_reader;
 
     /**
+     * Integrated printer / console typewriter (channel 2) — pragmatic model.
+     * `present` is set only when a printer peripheral is registered (interactive
+     * /wasm runs), so the faithful bootstrap channel states are untouched. When
+     * present, the channel-2 external-wait (state b8) for a print/typewriter op
+     * is completed (B8 -> alpha) instead of hanging, and output bytes are
+     * captured into out[]. kbd[] is the operator-keyboard input queue (two-way).
+     */
+    struct ge_integrated_printer {
+        int      present;
+        char     out[8192];     /* captured printed characters (ring/append) */
+        int      out_len;
+        uint8_t  kbd[256];      /* operator keyboard input queue */
+        int      kbd_head, kbd_tail;
+    } integrated_printer;
+
+    /**
      * The I/O interface for the ST3 connector
      */
     struct ge_connector ST3;
@@ -577,6 +594,15 @@ struct ge {
      * The I/O interface for the ST4 connector
      */
     struct ge_connector ST4;
+
+    /**
+     * Integrated channel 2 (CAN2) line bundle — shared by the integrated reader
+     * (input), the printer/typewriter (output), and the keyboard. Generalises
+     * the integrated_reader/connector lines; see channel.h. Phase 3 wires the
+     * rSI transfer micro-states to these lines; until then it is scaffolding and
+     * the legacy integrated_reader/integrated_printer paths remain authoritative.
+     */
+    struct ge_channel channel2;
 
     struct ge_peri *peri;
 

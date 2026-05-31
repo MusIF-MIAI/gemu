@@ -752,6 +752,62 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
 }
 #simpanel .sim-seq { font-size: 10pt; color: #7d8768; white-space: nowrap; }
 #simpanel .sim-seq b { color: #b9c4a7; }
+
+/* ---- integrated printer / console-typewriter (channel 2) ---------------- *
+ * This represents a real peripheral (the integrated printer-typewriter), not a
+ * console control, so it is drawn as its own device window: a paper-roll teletype
+ * deliberately unlike the dark metal console. Output the machine prints appears
+ * as paper lines; what the operator types is fed to the keyboard input queue and
+ * echoed. Completion/capture is the pragmatic channel-2 model (see printer.c). */
+#teleprinter {
+  position: fixed;
+  right: 1em;
+  bottom: 7.5em;          /* sit above the simulator toolbar */
+  z-index: 1001;
+  width: 26em;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  background: #f4f1e6;     /* paper */
+  border: 2px solid #2a2d24;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  overflow: hidden;
+}
+#teleprinter .tp-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.35em 0.7em;
+  background: #2a2d24; color: #cfe0a4;
+  font-size: 10pt; letter-spacing: 0.08em; text-transform: uppercase;
+}
+#teleprinter .tp-bar button {
+  background: none; border: 1px solid #5a6b3b; color: #cfe0a4;
+  border-radius: 3px; font: inherit; font-size: 8.5pt; padding: 0.1em 0.5em; cursor: pointer;
+}
+#tp_paper {
+  height: 13em; overflow-y: auto;
+  padding: 0.6em 0.8em; margin: 0;
+  background:
+    repeating-linear-gradient(#f4f1e6, #f4f1e6 1.45em, #e7e3d2 1.45em, #e7e3d2 1.5em);
+  color: #23241c; font-size: 10.5pt; line-height: 1.5em;
+  white-space: pre-wrap; word-break: break-word;
+}
+#tp_paper .tp-prn { color: #1a1c14; }
+#tp_paper .tp-kbd { color: #6a4a1a; }          /* operator-typed, ink-ribbon brown */
+#tp_paper .tp-note { color: #8a8770; font-style: italic; font-size: 9pt; }
+#teleprinter .tp-input {
+  display: flex; border-top: 1px solid #cfcab4; background: #efeada;
+}
+#tp_line {
+  flex: 1; border: none; background: transparent;
+  padding: 0.5em 0.7em; font: inherit; font-size: 10.5pt; color: #23241c; outline: none;
+}
+#teleprinter .tp-input button {
+  border: none; border-left: 1px solid #cfcab4; background: #e2dcc6;
+  color: #2a2d24; font: inherit; font-size: 10pt; padding: 0 1em; cursor: pointer;
+}
+#teleprinter .tp-input button:hover { background: #d6cfb4; }
 </style>
 
 <div id=verticalcontainer>
@@ -930,6 +986,21 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
             <option value="50">50x</option>
         </select>
     </label>
+</aside>
+
+<!-- Integrated printer / console-typewriter (channel 2). Represents a real
+     peripheral; drawn as a paper teletype, separate from the console controls. -->
+<aside id=teleprinter>
+    <div class=tp-bar>
+        <span>Printer / Typewriter &nbsp;(channel 2)</span>
+        <button id=tp_clear type=button>Clear</button>
+    </div>
+    <div id=tp_paper><span class=tp-note>Channel-2 printer ready. The machine's printed output appears here; type below to feed the operator keyboard.
+</span></div>
+    <div class=tp-input>
+        <input id=tp_line type=text autocomplete=off placeholder="type to the operator keyboard...">
+        <button id=tp_send type=button>Send</button>
+    </div>
 </aside>
 
 
@@ -1295,6 +1366,42 @@ document.set_switches = function() {
   if (!module) return;
   module._set_switches(flags_from_switches(), am_from_switches())
 }
+
+/* ---- integrated printer / console-typewriter (channel 2) ---------------- */
+/* Leading ';' is required: the preceding assignment has no terminating
+ * semicolon, so without this the '(' below would be parsed as calling it. */
+;(function () {
+  const paper = document.getElementById('tp_paper');
+  const line  = document.getElementById('tp_line');
+
+  function append(cls, text) {
+    if (text === '' || text == null) return;
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = text;
+    paper.appendChild(span);
+    paper.scrollTop = paper.scrollHeight;
+  }
+
+  /* Called from the C side (printer_emit EM_JS) with each newly-printed chunk. */
+  document.gemu_printer_emit = function (text) { append('tp-prn', text); };
+
+  function send() {
+    const s = line.value;
+    if (s === '') return;
+    /* Feed each byte to the operator-keyboard queue, then a carriage return. */
+    if (module) {
+      for (let i = 0; i < s.length; i++) module._printer_key(s.charCodeAt(i) & 0xff);
+      module._printer_key(0x0d);
+    }
+    append('tp-kbd', s + '\n');     /* local echo of what was typed */
+    line.value = '';
+  }
+
+  document.getElementById('tp_send').addEventListener('click', send);
+  line.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+  document.getElementById('tp_clear').addEventListener('click', () => { paper.textContent = ''; });
+})();
 
 const rotary_positions = [
   rs_V4, rs_L3, rs_V3, rs_RI_L2, 

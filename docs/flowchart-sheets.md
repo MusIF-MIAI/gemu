@@ -31,8 +31,9 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 | 31 | 14023130O  | NI‑XI‑OI‑TM SEQUENCES | `64/65` (`EXEC_NI/XI/TM`, + `MVI/CI/CMI`) | ◑ hybrid |
 | 32 | 14023130F  | PER‑PERI (preliminary phase) | `64/65`→`c8`→`d8/d9/da/db`→`dc`→`cc` | ✅ cluster verified row-by-row; only residual is the `PCOV` status stub |
 | 33 | 14023130G  | TPER‑CPER external sequence | `ca`, `a8`, `a9`, `aa`, `ab` | ◑ states present; per-row needs higher-DPI recheck |
-| 34 | 14023130H  | CHANNEL‑1 DATA TRANSFER phase | `b8`, `b9`, `ea`, `eb` | ◑ states present; write-back condition reworked (`L207_output_writeback`) |
-| 35‑37 | 14023130…| CHANNEL‑2 DATA TRANSFER phase | `b1` (+ channel‑2 sub-states) | ◑ partial |
+| 34 | 14023130₁  | CHANNEL‑**1** DATA TRANSFER phase | `b8`, `b9`, `ea`, `eb` | ◑ states present; write-back condition reworked (`L207_output_writeback`) |
+| 35 | 14023130O  | CHANNEL‑**3** DATA TRANSFER phase | (channel‑3 `rSI` sub-states) | ✗ not modelled |
+| 36 | 14023130₁  | CHANNEL‑**2** DATA TRANSFER phase | `rSI` sub-states `0C/0E` (in), `04/06` (compare), `02/03` (printer out, `CE16`), `0A/0B` (end print) | ◑ recovered (docs/peripherals.md "CAN2 data-transfer phase"); wiring is Phase 3/5 |
 | 38 | 14023130…  | CMI‑CHI sequence | `64/65` (`EXEC_CMI`/`EXEC_CI`) | ◑ hybrid |
 | 44‑45 | 14023130…| EXECUTIVE PHASE OP (data ops) | `64/65` (`EXEC_SS` + `alu_*`) | ◑ hybrid (SS executed by Mechanism B in `e7`/`ef`) |
 
