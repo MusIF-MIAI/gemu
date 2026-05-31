@@ -35,6 +35,8 @@
 #include "utest.h"
 #include "../ge.h"
 #include "../cardreader.h"
+#include "../cap.h"
+#include "../transcode.h"
 #include "../bit.h"
 
 #include <stdio.h>
@@ -420,4 +422,41 @@ UTEST(cardreader, sequential_two_cards)
     ASSERT_EQ(g.mem[1], 0x34);
 
     ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * cardreader.scatter_load_funktionalcpu
+ *
+ * cap_load_scattered places each self-addressed card's payload at its embedded
+ * load address. For the funktionalcpu deck this populates the program: the
+ * cpu_selftest entry sits at 0x0100 as `JC 0xF0, 0x172A` (43 F0 17 2A). This is
+ * the working .cap default-input path (distinct from the cycle-faithful reader
+ * bootstrap), and the regression guard for the IPL scatter-loader.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, scatter_load_funktionalcpu)
+{
+    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+
+    FILE *probe = fopen(cap_path, "r");
+    if (!probe) {
+        printf("  [SKIP] %s not found\n", cap_path);
+        return;
+    }
+    fclose(probe);
+
+    static uint8_t img[MEM_SIZE];
+    memset(img, 0, sizeof img);
+
+    unsigned lo = 0xFFFF, hi = 0;
+    int nc = cap_load_scattered(cap_path, TC_COLBIN, img, &lo, &hi);
+
+    ASSERT_GT(nc, 0);
+    ASSERT_EQ((int)lo, 0x0000);
+    ASSERT_GT((int)hi, 0x1000);
+
+    /* cpu_selftest entry scattered to 0x0100: JC 0xF0, 0x172A */
+    ASSERT_EQ((int)img[0x0100], 0x43);
+    ASSERT_EQ((int)img[0x0101], 0xF0);
+    ASSERT_EQ((int)img[0x0102], 0x17);
+    ASSERT_EQ((int)img[0x0103], 0x2A);
 }

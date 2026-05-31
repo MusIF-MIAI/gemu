@@ -12,6 +12,7 @@
  */
 
 #include "cap.h"
+#include "transcode.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -217,4 +218,116 @@ void cap_free(struct cap_deck *d)
         free(d->cards[i].cols);
     free(d->cards);
     free(d);
+}
+
+/* -------------------------------------------------------------------------
+ * Self-addressed scatter load (mirrors gdis --image; see cap.h).
+ * ------------------------------------------------------------------------- */
+
+static int scat_decode_card(const uint16_t *cols, int ncols, int mode,
+                            uint8_t out[80])
+{
+    int n = ncols < 80 ? ncols : 80;
+
+    for (int i = 0; i < n; i++)
+        out[i] = transcode_column(cols[i], (enum transcode_mode)mode);
+
+    return n;
+}
+
+/* Detect the deck's dominant 8-byte data-card prefix (cols 0-7). Returns the
+ * match count and copies it into out[8]; 0 if no eligible cards. */
+static int scat_detect_prefix(struct cap_deck *d, int mode, uint8_t out[8])
+{
+    int nc = cap_num_cards(d);
+    struct { uint8_t p[8]; int cnt; } tab[1024];
+    int ntab = 0, best = -1;
+
+    for (int i = 0; i < nc; i++) {
+        int ncols = cap_card_ncols(d, i);
+        const uint16_t *cols = cap_card_columns(d, i);
+        if (ncols < 11 || !cols)
+            continue;
+
+        uint8_t b[80];
+        scat_decode_card(cols, ncols, mode, b);
+
+        int j;
+        for (j = 0; j < ntab; j++) {
+            if (memcmp(tab[j].p, b, 8) == 0) {
+                tab[j].cnt++;
+                break;
+            }
+        }
+        if (j == ntab && ntab < 1024) {
+            memcpy(tab[ntab].p, b, 8);
+            tab[ntab].cnt = 1;
+            ntab++;
+        }
+    }
+
+    for (int j = 0; j < ntab; j++) {
+        if (best < 0 || tab[j].cnt > tab[best].cnt)
+            best = j;
+    }
+    if (best < 0)
+        return 0;
+
+    memcpy(out, tab[best].p, 8);
+    return tab[best].cnt;
+}
+
+int cap_load_scattered(const char *path, int mode, unsigned char *image,
+                       unsigned *lo, unsigned *hi)
+{
+    struct cap_deck *d = cap_load(path);
+    if (!d)
+        return -1;
+
+    uint8_t want[8];
+    int have_prefix = (scat_detect_prefix(d, mode, want) >= 4);
+    int loose = !have_prefix;  /* no dominant prefix: accept any fitting record */
+
+    int nc = cap_num_cards(d);
+    int loaded = 0;
+    long min_a = -1, max_a = -1;
+
+    for (int i = 0; i < nc; i++) {
+        int ncols = cap_card_ncols(d, i);
+        const uint16_t *cols = cap_card_columns(d, i);
+        if (ncols < 11 || !cols)
+            continue;
+
+        uint8_t b[80];
+        int n = scat_decode_card(cols, ncols, mode, b);
+
+        int match = (have_prefix && n >= 8 && memcmp(b, want, 8) == 0);
+        int ll    = b[8];
+        long addr = ((long)b[9] << 8) | b[10];
+        int paylen = ll + 1;
+        int fits = (11 + ll < n) && (addr + ll <= 0xFFFF);
+
+        if (!(loose ? fits : (match && fits)))
+            continue;
+
+        for (int k = 0; k < paylen; k++)
+            image[addr + k] = b[11 + k];
+
+        if (min_a < 0 || addr < min_a)
+            min_a = addr;
+        if (addr + ll > max_a)
+            max_a = addr + ll;
+        loaded++;
+    }
+
+    cap_free(d);
+
+    if (loaded == 0 || min_a < 0)
+        return -1;
+
+    if (lo)
+        *lo = (unsigned)min_a;
+    if (hi)
+        *hi = (unsigned)max_a;
+    return loaded;
 }

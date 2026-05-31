@@ -10,6 +10,7 @@
 #include "console_socket.h"
 #include "cardreader.h"
 #include "printer.h"
+#include "cap.h"
 #include "transcode.h"
 #include "binimage.h"
 #include "log.h"
@@ -110,7 +111,8 @@ int main(int argc, char *argv[])
     int use_console = 0;
     int use_tui = 0;
     int trace_set = 0;
-    const char *deck_path = NULL;
+    const char *deck_path = NULL;   /* --deck: cycle-faithful card-reader bootstrap */
+    const char *cap_path = NULL;    /* positional .cap: scatter-load (default) */
     const char *image_path = NULL;
     int raw = 0;
     long load_org = 0x0000;
@@ -193,14 +195,16 @@ int main(int argc, char *argv[])
             return 1;
         } else if (!image_path && !deck_path) {
             /* Positional input. The DEFAULT is the authentic card-reader flow:
-             * a `.cap` deck is fed through the reader (CLEAR/LOAD/START
-             * bootstrap). Any other file (e.g. a `.bin`) is a direct
-             * unified-format binary load — the debugging path. `--deck` / `--bin`
-             * force the respective path explicitly. */
+             * a `.cap` deck is loaded by scattering each card's payload to its
+             * embedded load address (cap_load_scattered — the deck format), then
+             * entering at the lowest loaded address. Any other file (e.g. a
+             * `.bin`) is a direct unified-format binary load — the debugging path.
+             * `--deck` forces the cycle-faithful card-reader bootstrap; `--bin`
+             * forces direct binary load. */
             const char *p = argv[i];
             size_t n = strlen(p);
             if (n >= 4 && strcmp(p + n - 4, ".cap") == 0)
-                deck_path = p;
+                cap_path = p;
             else
                 image_path = p;
         } else {
@@ -210,8 +214,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (deck_path && image_path) {
-        fprintf(stderr, "error: give either a binary image or --deck, not both\n");
+    if ((deck_path && image_path) || (deck_path && cap_path) ||
+        (cap_path && image_path)) {
+        fprintf(stderr, "error: give only one of a .cap deck, --deck, or --bin\n");
         return 1;
     }
 
@@ -241,6 +246,33 @@ int main(int argc, char *argv[])
             ge_deinit(&ge);
             return ret;
         }
+    } else if (cap_path) {
+        /* Default .cap load: scatter each card's payload to its embedded load
+         * address (the deck format), then enter at the lowest loaded address.
+         * Honours the card addresses exactly like `gdis --image`; distinct from
+         * the cycle-faithful card-reader bootstrap (--deck). */
+        static uint8_t scat[MEM_SIZE];
+        unsigned lo = 0, hi = 0;
+        memset(scat, 0, sizeof scat);
+
+        int ncards = cap_load_scattered(cap_path, TC_COLBIN, scat, &lo, &hi);
+        if (ncards < 0) {
+            fprintf(stderr, "error: failed to scatter-load .cap '%s'\n", cap_path);
+            ge_deinit(&ge);
+            return 1;
+        }
+
+        uint16_t len = (uint16_t)(hi - lo + 1);
+        if (ge_load_image(&ge, scat + lo, len, (uint16_t)lo) != 0) {
+            fprintf(stderr, "error: scattered image does not fit in memory\n");
+            ge_deinit(&ge);
+            return 1;
+        }
+        ge_seed_segment_bases(&ge);
+        image_loaded = 1;
+        image_entry  = (uint16_t)lo;
+        ge_log(LOG_DEBUG, "scatter-loaded %d cards, span 0x%04x-0x%04x, entry 0x%04x\n",
+               ncards, lo, hi, lo);
     } else if (image_path) {
         /* Direct binary load: read the unified-format image (gasm output) and
          * place it at its origin; entry comes from the header. With --raw the
