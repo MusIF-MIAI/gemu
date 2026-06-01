@@ -64,7 +64,8 @@ void EMSCRIPTEN_KEEPALIVE printer_key(int c) {
 
 void send_console() {
     struct ge_console console = { 0 };
-    int r = running_loop;
+    int powered = ge->powered != 0;
+    int running = powered && running_loop;
 
     ge_fill_console_data(ge, &console);
 
@@ -143,9 +144,9 @@ void send_console() {
     set_lamp("OF",  console.lamps.OF);
 
     set_lamp("DC_ALERT",       console.lamps.DC_ALERT      );
-    set_lamp("POWER_OFF",      !r                          );
-    set_lamp("STAND_BY",       !r                          );
-    set_lamp("POWER_ON",       r                           );
+    set_lamp("POWER_OFF",      !powered                    );
+    set_lamp("STAND_BY",       powered && !running         );
+    set_lamp("POWER_ON",       powered                     );
     set_lamp("MAINTENANCE_ON", console.lamps.MAINTENANCE_ON);
     set_lamp("MEM_CHECK",      console.lamps.MEM_CHECK     );
     set_lamp("INV_ADD",        console.lamps.INV_ADD       );
@@ -169,9 +170,20 @@ void send_console() {
 }
 
 
-void EMSCRIPTEN_KEEPALIVE press_on()        { running_loop = 1; send_console(); }
-void EMSCRIPTEN_KEEPALIVE press_off()       { running_loop = 0; send_console(); }
-void EMSCRIPTEN_KEEPALIVE press_power_off() { running_loop = 0; send_console(); }
+static void wasm_set_power(int on)
+{
+    ge->powered = !!on;
+    if (!ge->powered)
+        running_loop = 0;
+    cycle_budget = 0.0;
+    last_now_ms = emscripten_get_now();
+    send_console();
+}
+
+void EMSCRIPTEN_KEEPALIVE press_power_on()  { wasm_set_power(1); }
+void EMSCRIPTEN_KEEPALIVE press_on()        { press_power_on(); }
+void EMSCRIPTEN_KEEPALIVE press_off()       { wasm_set_power(0); }
+void EMSCRIPTEN_KEEPALIVE press_power_off() { wasm_set_power(0); }
 
 /* Push the real lamp states again (used to restore the panel after a momentary
  * LAMPS CHECK bulb-test, which forces every lamp on from the JS side). */
@@ -196,6 +208,10 @@ void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
  * With no staged deck, LOAD is the real card-reader bootstrap: set AINI so the
  * 80 -> c8 IPL sequence pulls the mounted deck in through the reader. */
 void EMSCRIPTEN_KEEPALIVE press_load()  {
+    if (!ge->powered) {
+        send_console();
+        return;
+    }
     if (staged) {
         ge_load_image(ge, staged_img, staged_len, staged_origin);
         ge_seed_segment_bases(ge);
@@ -251,6 +267,10 @@ int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
 }
 
 void EMSCRIPTEN_KEEPALIVE press_start() {
+    if (!ge->powered) {
+        send_console();
+        return;
+    }
     /* START always runs the machine (NORM). The deck is already resident and
      * entered by LOAD, so START just releases the CPU. Clearing `halted` lets a
      * START after a HLT resume — and because LOAD (not START) loads the image,
@@ -348,7 +368,7 @@ void em_main_loop() {
      * ge->halted: a real GE-120's delay line keeps running through a HLT (the
      * CPU is frozen via ALTO, but the panel stays live), which is what lets
      * console forcing/display work after a halt. */
-    if (!running_loop) {
+    if (!ge->powered || !running_loop) {
         cycle_budget = 0.0;
         return;
     }

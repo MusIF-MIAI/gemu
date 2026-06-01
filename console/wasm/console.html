@@ -1266,7 +1266,11 @@ import { default as GE_Module } from './main.mjs'
 
 var module;
 
-power_on_button  .addEventListener("click", e => module && module._press_on()        )
+power_on_button  .addEventListener("click", e => {
+    if (!module) return;
+    if (module._press_power_on) module._press_power_on();
+    else if (module._press_on) module._press_on();
+})
 power_off_button .addEventListener("click", e => module && module._press_power_off() )
 emerg_off_button .addEventListener("click", e => module && module._press_off()       )
 clear_button     .addEventListener("click", e => module && module._press_clear()     )
@@ -1306,10 +1310,10 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
 
 /* ---- simulator gadget ---------------------------------------------------
- * `.cap` decks are mounted into the virtual reader hopper, so the real
- * CLEAR -> LOAD -> START bootstrap runs through the card-reader model.
- * Unified `.bin` images are a simulator convenience: they are staged into
- * MEMFS, LOAD drops them into memory directly, and START runs them. */
+ * Unified `.bin` images stage their unified-format payload directly.
+ * `.cap` decks currently use the same staged-image path after host-side
+ * scatter decode, because the browser's authentic reader/bootstrap path still
+ * shares the incomplete `--deck` loader chain. */
 let deck_bytes = null;
 let deck_is_cap = false;
 
@@ -1337,22 +1341,15 @@ mount_button.addEventListener("click", () => {
         return;
     }
 
-    if (deck_is_cap) {
-        const rc = module._mount_deck(0, 0);
-        if (rc === 0) {
-            mount_status.textContent =
-                "Deck inserted in reader.\nNow: CLEAR -> LOAD -> START.";
-        } else {
-            mount_status.textContent = "Could not mount .cap deck (rc=" + rc + ").";
-        }
-        return;
-    }
-
-    const rc = module._stage_image();
+    const rc = deck_is_cap ? module._stage_cap() : module._stage_image();
     if (rc === 0) {
-        mount_status.textContent = "Image staged.\nNow: CLEAR -> LOAD -> START.";
+        mount_status.textContent = deck_is_cap
+            ? "Scattered .cap image staged.\nNow: CLEAR -> LOAD -> START."
+            : "Image staged.\nNow: CLEAR -> LOAD -> START.";
     } else {
-        mount_status.textContent = "Not a unified .bin image (rc=" + rc + ").";
+        mount_status.textContent = deck_is_cap
+            ? "Could not stage .cap deck (rc=" + rc + ")."
+            : "Not a unified .bin image (rc=" + rc + ").";
     }
 })
 
