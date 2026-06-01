@@ -23,6 +23,10 @@ void reader_send_tu00(struct ge *ge)
     uint8_t command = ge->rRE;
     ge_log(LOG_READER, "EMIT TU201 (CE10)\n");
 
+    /* TU00N read-strobe line: the CPU clocks the command byte (rRE) toward the
+     * reader. Modelled as an explicit pin (inert — observability only). */
+    ge->integrated_reader.tu00 = 1;
+
     switch (command) {
 #define X(cmd, name, desc) \
         case cmd: \
@@ -78,6 +82,10 @@ void reader_send_tu10(struct ge *ge)
 {
     ge_log(LOG_READER, "EMIT TU101 (CE09)\n");
     ge_log(LOG_READER, "    Card feed\n");
+
+    /* TU03N card-feed/advance line. Modelled as an explicit pin (inert here —
+     * Phase 4 switches the cardreader's deck-advance onto this line). */
+    ge->integrated_reader.tu03 = 1;
 }
 
 uint8_t reader_get_LU08(struct ge *ge)

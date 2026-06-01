@@ -47,6 +47,24 @@ void ge_clear(struct ge *ge)
     ge->RC02 = 0;
     ge->RC03 = 0;
 
+    /* REGEN: general clear of the integrated-reader command/mode latches (the
+     * controller's reset line). Pulse `regen` and drop the CPU->reader command
+     * lines + the CPU-selected read mode so a CLEAR returns the reader to its
+     * power-up state. (Inert: the data path and the harness-selected transcode
+     * mode are unaffected; active_valid==0 keeps the harness mode in force.) */
+    ge->integrated_reader.regen = 1;
+    ge->integrated_reader.tu00 = 0;
+    ge->integrated_reader.tu03 = 0;
+    ge->integrated_reader.rifan = 0;
+    ge->integrated_reader.sesen = 0;
+    ge->integrated_reader.cocon = 0;
+    ge->integrated_reader.mode_n001 = 0;
+    ge->integrated_reader.mode_n002 = 0;
+    ge->integrated_reader.mode_debi = 0;
+    ge->integrated_reader.mode_mi01 = 0;
+    ge->integrated_reader.mode_mi02 = 0;
+    ge->integrated_reader.active_valid = 0;
+
     ge_seed_segment_bases(ge);
 }
 
