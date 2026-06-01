@@ -255,3 +255,93 @@ read needs `RC021`→`RIA21`→`RES26` and terminates on `RUF26`/`RIG?`/`RIL?`.
 `RES26`, `RIA21`, `RC021`); gemu uses the base mnemonic (`RES2`, `RIA2`, `RC02`).
 The `Ch/Bx` columns point at the GE schematic sheet to consult when wiring the
 exact logic equation for a signal we promote from ☐/◑ to ✅.
+
+### 4.7 Connector/channel selection & peripheral status (PC/PE/PU)
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `PCOV6` | 128 | 11 | Network output, external-condition examination | ☐ |
+| `PC111`/`PC121`/`PC131`/`PC141` | 159,156,157 | — | Connector 1/2/3/4 selection, **channel 1** | ◑ |
+| `PC211`/`PC221` | 160 | 5,1 | Connector 1/2 selection, **channel 2** | ◑ |
+| `PC311`/`PC321`/`PC331`/`PC341` | 161,156,157 | — | Connector 1/2/3/4 selection, **channel 3** | ☐ |
+| `PUC16`/`PUC26`/`PUC36` | 136 | 8,18,29 | **Channel 1/2/3 selection** | ◑ (`PUC2`) |
+| `PUOO2` | 135 | 22 | Connector 2 selection | ◑ |
+| `PUOOC`/`PUOOD` | 163,162 | 3,7 | Connector 3/4 selection | ☐ |
+| `PELS1` | 156 | 15 | **Card reader connected to connector 2** | ◑ (the integrated reader) |
+| `PELM6` | 161 | 4 | **Magnetic reader** connected to connector 2 (`PELM` in flowchart: selects `V4−1` vs `V4+1`) | ☐ (gemu = card reader, `+1`) |
+| `PELSA` | 125 | 15 | "Out-of-service" condition of the **integrated reader** | ☐ (cf. `LUSEN`) |
+| `PEST1` | 134 | 24 | Odd-parity error on input character | ☐ |
+| `PEOOC`/`PEOOD` | 007,008 | 3 | "Availability" from connector 3/4 | ☐ |
+| `PEBIA`/`PEBAA`/`PEBEA`/`PEBUA` | 134 | 19,10,13,22 | Selected connector 3/1/2/4 **busy** condition | ☐ |
+| `PUBO6` | 134 | 14 | Selected-connector busy condition | ☐ |
+| `PEC11`/`PEC21`/`PEC31`/`PEC41` | 137,136 | — | Stores **reset** conditions, channel 1/2/3/(1) | ☐ (cf. `REAB2`) |
+
+> The page-36 flowchart's **`PC22`** ("reader, integrated controller, on channel
+> 2") is the reader-present decode that branches the channel-2 transfer: after the
+> input state `0C`, `PC22`-YES (reader) returns to `B8` for the next request;
+> `PC22`-NO (printer) goes to `04|06`. It corresponds to the `PELS1`/`PELM6`
+> reader-on-connector-2 selection (vs the printer). `PELM` selects the addresser
+> direction (`V4−1` magnetic vs `V4+1` card/photo).
+
+### 4.8 Arithmetic unit (UA)
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `UA001`…`UA071` | 091,094 | — | Output bits of the arithmetic unit | ✅ (ALU result) |
+| `UAZO6` | 116 | 4 | **Decode UA 00+07 = "all zeroes"** (the `UAZO` in the ch-2 flowchart) | ◑ (ALU zero flag) |
+| `URO31`/`URO71` | 090,093 | 21 | Carry from A.U. bits 00+03 / 04+07 | ◑ |
+| `URPE6` | 091 | 3 | Carry going **into** the A.U. | ◑ |
+| `URPU2` | 094 | 3 | Carry coming **out** of the A.U. | ◑ |
+
+---
+
+## 5. Channel-2 data-transfer microcode (CPU[7] sheet 36, dwg 14023130)
+
+"Sequenza Esterna TPER — Fase trasferimento dati canale 2 (per lettore e stampante
+integrate)." States are obtained by unloading `S1 → SA1` (i.e. `rSA = rSI&0x0f` on
+a `RES2` cycle — see `NA_knot`). **State `0C` runs on every request from the
+reader, and on the first request from the integrated printer.**
+
+### State `0C|0E` — channel-2 INPUT (reader → memory)
+```
+V4 → VO                        (CO14: NO knot = V4 → memory address)
+V4−1 → V4   [PELM]             (magnetic reader: decrement addresser)
+V4+1 → V4   [¬PELM]            (card/photo reader: increment — CO41 + CO04)
+NE  → RO                       (CI34: channel-2 input data → RO)
+RO  → Mem                      (CO31: memory WRITE RO → mem[VO=V4])
+RO  → RI
+Ab reset RIAP
+Ab set external error  [¬PC22] (only when NOT the integrated reader)
+```
+Diamond after `0C|0E`:
+- `PC22` (reader) & channel-2 not overlapping → **`B8`** (org-phase wait for the next request)
+- `¬PC22` (printer) → `04|06`
+- `PC22` & overlapping with a CAN1/CAN3 request → run that channel's status; with itself → back to `0C|0E`; CAN1 operating → `B8`; else continue the internal program (`SO→SA`), a CAN2 request preempts for an external cycle.
+
+### State `04|06` — printer photodisc compare
+```
+V4→VO (CO14); V4+1→V4 (CO41/CO04); RO→Mem [SA01] (CO31); Mem→RO [SA01] (CO30);
+RI→RO [¬SA01] (CI21/CI32); RI→BO4,3 (CI21); RO⊕BO4,3→NI4,3 (C145/47/68);
+Set S101 (CI71); Set S100 [(UAZO+ERAR+FINO+AITE)·SA01] (CI70)
+```
+
+### State `02|03` — channel-2 OUTPUT (memory → printer) — implemented as `state_02`
+```
+V4→VO (CO14); V4+1→V4 (CO41/CO04); Mem→RO (CO30); RI→BO4,3 (CI21);
+RO⊕BO4,3→NI4,3 (C145/47/68); Load Printer Buffer (CE16)
+```
+Diamond after `02|03`: `SA00` or `RUF2` → `0A|0B` (end); else → back to `02|03`.
+
+### State `0A|0B` — end of channel-2 transfer.
+
+Signals referenced: `PELM` (magnetic reader on ch-2), `PC22` (reader+integrated
+controller on ch-2), `UAZO` (ALU=0, `UAZO6`), `ERAR` (printer photodisc parity
+error), `FINO` (printer out-of-service), `RUF2` (end of photodisc-code compare
+run-through ≈ `RUF26`).
+
+**Implementation status:** `02|03` (output) is wired (`state_02`). `0C|0E`
+(input) is the next to implement — `CO14/CO41/CO04/CI34/CO31` are all available
+commands; the reader drives it by asserting `RC02` (→`RES2`) and presenting the
+byte on `NE_knot` (`integrated_reader.data` via the `PIB21` reader-input bit),
+with the per-byte loop returning to `B8` and termination on the card-end (`FINI`
+→ `RUF26`).
