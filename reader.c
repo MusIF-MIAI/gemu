@@ -35,6 +35,28 @@ void reader_send_tu00(struct ge *ge)
             ENUMERATE_READER_COMMANDS
 #undef X
     }
+
+    /* COCON — mode-select clock. An explicit mode-select READ command drives the
+     * N001/N002/DEBI/MI01/MI02 decode and latches the CPU-selected read mode
+     * (active_mode/active_valid). The plain "read unchanged" (0x40) and the
+     * put/reject/manual commands leave the mode as-is, so the bootstrap (which
+     * issues 0x40) never engages the CPU mode and the cardreader keeps its
+     * harness/default mode. This is the loader's "set by-pass" actually
+     * switching normal<->binary. */
+    {
+        struct ge_integrated_reader *r = &ge->integrated_reader;
+        int latch = 1;
+        r->mode_n001 = r->mode_n002 = r->mode_debi = r->mode_mi01 = r->mode_mi02 = 0;
+        switch (command) {
+        case 0x21: r->mode_n001 = 1; r->active_mode = TC_NORMAL; break; /* read normal i  */
+        case 0x01: r->mode_n002 = 1; r->active_mode = TC_NORMAL; break; /* read normal ii */
+        case 0x24: r->mode_mi01 = 1; r->active_mode = TC_NORMAL; break; /* read mixed i   */
+        case 0x04: r->mode_mi02 = 1; r->active_mode = TC_NORMAL; break; /* read mixed ii  */
+        case 0x20: r->mode_debi = 1; r->active_mode = TC_BINARY; break; /* read binary    */
+        default:   latch = 0; break;                                    /* 0x40 etc.: keep mode */
+        }
+        if (latch) { r->cocon = 1; r->active_valid = 1; }
+    }
 }
 
 void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)

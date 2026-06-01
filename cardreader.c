@@ -231,13 +231,20 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
         }
 
         const uint16_t *cols = cap_card_columns(ctx->deck, ctx->card_idx);
-        /* Read mode: in packed self-loading mode every card is decoded in the
-         * registered COLBIN mode (and presented as nibble pairs, below). In the
-         * legacy mode the loader card uses the registered mode (TC_HEX) and the
-         * following program cards are read in binary ("by-pass"). */
-        enum transcode_mode m = ctx->pack
-            ? ctx->mode
-            : (ctx->card_idx == ctx->loader_card ? ctx->mode : TC_BINARY);
+        /* Read mode. If the CPU has driven a mode-select read command (the
+         * loader's "set by-pass" — active_valid set by COCON; see reader.c) and
+         * this is not a packed self-loading deck, the reader transcodes in the
+         * CPU-selected active_mode. Otherwise the legacy harness selection holds:
+         * packed decks use the registered COLBIN mode; legacy decks read the
+         * loader card in the registered mode and the program cards in TC_BINARY
+         * ("by-pass"). */
+        enum transcode_mode m;
+        if (ge->integrated_reader.active_valid && !ctx->pack)
+            m = ge->integrated_reader.active_mode;
+        else
+            m = ctx->pack
+                ? ctx->mode
+                : (ctx->card_idx == ctx->loader_card ? ctx->mode : TC_BINARY);
         uint8_t byte = transcode_column(cols[ctx->col_idx], m);
 
         /* End-of-card: the GE reader raises FINI (the controller "end" RIG1)
