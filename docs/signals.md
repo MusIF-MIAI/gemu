@@ -340,8 +340,21 @@ error), `FINO` (printer out-of-service), `RUF2` (end of photodisc-code compare
 run-through ≈ `RUF26`).
 
 **Implementation status:** `02|03` (output) is wired (`state_02`). `0C|0E`
-(input) is the next to implement — `CO14/CO41/CO04/CI34/CO31` are all available
-commands; the reader drives it by asserting `RC02` (→`RES2`) and presenting the
-byte on `NE_knot` (`integrated_reader.data` via the `PIB21` reader-input bit),
-with the per-byte loop returning to `B8` and termination on the card-end (`FINI`
-→ `RUF26`).
+(input) is implemented as `state_0c` (commit 76d67fe) and **verified to route**
+(a `RES2` cycle with `rSI=0x0c` → `rSA=0c`) and **advance `V4`**. The `NE→RO`
+read (`CI34`) is gated on the reader-input select **`PIB21`**, which on a
+channel-2 cycle needs `PB22A=0` ⇒ **`RET21 && PC221`** (ch-2 cycle-assignment
+stored AND connector-2/channel-2 selected).
+
+⚠ **Open blocker — channel-2 reader selection.** `RET21` and `PC221` are
+currently **stubs** (`return 0`, signals.h). With them 0, `PIB21` can only assert
+via `PB12A = RESI1 && PC121` — i.e. gemu's integrated reader selects on
+**channel 1**, not channel 2. So a channel-2 read latches nothing, and the
+loader's connector-2 read PER (which routes to channel 2 and parks at `b8`) is
+unfed. Finishing the channel-2 read therefore needs **Phase 4**: implement
+`RET21` (ch.132) + `PC221` (ch.160) for the channel-2 reader selection and/or
+reconcile the integrated reader's channel (the `RA101→RC01` channel-1 wiring vs
+the documented `LU08→RC02` channel-2), without breaking the channel-1 bootstrap
+IPL (which the locked `bootstrap`/`initial-load` tests guard). Then the reader
+asserts `RC02`→`RES2`→`state_0c` per byte, looping via `B8`, terminating on the
+card-end (`FINI`→`RUF26`).
