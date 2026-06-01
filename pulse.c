@@ -98,6 +98,11 @@ static void on_TO40(struct ge *ge) {
 }
 
 static void on_TO50(struct ge *ge) {
+    if (ge->PEC1_pending) {
+        ge->PEC1 = 1;
+        ge->PEC1_pending = 0;
+    }
+
     /* not sure about the timing of memory ops
      * read was previously done in TO65 with write, but
      * it didn't work to implement the state CC for PERI.
@@ -197,6 +202,7 @@ static void on_TO80(struct ge *ge) {}
 
 static void on_TO89(struct ge *ge) {
     ge->PEC1 = 0;
+    ge->PEC1_pending = 0;
 }
 
 static void on_TO90(struct ge *ge) {

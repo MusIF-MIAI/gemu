@@ -203,7 +203,8 @@ UTEST(printer, channel2_output_transfer)
  * Same datapath, but the printer drives the transfer itself: printer_begin_output
  * arms it with a buffer + length, and printer_on_clock holds the channel-2 request
  * (RC02) + rSI=0x02 for each of the `length` characters, then drops the request
- * and ends the line. The caller just runs cycles; the transfer self-terminates.
+ * and then drops the request. The caller just runs cycles; the transfer
+ * self-terminates without injecting a host-side newline.
  * -------------------------------------------------------------------------- */
 UTEST(printer, channel2_output_driven)
 {
@@ -230,11 +231,10 @@ UTEST(printer, channel2_output_driven)
 
     ASSERT_EQ(g.integrated_printer.out_active, 0);   /* self-terminated */
     ASSERT_EQ((int)g.RC02, 0);                        /* request dropped */
-    ASSERT_EQ(printer_output_len(&g), 3);             /* "HI" + newline */
+    ASSERT_EQ(printer_output_len(&g), 2);
     const char *o = printer_output(&g);
     ASSERT_EQ(o[0], 'H');
     ASSERT_EQ(o[1], 'I');
-    ASSERT_EQ(o[2], '\n');
 
     ge_deinit(&g);
 }
@@ -274,13 +274,12 @@ UTEST(printer, output_per_prints)
     }
 
     const char *o = printer_output(&g);
-    ASSERT_EQ(printer_output_len(&g), 6);   /* "HELLO" + newline */
+    ASSERT_EQ(printer_output_len(&g), 5);
     ASSERT_EQ(o[0], 'H');
     ASSERT_EQ(o[1], 'E');
     ASSERT_EQ(o[2], 'L');
     ASSERT_EQ(o[3], 'L');
     ASSERT_EQ(o[4], 'O');
-    ASSERT_EQ(o[5], '\n');
 
     ge_deinit(&g);
 }

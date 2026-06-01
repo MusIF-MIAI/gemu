@@ -179,13 +179,14 @@ bit 2 INAR   bit 5 ACOV   bit 8 PAPA
 ### 5.1 The WebAssembly "simulator gadget" (deck loading)
 
 A real GE-120 has no file dialog — a program enters through a deck of cards
-physically loaded into the reader. The browser panel reproduces this faithfully:
-a small **simulator gadget**, drawn deliberately apart from the authentic console
-(dashed border, monospace) so it never reads as a real control, lets you pick a
-`.cap` deck and "insert it in the reader hopper". Internally it writes the deck
-into the emscripten in-memory filesystem and calls `mount_deck()`, which attaches
-it to the card reader on connector 2 and selects `LOAD1` — exactly the `--deck`
-CLI path. You then run the **real** bootstrap on the console buttons:
+physically loaded into the reader. The browser panel reproduces this faithfully
+for `.cap` decks: a small **simulator gadget**, drawn deliberately apart from
+the authentic console (dashed border, monospace) so it never reads as a real
+control, lets you pick a `.cap` deck and "insert it in the reader hopper".
+Internally it writes the deck into the emscripten in-memory filesystem and
+calls `mount_deck()`, which attaches it to the card reader on connector 2 and
+selects `LOAD1` — exactly the `--deck` CLI path. You then run the **real**
+bootstrap on the console buttons:
 
 ```
 (gadget) choose deck → Insert deck in reader
@@ -194,6 +195,11 @@ CLI path. You then run the **real** bootstrap on the console buttons:
 
 No code is teleported into RAM: the documented `80 → c8` load sequence reads the
 deck through the reader, just like the hardware.
+
+For unified-format `.bin` images the gadget exposes a simulator-only direct-load
+path instead: the image is staged in MEMFS, `LOAD` copies it into memory at its
+origin, and `START` enters at the header's entry point. That path is only for
+images, not for physical card-deck behaviour.
 
 ---
 

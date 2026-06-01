@@ -64,6 +64,7 @@ void ge_clear(struct ge *ge)
     ge->integrated_reader.mode_mi01 = 0;
     ge->integrated_reader.mode_mi02 = 0;
     ge->integrated_reader.active_valid = 0;
+    ge->PEC1_pending = 0;
 
     ge_seed_segment_bases(ge);
 }

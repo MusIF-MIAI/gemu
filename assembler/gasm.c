@@ -9,7 +9,8 @@
  *
  *   opcodes.h       — opcode bytes, P-format second chars, mnemonic grouping.
  *   msl-commands.c  — address field split (eff_addr / reg_addr_of), the
- *                     register-aux (N = aux & 7), the immediate-aux (= K), and
+ *                     register-aux (1XXX0000: N = (aux>>4)&7, emitted as
+ *                     0x80|(N<<4)), the immediate-aux (= K), and
  *                     the SS length byte (single-length len=(LL&0xff)+1 vs
  *                     two-length alen=(LL>>4)+1 / blen=(LL&0xf)+1).
  *   signals.h       — branch condition mask (verified_condition): aux bits
@@ -55,7 +56,7 @@ typedef enum {
     F_JU,      /* JU:       addr            (aux forced 0xF0)    */
     F_JALIAS,  /* JE/JL/...: addr           (aux = .aux mask)    */
     F_SENSE,   /* JS1/JS2/JIE: addr         (aux = .aux fixed)   */
-    F_REG,     /* LR/STR/...: N, addr       (aux = N & 7)        */
+    F_REG,     /* LR/STR/...: N, addr       (aux = 0x80|(N<<4))  */
     F_IMM,     /* MVI/NI/...: K, addr       (aux = K)            */
     F_PER,     /* PER/PERI/...: aux, addr   (generic PM)         */
     F_SS1,     /* MVC/...:   len, A1, A2    (LL = len-1)         */
@@ -110,7 +111,7 @@ static const struct mnem MNEMS[] = {
 
     /* --- PM register & address (4 bytes) -------------------------- */
     { "LR",  0xBC, 0x00, F_REG, 4 },
-    { "STR", 0x84, 0x00, F_REG, 4 },
+    { "STR", 0xB4, 0x00, F_REG, 4 },
     { "LA",  0x68, 0x00, F_REG, 4 },
     { "CMR", 0xBD, 0x00, F_REG, 4 },
     { "AMR", 0xBE, 0x00, F_REG, 4 },
@@ -505,7 +506,10 @@ static void emit_instr(const struct mnem *m, char *args, long lc)
         if (parse_addr(f[1], 2, &field)) break;
         if (n < 0 || n > 7) err("%s register %ld out of range 0..7", m->name, n);
         emit_byte(lc, m->op);
-        emit_byte(lc + 1, (uint8_t)(n & 7));
+        /* Register-op aux char is 1XXX0000: register N lives in bits 4-6
+         * (ISA.md §0.5 row 3; emulator reg_addr_of reads (aux>>4)&7, disasm
+         * decodes (aux>>4)&7).  Emit 1<<7 | (N<<4), e.g. R6 -> 0xE0, R7 -> 0xF0. */
+        emit_byte(lc + 1, (uint8_t)(0x80 | ((n & 7) << 4)));
         emit_byte(lc + 2, (uint8_t)(field >> 8));
         emit_byte(lc + 3, (uint8_t)(field & 0xff));
         break;

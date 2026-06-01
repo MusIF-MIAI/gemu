@@ -54,6 +54,86 @@ struct printer_ctx {
  * 2-byte order overlaps the following code) and ignored. */
 #define PRINT_CMD_IS_PUT(cmd) ((cmd) & 0x80)
 #define PRINT_LEN_MAX 256
+#define KBD_CMD_LINE 0x40
+#define KBD_CMD_CHAR 0x41
+
+#define STDIO_STATUS_ADDR 0x0030
+#define STDIO_COUNT_ADDR  0x0032
+
+static void store16(struct ge *ge, uint16_t addr, uint16_t value)
+{
+    ge_mem_store8(ge, addr, (uint8_t)(value >> 8));
+    ge_mem_store8(ge, (uint16_t)(addr + 1), (uint8_t)value);
+}
+
+static int kbd_ready(const struct ge_integrated_printer *p)
+{
+    return p->kbd_head != p->kbd_tail;
+}
+
+static int kbd_has_complete_line(const struct ge_integrated_printer *p)
+{
+    for (int i = p->kbd_head; i != p->kbd_tail; i = (i + 1) % (int)sizeof(p->kbd)) {
+        if (p->kbd[i] == '\n' || p->kbd[i] == '\r')
+            return 1;
+    }
+    return 0;
+}
+
+static uint8_t kbd_pop(struct ge_integrated_printer *p)
+{
+    uint8_t c = p->kbd[p->kbd_head];
+    p->kbd_head = (p->kbd_head + 1) % (int)sizeof(p->kbd);
+    return c;
+}
+
+static int service_input_line(struct ge *ge, uint16_t buf, int len)
+{
+    struct ge_integrated_printer *p = &ge->integrated_printer;
+    int max = (len > 0) ? len - 1 : 0;
+    int n = 0;
+
+    while (kbd_ready(p)) {
+        uint8_t c = kbd_pop(p);
+        if (c == '\r')
+            continue;
+        if (c == '\n')
+            break;
+        if (n < max)
+            ge_mem_store8(ge, (uint16_t)(buf + n++), ge_code(c));
+    }
+    if (len > 0)
+        ge_mem_store8(ge, (uint16_t)(buf + n), 0x00);
+    store16(ge, STDIO_COUNT_ADDR, (uint16_t)n);
+    store16(ge, STDIO_STATUS_ADDR, 1);
+    return n;
+}
+
+static int service_input_char(struct ge *ge, uint16_t buf, int len)
+{
+    struct ge_integrated_printer *p = &ge->integrated_printer;
+    uint8_t c;
+
+    if (!kbd_ready(p))
+        return 0;
+    c = kbd_pop(p);
+    if (c == '\r')
+        c = '\n';
+    if (len > 0)
+        ge_mem_store8(ge, buf, ge_code(c));
+    store16(ge, STDIO_COUNT_ADDR, len > 0 ? 1 : 0);
+    store16(ge, STDIO_STATUS_ADDR, len > 0 ? 1 : 0);
+    return len > 0 ? 1 : 0;
+}
+
+static int input_order_ready(struct ge *ge, uint8_t cmd)
+{
+    if (cmd == KBD_CMD_CHAR)
+        return kbd_ready(&ge->integrated_printer);
+    if (cmd == KBD_CMD_LINE)
+        return kbd_has_complete_line(&ge->integrated_printer);
+    return 0;
+}
 
 /* Is the machine parked in the channel-2 org-phase external request-wait?
  * rSO=b8 pending, rSA=0 (CPU suspended/idle), CPU-active request not raised,
@@ -98,10 +178,8 @@ static int printer_on_clock(struct ge *ge, void *opaque)
              * the stolen cycles clobbered, and end the line. */
             ge->RC02 = 0;
             ge->rSO  = p->out_saved_so;
-            if (p->out_len < (int)sizeof(p->out) - 1) {
-                p->out[p->out_len++] = '\n';   /* end-of-print (models 0A/0B/FIRU) */
-                p->out[p->out_len] = '\0';
-            }
+            store16(ge, STDIO_COUNT_ADDR, (uint16_t)p->out_total);
+            store16(ge, STDIO_STATUS_ADDR, 1);
             p->out_active = 0;
         }
         return 0;
@@ -114,6 +192,12 @@ static int printer_on_clock(struct ge *ge, void *opaque)
     if (ge->rSO == 0xc8) {
         ctx->per_pending = 1;
         ctx->per_base = ge->rV1;
+        /* Start each PER's org phase with a clean channel-2 handshake. PUC2 is
+         * a flip-flop the real machine clears via the L2.3 toggle; the model
+         * never toggles L2.3, so an input completion that asserted PUC2 would
+         * otherwise leave it stuck and make DU97 fire prematurely in the next
+         * PER (jamming its org phase). Clear it here. */
+        ge->PUC2 = 0;
     } else if (ctx->per_pending && ge->rSO == 0xe2) {
         uint16_t base = ctx->per_base;
         uint8_t  cmd  = ge->mem[(uint16_t)(base + 1)];
@@ -124,11 +208,43 @@ static int printer_on_clock(struct ge *ge, void *opaque)
         ctx->per_pending = 0;
         if (PRINT_CMD_IS_PUT(cmd) && len >= 1 && len <= PRINT_LEN_MAX)
             printer_begin_output(ge, buf, len);
+        else if (cmd == KBD_CMD_LINE && len >= 1 && len <= PRINT_LEN_MAX)
+            service_input_line(ge, buf, len);
+        else if (cmd == KBD_CMD_CHAR && len >= 1 && len <= PRINT_LEN_MAX)
+            service_input_char(ge, buf, len);
+    }
+
+    /* Input orders (read line / read char) park the CPU at the channel-2
+     * external request-wait (rSO=b8) with RC00 still asserted: unlike an
+     * output/control PER, no transfer cycles ran to reset it via CE18, so the
+     * print-wait detector below (which requires !RC00) never fires. Complete
+     * the read here, independent of RC00, as soon as the requested input is
+     * available (a full line for KBD_CMD_LINE, any key for KBD_CMD_CHAR). */
+    if (ctx->per_pending && ge->rSO == 0xb8) {
+        uint8_t cmd = ge->mem[(uint16_t)(ctx->per_base + 1)];
+        if ((cmd == KBD_CMD_LINE || cmd == KBD_CMD_CHAR) &&
+            input_order_ready(ge, cmd)) {
+            ge->PUC2 = 1;   /* channel-2 unit ready -> DU97 completes the PER */
+            ge->RC00 = 1;   /* CPU-active request   -> rSO=b8 routed into rSA */
+            ctx->stall = 0;
+            return 0;
+        }
     }
 
     if (!in_channel2_print_wait(ge)) {
         ctx->stall = 0;
         return 0;
+    }
+
+    if (ctx->per_pending) {
+        uint8_t cmd = ge->mem[(uint16_t)(ctx->per_base + 1)];
+        if ((cmd == KBD_CMD_LINE || cmd == KBD_CMD_CHAR) &&
+            input_order_ready(ge, cmd)) {
+            ge->PUC2 = 1;
+            ge->RC00 = 1;
+            ctx->stall = 0;
+            return 0;
+        }
     }
 
     if (++ctx->stall < STALL_THRESHOLD)
@@ -196,6 +312,7 @@ void printer_begin_output(struct ge *ge, uint16_t buffer, int length)
     ge->rV4 = buffer;
     ge->integrated_printer.out_active    = 1;
     ge->integrated_printer.out_remaining = length;
+    ge->integrated_printer.out_total     = length;
     ge->integrated_printer.out_saved_so  = ge->rSO;  /* resume here when done */
 }
 

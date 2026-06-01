@@ -14,4 +14,9 @@
  * for any non-graphic code (and for graphics with no ASCII equivalent). */
 char ge_glyph(uint8_t b);
 
+/* Translate an ASCII byte to the GE-120 internal graphic code used by the
+ * compiler/runtime and the integrated typewriter path. Unsupported characters
+ * fold to space; '\n' becomes the runtime line-feed control byte 0x00. */
+uint8_t ge_code(uint8_t ascii);
+
 #endif /* GECODE_H */

@@ -36,6 +36,51 @@ static const char GE_GLYPH[256] = {
 
 char ge_glyph(uint8_t b)
 {
+    if (b == 0x00)
+        return '\n';
+    if (b == 0xAA)
+        return '-';
     char c = GE_GLYPH[b];
     return c ? c : '.';
+}
+
+uint8_t ge_code(uint8_t c)
+{
+    if (c >= '0' && c <= '9') return 0x40 + (c - '0');
+    if (c >= 'A' && c <= 'I') return 0x51 + (c - 'A');
+    if (c >= 'J' && c <= 'R') return 0xA1 + (c - 'J');
+    if (c >= 'S' && c <= 'Z') return 0xB2 + (c - 'S');
+    if (c >= 'a' && c <= 'z') return ge_code((uint8_t)(c - 'a' + 'A'));
+    switch (c) {
+    case '\n': return 0x00;
+    case '\r': return 0x00;
+    case '\t': return 0x50;
+    case ' ':  return 0x50;
+    case '[':  return 0x4A;
+    case '#':  return 0x4B;
+    case '@':  return 0x4C;
+    case ':':  return 0x4D;
+    case '>':  return 0x4E;
+    case '?':  return 0x4F;
+    case '&':  return 0x5A;
+    case '.':  return 0x5B;
+    case ']':  return 0x5C;
+    case '(':  return 0x5D;
+    case '<':  return 0x5E;
+    case '\\': return 0x5F;
+    case '$':  return 0xAB;
+    case '-':  return 0xAA;
+    case ')':  return 0xAD;
+    case ';':  return 0xAE;
+    case '\'': return 0xAF;
+    case '+':  return 0xB0;
+    case '/':  return 0xB1;
+    case ',':  return 0xBB;
+    case '%':  return 0xBC;
+    case '=':  return 0xBD;
+    case '"':  return 0xBE;
+    case '!':  return 0xBF;
+    case 0:    return 0x00;
+    }
+    return 0x50;
 }

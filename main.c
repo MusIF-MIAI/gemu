@@ -335,6 +335,17 @@ int main(int argc, char *argv[])
     ge.JS1 = sw1_init;
     ge.JS2 = sw2_init;
 
+    int printer_enabled = 0;
+    int printed = 0;
+    int kbd_fl = -1;
+    if (image_loaded && !use_tui) {
+        printer_register(&ge);
+        printer_enabled = 1;
+        kbd_fl = fcntl(0, F_GETFL, 0);
+        if (kbd_fl != -1)
+            fcntl(0, F_SETFL, kbd_fl | O_NONBLOCK);
+    }
+
     if (interactive) {
         /* Signal-driven interactive run: flip the diagnostic switches with
          * `kill -USR1/-USR2 <pid>` and watch the deck. Run until killed.
@@ -349,11 +360,14 @@ int main(int argc, char *argv[])
          * the machine does not hang waiting for a device gemu does not drive at
          * signal level) and captures output. Two-way: bytes typed on stdin are
          * fed to the operator keyboard queue (non-blocking). */
-        printer_register(&ge);
-        int kbd_fl = fcntl(0, F_GETFL, 0);
+        if (!printer_enabled) {
+            printer_register(&ge);
+            printer_enabled = 1;
+        }
+        kbd_fl = fcntl(0, F_GETFL, 0);
         if (kbd_fl != -1)
             fcntl(0, F_SETFL, kbd_fl | O_NONBLOCK);
-        int printed = 0;   /* bytes of printer output already echoed to stdout */
+        printed = 0;   /* bytes of printer output already echoed to stdout */
         long pid = (long)getpid();
         printf("interactive: pid=%ld  SWITCH1=%d SWITCH2=%d\n", pid, ge.JS1, ge.JS2);
         printf("  kill -USR1 %ld   # toggle SWITCH 1 (JS1)\n", pid);
@@ -444,6 +458,19 @@ int main(int argc, char *argv[])
         waitpid(tui_pid, NULL, 0);
     } else {
         while (!ge.halted && cycles < max_cycles) {
+            if (printer_enabled) {
+                int olen = printer_output_len(&ge);
+                if (olen > printed) {
+                    const char *o = printer_output(&ge);
+                    fwrite(o + printed, 1, (size_t)(olen - printed), stdout);
+                    fflush(stdout);
+                    printed = olen;
+                }
+                unsigned char kb[64];
+                ssize_t r = read(0, kb, sizeof kb);
+                for (ssize_t k = 0; k < r; k++)
+                    printer_feed_key(&ge, kb[k]);
+            }
             ret = ge_run_cycle(&ge);
             cycles++;
             if (ret != 0)

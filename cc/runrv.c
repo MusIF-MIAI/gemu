@@ -11,6 +11,7 @@
 #include "../ge.h"
 #include "../binimage.h"
 #include "../log.h"
+#include "../printer.h"
 
 #define RV 0x0010
 
@@ -32,6 +33,14 @@ int main(int argc, char **argv) {
     ge_clear(&ge);         /* clears halted, seeds identity segment bases */
     if (ge_load_image(&ge, buf, len, origin) != 0) { fprintf(stderr, "load failed\n"); return 2; }
     ge_seed_segment_bases(&ge);
+    printer_register(&ge);
+    {
+        const char *in = getenv("GEMU_STDIN");
+        if (in) {
+            for (const unsigned char *p = (const unsigned char *)in; *p; p++)
+                printer_feed_key(&ge, *p);
+        }
+    }
     ge_start(&ge);
     ge_enter(&ge, entry);
 
@@ -45,6 +54,8 @@ int main(int argc, char **argv) {
     if (nbytes == 2 && (val & 0x8000)) sval = val - 0x10000;
     if (nbytes == 1 && (val & 0x80))   sval = val - 0x100;
 
+    if (printer_output_len(&ge) > 0)
+        printf("__prn = %s\n", printer_output(&ge));
     printf("__rv = %ld (0x%0*lX)%s cycles=%ld%s\n",
            sval, nbytes * 2, val,
            ge.halted ? "" : " [DID NOT HALT]", i,

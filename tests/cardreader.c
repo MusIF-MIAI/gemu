@@ -193,7 +193,8 @@ UTEST(cardreader, synthetic_4byte)
      *   byte 0: 0xAB  (end=0)
      *   byte 1: 0xCD  (end=0)
      *   byte 2: 0xEF  (end=0)
-     *   byte 3: 0xAA  (end=1)  <- sets RIG1/PEC1, drives load-end sequence
+     *   byte 3: 0xAA  (end=1)  <- sets RIG1 and queues PEC1 for the TO50 latch,
+     *                             driving the load-end sequence
      *
      * After the last byte the machine transitions:
      *   b8 (wait) -> ea (TPER END 1) -> eb (TPER END 2) -> e3 (Alpha)

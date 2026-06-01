@@ -472,7 +472,7 @@ SIG(FINI1) { return reader_get_FINI1(ge); }      /* FININ : end-of-read         
 SIG(FIDE1) { return ge->integrated_reader.fiden; }  /* FIDEN: end-of-sequence   */
 SIG(LURE1) { return ge->integrated_reader.luren; }  /* LUREN: error / jam       */
 SIG(LUSE1) { return ge->integrated_reader.lusen; }  /* LUSEN: out-of-service    */
-SIG(LENO1) { return ge->integrated_reader.lenon; }  /* LENON: manual-mode       */
+SIG(LENO1) { return ge->integrated_reader.lenon; }  /* LENON: not operable      */
 SIG(BI201) { return ge->integrated_reader.bi20;  }  /* BI20 : binary 2nd-nibble */
 SIG(POM01) { return ge->integrated_reader.pom01; }  /* POM01: binary-mode indic */
 SIG(PICO1) { return ge->integrated_reader.picon; }  /* PICON: first-column      */

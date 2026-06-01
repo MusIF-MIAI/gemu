@@ -229,7 +229,10 @@ int EMSCRIPTEN_KEEPALIVE stage_image(void) {
  * payload to its embedded load address — the same self-addressed deck format as
  * the CLI default (cap_load_scattered). The populated span is moved down to the
  * start of staged_img so press_load's ge_load_image(origin) path is shared with
- * the .bin loader. Returns 0 on success, -1 on parse/empty error. */
+ * the .bin loader. This is kept as an expert/debug direct-load path; the normal
+ * browser workflow mounts .cap decks into the reader with mount_deck() so the
+ * authentic CLEAR -> LOAD -> START bootstrap runs through CAN1. Returns 0 on
+ * success, -1 on parse/empty error. */
 int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
     unsigned lo = 0, hi = 0;
 
@@ -279,6 +282,10 @@ void EMSCRIPTEN_KEEPALIVE press_start() {
 int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
     int rc;
 
+    /* A real deck-in-reader bootstrap must win over any previously staged
+     * direct-load image, otherwise LOAD would still bypass the reader. */
+    staged = 0;
+    staged_origin = staged_entry = staged_len = 0;
     ge_load_1(ge);   /* select connector 2 (LOAD1), matching the reader */
     rc = cardreader_register_from(ge, "/deck.cap",
                                   binary ? TC_BINARY : TC_NORMAL, first_card);
@@ -388,4 +395,3 @@ int main() {
     emscripten_set_main_loop(em_main_loop, 0, 0);
     return 0;
 }
-

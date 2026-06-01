@@ -1305,11 +1305,11 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 /* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
 
-/* ---- simulator gadget: stage a program into MEMFS -----------------------
- * Accepts either a `.cap` card deck (scattered to each card's embedded load
- * address, like the CLI default) or a unified-format `.bin` image. The staged
- * program is dropped into memory on the CLEAR-LOAD-START sequence (press_start),
- * bypassing the (not-yet-faithful) card-reader bootstrap. */
+/* ---- simulator gadget ---------------------------------------------------
+ * `.cap` decks are mounted into the virtual reader hopper, so the real
+ * CLEAR -> LOAD -> START bootstrap runs through the card-reader model.
+ * Unified `.bin` images are a simulator convenience: they are staged into
+ * MEMFS, LOAD drops them into memory directly, and START runs them. */
 let deck_bytes = null;
 let deck_is_cap = false;
 
@@ -1337,14 +1337,23 @@ mount_button.addEventListener("click", () => {
         return;
     }
 
-    const rc = deck_is_cap ? module._stage_cap() : module._stage_image();
-    if (rc === 0)
-        mount_status.textContent = (deck_is_cap ? "Deck" : "Image")
-            + " staged.\nNow: CLEAR -> LOAD -> START.";
-    else if (deck_is_cap)
-        mount_status.textContent = "Could not scatter-load .cap (rc=" + rc + ").";
-    else
+    if (deck_is_cap) {
+        const rc = module._mount_deck(0, 0);
+        if (rc === 0) {
+            mount_status.textContent =
+                "Deck inserted in reader.\nNow: CLEAR -> LOAD -> START.";
+        } else {
+            mount_status.textContent = "Could not mount .cap deck (rc=" + rc + ").";
+        }
+        return;
+    }
+
+    const rc = module._stage_image();
+    if (rc === 0) {
+        mount_status.textContent = "Image staged.\nNow: CLEAR -> LOAD -> START.";
+    } else {
         mount_status.textContent = "Not a unified .bin image (rc=" + rc + ").";
+    }
 })
 
 document.set_lamp = function(lamp, val) {

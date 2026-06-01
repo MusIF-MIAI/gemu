@@ -37,8 +37,8 @@ void cap_free(struct cap_deck *d);
  * card's embedded load address (the deck format), independent of the (separate,
  * cycle-faithful) card-reader bootstrap.
  *
- * On success returns the number of cards loaded (>0) and sets *lo/*hi to the
- * lowest/highest address written (so [*lo, *hi] is the populated span; entry is
+ * On success returns the number of cards loaded (>0) and sets `*lo` / `*hi` to
+ * the lowest/highest address written (so [`*lo`, `*hi`] is the populated span; entry is
  * conventionally *lo). Returns -1 on parse error or if nothing loaded. `mode` is
  * an `enum transcode_mode` (pass TC_COLBIN for binary decks).
  */

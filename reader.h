@@ -25,7 +25,7 @@ struct ge_integrated_reader {
     uint8_t lupor:1;    /* LUPOR : reader free / ready (= signal LUPO1)     */
     uint8_t luren:1;    /* LUREN : error (transcoder / jam)                */
     uint8_t lusen:1;    /* LUSEN : out-of-service                          */
-    uint8_t lenon:1;    /* LENON : manual-mode active                      */
+    uint8_t lenon:1;    /* LENON : "not operable" condition (LENOB/LENO)   */
     uint8_t bi20:1;     /* BI20  : binary-read 2nd-nibble aux clock        */
     uint8_t pom01:1;    /* POM01 : binary-mode (by-pass) indicator         */
     uint8_t picon:1;    /* PICON : first-column check                      */

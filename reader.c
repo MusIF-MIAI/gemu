@@ -72,21 +72,20 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
 
     /* When end=1, set the end-of-transfer flip-flops.
      *
-     * RIG1 is the "reader end" flip-flop; the real hardware sets it via
-     * the RF101 signal chain (FINI1 && PC121).  Here we set it directly
-     * whenever the peripheral signals end-of-card (fini=1), which is
-     * equivalent because we only call reader_setup_to_send from the
-     * integrated-reader path (PC121=1).
+     * In the hardware, FINI1 contributes to RF101 through PF12A when the
+     * integrated reader is selected on channel 1 (PC121=1). RF101 is then
+     * stored into RIG1 on the channel timing edge. Here we short-cut that
+     * path and set RIG1 directly because this helper is only used by the
+     * integrated-reader path.
      *
-     * PEC1 is the "peripheral end complete" flip-flop; the real hardware
-     * sets it via PIM11 (end-of-transfer strobe) once RF101 is asserted.
-     * PIM11 depends on TO50 and several channel-status signals that are
-     * not yet fully modelled; the direct set here is the working
-     * approximation until PIM11/RS011 are complete.
+     * PEC1 is a second shortcut, but one stage later. The manual routes
+     * peripheral-end completion through the TO50/PIM11 reset chain; gemu now
+     * records that a PEC1 set is pending here and commits it from pulse.c at
+     * TO50, instead of raising PEC1 immediately in the peripheral helper.
      */
     if (end) {
         ge->RIG1 = 1;
-        ge->PEC1 = 1;
+        ge->PEC1_pending = 1;
     }
 
     if (RB111(ge)) {
@@ -109,10 +108,10 @@ void reader_send_tu10(struct ge *ge)
 {
     ge_log(LOG_READER, "EMIT TU101 (CE09)\n");
 
-    /* LENON (manual mode) inhibits the card-feed: a reader in manual does not
-     * advance under the CPU's feed strobe. */
+    /* LENON ("not operable") inhibits the card-feed: a non-operable reader
+     * does not advance under the CPU's feed strobe. */
     if (ge->integrated_reader.lenon) {
-        ge_log(LOG_READER, "    Card feed INHIBITED (LENON / manual)\n");
+        ge_log(LOG_READER, "    Card feed INHIBITED (LENON / not operable)\n");
         return;
     }
 
@@ -190,12 +189,12 @@ void connector_setup_to_send(struct ge *ge, struct ge_connector *conn, uint8_t d
     conn->fine = end;
 
     /* Mirror the same end-of-transfer signalling as reader_setup_to_send.
-     * RIG1/PEC1 are set directly here for the same reasons: the FINE
-     * connector signal drives the RF10x chain (FINE3/FINE4 → PF13A/PF14A →
-     * RF101) but PIM11 is not yet fully modelled for connector paths. */
+     * The connector FINE inputs feed RF101 through PF13A/PF14A when the
+     * external unit is selected; gemu still short-circuits the subsequent
+     * RIG1 timing path here, but now defers PEC1 to the TO50 latch point. */
     if (end) {
         ge->RIG1 = 1;
-        ge->PEC1 = 1;
+        ge->PEC1_pending = 1;
     }
 
     if (RB111(ge)) {

@@ -3,6 +3,23 @@ CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%.o,$(wildcard tests/*.c))
 
+.PHONY: native-sanitize
+native-sanitize:
+	@if [ "$(CC)" != "emcc" ]; then \
+		bad=0; \
+		for f in $(OBJS) libge.a; do \
+			[ -f "$$f" ] || continue; \
+			if file "$$f" | grep -q 'WebAssembly'; then \
+				echo "Removing wasm artifact $$f for native build"; \
+				rm -f "$$f"; \
+				bad=1; \
+			fi; \
+		done; \
+		if [ $$bad -eq 1 ]; then \
+			rm -f ge tests/tests; \
+		fi; \
+	fi
+
 ge: libge.a main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) libge.a -o ge main.o $(OBJS)
 
@@ -22,7 +39,14 @@ tools:
 	$(MAKE) -C disassembler gdis
 
 .PHONY: check
-check: tests/tests ge tools
+.PHONY: native-reset
+native-reset:
+	@$(MAKE) native-sanitize
+	@rm -f libge.a ge tests/tests
+
+check:
+	$(MAKE) native-reset
+	$(MAKE) tests/tests ge tools
 	tests/tests
 	python3 tests/isa_consistency.py
 	sh tests/roundtrip.sh
@@ -89,4 +113,3 @@ docs:
 .PHONY: open-docs
 open-docs: docs
 	open docs/html/index.html
-

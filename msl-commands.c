@@ -564,7 +564,12 @@ static void CE07(struct ge *ge) {
 }
 
 static void CE08(struct ge *ge) {
-    /* set VICU */
+    /* Set VICU.
+     *
+     * The CPU docs tie CE08 to the VICU-support path: TO19 + RETO sets RAVI
+     * (indexed as RAV12), and the later RB111 timing edge stores RACI.
+     * gemu models that latch pair directly even though the wider VICU
+     * ecosystem is still only partially implemented. */
     uint8_t TO191 = ge->current_clock == TO19;
 
     ge_log(LOG_PERI, "SET VICU (CE08)\n");
