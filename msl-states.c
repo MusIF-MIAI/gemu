@@ -830,6 +830,25 @@ static const struct msl_timing_chart state_02[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+/* Channel-2 INPUT data-transfer (rSI state 0C|0E; CPU[7] sheet 36 "CHANNEL 2
+ * DATA TRANSFER PHASE"). One byte per RES2 cycle from the integrated reader:
+ *   VO <- V4 (CO14); V4+1 -> V4 (CO41/CO04 — card/photo reader; a magnetic
+ *   reader [PELM] would decrement); NE -> RO (CI34, the channel-2 input byte via
+ *   NE_knot when the reader-input select PIB21 is asserted); RO -> mem[VO=V4]
+ *   (CO31 WRITE, commits at TO65). Reached via NA_knot (RES2 -> rSA = rSI&0x0f =
+ *   0x0c) while the reader holds the channel-2 request RC02; per the sheet-36
+ *   diamond a reader (PC22) byte returns to B8 to await the next request.
+ * The page-36 RO->RI and the [~PC22] external-error arming are printer/compare
+ * concerns (states 04|06); the bare reader read is the five commands below. */
+static const struct msl_timing_chart state_0c[] = {
+    { TO10, CO14, 0 },   /* VO <- V4 (channel-2 operand addresser) */
+    { TO10, CO41, 0 },   /* counting network: NI = V4 + 1 */
+    { TO25, CI34, 0 },   /* NE -> RO: latch the channel-2 input byte */
+    { TO25, CO31, 0 },   /* arm memory WRITE (commits TO65: mem[VO=V4] <- RO) */
+    { TO40, CO04, 0 },   /* V4 <- NI (advance to next byte) */
+    { END_OF_STATUS, 0, 0 },
+};
+
 /* TPER - CPER */
 /* ----------- */
 

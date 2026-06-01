@@ -19,9 +19,9 @@ struct msl_timing_state msl_timings[0xff] = {
     /* 09 */ { },
     /* 0a */ { },
     /* 0b */ { },
-    /* 0c */ { },
+    /* 0c */ {state_0c},   /* channel-2 INPUT data transfer (integrated reader) */
     /* 0d */ { },
-    /* 0e */ { },
+    /* 0e */ {state_0c},   /* 0c|0e share the chart per the flow sheet */
     /* 0f */ { },
     /* 10 */ { },
     /* 11 */ { },
