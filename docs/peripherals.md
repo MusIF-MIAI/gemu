@@ -159,6 +159,18 @@ Pragmatic model. gemu drives no channel-2 timing at signal level, so a print
    `rSO=b8` into `rSA`) so the machine's own `state_b8` microcode returns to
    alpha. One-shot: `rSO` leaves b8 on the next cycle.
 
+### gemu completion cells
+
+For the current `gec` stdio runtime and the halting `assembler/examples/print.s`
+demo, gemu also exposes a small completion convention in low memory:
+
+- `0x0030..0x0031` — `__io_status` (`0x0001` once the channel-2 operation has completed)
+- `0x0032..0x0033` — `__io_count` (characters transferred)
+
+These are **gemu runtime cells**, not claimed hardware registers from the PTR
+manuals. They exist so compiled C stdio and simple assembly demos can wait for
+the overlapped typewriter/printer transfer to finish before halting.
+
 `present` is set only by `printer_register`, so bootstrap/reader tests (which do
 not register a printer) leave it 0 and are completely unaffected.
 

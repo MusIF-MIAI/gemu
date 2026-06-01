@@ -283,3 +283,44 @@ UTEST(printer, output_per_prints)
 
     ge_deinit(&g);
 }
+
+UTEST(printer, output_per_prints_and_halts_when_polled)
+{
+    struct ge g;
+    ge_init(&g);
+
+    /* PER connector-2, order block @ 0x10, then poll __io_status low byte. */
+    g.mem[0x00] = PER_OPCODE; g.mem[0x01] = 0x80; g.mem[0x02] = 0x00; g.mem[0x03] = 0x10;
+    g.mem[0x04] = CMI_OPCODE; g.mem[0x05] = 0x01; g.mem[0x06] = 0x00; g.mem[0x07] = 0x31;
+    g.mem[0x08] = JC_OPCODE;  g.mem[0x09] = 0x50; g.mem[0x0A] = 0x00; g.mem[0x0B] = 0x04;
+    g.mem[0x0C] = HLT_OPCODE; g.mem[0x0D] = 0x00;
+
+    /* z=0x80 (L207 output), cmd=0x85 (put), len=5, buffer=0x0200 */
+    g.mem[0x10] = 0x80; g.mem[0x11] = 0x85;
+    g.mem[0x12] = 0x00; g.mem[0x13] = 0x05;
+    g.mem[0x14] = 0x02; g.mem[0x15] = 0x00;
+
+    /* "HELLO" in GE graphic code. */
+    g.mem[0x200] = 0x58; g.mem[0x201] = 0x55; g.mem[0x202] = 0xA3;
+    g.mem[0x203] = 0xA3; g.mem[0x204] = 0xA6;
+
+    ge_clear(&g);
+    printer_register(&g);
+    ge_start(&g);
+
+    for (int i = 0; i < 80; i++) {
+        if (ge_run_cycle(&g))
+            break;
+        if (g.halted)
+            break;
+    }
+
+    ASSERT_TRUE(g.halted);
+    ASSERT_EQ((int)g.rPO, 0x000c);
+    ASSERT_EQ(g.mem[0x30], 0x00);
+    ASSERT_EQ(g.mem[0x31], 0x01);
+    ASSERT_EQ(printer_output_len(&g), 5);
+    ASSERT_STREQ(printer_output(&g), "HELLO");
+
+    ge_deinit(&g);
+}
