@@ -65,6 +65,11 @@ void reader_setup_to_send(struct ge *ge, uint8_t data, uint8_t end)
     ge->integrated_reader.data = data;
     ge->integrated_reader.fini = end;
 
+    /* A byte is now on the data lines: the reader is busy, not free.  Holding
+     * LUPOR (reader free) at 0 whenever LU08=1 keeps PELEA = !(LU08 . LUPO1) at
+     * 1, so the read data path is unchanged by the ready line. */
+    ge->integrated_reader.lupor = 0;
+
     /* When end=1, set the end-of-transfer flip-flops.
      *
      * RIG1 is the "reader end" flip-flop; the real hardware sets it via
@@ -103,10 +108,18 @@ void reader_clear_sending(struct ge *ge)
 void reader_send_tu10(struct ge *ge)
 {
     ge_log(LOG_READER, "EMIT TU101 (CE09)\n");
+
+    /* LENON (manual mode) inhibits the card-feed: a reader in manual does not
+     * advance under the CPU's feed strobe. */
+    if (ge->integrated_reader.lenon) {
+        ge_log(LOG_READER, "    Card feed INHIBITED (LENON / manual)\n");
+        return;
+    }
+
     ge_log(LOG_READER, "    Card feed\n");
 
-    /* TU03N card-feed/advance line. Modelled as an explicit pin (inert here —
-     * Phase 4 switches the cardreader's deck-advance onto this line). */
+    /* TU03N card-feed/advance line. Modelled as an explicit pin (Phase 4
+     * switches the cardreader's deck-advance onto this line). */
     ge->integrated_reader.tu03 = 1;
 }
 

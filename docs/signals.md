@@ -33,11 +33,11 @@ target pins for the signal-level model. Where gemu already carries the line, the
 | `LU00N`–`LU07N` | data | transcoded character bits (8) | ◑ `integrated_reader.data` (a byte) | The presented character. Today carried as one byte, not 8 separate lines. The channel read latches it into `RO` and stores to `mem[V]`. |
 | `LU08N` | handshake/clock | **character-ready strobe** | ✅ `integrated_reader.lu08` (`LU081`) | "a byte is on the data lines." While set, the channel input cycle (`b9`/`b1`, cmd `CI34` `NE→RO→Mem`) reads it; the peripheral clears it after consumption. The single most important read handshake. |
 | `FININ` | handshake | end-of-read, raised with the **last** character | ✅ `FINI1` (`reader_get_FINI1`) | The controller "end" (→ `RIG1`). Bounds the transfer at the physical card boundary: drives the load-end sequence (`b9→ea→eb→e3`) instead of continuing. |
-| `FIDEN` | status | end-of-sequence (all data transferred) | ☐ | Reader has returned to idle after the record; would clear the in-transfer state and let `LUPOR` reassert. |
-| `LUPOR` | status | reader free / ready | ✅ `LUPO1` (`reader_get_LUPO1`) | Unit idle and able to accept a command; gates the start of a new read. |
-| `LUREN` | status | error (transcoder / jam) | ☐ | Fault → would raise a peripheral-error / interrupt condition and abort the transfer. |
-| `LUSEN` | status | out-of-service | ☐ | Unit offline; a PER to it should complete as unit-not-ready rather than wait. |
-| `LENON` | status | manual-mode active | ☐ | Operator has the reader in manual; inhibits automatic feed. |
+| `FIDEN` | status | end-of-sequence (all data transferred) | ◑ `integrated_reader.fiden` (`FIDE1`) | Set by `cardreader_on_clock` when the deck is exhausted (`CR_DONE`). Observable end-of-sequence; the full in-transfer-clear/`LUPOR`-reassert handshake is still minimal. |
+| `LUPOR` | status | reader free / ready | ✅ `LUPO1` (`reader_get_LUPO1`) | Driven by `cardreader_on_clock`: ready (1) while not finished **and not presenting a byte**. Held 0 whenever `LU08=1`, which keeps `PELEA = !(LU08·LUPO1)` at 1 so the read data path is unchanged. (Test `cardreader.lupor_ready_invariant`.) |
+| `LUREN` | status | error (transcoder / jam) | ☐ | Fault → would raise a peripheral-error / interrupt condition and abort the transfer. (Phase 6, with `RG011`.) |
+| `LUSEN` | status | out-of-service | ✅ `integrated_reader.lusen` (`LUSE1`) | `cardreader_on_clock`: when set, the reader is offline — presents nothing and reports not-ready, so a read parks/completes as unit-not-ready instead of getting data. (Test `cardreader.lusen_out_of_service_stalls`.) |
+| `LENON` | status | manual-mode active | ✅ `integrated_reader.lenon` (`LENO1`) | `reader_send_tu10` (`CE09`): when set, the `TU03N` card-feed strobe is suppressed — a reader in manual does not advance under the CPU feed. (Test `reader_signals.lenon_inhibits_feed`.) |
 | `BI20` | clock | binary-read aux clock — 2nd nibble, ~15 µs after `LU08` | ☐ | In binary/by-pass mode the column is read as two sub-reads; `BI20` strobes the second. (gemu currently reconstructs a full byte per column via the packed nibble-pair feed; see §3.) |
 | `POM01` | status | binary-mode indicator | ☐ | High ⇒ transcoder is in binary (by-pass) read; selects raw 12-row column image vs GE char code. |
 | `PICON` | handshake | first-column check | ☐ | Marks the leading column of a card; used to align/validate the start of a record. |
@@ -105,8 +105,9 @@ above feed into them. Implemented in `signals.h` (`SIG(...)`) and `struct ge`.
   `POM01`) is implied by the `transcode_mode` and the packed nibble-pair feed
   rather than driven as separate pins. The pin-by-pin goal is to split these out
   so the controller and CPU exchange the real lines.
-- **Status lines** (`FIDEN/LUREN/LUSEN/LENON/PICON`) are not yet modelled; they
-  become relevant for error/interrupt behaviour and faithful end-of-sequence.
+- **Status lines**: `LUSEN` (out-of-service), `LENON` (manual), `LUPOR` (ready)
+  and `FIDEN` (end-of-sequence) are now modelled and reactive (Phase 3). `LUREN`
+  (error → interrupt) and `PICON` (first-column) remain unmodelled (Phase 6).
 
 Extend this table whenever a new signal is wired; keep the **Effect / condition**
 column concrete (what it sets/clears/gates), not just a gloss.
@@ -269,7 +270,7 @@ exact logic equation for a signal we promote from ☐/◑ to ✅.
 | `PUOOC`/`PUOOD` | 163,162 | 3,7 | Connector 3/4 selection | ☐ |
 | `PELS1` | 156 | 15 | **Card reader connected to connector 2** | ◑ (the integrated reader) |
 | `PELM6` | 161 | 4 | **Magnetic reader** connected to connector 2 (`PELM` in flowchart: selects `V4−1` vs `V4+1`) | ☐ (gemu = card reader, `+1`) |
-| `PELSA` | 125 | 15 | "Out-of-service" condition of the **integrated reader** | ☐ (cf. `LUSEN`) |
+| `PELSA` | 125 | 15 | "Out-of-service" condition of the **integrated reader** | ◑ `LUSEN` is modelled behaviorally (reader presents nothing when offline); the `PELSA→RM101` equation path is not yet wired. |
 | `PEST1` | 134 | 24 | Odd-parity error on input character | ☐ |
 | `PEOOC`/`PEOOD` | 007,008 | 3 | "Availability" from connector 3/4 | ☐ |
 | `PEBIA`/`PEBAA`/`PEBEA`/`PEBUA` | 134 | 19,10,13,22 | Selected connector 3/1/2/4 **busy** condition | ☐ |

@@ -167,8 +167,24 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
 {
     struct cardreader_ctx *ctx = (struct cardreader_ctx *)opaque;
 
-    if (ctx->state == CR_DONE)
+    /* LUSEN (out-of-service): the reader is offline — present nothing and report
+     * not-ready, so a read parks/completes as unit-not-ready rather than getting
+     * data. (Default 0: normal operation, no change.) */
+    if (ge->integrated_reader.lusen) {
+        ge->integrated_reader.lupor = 0;
         return 0;
+    }
+
+    /* LUPOR (reader free / ready): asserted while the reader is not finished and
+     * not presenting a byte. Held 0 whenever a byte is on the data lines
+     * (lu08=1) so PELEA = !(LU08 . LUPO1) stays 1 (the read path is unchanged). */
+    ge->integrated_reader.lupor =
+        (ctx->state != CR_DONE) && !ge->integrated_reader.lu08;
+
+    if (ctx->state == CR_DONE) {
+        ge->integrated_reader.fiden = 1;   /* FIDEN: end-of-sequence (deck done) */
+        return 0;
+    }
 
     if (ctx->state == CR_CARD_DONE) {
         /* Wait for RASI to drop (end of the previous card's transfer).

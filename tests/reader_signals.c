@@ -77,3 +77,24 @@ UTEST(reader_signals, read_normal_selects_mode)
     ASSERT_EQ((int)g.integrated_reader.mode_n001, 1);
     ASSERT_EQ((int)g.integrated_reader.active_mode, (int)TC_NORMAL);
 }
+
+/* Phase 3 — LENON (manual) inhibits the TU03 feed strobe; a non-manual reader
+ * feeds normally. (Fault injection: a reader left in manual mode.) */
+UTEST(reader_signals, lenon_inhibits_feed)
+{
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    /* Normal (lenon=0): CE09 raises the feed line. */
+    g.integrated_reader.lenon = 0;
+    reader_send_tu10(&g);
+    ASSERT_EQ((int)g.integrated_reader.tu03, 1);
+
+    /* Manual (lenon=1): the feed strobe is suppressed. */
+    g.integrated_reader.tu03 = 0;
+    g.integrated_reader.lenon = 1;
+    reader_send_tu10(&g);
+    ASSERT_EQ((int)g.integrated_reader.tu03, 0);
+}

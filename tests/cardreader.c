@@ -38,6 +38,7 @@
 #include "../cap.h"
 #include "../transcode.h"
 #include "../bit.h"
+#include "../log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -205,6 +206,87 @@ UTEST(cardreader, synthetic_4byte)
      *   mem[0] = 0xBD  (high nibble of 0xAB packed with low nibble of 0xCD)
      *   mem[1] = 0xFA  (high nibble of 0xEF packed with low nibble of 0xAA)
      */
+    ASSERT_EQ(g.mem[0], 0xBD);
+    ASSERT_EQ(g.mem[1], 0xFA);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test (Phase 3): LUSEN out-of-service stalls the read.
+ *
+ * Identical setup to synthetic_4byte, but the reader is forced out-of-service
+ * (lusen=1) once the machine reaches the input-wait (b8). cardreader_on_clock
+ * then presents nothing, so the transfer never completes: the machine must NOT
+ * reach 0xe3 and mem[0] stays 0. This is the unit-not-ready fault path.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, lusen_out_of_service_stalls)
+{
+    static const char cap_path[] = "/tmp/gemu_test_lusen.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    /* Advance to the input-wait, then yank the reader out of service. */
+    int got = run_until_state(&g, 0xb8, 256);
+    ASSERT_EQ(got, 0xb8);
+    g.integrated_reader.lusen = 1;
+
+    /* With the reader offline the load cannot complete. */
+    int final = run_until_state(&g, 0xe3, 2048);
+    ASSERT_NE(final, 0xe3);
+    ASSERT_EQ(g.mem[0], 0x00);
+    ASSERT_EQ((int)g.integrated_reader.lupor, 0);  /* not ready while offline */
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test (Phase 3): LUPOR ready behaviour + the PELEA safety invariant.
+ *
+ * A normal 4-byte read must still complete (LUPOR is only a status line, not a
+ * gate that blocks the bootstrap). Two extra checks:
+ *   - LUPOR is asserted at least once (reader reports ready during the wait).
+ *   - LUPOR and LU08 are NEVER both 1 — this is what keeps
+ *     PELEA = !(LU08 . LUPO1) == 1, i.e. the read data path is unchanged.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, lupor_ready_invariant)
+{
+    static const char cap_path[] = "/tmp/gemu_test_lupor.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    int saw_ready = 0;
+    int reached_e3 = 0;
+    for (int i = 0; i < 2048; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        /* Invariant: a presented byte and "ready" are mutually exclusive. */
+        ASSERT_FALSE(g.integrated_reader.lupor && g.integrated_reader.lu08);
+        if (g.integrated_reader.lupor)
+            saw_ready = 1;
+        if (g.rSO == 0xe3) { reached_e3 = 1; break; }
+        if (g.halted) break;
+    }
+
+    ASSERT_TRUE(reached_e3);             /* normal load still completes */
+    ASSERT_TRUE(saw_ready);              /* reader reported ready at least once */
     ASSERT_EQ(g.mem[0], 0xBD);
     ASSERT_EQ(g.mem[1], 0xFA);
 
