@@ -477,6 +477,13 @@ SIG(BI201) { return ge->integrated_reader.bi20;  }  /* BI20 : binary 2nd-nibble 
 SIG(POM01) { return ge->integrated_reader.pom01; }  /* POM01: binary-mode indic */
 SIG(PICO1) { return ge->integrated_reader.picon; }  /* PICON: first-column      */
 
+/* RL1U1: channel-1 read-length L1 "all ones" (terminal-count) decode (CPU
+ * signal index ch.128). A length-counted channel-1 transfer ends at L1+1
+ * characters; counting L1 down per character, the terminal is reached when L1
+ * underflows to all ones. Pure decode of rL1, so it is exposed here and reused
+ * by the RENIA end-of-transfer equation in msl-states.c. */
+SIG(RL1U1) { return (ge->rL1 & 0xff) == 0xff; }
+
 /* PI */
 SIG(FUSE1) { return 0; }
 SIG(FINA1) { return 0; }

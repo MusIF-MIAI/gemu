@@ -14,6 +14,7 @@
 #include "../reader.h"
 #include "../transcode.h"
 #include "../log.h"
+#include "../signals.h"
 
 /* Phase 1 — TU00N / TU03N / REGEN strobe lines. */
 UTEST(reader_signals, tu_strobes_and_regen)
@@ -97,4 +98,27 @@ UTEST(reader_signals, lenon_inhibits_feed)
     g.integrated_reader.lenon = 1;
     reader_send_tu10(&g);
     ASSERT_EQ((int)g.integrated_reader.tu03, 0);
+}
+
+/* Phase 5 — RL1U1 is the channel-1 length terminal-count decode: L1 all-ones.
+ * This is the decode that the RENIA end-of-transfer equation consumes (gated by
+ * L204, the order-block length-counted bit). */
+UTEST(reader_signals, rl1u1_terminal_decode)
+{
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    g.rL1 = 0x0080;                     /* order length (e.g. bootstrap): not terminal */
+    ASSERT_EQ((int)RL1U1(&g), 0);
+
+    g.rL1 = 0x007F;                     /* one short of terminal */
+    ASSERT_EQ((int)RL1U1(&g), 0);
+
+    g.rL1 = 0x00FF;                     /* all ones: terminal count reached */
+    ASSERT_EQ((int)RL1U1(&g), 1);
+
+    g.rL1 = 0x12FF;                     /* only the low byte matters */
+    ASSERT_EQ((int)RL1U1(&g), 1);
 }

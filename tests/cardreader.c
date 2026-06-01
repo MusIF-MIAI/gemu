@@ -344,6 +344,53 @@ UTEST(cardreader, tu03_feeds_at_end_of_card)
 }
 
 /* --------------------------------------------------------------------------
+ * Test (Phase 5): the RENIA length-count terminal is inert for a FININ read.
+ *
+ * The RENIA equation (L1 all-ones AND L204) is wired, but the current read
+ * datapath does not decrement L1 and never sets the order-block length bit
+ * (L204), so a read must still keep L1 constant at the order length and end on
+ * FININ — byte-identically. This guards that the wiring stays inert: across the
+ * whole 4-byte load, rL1 never changes and L204 stays 0, yet the load completes.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, renia_length_count_inert)
+{
+    static const char cap_path[] = "/tmp/gemu_test_renia.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    /* Reach the input-wait and capture the order length. */
+    int got = run_until_state(&g, 0xb8, 256);
+    ASSERT_EQ(got, 0xb8);
+    uint16_t order_len = g.rL1;
+    ASSERT_EQ((int)order_len, 0x80);
+
+    int reached_e3 = 0;
+    for (int i = 0; i < 2048; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        /* Length counter never decrements and length-count bit never sets, so
+         * the terminal can never be reached: the read is FININ-bounded. */
+        ASSERT_EQ((int)g.rL1, (int)order_len);
+        ASSERT_EQ((int)((g.rL2 >> 4) & 1), 0);   /* L204 stays clear */
+        if (g.rSO == 0xe3) { reached_e3 = 1; break; }
+        if (g.halted) break;
+    }
+    ASSERT_TRUE(reached_e3);
+    ASSERT_EQ(g.mem[0], 0xBD);
+    ASSERT_EQ(g.mem[1], 0xFA);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
  * Test: real funktionalcpu.cap, TC_NORMAL, first card only.
  *
  * Points at ../DUMP1/funktionalcpu.cap (and funktionalcpu.bin for oracle).

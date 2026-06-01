@@ -181,7 +181,7 @@ read needs `RC021`→`RIA21`→`RES26` and terminates on `RUF26`/`RIG?`/`RIL?`.
 | `RUSC6` | 148 | 14 | Data exchange in output on channel 3 | ☐ |
 | `RIG16` | 138 | 4 | **End from controller on channel 1** (`RIG1`) | ✅ `RIG1` |
 | `RIG36` | 146 | 4 | End from controller on channel 3 | ☐ |
-| `RIL11` | 138 | 13 | **End from length on channel 1** | ◑ (`RENIA`/`RIVE`, TODO) |
+| `RIL11` | 138 | 13 | **End from length on channel 1** | ◑ `RENIA = !(RL1U1·L204)` wired into `RIVE`; inert until the per-char L1 decrement is added to the read datapath (reads still end on FININ). |
 | `RIL31` | 146 | 13 | End from length on channel 3 | ☐ |
 | `RIVEF` | 138 | 11 | **Condition of end of transfer on channel 1** (`RIVE`) | ✅ `RIVE` |
 | `RIVAF` | 146 | 1 | Condition of end of transfer on channel 3 | ☐ |
@@ -218,7 +218,7 @@ read needs `RC021`→`RIA21`→`RES26` and terminates on `RUF26`/`RIG?`/`RIL?`.
 | `RG121` | 12 | NU30 |
 | `RG131` | 14 | SECO, FU22, LENO |
 | `RG141` | 16 | ERCA + input-parity error |
-| `RL1U1` | 128/4 | Decode **L1 all "ones"** |
+| `RL1U1` | 128/4 | Decode **L1 all "ones"** | ✅ `RL1U1` (`signals.h`: `(rL1 & 0xff) == 0xff`) — the channel-1 length terminal-count decode; consumed by `RENIA`. |
 | `RL301` | 128/6 | Decode **L3 all "zeroes"** |
 
 ### 4.5 Peripheral / connector lines (FU/FI/FA/SE/SA "bocchettone" = connector)

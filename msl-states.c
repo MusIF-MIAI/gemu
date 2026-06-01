@@ -1010,14 +1010,21 @@ SIG(RIG1) { return ge->RIG1; }
 SIG(RIG3) { return ge->RIG3; }
 
 /* RENIA/RILIA: channel-1 read length-count "not exhausted". The length is in L1,
- * decremented per character (CI15->count->CI05, gated L204; CPU[7] B9 timing),
- * and a length-counted transfer ends at L1+1 chars (CPU[4] §5.8.4.3a). Left as 1
- * for now: the funktionalcpu boot does NOT stall on this — it stalls earlier,
- * executing loaded data as code at PO=0x000e (the IPL load/entry is wrong), so
- * wiring the count terminal here was verified inert. Needs the RENIA/RILIA
- * combinational equation (terminal-count -> RIVE) before enabling. */
-SIG(RENIA) { return 1; } // TODO: L1 terminal count (see note above)
-SIG(RILIA) { return 1; } // TODO: 2nd-length count (decimal SS transfers)
+ * decremented per character (CI15->count->CI05; CPU[7] B9 timing), and a
+ * length-counted transfer ends at L1+1 chars (CPU[4] §5.8.4.3a) — i.e. when L1
+ * underflows to all ones (RL1U1, ch.128).
+ *
+ * RENIA is the faithful terminal-count equation, gated by L204 (the order-block
+ * "length-counted transfer" bit, rL2.4): it drops to 0 only when an actively
+ * length-counted transfer has reached terminal. This is INERT for every read
+ * gemu currently performs: the bootstrap/initial-load reads keep L204=0 and L1
+ * constant at the order length (the per-character L1 decrement is not yet wired
+ * into the b1/b9 read datapath), so they continue to end on FININ (RIG1)
+ * byte-identically. Enabling true length termination needs that L1 decrement
+ * wired first — tracked as the remaining datapath gap. (Equation/decode covered
+ * by reader_signals.rl1u1_terminal_decode; inertness by the bootstrap reads.) */
+SIG(RENIA) { return !(RL1U1(ge) && L204(ge)); }
+SIG(RILIA) { return 1; } // 2nd-length count (decimal SS transfers) — not exercised
 
 SIG(RIG1A) { return !ge->RIG1; }
 SIG(RIVE1) { return !(RIG1A(ge) && RENIA(ge) && RILIA(ge)); }
