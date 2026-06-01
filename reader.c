@@ -95,8 +95,9 @@ uint8_t reader_get_LU08(struct ge *ge)
 
 uint8_t reader_get_LUPO1(struct ge *ge)
 {
-    ge_log(LOG_READER, "reading LUPO1\n");
-    return 0;
+    /* LUPOR: reader free / ready. Defaults 0 (== the previous hardcoded stub),
+     * so this is inert until Phase 3 drives `lupor`. */
+    return ge->integrated_reader.lupor;
 }
 
 uint8_t reader_get_FINI1(struct ge *ge)

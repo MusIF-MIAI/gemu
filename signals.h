@@ -465,10 +465,17 @@ SIG(ED91A0) { return !ED91A(ge); }
 SIG(AITE)  { return ge->console_switches.SITE; }
 SIG(AITEA) { return !AITE(ge); }
 
-/* RI */
-SIG(LU081) { return reader_get_LU08(ge); }
-SIG(LUPO1) { return reader_get_LUPO1(ge); }
-SIG(FINI1) { return reader_get_FINI1(ge); }
+/* RI — integrated card reader on channel 1 (COCA pins; see docs/signals.md §1). */
+SIG(LU081) { return reader_get_LU08(ge); }       /* LU08N : char-ready strobe   */
+SIG(LUPO1) { return reader_get_LUPO1(ge); }      /* LUPOR : reader free / ready */
+SIG(FINI1) { return reader_get_FINI1(ge); }      /* FININ : end-of-read         */
+SIG(FIDE1) { return ge->integrated_reader.fiden; }  /* FIDEN: end-of-sequence   */
+SIG(LURE1) { return ge->integrated_reader.luren; }  /* LUREN: error / jam       */
+SIG(LUSE1) { return ge->integrated_reader.lusen; }  /* LUSEN: out-of-service    */
+SIG(LENO1) { return ge->integrated_reader.lenon; }  /* LENON: manual-mode       */
+SIG(BI201) { return ge->integrated_reader.bi20;  }  /* BI20 : binary 2nd-nibble */
+SIG(POM01) { return ge->integrated_reader.pom01; }  /* POM01: binary-mode indic */
+SIG(PICO1) { return ge->integrated_reader.picon; }  /* PICON: first-column      */
 
 /* PI */
 SIG(FUSE1) { return 0; }
