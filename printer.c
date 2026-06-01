@@ -245,7 +245,10 @@ static int printer_on_clock(struct ge *ge, void *opaque)
          * — the RC00=0 path below (stall debounce vs the card reader's b8 gap)
          * cannot, because RC00 never dropped. Gated on RC00 so a reader inter-byte
          * gap (RC00=0) and funktionalcpu's RC00=0 control PER are left to it. */
-        int control_ready = ge->RC00 && !write_ready && !input_ready;
+        int control_ready = ge->RC00 &&
+                            cmd != KBD_CMD_LINE &&
+                            cmd != KBD_CMD_CHAR &&
+                            !write_ready;
         if (write_ready || input_ready || control_ready) {
             ge->PUC2 = 1;   /* channel-2 unit ready -> DU97 completes the PER */
             ge->RC00 = 1;   /* CPU-active request   -> rSO=b8 routed into rSA */

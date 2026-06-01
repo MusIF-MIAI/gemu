@@ -31,6 +31,7 @@
 #include "../binimage.h"
 #include "../opcodes.h"
 #include "../log.h"
+#include "../gecode.h"
 
 #include <stdio.h>
 
@@ -321,6 +322,56 @@ UTEST(printer, output_per_prints_and_halts_when_polled)
     ASSERT_EQ(g.mem[0x31], 0x01);
     ASSERT_EQ(printer_output_len(&g), 5);
     ASSERT_STREQ(printer_output(&g), "HELLO");
+
+    ge_deinit(&g);
+}
+
+UTEST(printer, input_line_waits_for_keyboard_and_fills_buffer)
+{
+    struct ge g;
+    ge_init(&g);
+
+    /* PER connector-2, order block @ 0x10: read a line into 0x0200. */
+    g.mem[0x00] = PER_OPCODE; g.mem[0x01] = 0x80; g.mem[0x02] = 0x00; g.mem[0x03] = 0x10;
+    g.mem[0x10] = 0x00; g.mem[0x11] = 0x40;  /* z, cmd=KBD_CMD_LINE */
+    g.mem[0x12] = 0x00; g.mem[0x13] = 0x20;  /* len = 32 */
+    g.mem[0x14] = 0x02; g.mem[0x15] = 0x00;  /* buf = 0x0200 */
+
+    ge_clear(&g);
+    printer_register(&g);
+    ge_start(&g);
+
+    /* Without a completed line queued, the PER must remain pending. */
+    for (int i = 0; i < 40; i++) {
+        if (ge_run_cycle(&g))
+            break;
+    }
+    ASSERT_EQ(g.mem[0x30], 0x00);
+    ASSERT_EQ(g.mem[0x31], 0x00);
+    ASSERT_EQ(g.mem[0x200], 0x00);
+
+    printer_feed_key(&g, 'C');
+    printer_feed_key(&g, 'I');
+    printer_feed_key(&g, 'A');
+    printer_feed_key(&g, 'O');
+    printer_feed_key(&g, '\r');
+
+    for (int i = 0; i < 80; i++) {
+        if (ge_run_cycle(&g))
+            break;
+        if (g.mem[0x31] == 0x01)
+            break;
+    }
+
+    ASSERT_EQ(g.mem[0x30], 0x00);
+    ASSERT_EQ(g.mem[0x31], 0x01);
+    ASSERT_EQ(g.mem[0x32], 0x00);
+    ASSERT_EQ(g.mem[0x33], 0x04);
+    ASSERT_EQ(g.mem[0x200], ge_code('C'));
+    ASSERT_EQ(g.mem[0x201], ge_code('I'));
+    ASSERT_EQ(g.mem[0x202], ge_code('A'));
+    ASSERT_EQ(g.mem[0x203], ge_code('O'));
+    ASSERT_EQ(g.mem[0x204], 0x00); /* trailing NUL */
 
     ge_deinit(&g);
 }
