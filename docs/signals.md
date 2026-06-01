@@ -48,7 +48,7 @@ target pins for the signal-level model. Where gemu already carries the line, the
 |-----|------|---------|------|----------------------------------|
 | `RE00N`–`RE08N` | data (8+parity) | character data toward the reader register | ◑ `rRE` (connector-name byte) | The byte the CPU presents (output / command code). 8 data + odd parity. |
 | `TU00N` | timing | read-strobe clock for `RE` data | ☐ | Clocks `RE` data into the reader. |
-| `TU03N` | command | card-feed / advance clock | ☐ | Steps the card past the read station (next card / next column). |
+| `TU03N` | command | card-feed / advance clock | ✅ `integrated_reader.tu03` (`CE09`) | Raised once per card in the end state (`ea`) — **not** a per-column clock (empirically TU03 = `RT111·PC121` is asserted only at end-of-card, never during `b1`/`b8`). `cardreader_on_clock` reads it as a one-cycle pulse and uses it to gate the cross-to-next-card feed (the per-column cadence stays on the `lu08` read handshake). Suppressed by `LENON`. (Tests `cardreader.tu03_feeds_at_end_of_card`, `cardreader.sequential_two_cards`.) |
 | `N001`,`N002` | command | normal-mode read decode (GE char code) | ☐ | Selects Hollerith→GE transcoding. |
 | `DEBI` | command | binary-read mode decode (by-pass) | ◑ (by-pass implied by `TC_COLBIN`) | Selects raw column-binary read; the loader's "set by-pass" PER asserts this on the real machine. |
 | `MI01`,`MI02` | command | mixed-mode read decode | ☐ | Selects mixed transcoding. |

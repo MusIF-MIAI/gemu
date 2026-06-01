@@ -82,6 +82,13 @@ struct cardreader_ctx {
      * Used to transition to CR_CARD_DONE after CR_PRESENTED is cleared. */
     int end_of_card_presented;
 
+    /* Set to 1 when the last column of a card has been presented and the
+     * cross-to-next-card advance has been deferred until the CPU raises the
+     * TU03N end-of-card feed strobe (state ea). Honoured by the TU03 pulse
+     * handler at the top of on_clock. The per-column advance within a card is
+     * NOT gated by TU03 — that cadence stays on the lu08 read handshake. */
+    int feed_pending;
+
     /* Packed / self-loading mode (cardreader_register_packed). The channel-1
      * input-transfer microcode always packs TWO presented nibbles into one
      * memory byte. A self-loading SMAC .cap holds the program as full COLBIN
@@ -166,6 +173,21 @@ static int cr_advance(struct cardreader_ctx *ctx)
 static int cardreader_on_clock(struct ge *ge, void *opaque)
 {
     struct cardreader_ctx *ctx = (struct cardreader_ctx *)opaque;
+
+    /* TU03N card-feed strobe (CE09), read as a one-cycle pulse: the CPU raises
+     * it at end-of-card (state ea). We latch and clear it here at TO00 so it
+     * reads as the previous cycle's pulse. A card-boundary advance deferred when
+     * the last column was presented is the reader physically feeding the card
+     * out and bringing the next under the read station — it happens in response
+     * to this strobe rather than autonomously. */
+    {
+        int feed = ge->integrated_reader.tu03;
+        ge->integrated_reader.tu03 = 0;
+        if (feed && ctx->feed_pending) {
+            cr_advance(ctx);
+            ctx->feed_pending = 0;
+        }
+    }
 
     /* LUSEN (out-of-service): the reader is offline — present nothing and report
      * not-ready, so a read parks/completes as unit-not-ready rather than getting
@@ -306,7 +328,13 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
             ctx->half = 1;
         } else {
             ctx->half = 0;
-            cr_advance(ctx);
+            if (is_last_col) {
+                /* Card boundary: defer the cross-to-next-card feed until the
+                 * CPU's TU03N end-of-card strobe (state ea). */
+                ctx->feed_pending = 1;
+            } else {
+                cr_advance(ctx);
+            }
         }
     }
 

@@ -294,6 +294,56 @@ UTEST(cardreader, lupor_ready_invariant)
 }
 
 /* --------------------------------------------------------------------------
+ * Test (Phase 4): TU03N is the end-of-card feed strobe.
+ *
+ * The CPU raises TU03N (CE09) once per card, in the end state (ea), to feed the
+ * card out and bring the next one under the read station — it is NOT a per-column
+ * clock. This checks the strobe is observed exactly at end-of-card (rSO==0xea)
+ * and that the load still completes. (The cross-to-next-card advance is gated on
+ * this pulse; the multi-card cadence is covered by sequential_two_cards.)
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, tu03_feeds_at_end_of_card)
+{
+    static const char cap_path[] = "/tmp/gemu_test_tu03.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    int feed_pulses = 0;
+    int feed_at_ea = 0;
+    int feed_during_transfer = 0;
+    int reached_e3 = 0;
+    for (int i = 0; i < 2048; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        if (g.integrated_reader.tu03) {
+            feed_pulses++;
+            if (g.rSO == 0xea) feed_at_ea = 1;
+            /* It must NOT pulse while a data byte is being transferred (b1/b8). */
+            if (g.rSO == 0xb1 || g.rSO == 0xb8) feed_during_transfer = 1;
+        }
+        if (g.rSO == 0xe3) { reached_e3 = 1; break; }
+        if (g.halted) break;
+    }
+
+    ASSERT_TRUE(reached_e3);             /* load completes */
+    ASSERT_EQ(feed_pulses, 1);           /* exactly one feed strobe for one card */
+    ASSERT_TRUE(feed_at_ea);             /* and it is at end-of-card (ea) */
+    ASSERT_FALSE(feed_during_transfer);  /* never mid-transfer */
+    ASSERT_EQ(g.mem[0], 0xBD);
+    ASSERT_EQ(g.mem[1], 0xFA);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
  * Test: real funktionalcpu.cap, TC_NORMAL, first card only.
  *
  * Points at ../DUMP1/funktionalcpu.cap (and funktionalcpu.bin for oracle).
