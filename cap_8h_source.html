@@ -94,8 +94,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment"> * card&#39;s embedded load address (the deck format), independent of the (separate,</span></div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment"> * cycle-faithful) card-reader bootstrap.</span></div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment"> * On success returns the number of cards loaded (&gt;0) and sets *lo/*hi to the</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment"> * lowest/highest address written (so [*lo, *hi] is the populated span; entry is</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment"> * On success returns the number of cards loaded (&gt;0) and sets `*lo` / `*hi` to</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="comment"> * the lowest/highest address written (so [`*lo`, `*hi`] is the populated span; entry is</span></div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment"> * conventionally *lo). Returns -1 on parse error or if nothing loaded. `mode` is</span></div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="comment"> * an `enum transcode_mode` (pass TC_COLBIN for binary decks).</span></div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="comment"> */</span></div>

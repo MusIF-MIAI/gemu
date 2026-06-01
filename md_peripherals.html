@@ -121,14 +121,56 @@ Printer / console-typewriter — channel 2 (&lt;tt&gt;printer.c&lt;/tt&gt;)</h1>
 <li><b>Captures</b> (best-effort): reads up to 160 bytes of the print order block at the channel-2 operand addresser <code>rV2</code>, rendering each byte through the <b>GE 100-series internal graphic set</b> (<code><a class="el" href="gecode_8c.html">gecode.c</a></code> — the machine's own character code, <em>not</em> ASCII; non-graphic codes → <code>.</code>), stopping at NUL, into <code>integrated_printer.out[]</code>. The glyph table is single-sourced with the disassembler's DB-comment glyphs (<code>gdis</code> links the same <code><a class="el" href="gecode_8c.html">gecode.c</a></code>).</li>
 <li><b>Completes</b>: asserts <code>PUC2</code> (→ <code>DU97 = 1</code>) and <code>RC00</code> (→ <code>NA_knot</code> routes <code>rSO=b8</code> into <code>rSA</code>) so the machine's own <code>state_b8</code> microcode returns to alpha. One-shot: <code>rSO</code> leaves b8 on the next cycle.</li>
 </ol>
-<p><code>present</code> is set only by <code>printer_register</code>, so bootstrap/reader tests (which do not register a printer) leave it 0 and are completely unaffected.</p>
 <h2><a class="anchor" id="autotoc_md152"></a>
+gemu completion cells</h2>
+<p>For the current <code>gec</code> stdio runtime and the halting <code>assembler/examples/print.s</code> demo, gemu also exposes a small completion convention in low memory:</p>
+<ul>
+<li><code>0x0030..0x0031</code> — <code>__io_status</code> (<code>0x0001</code> once the channel-2 operation has completed)</li>
+<li><code>0x0032..0x0033</code> — <code>__io_count</code> (characters transferred)</li>
+</ul>
+<p>These are <b>gemu runtime cells</b>, not claimed hardware registers from the PTR manuals. They exist so compiled C stdio and simple assembly demos can wait for the overlapped typewriter/printer transfer to finish before halting.</p>
+<p><code>present</code> is set only by <code>printer_register</code>, so bootstrap/reader tests (which do not register a printer) leave it 0 and are completely unaffected.</p>
+<h2><a class="anchor" id="autotoc_md153"></a>
+Example: load a small printer program</h2>
+<p><code>assembler/examples/print.s</code> is the shortest end-to-end channel-2 output demo. It issues a <code>PER 0x80, order</code>, waits for <code>__io_status</code> at <code>0x0031</code> to become <code>0x01</code>, then halts.</p>
+<p>Build it:</p>
+<div class="fragment"><div class="line">make -C software/gemu tools ge</div>
+<div class="line">./software/gemu/assembler/gasm \</div>
+<div class="line">  -o /tmp/print.bin \</div>
+<div class="line">  ./software/gemu/assembler/examples/print.s</div>
+</div><!-- fragment --><p>Run it from the CLI:</p>
+<div class="fragment"><div class="line">./software/gemu/ge /tmp/print.bin</div>
+</div><!-- fragment --><p>You should see:</p>
+<div class="fragment"><div class="line">PRN&gt; HELLO</div>
+<div class="line">exit: halted=1 ...</div>
+</div><!-- fragment --><p>Run it in wasm:</p>
+<div class="fragment"><div class="line">make -C software/gemu wasm</div>
+</div><!-- fragment --><p>Then open the wasm console, choose <code>/tmp/print.bin</code> in the simulator gadget, press <code>Stage</code>, then on the panel press <code>CLEAR</code>, <code>LOAD</code>, <code>START</code>. The printer paper view should show <code>HELLO</code>, then the CPU halts.</p>
+<h2><a class="anchor" id="autotoc_md154"></a>
+Example: load the authentic printer deck</h2>
+<p>The real punched deck in the dump set is <code>software/DUMP1/printermechanicaltest.cap</code>. This is a full card deck, not a direct binary image.</p>
+<p>CLI, authentic reader/bootstrap path:</p>
+<div class="fragment"><div class="line">./software/gemu/ge --deck ./software/DUMP1/printermechanicaltest.cap</div>
+</div><!-- fragment --><p>That path uses the real reader flow (<code>LOAD1</code>, <code>LOAD</code>, bootstrap card, then deck cards through the integrated reader).</p>
+<p>CLI, fast scatter-decoded path:</p>
+<div class="fragment"><div class="line">./software/gemu/ge ./software/DUMP1/printermechanicaltest.cap</div>
+</div><!-- fragment --><p>That uses the default positional <code>.cap</code> image path: the deck is scatter-decoded to memory first, then execution starts at the lowest loaded address.</p>
+<p>Wasm:</p>
+<ol type="1">
+<li>Choose <code>software/DUMP1/printermechanicaltest.cap</code> in the simulator gadget.</li>
+<li>Press <code>Stage</code>.</li>
+<li>On the panel press <code>CLEAR</code>.</li>
+<li>Press <code>LOAD</code>.</li>
+<li>Press <code>START</code>.</li>
+</ol>
+<p>In the browser, <code>.cap</code> currently follows the staged scatter-image path rather than the authentic multi-card reader chain, so use the <code>--deck</code> CLI form above when you specifically want to exercise the real bootstrap/read path.</p>
+<h2><a class="anchor" id="autotoc_md155"></a>
 Two-way chat (wasm + interactive CLI)</h2>
 <ul>
 <li><b>Output</b> — <code><a class="el" href="printer_8c.html#a890616d97cdcf2cc34aea642ea1418ce">printer_output()</a></code> / <code><a class="el" href="printer_8c.html#a1d72251ae79e373f43eee9a1c5367e83">printer_output_len()</a></code> expose the captured paper feed. The wasm front-end (<code>console/wasm/console.html</code>) drains it each frame into a paper-teletype panel (<code>#teleprinter</code>), drawn deliberately unlike the metal console since it represents a peripheral, not a console control. The <code>--interactive</code> CLI echoes it as <code>PRN&gt; …</code>.</li>
 <li><b>Input</b> — <code><a class="el" href="printer_8c.html#a968e4c8d393a4a63a9e3de02305913db">printer_feed_key()</a></code> enqueues operator-keyboard bytes into <code>integrated_printer.kbd[]</code> (a ring). The wasm chat input and the CLI's non-blocking stdin feed it.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md153"></a>
+<h1><a class="anchor" id="autotoc_md156"></a>
 Limitations (honest scope)</h1>
 <ul>
 <li>The <b>per-character channel-2 transfer</b> (the <code>rSI</code> sequencer states b9/b1 and the <code>RIVE</code>/<code>RIG1</code> length termination) is <b>not modelled</b>. The print <code>PER</code> completes in one shot rather than transferring byte-by-byte, so:<ul>
@@ -138,7 +180,7 @@ Limitations (honest scope)</h1>
 </li>
 <li>The funktionalcpu deck, after the completed print PER, takes its <code>report_restart</code> branch (the final 40-char signature <code>CMC</code> at <code>0x19d4</code> compares <code>mem[0x1100]</code> vs <code>mem[0x0036]</code> and mismatches) — i.e. it loops as a continuous self-test. That is <b>deck logic, not a printer issue</b>: the End HLT <code>0x19DE</code> is only reached when that signature matches.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md154"></a>
+<h1><a class="anchor" id="autotoc_md157"></a>
 Tests</h1>
 <p><code>tests/printer.c</code>:</p><ul>
 <li><code>printer.present_completes_channel2_per</code> — with the printer, the print PER completes (output captured) instead of parking at b8.</li>

@@ -71,15 +71,41 @@ Data Structures</h2></td></tr>
 Macros</h2></td></tr>
 <tr class="memitem:add45918f365cd70ffcbf77274011e501" id="r_add45918f365cd70ffcbf77274011e501"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#add45918f365cd70ffcbf77274011e501">STALL_THRESHOLD</a>&#160;&#160;&#160;256</td></tr>
 <tr class="separator:add45918f365cd70ffcbf77274011e501"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04accc10bc137b8ab5080a82696f92da" id="r_a04accc10bc137b8ab5080a82696f92da"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a04accc10bc137b8ab5080a82696f92da">CAPTURE_MAX</a>&#160;&#160;&#160;160</td></tr>
-<tr class="separator:a04accc10bc137b8ab5080a82696f92da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a145040ad3ebe48cf3897f4e26e998cde" id="r_a145040ad3ebe48cf3897f4e26e998cde"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a145040ad3ebe48cf3897f4e26e998cde">PRINT_CMD_IS_PUT</a>(cmd)&#160;&#160;&#160;((cmd) &amp; 0x80)</td></tr>
+<tr class="separator:a145040ad3ebe48cf3897f4e26e998cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77c115773bd120612928c55983120f9a" id="r_a77c115773bd120612928c55983120f9a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a77c115773bd120612928c55983120f9a">PRINT_LEN_MAX</a>&#160;&#160;&#160;256</td></tr>
+<tr class="separator:a77c115773bd120612928c55983120f9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a337e5c04cd7d2da42e051e15b0c8983f" id="r_a337e5c04cd7d2da42e051e15b0c8983f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a337e5c04cd7d2da42e051e15b0c8983f">KBD_CMD_LINE</a>&#160;&#160;&#160;0x40</td></tr>
+<tr class="separator:a337e5c04cd7d2da42e051e15b0c8983f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1369b2ededb9039d8082e9ba5f65435e" id="r_a1369b2ededb9039d8082e9ba5f65435e"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a1369b2ededb9039d8082e9ba5f65435e">KBD_CMD_CHAR</a>&#160;&#160;&#160;0x41</td></tr>
+<tr class="separator:a1369b2ededb9039d8082e9ba5f65435e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d0352a024d67016e6303e35a0914905" id="r_a0d0352a024d67016e6303e35a0914905"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a0d0352a024d67016e6303e35a0914905">LP_CMD_WRITE</a>&#160;&#160;&#160;0x42</td></tr>
+<tr class="separator:a0d0352a024d67016e6303e35a0914905"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0a6b0de150a31768c7308e37d353687" id="r_ab0a6b0de150a31768c7308e37d353687"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#ab0a6b0de150a31768c7308e37d353687">IS_OUTPUT_CMD</a>(cmd)&#160;&#160;&#160;(<a class="el" href="printer_8c.html#a145040ad3ebe48cf3897f4e26e998cde">PRINT_CMD_IS_PUT</a>(cmd) || (cmd) == <a class="el" href="printer_8c.html#a0d0352a024d67016e6303e35a0914905">LP_CMD_WRITE</a>)</td></tr>
+<tr class="separator:ab0a6b0de150a31768c7308e37d353687"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0694e146a2288b946e29dce5e15ad9a7" id="r_a0694e146a2288b946e29dce5e15ad9a7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a0694e146a2288b946e29dce5e15ad9a7">STDIO_STATUS_ADDR</a>&#160;&#160;&#160;0x0030</td></tr>
+<tr class="separator:a0694e146a2288b946e29dce5e15ad9a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee9893cd11f67f01b1d6855d2feaa21d" id="r_aee9893cd11f67f01b1d6855d2feaa21d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#aee9893cd11f67f01b1d6855d2feaa21d">STDIO_COUNT_ADDR</a>&#160;&#160;&#160;0x0032</td></tr>
+<tr class="separator:aee9893cd11f67f01b1d6855d2feaa21d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a34daf01b371da8a98010b68981f936f6" id="r_a34daf01b371da8a98010b68981f936f6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a34daf01b371da8a98010b68981f936f6">store16</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t addr, uint16_t value)</td></tr>
+<tr class="separator:a34daf01b371da8a98010b68981f936f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae505212a9dcffd7b65a7bba58d072484" id="r_ae505212a9dcffd7b65a7bba58d072484"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#ae505212a9dcffd7b65a7bba58d072484">kbd_ready</a> (const struct ge_integrated_printer *p)</td></tr>
+<tr class="separator:ae505212a9dcffd7b65a7bba58d072484"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac470b5e781dcb3ca841850cacc45ca60" id="r_ac470b5e781dcb3ca841850cacc45ca60"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#ac470b5e781dcb3ca841850cacc45ca60">kbd_has_complete_line</a> (const struct ge_integrated_printer *p)</td></tr>
+<tr class="separator:ac470b5e781dcb3ca841850cacc45ca60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e7351bd6125daa0f3cde31386c2efc7" id="r_a9e7351bd6125daa0f3cde31386c2efc7"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a9e7351bd6125daa0f3cde31386c2efc7">kbd_pop</a> (struct ge_integrated_printer *p)</td></tr>
+<tr class="separator:a9e7351bd6125daa0f3cde31386c2efc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae94d3aa7c589f6fd243df9c239adccd8" id="r_ae94d3aa7c589f6fd243df9c239adccd8"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#ae94d3aa7c589f6fd243df9c239adccd8">service_input_line</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t buf, int len)</td></tr>
+<tr class="separator:ae94d3aa7c589f6fd243df9c239adccd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1115cc73fca3bab8ed0e19277620d9f4" id="r_a1115cc73fca3bab8ed0e19277620d9f4"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a1115cc73fca3bab8ed0e19277620d9f4">service_input_char</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t buf, int len)</td></tr>
+<tr class="separator:a1115cc73fca3bab8ed0e19277620d9f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8add2ebdd727d97ab81867373bc1746f" id="r_a8add2ebdd727d97ab81867373bc1746f"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a8add2ebdd727d97ab81867373bc1746f">input_order_ready</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint8_t cmd)</td></tr>
+<tr class="separator:a8add2ebdd727d97ab81867373bc1746f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a53e0b9c9a8a2d33d203a408b6b2d554c" id="r_a53e0b9c9a8a2d33d203a408b6b2d554c"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a53e0b9c9a8a2d33d203a408b6b2d554c">in_channel2_print_wait</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:a53e0b9c9a8a2d33d203a408b6b2d554c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a598ab96d97b555ce932502eb54b4571b" id="r_a598ab96d97b555ce932502eb54b4571b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a598ab96d97b555ce932502eb54b4571b">capture_line</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
-<tr class="separator:a598ab96d97b555ce932502eb54b4571b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22eb817acc4ab34ed0b1e4dbdd2ee8fc" id="r_a22eb817acc4ab34ed0b1e4dbdd2ee8fc"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a22eb817acc4ab34ed0b1e4dbdd2ee8fc">printer_on_clock</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *opaque)</td></tr>
 <tr class="separator:a22eb817acc4ab34ed0b1e4dbdd2ee8fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8fe87a5d7716d423a255b9b9deace421" id="r_a8fe87a5d7716d423a255b9b9deace421"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a8fe87a5d7716d423a255b9b9deace421">printer_deinit</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *opaque)</td></tr>
@@ -100,19 +126,107 @@ Functions</h2></td></tr>
 <tr class="separator:acaed2e2800bec060caa5f842ea6dea0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="a04accc10bc137b8ab5080a82696f92da" name="a04accc10bc137b8ab5080a82696f92da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04accc10bc137b8ab5080a82696f92da">&#9670;&#160;</a></span>CAPTURE_MAX</h2>
+<a id="ab0a6b0de150a31768c7308e37d353687" name="ab0a6b0de150a31768c7308e37d353687"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0a6b0de150a31768c7308e37d353687">&#9670;&#160;</a></span>IS_OUTPUT_CMD</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define CAPTURE_MAX&#160;&#160;&#160;160</td>
+          <td class="memname">#define IS_OUTPUT_CMD</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">cmd</td><td>)</td>
+          <td>&#160;&#160;&#160;(<a class="el" href="printer_8c.html#a145040ad3ebe48cf3897f4e26e998cde">PRINT_CMD_IS_PUT</a>(cmd) || (cmd) == <a class="el" href="printer_8c.html#a0d0352a024d67016e6303e35a0914905">LP_CMD_WRITE</a>)</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00046">46</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00068">68</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a1369b2ededb9039d8082e9ba5f65435e" name="a1369b2ededb9039d8082e9ba5f65435e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1369b2ededb9039d8082e9ba5f65435e">&#9670;&#160;</a></span>KBD_CMD_CHAR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define KBD_CMD_CHAR&#160;&#160;&#160;0x41</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00058">58</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a337e5c04cd7d2da42e051e15b0c8983f" name="a337e5c04cd7d2da42e051e15b0c8983f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a337e5c04cd7d2da42e051e15b0c8983f">&#9670;&#160;</a></span>KBD_CMD_LINE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define KBD_CMD_LINE&#160;&#160;&#160;0x40</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00057">57</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a0d0352a024d67016e6303e35a0914905" name="a0d0352a024d67016e6303e35a0914905"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d0352a024d67016e6303e35a0914905">&#9670;&#160;</a></span>LP_CMD_WRITE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define LP_CMD_WRITE&#160;&#160;&#160;0x42</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00067">67</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a145040ad3ebe48cf3897f4e26e998cde" name="a145040ad3ebe48cf3897f4e26e998cde"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a145040ad3ebe48cf3897f4e26e998cde">&#9670;&#160;</a></span>PRINT_CMD_IS_PUT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PRINT_CMD_IS_PUT</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">cmd</td><td>)</td>
+          <td>&#160;&#160;&#160;((cmd) &amp; 0x80)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00055">55</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a77c115773bd120612928c55983120f9a" name="a77c115773bd120612928c55983120f9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77c115773bd120612928c55983120f9a">&#9670;&#160;</a></span>PRINT_LEN_MAX</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PRINT_LEN_MAX&#160;&#160;&#160;256</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00056">56</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -132,35 +246,39 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="a598ab96d97b555ce932502eb54b4571b" name="a598ab96d97b555ce932502eb54b4571b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a598ab96d97b555ce932502eb54b4571b">&#9670;&#160;</a></span>capture_line()</h2>
+<a id="aee9893cd11f67f01b1d6855d2feaa21d" name="aee9893cd11f67f01b1d6855d2feaa21d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee9893cd11f67f01b1d6855d2feaa21d">&#9670;&#160;</a></span>STDIO_COUNT_ADDR</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static void capture_line </td>
-          <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
-          <td class="paramname"><em>ge</em></td><td>)</td>
-          <td></td>
+          <td class="memname">#define STDIO_COUNT_ADDR&#160;&#160;&#160;0x0032</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00071">71</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a0694e146a2288b946e29dce5e15ad9a7" name="a0694e146a2288b946e29dce5e15ad9a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0694e146a2288b946e29dce5e15ad9a7">&#9670;&#160;</a></span>STDIO_STATUS_ADDR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define STDIO_STATUS_ADDR&#160;&#160;&#160;0x0030</td>
+        </tr>
+      </table>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00070">70</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
+<h2 class="groupheader">Function Documentation</h2>
 <a id="a53e0b9c9a8a2d33d203a408b6b2d554c" name="a53e0b9c9a8a2d33d203a408b6b2d554c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a53e0b9c9a8a2d33d203a408b6b2d554c">&#9670;&#160;</a></span>in_channel2_print_wait()</h2>
 
@@ -185,7 +303,129 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00057">57</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00152">152</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a8add2ebdd727d97ab81867373bc1746f" name="a8add2ebdd727d97ab81867373bc1746f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8add2ebdd727d97ab81867373bc1746f">&#9670;&#160;</a></span>input_order_ready()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int input_order_ready </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>cmd</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00139">139</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="ac470b5e781dcb3ca841850cacc45ca60" name="ac470b5e781dcb3ca841850cacc45ca60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac470b5e781dcb3ca841850cacc45ca60">&#9670;&#160;</a></span>kbd_has_complete_line()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int kbd_has_complete_line </td>
+          <td>(</td>
+          <td class="paramtype">const struct ge_integrated_printer *&#160;</td>
+          <td class="paramname"><em>p</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00084">84</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a9e7351bd6125daa0f3cde31386c2efc7" name="a9e7351bd6125daa0f3cde31386c2efc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e7351bd6125daa0f3cde31386c2efc7">&#9670;&#160;</a></span>kbd_pop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static uint8_t kbd_pop </td>
+          <td>(</td>
+          <td class="paramtype">struct ge_integrated_printer *&#160;</td>
+          <td class="paramname"><em>p</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00093">93</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="ae505212a9dcffd7b65a7bba58d072484" name="ae505212a9dcffd7b65a7bba58d072484"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae505212a9dcffd7b65a7bba58d072484">&#9670;&#160;</a></span>kbd_ready()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int kbd_ready </td>
+          <td>(</td>
+          <td class="paramtype">const struct ge_integrated_printer *&#160;</td>
+          <td class="paramname"><em>p</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00079">79</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -221,7 +461,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00196">196</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00336">336</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -259,7 +499,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00150">150</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00290">290</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -289,7 +529,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00204">204</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00345">345</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -327,7 +567,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00101">101</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00167">167</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -347,7 +587,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00219">219</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00360">360</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -367,7 +607,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00224">224</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00365">365</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -387,7 +627,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00214">214</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00355">355</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -407,7 +647,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00172">172</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00312">312</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -451,7 +691,139 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00162">162</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00302">302</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a1115cc73fca3bab8ed0e19277620d9f4" name="a1115cc73fca3bab8ed0e19277620d9f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1115cc73fca3bab8ed0e19277620d9f4">&#9670;&#160;</a></span>service_input_char()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int service_input_char </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00122">122</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="ae94d3aa7c589f6fd243df9c239adccd8" name="ae94d3aa7c589f6fd243df9c239adccd8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae94d3aa7c589f6fd243df9c239adccd8">&#9670;&#160;</a></span>service_input_line()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int service_input_line </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00100">100</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a34daf01b371da8a98010b68981f936f6" name="a34daf01b371da8a98010b68981f936f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34daf01b371da8a98010b68981f936f6">&#9670;&#160;</a></span>store16()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void store16 </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00073">73</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
