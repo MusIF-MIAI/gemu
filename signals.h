@@ -678,8 +678,19 @@ SIG(RA101) { return !(PA11A(ge) && PA12A(ge) && PA13A(ge) && PA13A(ge) && PA14A(
 
 /* } */
 
-SIG(RET21) { return 0; };
-SIG(PC221) { return 0; };
+/* Channel-2 reader-input selection (Phase 4). These gate PIB21 = enable NE input
+ * from connector 2 on a channel-2 cycle, mirroring the channel-1 path
+ * PB12A = !(RESI1 . PC121):
+ *   PB22A = !(RET21 . PC221), so the channel-2 reader read latches NE->RO when
+ *   the channel-2 cycle is active (RET21) AND connector 2 is selected on channel
+ *   2 (PC221). RET21 is the channel-2 sync request RIA2 (mirror of RESI1 for ch-1).
+ *   PC221 = !PC22A = PUC21 . ~PB26 (channel-2 unit selected, connector selector
+ *   PB26=0 => connector 2). Both were stubbed to 0, which left the integrated
+ *   reader selectable only on channel 1 (via PB12A); these light the channel-2
+ *   path. Off for channel-1 ops (RIA2=0 / PUC2=0), so the channel-1 bootstrap is
+ *   unaffected. */
+SIG(RET21) { return ge->RIA2; }
+SIG(PC221) { return !PC22A(ge); }
 
 /**
  * @defgroup ne-logic NE Knot Logic
