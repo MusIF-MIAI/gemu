@@ -56,6 +56,16 @@ struct printer_ctx {
 #define PRINT_LEN_MAX 256
 #define KBD_CMD_LINE 0x40
 #define KBD_CMD_CHAR 0x41
+/* Line printer (LP/PRT, connector 2): the WRITE/print order is the same 6-byte
+ * block {z, cmd, len_hi, len_lo, buf_hi, buf_lo} as the console typewriter, but
+ * with command byte 0x42 (WRITE) instead of the typewriter's PUT (bit 7 set) —
+ * verified from printermechanicaltest.cap (order {51 42 00 9F 02 02} prints 159
+ * bytes from 0x0202) and the PRT mechanic-test listing ("X'C0',WRITE"). Unlike
+ * the typewriter output it parks the CPU at the b8 external request-wait with
+ * RC00 still set, so it is released there (like an input order) and the actual
+ * transfer is armed when the PER returns to alpha. */
+#define LP_CMD_WRITE 0x42
+#define IS_OUTPUT_CMD(cmd) (PRINT_CMD_IS_PUT(cmd) || (cmd) == LP_CMD_WRITE)
 
 #define STDIO_STATUS_ADDR 0x0030
 #define STDIO_COUNT_ADDR  0x0032
@@ -206,7 +216,7 @@ static int printer_on_clock(struct ge *ge, void *opaque)
         uint16_t buf  = (ge->mem[(uint16_t)(base + 4)] << 8) |
                          ge->mem[(uint16_t)(base + 5)];
         ctx->per_pending = 0;
-        if (PRINT_CMD_IS_PUT(cmd) && len >= 1 && len <= PRINT_LEN_MAX)
+        if (IS_OUTPUT_CMD(cmd) && len >= 1 && len <= PRINT_LEN_MAX)
             printer_begin_output(ge, buf, len);
         else if (cmd == KBD_CMD_LINE && len >= 1 && len <= PRINT_LEN_MAX)
             service_input_line(ge, buf, len);
@@ -222,8 +232,21 @@ static int printer_on_clock(struct ge *ge, void *opaque)
      * available (a full line for KBD_CMD_LINE, any key for KBD_CMD_CHAR). */
     if (ctx->per_pending && ge->rSO == 0xb8) {
         uint8_t cmd = ge->mem[(uint16_t)(ctx->per_base + 1)];
-        if ((cmd == KBD_CMD_LINE || cmd == KBD_CMD_CHAR) &&
-            input_order_ready(ge, cmd)) {
+        int     len = (ge->mem[(uint16_t)(ctx->per_base + 2)] << 8) |
+                       ge->mem[(uint16_t)(ctx->per_base + 3)];
+        /* A line-printer WRITE parks here with RC00 set; release it so the PER
+         * returns to alpha, where the e2 arm starts the buffer transfer. */
+        int write_ready = (cmd == LP_CMD_WRITE && len >= 1 && len <= PRINT_LEN_MAX);
+        int input_ready = (cmd == KBD_CMD_LINE || cmd == KBD_CMD_CHAR) &&
+                          input_order_ready(ge, cmd);
+        /* Any OTHER channel-2 order parked here with RC00 still set is a printer
+         * control op (paper spacing, jump-to-channel, drum/ribbon select) that
+         * transfers no data: the device accepts it immediately. Complete it here
+         * — the RC00=0 path below (stall debounce vs the card reader's b8 gap)
+         * cannot, because RC00 never dropped. Gated on RC00 so a reader inter-byte
+         * gap (RC00=0) and funktionalcpu's RC00=0 control PER are left to it. */
+        int control_ready = ge->RC00 && !write_ready && !input_ready;
+        if (write_ready || input_ready || control_ready) {
             ge->PUC2 = 1;   /* channel-2 unit ready -> DU97 completes the PER */
             ge->RC00 = 1;   /* CPU-active request   -> rSO=b8 routed into rSA */
             ctx->stall = 0;
