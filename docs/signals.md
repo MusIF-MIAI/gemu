@@ -35,12 +35,12 @@ target pins for the signal-level model. Where gemu already carries the line, the
 | `FININ` | handshake | end-of-read, raised with the **last** character | ✅ `FINI1` (`reader_get_FINI1`) | The controller "end" (→ `RIG1`). Bounds the transfer at the physical card boundary: drives the load-end sequence (`b9→ea→eb→e3`) instead of continuing. |
 | `FIDEN` | status | end-of-sequence (all data transferred) | ◑ `integrated_reader.fiden` (`FIDE1`) | Set by `cardreader_on_clock` when the deck is exhausted (`CR_DONE`). Observable end-of-sequence; the full in-transfer-clear/`LUPOR`-reassert handshake is still minimal. |
 | `LUPOR` | status | reader free / ready | ✅ `LUPO1` (`reader_get_LUPO1`) | Driven by `cardreader_on_clock`: ready (1) while not finished **and not presenting a byte**. Held 0 whenever `LU08=1`, which keeps `PELEA = !(LU08·LUPO1)` at 1 so the read data path is unchanged. (Test `cardreader.lupor_ready_invariant`.) |
-| `LUREN` | status | error (transcoder / jam) | ☐ | Fault → would raise a peripheral-error / interrupt condition and abort the transfer. (Phase 6, with `RG011`.) |
+| `LUREN` | status | error (transcoder / jam) | ◑ `integrated_reader.luren` (`LURE1`) | `cardreader_on_clock`: when set, the reader cannot deliver data — presents nothing and the read stalls in error. The faithful `RG011`-decode → peripheral-error/interrupt condition is deferred to the CAN2 interrupt integration. (Test `cardreader.luren_error_stalls`.) |
 | `LUSEN` | status | out-of-service | ✅ `integrated_reader.lusen` (`LUSE1`) | `cardreader_on_clock`: when set, the reader is offline — presents nothing and reports not-ready, so a read parks/completes as unit-not-ready instead of getting data. (Test `cardreader.lusen_out_of_service_stalls`.) |
 | `LENON` | status | manual-mode active | ✅ `integrated_reader.lenon` (`LENO1`) | `reader_send_tu10` (`CE09`): when set, the `TU03N` card-feed strobe is suppressed — a reader in manual does not advance under the CPU feed. (Test `reader_signals.lenon_inhibits_feed`.) |
-| `BI20` | clock | binary-read aux clock — 2nd nibble, ~15 µs after `LU08` | ☐ | In binary/by-pass mode the column is read as two sub-reads; `BI20` strobes the second. (gemu currently reconstructs a full byte per column via the packed nibble-pair feed; see §3.) |
-| `POM01` | status | binary-mode indicator | ☐ | High ⇒ transcoder is in binary (by-pass) read; selects raw 12-row column image vs GE char code. |
-| `PICON` | handshake | first-column check | ☐ | Marks the leading column of a card; used to align/validate the start of a record. |
+| `BI20` | clock | binary-read aux clock — 2nd nibble, ~15 µs after `LU08` | ✅ `integrated_reader.bi20` (`BI201`) | `cardreader_on_clock` raises it while the **low** nibble of a packed binary column is on the lines (the second sub-read). Observable framing of the packed nibble-pair feed (§3). (Test `cardreader.feed_state_lines_pom_pico_bi20`.) |
+| `POM01` | status | binary-mode indicator | ✅ `integrated_reader.pom01` (`POM01`) | `cardreader_on_clock`: high while presenting in a binary / by-pass read (`TC_BINARY`/`TC_COLBIN`). Observable. (Test `cardreader.feed_state_lines_pom_pico_bi20`.) |
+| `PICON` | handshake | first-column check | ✅ `integrated_reader.picon` (`PICO1`) | `cardreader_on_clock`: high while presenting column 0 of a card — the leading-column marker. Observable. (Test `cardreader.feed_state_lines_pom_pico_bi20`.) |
 
 ### 1.2 CPU/channel → reader
 
@@ -100,14 +100,16 @@ above feed into them. Implemented in `signals.h` (`SIG(...)`) and `struct ge`.
   at `b8` *frozen* (`rSA=0`, no request); it needs `RC02 → RIA2 → RES2 →` an
   `rSI` **input** transfer state to un-freeze and read. Implementing the `rSI`
   input states (`0C/0E`) + having the reader assert `RC02` is the next step.
-- **Data lines / modes**: today the reader presents a *byte* (`LU00N–LU07N`
-  collapsed) and a `lu08` strobe; the read mode (`N001/DEBI/MI01`, `BI20`,
-  `POM01`) is implied by the `transcode_mode` and the packed nibble-pair feed
-  rather than driven as separate pins. The pin-by-pin goal is to split these out
-  so the controller and CPU exchange the real lines.
-- **Status lines**: `LUSEN` (out-of-service), `LENON` (manual), `LUPOR` (ready)
-  and `FIDEN` (end-of-sequence) are now modelled and reactive (Phase 3). `LUREN`
-  (error → interrupt) and `PICON` (first-column) remain unmodelled (Phase 6).
+- **Data lines / modes**: the reader still presents a *byte* (`LU00N–LU07N`
+  collapsed) and a `lu08` strobe; the CPU-selected read mode is decoded into the
+  `N001/N002/DEBI/MI01/MI02` flags (Phase 2) and the framing is now exposed on
+  `POM01` (binary indicator), `BI20` (2nd-nibble clock) and `PICON` (first
+  column) during the feed (Phase 6). Splitting the 8 data bits into separate
+  lines remains the only representation choice still collapsed.
+- **Status lines**: `LUSEN` (out-of-service), `LENON` (manual), `LUPOR` (ready),
+  `FIDEN` (end-of-sequence) (Phase 3) and `LUREN` (error/jam, Phase 6) are
+  modelled and reactive. The only remaining gap is the faithful `LUREN`→`RG011`
+  → interrupt condition, deferred to the CAN2 interrupt integration.
 
 Extend this table whenever a new signal is wired; keep the **Effect / condition**
 column concrete (what it sets/clears/gates), not just a gloss.

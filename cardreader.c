@@ -189,10 +189,11 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
         }
     }
 
-    /* LUSEN (out-of-service): the reader is offline — present nothing and report
-     * not-ready, so a read parks/completes as unit-not-ready rather than getting
-     * data. (Default 0: normal operation, no change.) */
-    if (ge->integrated_reader.lusen) {
+    /* LUSEN (out-of-service) / LUREN (error or card jam): the reader cannot
+     * deliver data — present nothing and report not-ready, so a read parks /
+     * completes as unit-not-ready or in error rather than getting data. (Both
+     * default 0: normal operation, no change.) */
+    if (ge->integrated_reader.lusen || ge->integrated_reader.luren) {
         ge->integrated_reader.lupor = 0;
         return 0;
     }
@@ -315,6 +316,17 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
         ge_log(LOG_READER,
                "cardreader: presenting card %d col %d half %d byte=0x%02x val=0x%02x end=%d\n",
                ctx->card_idx, ctx->col_idx, ctx->half, byte, present, is_last);
+
+        /* Drive the reader's observable feed-state lines for this character:
+         *   POM01 — binary-mode (by-pass) indicator: high for raw binary reads.
+         *   PICON — first-column check: high on column 0 of a card.
+         *   BI20  — binary 2nd-nibble clock: high while the low nibble of a
+         *           packed binary column is on the lines (the second sub-read).
+         * Nothing in the CPU state logic consumes these yet; they make the read
+         * mode / framing visible at the pins. */
+        ge->integrated_reader.pom01 = (m == TC_BINARY || m == TC_COLBIN);
+        ge->integrated_reader.picon = (ctx->col_idx == 0);
+        ge->integrated_reader.bi20  = (ctx->pack && ctx->half == 1);
 
         reader_setup_to_send(ge, present, is_last ? 1 : 0);
         ctx->end_of_card_presented = is_last;

@@ -391,6 +391,91 @@ UTEST(cardreader, renia_length_count_inert)
 }
 
 /* --------------------------------------------------------------------------
+ * Test (Phase 6): LUREN (error / jam) stalls the read like out-of-service.
+ *
+ * With LUREN asserted the reader cannot deliver data: the load must not
+ * complete and no data lands. Mirrors the LUSEN fault path.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, luren_error_stalls)
+{
+    static const char cap_path[] = "/tmp/gemu_test_luren.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    int got = run_until_state(&g, 0xb8, 256);
+    ASSERT_EQ(got, 0xb8);
+    g.integrated_reader.luren = 1;          /* transcoder error / card jam */
+
+    int final = run_until_state(&g, 0xe3, 2048);
+    ASSERT_NE(final, 0xe3);
+    ASSERT_EQ(g.mem[0], 0x00);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test (Phase 6): POM01 / PICON / BI20 observable feed-state lines.
+ *
+ * A packed (self-loading) binary deck presents each column as a hi-then-lo
+ * nibble pair. Over the early part of the feed we must observe:
+ *   - POM01 high while presenting (binary / by-pass read),
+ *   - PICON high on column 0,
+ *   - BI20  high on a low-nibble (2nd sub-read) presentation.
+ * These are observability lines; nothing in the CPU logic consumes them, so we
+ * just sample them at presentation cycles.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, feed_state_lines_pom_pico_bi20)
+{
+    static const char cap_path[] = "/tmp/gemu_test_feedlines.cap";
+    {
+        FILE *f = fopen(cap_path, "w");
+        ASSERT_NE(f, NULL);
+        fprintf(f, "Packed feed-line test deck\n");
+        fprintf(f, "Card n. 1\n");
+        fprintf(f, "0012 0034 0056 0078 \n");   /* full COLBIN bytes */
+        fclose(f);
+    }
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register_packed(&g, cap_path, TC_COLBIN), 0);
+    ge_start(&g);
+
+    int saw_pom_on_present = 0;
+    int saw_picon_col0     = 0;
+    int saw_bi20           = 0;
+    for (int i = 0; i < 1024; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        if (g.integrated_reader.lu08) {        /* a character is on the lines */
+            if (g.integrated_reader.pom01) saw_pom_on_present = 1;
+            if (g.integrated_reader.picon) saw_picon_col0 = 1;
+            if (g.integrated_reader.bi20)  saw_bi20 = 1;
+        }
+        if (g.rSO == 0xe3) break;
+        if (g.halted) break;
+    }
+
+    ASSERT_TRUE(saw_pom_on_present);   /* binary-mode indicator asserted */
+    ASSERT_TRUE(saw_picon_col0);       /* first-column check seen */
+    ASSERT_TRUE(saw_bi20);             /* 2nd-nibble clock seen */
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
  * Test: real funktionalcpu.cap, TC_NORMAL, first card only.
  *
  * Points at ../DUMP1/funktionalcpu.cap (and funktionalcpu.bin for oracle).
