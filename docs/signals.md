@@ -283,6 +283,35 @@ exact logic equation for a signal we promote from ☐/◑ to ✅.
 > reader-on-connector-2 selection (vs the printer). `PELM` selects the addresser
 > direction (`V4−1` magnetic vs `V4+1` card/photo).
 
+### 4.7b Program addresser + channel-select / NE-input-enable (PO/PIB/PIC/PIM/PB)
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `PO001`…`PO151` | 056,059,062,065 | — | Bits of the **PO** program-addresser register | ✅ `rPO` |
+| `POD11` | 024 | 13 | Increases the delay-line cycle time | ☐ |
+| `POMOB` | 006 | 2 | **"Reader in binary condition from connector 2"** (= `POM01` binary-mode pin) | ◑ (by-pass implied) |
+| `PIB11` | 150 | 23 | Enables input of **photodisc code** into NE | ☐ |
+| **`PIB21`** | 150 | 24 | **Enables input into NE of information from connector 2** (the reader-input enable; `= !(PB12A·PB22A·PB32A)`) | ◑ (channel-1 only) |
+| `PIB31`/`PIB41` | 151,152 | 23 | Enables NE input from connector 3 / 4 | ☐ |
+| `PIC11`/`PIC32` | 136 | 2,33 | **Storage of channel 1 / 3 selection** | ◑ |
+| `PIM1A`/`PIM2A`/`PIM3A` | 137 | 3,8,13 | Enables selection **reset** channel 1/2/3 | ☐ |
+| `PIPO2` | 136 | 5 | **Trigger of register RE and RA** (latches the connector name) | ◑ |
+| `PB061`/`PB071` | 134 | 9,3 | Storage of connector name **with channel 1** | ◑ |
+| `PB261` | 134 | 18 | Storage of **connector-1 selection with channel 2** (`PB26`; `PC221=PUC21·¬PB26`, `PC211=PUC21·PB26`) | ☐ |
+| `PB361`/`PB371` | 134 | 11,6 | Storage of connector name **with channel 3** | ☐ |
+| `PC016`/`PC036` | 128 | 8,10 | **Channel 1 / 3 selection condition** | ◑ |
+| `PAR21` | 137 | 6 | Reset channel 1 condition | ☐ |
+| `PAZ1A` | 141 | 6 | Permission to disconnect DATANET from connector 4 | ☐ |
+
+> **Channel-2 reader-input chain (the Phase-4 target), decoded from the index +
+> signals.h:** `PIB21` (NE input from conn 2) `= !(PB12A·PB22A·PB32A)`, with
+> `PB12A=!(RESI1·PC121)` (ch-1), `PB22A=!(RET21·PC221)` (ch-2),
+> `PB32A=!(RES31·PC321)` (ch-3). For channel 2: `PC221=!PC22A=PUC21·¬PB26` (conn-2
+> on ch-2: channel-2 unit `PUC2` selected and the connector-1/2 selector `PB26=0`)
+> and `RET21` (ch-2 cycle active — the sync `RIA2`, mirroring ch-1's `RESI1`).
+> `PC221`/`RET21` are presently stubs (→0); promoting them is what lights `PIB21`
+> on a channel-2 read so `CI34`/`NE_knot` latches `integrated_reader.data`.
+
 ### 4.8 Arithmetic unit (UA)
 
 | Name | Ch | Bx | Meaning (EN) | gemu |
