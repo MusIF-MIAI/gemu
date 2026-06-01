@@ -104,6 +104,48 @@ struct cardreader_ctx {
     struct ge_peri peri;
 };
 
+/* Detect the functional-test Hollerith bootstrap loader among the early cards
+ * of a mixed deck. The matching card is punched as hex nibbles and is the one
+ * selected by a row-8 punch in column 3; after TC_HEX decode it begins with
+ * repeated `PER 0x80` orders (`9E 80 ... 9E 80 ...`). Returns the card index,
+ * or -1 if no such card is present. */
+static int cr_find_hollerith_loader_card(struct cap_deck *deck)
+{
+    int ncards = cap_num_cards(deck);
+
+    for (int i = 0; i < ncards && i < 16; i++) {
+        int ncols = cap_card_ncols(deck, i);
+        const uint16_t *cols;
+        uint8_t b[6];
+
+        if (ncols < 12)
+            continue;
+
+        cols = cap_card_columns(deck, i);
+        if (!cols)
+            continue;
+
+        /* The correct CR10/Hollerith loader is identified in the deck notes by
+         * a row-8 punch in column 3. */
+        if (cols[2] != 0x0100)
+            continue;
+
+        for (int j = 0; j < 12; j++) {
+            uint8_t nib = transcode_column(cols[j], TC_HEX) & 0x0f;
+            if ((j & 1) == 0)
+                b[j >> 1] = (uint8_t)(nib << 4);
+            else
+                b[j >> 1] |= nib;
+        }
+
+        if (b[0] == 0x9e && b[1] == 0x80 &&
+            b[2] == 0x00 && b[4] == 0x9e && b[5] == 0x80)
+            return i;
+    }
+
+    return -1;
+}
+
 /* -------------------------------------------------------------------------
  * Helper: advance card/column, skipping empty cards.
  * Returns 1 if there is more data, 0 if the deck is exhausted.
@@ -278,12 +320,21 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
          * loader card in the registered mode and the program cards in TC_BINARY
          * ("by-pass"). */
         enum transcode_mode m;
-        if (ge->integrated_reader.active_valid && !ctx->pack)
+        if (ctx->pack)
+            m = ctx->mode;
+        else if (ctx->card_idx == ctx->loader_card)
+            /* The loader card (first card) is read in the IPL's own loader mode
+             * = the registered mode (TC_HEX for the real "4 hex loader cards",
+             * which encode 0-F per column; the channel packs two columns into a
+             * byte). The CPU-driven mode-select (active_mode, from COCON) only
+             * offers NORMAL/BINARY and would corrupt an A-F hex nibble, so it
+             * must NOT override the loader card — it applies to the PROGRAM
+             * cards the loader's Set-by-Pass selects. */
+            m = ctx->mode;
+        else if (ge->integrated_reader.active_valid)
             m = ge->integrated_reader.active_mode;
         else
-            m = ctx->pack
-                ? ctx->mode
-                : (ctx->card_idx == ctx->loader_card ? ctx->mode : TC_BINARY);
+            m = TC_BINARY;
         uint8_t byte = transcode_column(cols[ctx->col_idx], m);
 
         /* End-of-card: the GE reader raises FINI (the controller "end" RIG1)
@@ -397,6 +448,7 @@ static int cr_register(struct ge *ge, const char *cap_path,
                        enum transcode_mode mode, int first_card, int pack)
 {
     struct cap_deck *deck = cap_load(cap_path);
+    int auto_loader = -1;
     if (!deck) {
         fprintf(stderr, "cardreader: failed to load deck '%s'\n", cap_path);
         return -1;
@@ -414,8 +466,18 @@ static int cr_register(struct ge *ge, const char *cap_path,
     ctx->half  = 0;
     ctx->state = CR_IDLE;
 
+    /* A plain `cardreader_register(..., TC_NORMAL)` on a real mixed deck should
+     * start from the Hollerith bootstrap loader, not from whichever control
+     * card happens to be first in the capture. Once identified, read that one
+     * card in TC_HEX; later cards still switch to binary via the normal
+     * active-mode/by-pass path. */
+    if (!pack && mode == TC_NORMAL && first_card == 0)
+        auto_loader = cr_find_hollerith_loader_card(deck);
+    if (auto_loader >= 0)
+        ctx->mode = TC_HEX;
+
     /* Find the first non-empty card at or after first_card */
-    ctx->card_idx = first_card < 0 ? 0 : first_card;
+    ctx->card_idx = auto_loader >= 0 ? auto_loader : (first_card < 0 ? 0 : first_card);
     ctx->col_idx  = 0;
     while (ctx->card_idx < cap_num_cards(deck) &&
            cap_card_ncols(deck, ctx->card_idx) == 0)

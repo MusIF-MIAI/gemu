@@ -590,6 +590,56 @@ UTEST(cardreader, funktionalcpu_first_card)
 }
 
 /* --------------------------------------------------------------------------
+ * Test: mixed funktionalcpu deck auto-detects the Hollerith bootstrap loader.
+ *
+ * The capture starts with several loader/control cards; the integrated reader
+ * bootstrap must pick the CR10/Hollerith loader card, decode it in TC_HEX, and
+ * land its first bytes exactly as punched.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, funktionalcpu_loader_autodetect)
+{
+    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+
+    FILE *probe = fopen(cap_path, "r");
+    if (!probe) {
+        printf("  [SKIP] %s not found\n", cap_path);
+        return;
+    }
+    fclose(probe);
+
+    struct ge g;
+    ge_init(&g);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_NORMAL), 0);
+    ge_start(&g);
+
+    ASSERT_EQ(run_until_state(&g, 0xe3, 8192), 0xe3);
+
+    /* Decoded start of the actual Hollerith loader card (card 5 in the .cap):
+     *   PER 0x80, 0x0022
+     *   PER 0x80, 0x0020
+     *   PER 0x80, 0x0026
+     */
+    ASSERT_EQ(g.mem[0], 0x9E);
+    ASSERT_EQ(g.mem[1], 0x80);
+    ASSERT_EQ(g.mem[2], 0x00);
+    ASSERT_EQ(g.mem[3], 0x22);
+    ASSERT_EQ(g.mem[4], 0x9E);
+    ASSERT_EQ(g.mem[5], 0x80);
+    ASSERT_EQ(g.mem[6], 0x00);
+    ASSERT_EQ(g.mem[7], 0x20);
+    ASSERT_EQ(g.mem[8], 0x9E);
+    ASSERT_EQ(g.mem[9], 0x80);
+    ASSERT_EQ(g.mem[10], 0x00);
+    ASSERT_EQ(g.mem[11], 0x26);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
  * Test: sequential two-card read (multi-card support).
  *
  * Synthetic deck has two cards in TC_BINARY mode:
