@@ -48,7 +48,9 @@ UTEST(reader_signals, plain_read_keeps_mode)
     ASSERT_EQ((int)g.integrated_reader.active_valid, 0);
 }
 
-/* Phase 2 — read-binary (0x20) latches active_mode = TC_BINARY via COCON. */
+/* Phase 2 — read-binary (0x20) latches active_mode = by-pass/COLBIN via
+ * COCON. The real loader uses this to switch the reader from the hex bootstrap
+ * card to 1-column/1-byte program-card reads. */
 UTEST(reader_signals, read_binary_selects_mode)
 {
     struct ge g;
@@ -61,7 +63,7 @@ UTEST(reader_signals, read_binary_selects_mode)
     ASSERT_EQ((int)g.integrated_reader.active_valid, 1);
     ASSERT_EQ((int)g.integrated_reader.cocon, 1);
     ASSERT_EQ((int)g.integrated_reader.mode_debi, 1);
-    ASSERT_EQ((int)g.integrated_reader.active_mode, (int)TC_BINARY);
+    ASSERT_EQ((int)g.integrated_reader.active_mode, (int)TC_COLBIN);
 }
 
 /* Phase 2 — read-normal (0x21) latches active_mode = TC_NORMAL. */

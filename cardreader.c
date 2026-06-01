@@ -99,6 +99,7 @@ struct cardreader_ctx {
      * to two packed nibbles here.) `half` tracks which nibble is pending. */
     int pack;
     int half;   /* 0 = high nibble pending, 1 = low nibble pending */
+    int post_loader_pack;
 
     /* the ge_peri node we allocated (kept for potential future use) */
     struct ge_peri peri;
@@ -215,6 +216,7 @@ static int cr_advance(struct cardreader_ctx *ctx)
 static int cardreader_on_clock(struct ge *ge, void *opaque)
 {
     struct cardreader_ctx *ctx = (struct cardreader_ctx *)opaque;
+    int pack_now;
 
     /* TU03N card-feed strobe (CE09), read as a one-cycle pulse: the CPU raises
      * it at end-of-card (state ea). We latch and clear it here at TO00 so it
@@ -320,6 +322,8 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
          * loader card in the registered mode and the program cards in TC_BINARY
          * ("by-pass"). */
         enum transcode_mode m;
+        pack_now = ctx->pack || (ctx->post_loader_pack &&
+                                 ctx->card_idx != ctx->loader_card);
         if (ctx->pack)
             m = ctx->mode;
         else if (ctx->card_idx == ctx->loader_card)
@@ -331,6 +335,13 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
              * must NOT override the loader card — it applies to the PROGRAM
              * cards the loader's Set-by-Pass selects. */
             m = ctx->mode;
+        else if (ctx->post_loader_pack)
+            /* The recovered loader program reads the following program cards in
+             * by-pass / column-binary form. The current signal-level model does
+             * not yet expose a distinct "non-packed by-pass" transfer state, so
+             * we feed each decoded COLBIN byte as a hi/lo nibble pair through
+             * the existing channel-1 packer. */
+            m = TC_COLBIN;
         else if (ge->integrated_reader.active_valid)
             m = ge->integrated_reader.active_mode;
         else
@@ -355,7 +366,7 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
          * In legacy mode one full value is presented per column. */
         uint8_t present;
         int     is_last;
-        if (ctx->pack) {
+        if (pack_now) {
             present = (ctx->half == 0) ? (uint8_t)((byte >> 4) & 0x0f)
                                        : (uint8_t)(byte & 0x0f);
             is_last = (ctx->half == 1) && is_last_col;
@@ -377,7 +388,7 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
          * mode / framing visible at the pins. */
         ge->integrated_reader.pom01 = (m == TC_BINARY || m == TC_COLBIN);
         ge->integrated_reader.picon = (ctx->col_idx == 0);
-        ge->integrated_reader.bi20  = (ctx->pack && ctx->half == 1);
+        ge->integrated_reader.bi20  = (pack_now && ctx->half == 1);
 
         reader_setup_to_send(ge, present, is_last ? 1 : 0);
         ctx->end_of_card_presented = is_last;
@@ -387,14 +398,20 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
          * the next call (do not move the pointer); only after the low nibble do
          * we advance to the next column / card. For a multi-card deck cr_advance
          * moves to (card+1, col 0), ready for the next PER read. */
-        if (ctx->pack && ctx->half == 0) {
+        if (pack_now && ctx->half == 0) {
             ctx->half = 1;
         } else {
             ctx->half = 0;
             if (is_last_col) {
-                /* Card boundary: defer the cross-to-next-card feed until the
-                 * CPU's TU03N end-of-card strobe (state ea). */
-                ctx->feed_pending = 1;
+                /* Only the bootstrap loader card uses the explicit TU03 feed
+                 * pulse (state ea). Once that loader has switched the reader to
+                 * by-pass and is pulling binary program cards into its buffer,
+                 * the next card becomes visible at the transfer boundary rather
+                 * than waiting for the bootstrap-only TU03 path. */
+                if (ctx->card_idx == ctx->loader_card && !ctx->pack)
+                    ctx->feed_pending = 1;
+                else
+                    cr_advance(ctx);
             } else {
                 cr_advance(ctx);
             }
@@ -475,6 +492,7 @@ static int cr_register(struct ge *ge, const char *cap_path,
         auto_loader = cr_find_hollerith_loader_card(deck);
     if (auto_loader >= 0)
         ctx->mode = TC_HEX;
+    ctx->post_loader_pack = !ctx->pack && ctx->mode == TC_HEX;
 
     /* Find the first non-empty card at or after first_card */
     ctx->card_idx = auto_loader >= 0 ? auto_loader : (first_card < 0 ? 0 : first_card);

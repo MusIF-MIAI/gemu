@@ -90,7 +90,8 @@ static void print_usage(const char *argv0)
         "                       e.g. --poke 0x0E00=0x80 to set a diagnostic option\n"
         "  --deck <path>        Path to a .cap card deck; loaded via the reader (connector 2)\n"
         "  --trace <spec>       Enable log types from spec string\n"
-        "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000)\n"
+        "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000,\n"
+        "                       or 500000 for --deck unless overridden)\n"
         "  --console            Enable the console socket /tmp/gemu.console (no UI attached)\n"
         "  --tui                Implies --console and starts the ncurses console client\n"
         "  --interactive, -i    Run until killed; SIGUSR1/SIGUSR2 toggle SWITCH 1/2 at\n"
@@ -107,6 +108,7 @@ int main(int argc, char *argv[])
     struct ge ge;
     int ret = 0;
     long max_cycles = 100000;
+    int max_cycles_set = 0;
     long cycles = 0;
     int use_console = 0;
     int use_tui = 0;
@@ -150,6 +152,7 @@ int main(int argc, char *argv[])
                 return 1;
             }
             max_cycles = atol(argv[++i]);
+            max_cycles_set = 1;
             if (max_cycles <= 0) {
                 fprintf(stderr, "error: --max-cycles must be a positive integer\n");
                 return 1;
@@ -219,6 +222,13 @@ int main(int argc, char *argv[])
         fprintf(stderr, "error: give only one of a .cap deck, --deck, or --bin\n");
         return 1;
     }
+
+    /* The cycle-faithful card-reader bootstrap is substantially slower than a
+     * direct binary or scatter-loaded image. Give `--deck` a roomier default so
+     * a real deck does not time out during the load unless the user explicitly
+     * requested a tighter budget. */
+    if (deck_path && !max_cycles_set)
+        max_cycles = 500000;
 
     ge_init(&ge);
 

@@ -37,6 +37,7 @@ tests/tests: $(TESTS) libge.a
 tools:
 	$(MAKE) -C assembler gasm
 	$(MAKE) -C disassembler gdis
+	$(MAKE) -C tools capcat
 
 .PHONY: check
 .PHONY: native-reset
@@ -97,6 +98,7 @@ clean:
 	rm -f $(TESTS) $(TESTS:%.o=%.d)
 	$(MAKE) -C assembler clean
 	$(MAKE) -C disassembler clean
+	$(MAKE) -C tools clean
 	# NB: do NOT recurse into console/wasm clean here — the wasm build's own
 	# libge.a step calls `make -C ../.. clean`, so recursing would delete the
 	# console/wasm/main.o it just built and break `make wasm`. Clean the wasm

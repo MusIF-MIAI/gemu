@@ -355,6 +355,28 @@ as a gemu-loadable **unified binary** (`gdis --image -o deck.bin deck.cap`; see
 `docs/binformat.md`), bridging a Hollerith `.cap` deck to the binary load path
 (`./ge deck.bin`).
 
+When a base deck needs extra payload cards appended, use `tools/capcat`:
+
+```sh
+make -C software/gemu tools
+
+# append one or more unified GE12 images
+software/gemu/tools/capcat -o combined.cap \
+    software/DUMP1/funktionalcpu.cap \
+    overlay.bin
+
+# raw flat overlay at an explicit address
+software/gemu/tools/capcat -o combined.cap \
+    software/DUMP1/funktionalcpu.cap \
+    0x2E00:segment2.raw
+```
+
+`capcat` copies the base deck's parsed hex-token cards, auto-detects its dominant
+8-byte program-card prefix, and emits appended self-addressed COLBIN cards
+(`LL`, load address, payload). The result is a real `.cap` medium that can be
+scatter-loaded (`./ge combined.cap`) or run through the authentic reader path
+(`./ge --deck combined.cap`).
+
 ---
 
 *Findings derived from the project's own reader firmware and the `gemu`

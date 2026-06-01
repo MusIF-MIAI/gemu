@@ -86,6 +86,20 @@ static int run_until_state(struct ge *g, uint8_t target, int max_cycles)
     return g->rSO;
 }
 
+static int run_until_mem_nonzero(struct ge *g, uint16_t addr, int max_cycles)
+{
+    for (int i = 0; i < max_cycles; i++) {
+        int r = ge_run_cycle(g);
+        if (r != 0)
+            return -1;
+        if (g->mem[addr] != 0)
+            return g->mem[addr];
+        if (g->halted)
+            return g->mem[addr];
+    }
+    return g->mem[addr];
+}
+
 /* --------------------------------------------------------------------------
  * Test: 4-byte synthetic deck, TC_BINARY, expect state 0xe3
  *
@@ -635,6 +649,42 @@ UTEST(cardreader, funktionalcpu_loader_autodetect)
     ASSERT_EQ(g.mem[9], 0x80);
     ASSERT_EQ(g.mem[10], 0x00);
     ASSERT_EQ(g.mem[11], 0x26);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test: authentic funktionalcpu deck loading progresses past the bootstrap.
+ *
+ * This covers the real reader flow: loader card in TC_HEX, subsequent program
+ * cards in by-pass/COLBIN, with the loader relocating card payloads into their
+ * embedded addresses. The first real code block reaches 0x010C as
+ * `43 F0 17 2A` in the oracle image.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, funktionalcpu_authentic_load_reaches_payload)
+{
+    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+
+    FILE *probe = fopen(cap_path, "r");
+    if (!probe) {
+        printf("  [SKIP] %s not found\n", cap_path);
+        return;
+    }
+    fclose(probe);
+
+    struct ge g;
+    ge_init(&g);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_NORMAL), 0);
+    ge_start(&g);
+
+    ASSERT_EQ(run_until_mem_nonzero(&g, 0x010C, 120000), 0x43);
+    ASSERT_EQ(g.mem[0x010D], 0xF0);
+    ASSERT_EQ(g.mem[0x010E], 0x17);
+    ASSERT_EQ(g.mem[0x010F], 0x2A);
 
     ge_deinit(&g);
 }

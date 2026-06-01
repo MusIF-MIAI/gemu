@@ -174,6 +174,80 @@ the overlapped typewriter/printer transfer to finish before halting.
 `present` is set only by `printer_register`, so bootstrap/reader tests (which do
 not register a printer) leave it 0 and are completely unaffected.
 
+### Example: load a small printer program
+
+`assembler/examples/print.s` is the shortest end-to-end channel-2 output demo.
+It issues a `PER 0x80, order`, waits for `__io_status` at `0x0031` to become
+`0x01`, then halts.
+
+Build it:
+
+```sh
+make -C software/gemu tools ge
+./software/gemu/assembler/gasm \
+  -o /tmp/print.bin \
+  ./software/gemu/assembler/examples/print.s
+```
+
+Run it from the CLI:
+
+```sh
+./software/gemu/ge /tmp/print.bin
+```
+
+You should see:
+
+```text
+PRN> HELLO
+exit: halted=1 ...
+```
+
+Run it in wasm:
+
+```sh
+make -C software/gemu wasm
+```
+
+Then open the wasm console, choose `/tmp/print.bin` in the simulator gadget,
+press `Stage`, then on the panel press `CLEAR`, `LOAD`, `START`. The printer
+paper view should show `HELLO`, then the CPU halts.
+
+### Example: load the authentic printer deck
+
+The real punched deck in the dump set is
+`software/DUMP1/printermechanicaltest.cap`. This is a full card deck, not a
+direct binary image.
+
+CLI, authentic reader/bootstrap path:
+
+```sh
+./software/gemu/ge --deck ./software/DUMP1/printermechanicaltest.cap
+```
+
+That path uses the real reader flow (`LOAD1`, `LOAD`, bootstrap card, then deck
+cards through the integrated reader).
+
+CLI, fast scatter-decoded path:
+
+```sh
+./software/gemu/ge ./software/DUMP1/printermechanicaltest.cap
+```
+
+That uses the default positional `.cap` image path: the deck is scatter-decoded
+to memory first, then execution starts at the lowest loaded address.
+
+Wasm:
+
+1. Choose `software/DUMP1/printermechanicaltest.cap` in the simulator gadget.
+2. Press `Stage`.
+3. On the panel press `CLEAR`.
+4. Press `LOAD`.
+5. Press `START`.
+
+In the browser, `.cap` currently follows the staged scatter-image path rather
+than the authentic multi-card reader chain, so use the `--deck` CLI form above
+when you specifically want to exercise the real bootstrap/read path.
+
 ### Two-way chat (wasm + interactive CLI)
 
 * **Output** — `printer_output()` / `printer_output_len()` expose the captured

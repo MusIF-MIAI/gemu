@@ -52,7 +52,8 @@ void reader_send_tu00(struct ge *ge)
         case 0x01: r->mode_n002 = 1; r->active_mode = TC_NORMAL; break; /* read normal ii */
         case 0x24: r->mode_mi01 = 1; r->active_mode = TC_NORMAL; break; /* read mixed i   */
         case 0x04: r->mode_mi02 = 1; r->active_mode = TC_NORMAL; break; /* read mixed ii  */
-        case 0x20: r->mode_debi = 1; r->active_mode = TC_BINARY; break; /* read binary    */
+        case 0x20: r->mode_debi = 1; r->active_mode = TC_COLBIN; break; /* read by-pass / column-binary */
+        case 0xa0: r->mode_debi = 1; r->active_mode = TC_COLBIN; break; /* channel code card: with by-pass */
         default:   latch = 0; break;                                    /* 0x40 etc.: keep mode */
         }
         if (latch) { r->cocon = 1; r->active_valid = 1; }
