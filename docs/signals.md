@@ -110,3 +110,148 @@ above feed into them. Implemented in `signals.h` (`SIG(...)`) and `struct ge`.
 
 Extend this table whenever a new signal is wired; keep the **Effect / condition**
 column concrete (what it sets/clears/gates), not just a gloss.
+
+---
+
+## 4. GE-120 official signal index (signal dictionary)
+
+Transcribed from the official GE-120 signal index (NOME/NAME · CAPITOLO/CHAPTER ·
+SCATOLA/BOX · descrizione IT/EN). `Ch` = schematic chapter, `Bx` = box on that
+sheet — the authoritative place to find the signal's logic. `gemu` marks what we
+model: ✅ implemented · ◑ partial/abstracted · ☐ not yet.
+
+This is the reference for the channel-transfer and reader work: the channel-2
+read needs `RC021`→`RIA21`→`RES26` and terminates on `RUF26`/`RIG?`/`RIL?`.
+
+### 4.1 Registers (bit groups)
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `RO006`,`RO016`,`RO026`,`RO036`,`RO046`,`RO056`,`RO066`,`RO076`,`RO081` | 081–086 | — | Bits of **RO** memory register | ✅ `rRO` |
+| `RI002`,`RI012`,`RI022`,`RI032`,`RI042`,`RI052`,`RI062`,`RI072` | 047,050 | — | Bits of **RI** register | ✅ `rRI` |
+| `RA001`…`RA081` | 121 | — | Bits of **RA** register | ✅ `rRA` |
+| `RE002`…`RE082` | 153–155 | — | Bits of **RE** register | ✅ `rRE` |
+| `SO002`…`SO072` | 106,107 | — | Bits of **SO** future-status register | ✅ `rSO` |
+| `SIO01`,`SIO11`,`SIO21`,`SIO31` | 108 | — | Bits of **SI** future-status register | ✅ `rSI` |
+| `SAO06`…`SAO76` | 110,111 | — | Bits of **SA** present-status register | ✅ `rSA` |
+| `FO006`…`FO076` | 104,105 | — | Bits of **FO** function register | ✅ `rFO`/`ffFO` |
+| `FIO01`…`FIO61` | 112–114 | — | Bits of **FI** conditions register | ✅ `ffFI` |
+| `FAO06`,`FAO16`,`FAO36`,`FAO46`,`FAO56`,`FAO66` | 112–114 | — | Bits of **FA** conditions register | ✅ `ffFA` |
+| `SOCO1` | 116 | 15 | Permission to load SO | ◑ |
+| `FOS1A` | 278 | 2 | Forces S1 loading | ☐ |
+
+### 4.2 Channel / cycle-request machinery (the transfer core)
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `RC001` | 130 | 2 | **Async** storage for **C.P.U.** cycle request | ✅ `RC00` |
+| `RC011` | 129 | 4 | **Async** storage for **channel-1** cycle request | ✅ `RC01` |
+| `RC021` | 129 | 11 | **Async** storage for **channel-2** cycle request | ✅ `RC02` |
+| `RC031` | 129 | 18 | **Async** storage for **channel-3** cycle request | ✅ `RC03` |
+| `RIA01` | 131 | 3 | **Sync** storage of **C.P.U.** cycle request | ✅ `RIA0` |
+| `RIA21` | 131 | 19 | **Sync** storage of **channel-2** cycle request | ✅ `RIA2` |
+| `RIA31` | 131 | 22 | **Sync** storage of **channel-3** cycle request | ✅ `RIA3` |
+| `RESO6` | 131 | 8 | Cycle assignment to **C.P.U. or channel 1** | ✅ `RES0` |
+| `RESI6` | 131 | 7 | Cycle assignment to **channel 1** | ✅ `RESI` |
+| `RES26` | 131 | 14 | Cycle assignment to **channel 2** | ✅ `RES2` |
+| `RES36` | 131 | 17 | Cycle assignment to **channel 3** | ✅ `RES3` |
+| `RIUC1` | 131 | 5 | Cycle assigned to **C.P.U.** (executing micro-cycle) | ✅ `RIUC` |
+| `RETO6` | 132 | 3 | Assign-to-CPU/channel-1 cycle **stored** (staticized) | ◑ |
+| `RET26` | 132 | 8 | Assign-to-CPU/channel-2 cycle **stored** (staticized) | ◑ |
+| `RA101` | 140 | 8 | OR of **char-exchange request, channel 1** | ◑ `RA101`→`RC01` |
+| `RA301` | 148 | 8 | OR of **char-exchange request, channel 3** | ☐ |
+| `RAS12` | 136 | 12 | **Data transfer by channel 1** | ◑ (`b8/b9/b1`) |
+| `RB101` | 140 | 1 | OR of trigger TE30 channel 1 | ☐ |
+| `RB301` | 148 | 1 | OR of trigger TE30 channel 3 | ☐ |
+| `RIMZA` | 143 | 13 | **MZ printer cycle request** (printer→`RC02` OR) | ◑ (printer raises `RC02`) |
+| `REAB2` | 143 | 15 | **General logic reset of channel 2** | ☐ |
+| `RAC16` | 140 | 18 | Storage of **rejected command** | ☐ |
+| `RAMO2` | 133 | 16 | Conditioning signal — C.P.U. internal speed | ☐ |
+| `RATE1` | 141 | 4 | Emission of selection trigger P.U. AEBE | ☐ |
+| `RAV12` | 140 | 14 | Emission of signal VICU | ☐ |
+
+### 4.3 Transfer end / length / status
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `RUFI2` | 139 | 20 | **End of data exchange on channel 1** | ◑ |
+| `RUF26` | 143 | 7 | **End of data exchange on channel 2** | ☐ ← needed for ch-2 read termination |
+| `RUF32` | 147 | 20 | End of data exchange on channel 3 | ☐ |
+| `RUSC6` | 148 | 14 | Data exchange in output on channel 3 | ☐ |
+| `RIG16` | 138 | 4 | **End from controller on channel 1** (`RIG1`) | ✅ `RIG1` |
+| `RIG36` | 146 | 4 | End from controller on channel 3 | ☐ |
+| `RIL11` | 138 | 13 | **End from length on channel 1** | ◑ (`RENIA`/`RIVE`, TODO) |
+| `RIL31` | 146 | 13 | End from length on channel 3 | ☐ |
+| `RIVEF` | 138 | 11 | **Condition of end of transfer on channel 1** (`RIVE`) | ✅ `RIVE` |
+| `RIVAF` | 146 | 1 | Condition of end of transfer on channel 3 | ☐ |
+| `RF101` | 140 | 4 | OR of "END condition" from P.U. for channel 1 | ☐ |
+| `RF301` | 148 | 4 | OR of "END condition" from P.U. for channel 3 | ☐ |
+| `RM101` | 140 | 12 | "Out-of-service" condition for channel 1 | ☐ (cf. `LUSEN`) |
+| `RM301` | 148 | 12 | "Out-of-service" condition for channel 3 | ☐ |
+| `RER12` | 139 | 5 | Odd-parity error in input, channel 1 | ☐ |
+| `RER32` | 147 | 5 | Odd-parity error in input, channel 3 | ☐ |
+| `RESC1` | 123 | 4 | Odd-parity error input data on **channel 1 or 2** | ☐ |
+| `RINT6` | 141 | 9 | **Interruption present** | ✅ `RINT` |
+| `RIND6` | 148 | 18 | Counts for decreasing addresses, connector 3 | ☐ |
+| `RICO2`/`RICI2` | 142 | 7,18 | Differential counter for MZ printer | ☐ |
+| `RICS1` | 145 | 13 | Counter permission for emission of TUO4 | ☐ |
+| `RUCO2`/`RUC12` | 145,133 | 22,1 | Counter for TUO4 emission | ☐ |
+| `RINO1`/`RIN11` | 144 | 21,24 | Information buffer for emission TUO2 | ☐ |
+
+### 4.4 RO-decode conditions (`RG0x1`/`RG1x1`, ch.122–123) and length decodes
+
+| Name | Bx | Decodes RO for condition(s) |
+|------|----|------------------------------|
+| `RG001` | 3 | PEOO, FUPO, LUPO |
+| `RG011` | 7 | SEGE, LURE |
+| `RG021` | 11 | FISE, SAFE, FIDE |
+| `RG031` | 13 | EGOL, SAFI |
+| `RG041` | 16 | MAPE |
+| `RG051` | 18 | TESE, FIDA |
+| `RG061` | 21 | MARE, LUSE, FUSE |
+| `RG071` | 5 | MATE |
+| `RG081` | 9 | CAPE |
+| `RG091` | 2 | IGOL |
+| `RG101` | 6 | NU10 |
+| `RG111` | 9 | NU20 |
+| `RG121` | 12 | NU30 |
+| `RG131` | 14 | SECO, FU22, LENO |
+| `RG141` | 16 | ERCA + input-parity error |
+| `RL1U1` | 128/4 | Decode **L1 all "ones"** |
+| `RL301` | 128/6 | Decode **L3 all "zeroes"** |
+
+### 4.5 Peripheral / connector lines (FU/FI/FA/SE/SA "bocchettone" = connector)
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `FU00A`–`FU08A` | 005,006 | 7,5 | **Input bits from photodisc, connector 1** | ☐ (printer photodisc) |
+| `FU09A` | 005 | 4 | Photodisc code strobe, connector 1 | ☐ |
+| `FU22A` | 005 | 5 | Condition "not operable", connector 1 | ☐ |
+| `FUPOA` | 006 | 5 | Condition "availability", connector 1 | ☐ |
+| `FUSEA` | 006 | 7 | Condition "out-of-service", connector 1 | ☐ |
+| `FIDAA` | 006 | 7 | "Almost end of paper", connector 1 | ☐ |
+| `FIDEB` | 006 | 3 | "End of file", connector 2 | ☐ (cf. reader end-of-deck) |
+| `FIFEC`/`FIFED` | 007,008 | 2 | Information bit in **input**, connector 3/4 | ☐ |
+| `FIFUA`/`FIFUC`/`FIFUD` | 154 | 21,12,17 | Information bit in **output**, connector 1/3/4 | ☐ |
+| `FINO1` | 006 | 5 | "Out-of-service", connector 1 | ☐ |
+| `FINAA`/`FINIB`/`FINEC`/`FINED` | 006–008 | 3,4 | END condition, connector 1/2/3/4 | ◑ (`FINI` family) |
+| `FINUA`/`FINUC`/`FINUD` | 162,163 | 6,2,13 | Command FINU, connector 1/3/4 | ☐ |
+| `FIRUA` | 162 | 8 | Trigger, paper-brake release, connector 1 | ☐ |
+| `FISEC`/`FISED` | 007,008 | 3 | Condition of P.U., connector 3/4 | ☐ |
+| `SAFIA`/`SAFEA` | 006 | 7 | "End of sheet" 2nd/1st trailer, connector 1 | ☐ |
+| `SECOC`/`SECOD` | 007,008 | 3 | Manual condition, connector 3/4 | ☐ (cf. `LENON`) |
+| `SEGEC`/`SEGED` | 007,008 | 3 | Condition of connector 3/4 | ☐ |
+| `SEPE1` | 135 | 21 | Selection of connector 1 | ☐ |
+
+### 4.6 Configuration jumpers ("fiscelle") and misc
+
+| Name | Ch | Bx | Meaning (EN) | gemu |
+|------|----|----|--------------|------|
+| `FEL06`/`FELI6` | 002 | 4 | Connections for **C.P.U. cycle-period** choice | ◑ (timing fixed) |
+| `FUL26`/`FUL36` | 002 | 3 | Connections for **program-loading connector** choice (`FUL2`/`FUL3`) | ✅ `FUL2`/`FUL3`=1 |
+| `FUL46` | 217 | 1 | Connections to enable additional performances | ☐ |
+
+**Note on suffix digits:** the index names carry a trailing form/rev digit (e.g.
+`RES26`, `RIA21`, `RC021`); gemu uses the base mnemonic (`RES2`, `RIA2`, `RC02`).
+The `Ch/Bx` columns point at the GE schematic sheet to consult when wiring the
+exact logic equation for a signal we promote from ☐/◑ to ✅.
