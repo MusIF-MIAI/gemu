@@ -10,7 +10,7 @@ body {
 
 #app_shell {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(24rem, 0.95fr);
+  grid-template-columns: max-content minmax(24rem, 1fr);
   gap: 1.2rem;
   align-items: start;
   padding: 1rem;
@@ -19,6 +19,7 @@ body {
 }
 
 #console_pane {
+  width: fit-content;
   min-width: 0;
   overflow-x: auto;
   display: flex;
@@ -80,7 +81,7 @@ body {
 
 #maincontent {
   width: 100%;
-  padding: 5em;
+  padding: 5em calc(5em - 30px);
   display: flex;
   align-items: flex-start;
   gap: 5em;
@@ -692,7 +693,7 @@ padding: 1px;
   color: #3f6;                 /* green on black */
   border-radius: 2px;
   padding: 0.5em 0.8em;
-  height: 10.5em;
+  height: 18em;
   overflow: hidden;
   box-shadow: inset 1px 1px 1px #181818, inset 0 -2px 1px #2a2a2a;
 }
