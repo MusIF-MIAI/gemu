@@ -173,9 +173,15 @@ Two-way chat (wasm + interactive CLI)</h2>
 <h1><a class="anchor" id="autotoc_md156"></a>
 Limitations (honest scope)</h1>
 <ul>
-<li>The <b>per-character channel-2 transfer</b> (the <code>rSI</code> sequencer states b9/b1 and the <code>RIVE</code>/<code>RIG1</code> length termination) is <b>not modelled</b>. The print <code>PER</code> completes in one shot rather than transferring byte-by-byte, so:<ul>
-<li>Capture reads the order block at <code>rV2</code> heuristically — for the funktionalcpu <code>report_and_end</code> PER (whose order block is <code>68 80 01 00 …</code>, all non-graphic) this renders as <code>...</code>, i.e. <em>not</em> a decoded line. Glyph rendering itself is correct (the GE graphic set, <code><a class="el" href="gecode_8c.html">gecode.c</a></code>); what's missing is the channel-2 transfer that would point capture at the actual character buffer.</li>
-<li>The <b>keyboard input queue is filled but not yet consumed</b> by the CPU — channel-2 <em>input</em> transfer is also unmodelled. Typed text is echoed locally in the chat for now; wiring it into a channel-2 read is future work, and will also need the inverse ASCII → GE-graphic encoding at the feed boundary.</li>
+<li>The <b>byte-transfer core is modelled for the documented paths</b>:<ul>
+<li>output uses the channel-2 <code>rSI=0x02</code> state (<code>Mem[V4] -&gt; RO -&gt; CE16</code>)</li>
+<li>input uses the channel-2 <code>rSI=0x0C</code> path (<code>CI34</code>, <code>RO -&gt; Mem[V4]</code>)</li>
+<li>the keyboard queue is therefore <b>consumed by real channel-2 reads</b>, not just echoed locally</li>
+</ul>
+</li>
+<li>What remains abstracted is the rest of the CAN2 micro-sequence around those bytes:<ul>
+<li>print/input completion is still finalized by the integrated device shim asserting <code>PUC2</code>/<code>RC00</code> at the org-phase wait, rather than by a fully recovered <code>0A|0B</code>/compare/parity transfer-state implementation</li>
+<li><code>04|06</code> compare/parity behavior and the physical printer-mechanism signals (<code>FIRU</code>, brake/release timing, etc.) are not yet modelled signal-by-signal</li>
 </ul>
 </li>
 <li>The funktionalcpu deck, after the completed print PER, takes its <code>report_restart</code> branch (the final 40-char signature <code>CMC</code> at <code>0x19d4</code> compares <code>mem[0x1100]</code> vs <code>mem[0x0036]</code> and mismatches) — i.e. it loops as a continuous self-test. That is <b>deck logic, not a printer issue</b>: the End HLT <code>0x19DE</code> is only reached when that signature matches.</li>

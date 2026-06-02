@@ -49,6 +49,7 @@
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">cap.c File Reference</div></div>
 </div><!--header-->
@@ -69,6 +70,13 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcap__deck.html">cap_deck</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a42422f43b827a80c852005daac302068" id="r_a42422f43b827a80c852005daac302068"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a42422f43b827a80c852005daac302068">CAP_MIN_SCATTER_PREFIX_CARDS</a>&#160;&#160;&#160;4</td></tr>
+<tr class="separator:a42422f43b827a80c852005daac302068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1ab9c2243319d03d0ada444da43a1ad" id="r_ae1ab9c2243319d03d0ada444da43a1ad"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#ae1ab9c2243319d03d0ada444da43a1ad">CAP_MIN_ISOLATION_CARDS</a>&#160;&#160;&#160;8</td></tr>
+<tr class="separator:ae1ab9c2243319d03d0ada444da43a1ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:af1c09ebe098fe5c6f3bcfbf8424d4544" id="r_af1c09ebe098fe5c6f3bcfbf8424d4544"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#af1c09ebe098fe5c6f3bcfbf8424d4544">deck_add_card</a> (struct <a class="el" href="structcap__deck.html">cap_deck</a> *d)</td></tr>
@@ -81,22 +89,107 @@ Functions</h2></td></tr>
 <tr class="separator:a1251ee8c913fe2dd926be9242f329a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab16982f054d631e4d447ba9c3330718b" id="r_ab16982f054d631e4d447ba9c3330718b"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#ab16982f054d631e4d447ba9c3330718b">cap_load</a> (const char *path)</td></tr>
 <tr class="separator:ab16982f054d631e4d447ba9c3330718b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f2a083f7d67a3df01b8a51440597e27" id="r_a9f2a083f7d67a3df01b8a51440597e27"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a9f2a083f7d67a3df01b8a51440597e27">cap_create</a> (void)</td></tr>
+<tr class="separator:a9f2a083f7d67a3df01b8a51440597e27"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8ab1f924a5ed22882faceae6b57b904" id="r_aa8ab1f924a5ed22882faceae6b57b904"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#aa8ab1f924a5ed22882faceae6b57b904">cap_num_cards</a> (const struct <a class="el" href="structcap__deck.html">cap_deck</a> *d)</td></tr>
 <tr class="separator:aa8ab1f924a5ed22882faceae6b57b904"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7bac641a123ee0c90b8ffcee385dddfa" id="r_a7bac641a123ee0c90b8ffcee385dddfa"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a7bac641a123ee0c90b8ffcee385dddfa">cap_card_ncols</a> (const struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, int i)</td></tr>
 <tr class="separator:a7bac641a123ee0c90b8ffcee385dddfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a070640b4b53efca317718eb0bd54c6d0" id="r_a070640b4b53efca317718eb0bd54c6d0"><td class="memItemLeft" align="right" valign="top">const uint16_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a070640b4b53efca317718eb0bd54c6d0">cap_card_columns</a> (const struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, int i)</td></tr>
 <tr class="separator:a070640b4b53efca317718eb0bd54c6d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18785b980fd06dc3b18ffd51b97d30a0" id="r_a18785b980fd06dc3b18ffd51b97d30a0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a18785b980fd06dc3b18ffd51b97d30a0">cap_append_card</a> (struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, const uint16_t *cols, int ncols)</td></tr>
+<tr class="separator:a18785b980fd06dc3b18ffd51b97d30a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae618be434733b5be1b36383bb46658d2" id="r_ae618be434733b5be1b36383bb46658d2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#ae618be434733b5be1b36383bb46658d2">cap_save</a> (const struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, const char *path)</td></tr>
+<tr class="separator:ae618be434733b5be1b36383bb46658d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab96e324bbfbb1f18be40b5011ba1745" id="r_aab96e324bbfbb1f18be40b5011ba1745"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#aab96e324bbfbb1f18be40b5011ba1745">cap_free</a> (struct <a class="el" href="structcap__deck.html">cap_deck</a> *d)</td></tr>
 <tr class="separator:aab96e324bbfbb1f18be40b5011ba1745"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7870d2f7516e66831e2259233c19ffdc" id="r_a7870d2f7516e66831e2259233c19ffdc"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a7870d2f7516e66831e2259233c19ffdc">scat_decode_card</a> (const uint16_t *cols, int ncols, int mode, uint8_t out[80])</td></tr>
 <tr class="separator:a7870d2f7516e66831e2259233c19ffdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0bd2754812055a6ebb336f6aa6f7a378" id="r_a0bd2754812055a6ebb336f6aa6f7a378"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a0bd2754812055a6ebb336f6aa6f7a378">scat_detect_prefix</a> (struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, int mode, uint8_t out[8])</td></tr>
-<tr class="separator:a0bd2754812055a6ebb336f6aa6f7a378"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0c99b22528c91088424a14f6202ed43" id="r_aa0c99b22528c91088424a14f6202ed43"><td class="memItemLeft" align="right" valign="top">static char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#aa0c99b22528c91088424a14f6202ed43">isolation_ident_char</a> (uint16_t col)</td></tr>
+<tr class="separator:aa0c99b22528c91088424a14f6202ed43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58533a84d6c33dee6159b720da7bb5a7" id="r_a58533a84d6c33dee6159b720da7bb5a7"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a58533a84d6c33dee6159b720da7bb5a7">isolation_ident_value</a> (char a, char b, char c)</td></tr>
+<tr class="separator:a58533a84d6c33dee6159b720da7bb5a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea350dad21066e10bf86a99a4281372a" id="r_aea350dad21066e10bf86a99a4281372a"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#aea350dad21066e10bf86a99a4281372a">scat_detect_prefix</a> (const struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, int mode, uint8_t out[8], int *eligible_cards)</td></tr>
+<tr class="separator:aea350dad21066e10bf86a99a4281372a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a212f7122cb0f0937e3603b81a85cda57" id="r_a212f7122cb0f0937e3603b81a85cda57"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#a212f7122cb0f0937e3603b81a85cda57">cap_family_name</a> (enum <a class="el" href="cap_8h.html#a76318a467ceb4572690083248ed1c9e3">cap_deck_family</a> family)</td></tr>
+<tr class="separator:a212f7122cb0f0937e3603b81a85cda57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7ffa3d90bd61ce41982d294b2f44d1c" id="r_af7ffa3d90bd61ce41982d294b2f44d1c"><td class="memItemLeft" align="right" valign="top">enum <a class="el" href="cap_8h.html#a76318a467ceb4572690083248ed1c9e3">cap_deck_family</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#af7ffa3d90bd61ce41982d294b2f44d1c">cap_detect_family</a> (const struct <a class="el" href="structcap__deck.html">cap_deck</a> *d, int mode, struct <a class="el" href="structcap__deck__info.html">cap_deck_info</a> *info)</td></tr>
+<tr class="separator:af7ffa3d90bd61ce41982d294b2f44d1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adee79b64da5b2e2f3ac78148616e8a25" id="r_adee79b64da5b2e2f3ac78148616e8a25"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#adee79b64da5b2e2f3ac78148616e8a25">cap_load_scattered</a> (const char *path, int mode, unsigned char *image, unsigned *lo, unsigned *hi)</td></tr>
 <tr class="separator:adee79b64da5b2e2f3ac78148616e8a25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae85991478eaa819c4583f36b8aae980a" id="r_ae85991478eaa819c4583f36b8aae980a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cap_8c.html#ae85991478eaa819c4583f36b8aae980a">cap_load_isolation_stream</a> (const char *path, unsigned char *image, unsigned org, unsigned *lo, unsigned *hi)</td></tr>
+<tr class="separator:ae85991478eaa819c4583f36b8aae980a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="ae1ab9c2243319d03d0ada444da43a1ad" name="ae1ab9c2243319d03d0ada444da43a1ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1ab9c2243319d03d0ada444da43a1ad">&#9670;&#160;</a></span>CAP_MIN_ISOLATION_CARDS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CAP_MIN_ISOLATION_CARDS&#160;&#160;&#160;8</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00023">23</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="a42422f43b827a80c852005daac302068" name="a42422f43b827a80c852005daac302068"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42422f43b827a80c852005daac302068">&#9670;&#160;</a></span>CAP_MIN_SCATTER_PREFIX_CARDS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CAP_MIN_SCATTER_PREFIX_CARDS&#160;&#160;&#160;4</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00022">22</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a18785b980fd06dc3b18ffd51b97d30a0" name="a18785b980fd06dc3b18ffd51b97d30a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18785b980fd06dc3b18ffd51b97d30a0">&#9670;&#160;</a></span>cap_append_card()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int cap_append_card </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint16_t *&#160;</td>
+          <td class="paramname"><em>cols</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>ncols</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00221">221</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
 <a id="a070640b4b53efca317718eb0bd54c6d0" name="a070640b4b53efca317718eb0bd54c6d0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a070640b4b53efca317718eb0bd54c6d0">&#9670;&#160;</a></span>cap_card_columns()</h2>
 
@@ -123,7 +216,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00206">206</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00214">214</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -153,7 +246,83 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00199">199</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00207">207</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="a9f2a083f7d67a3df01b8a51440597e27" name="a9f2a083f7d67a3df01b8a51440597e27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f2a083f7d67a3df01b8a51440597e27">&#9670;&#160;</a></span>cap_create()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="structcap__deck.html">cap_deck</a> * cap_create </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00195">195</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="af7ffa3d90bd61ce41982d294b2f44d1c" name="af7ffa3d90bd61ce41982d294b2f44d1c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7ffa3d90bd61ce41982d294b2f44d1c">&#9670;&#160;</a></span>cap_detect_family()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="cap_8h.html#a76318a467ceb4572690083248ed1c9e3">cap_deck_family</a> cap_detect_family </td>
+          <td>(</td>
+          <td class="paramtype">const struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>mode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct <a class="el" href="structcap__deck__info.html">cap_deck_info</a> *&#160;</td>
+          <td class="paramname"><em>info</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00386">386</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="a212f7122cb0f0937e3603b81a85cda57" name="a212f7122cb0f0937e3603b81a85cda57"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a212f7122cb0f0937e3603b81a85cda57">&#9670;&#160;</a></span>cap_family_name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * cap_family_name </td>
+          <td>(</td>
+          <td class="paramtype">enum <a class="el" href="cap_8h.html#a76318a467ceb4572690083248ed1c9e3">cap_deck_family</a>&#160;</td>
+          <td class="paramname"><em>family</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00374">374</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -173,7 +342,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00213">213</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00263">263</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -193,7 +362,55 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00121">121</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00124">124</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="ae85991478eaa819c4583f36b8aae980a" name="ae85991478eaa819c4583f36b8aae980a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae85991478eaa819c4583f36b8aae980a">&#9670;&#160;</a></span>cap_load_isolation_stream()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int cap_load_isolation_stream </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned char *&#160;</td>
+          <td class="paramname"><em>image</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>org</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned *&#160;</td>
+          <td class="paramname"><em>lo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned *&#160;</td>
+          <td class="paramname"><em>hi</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00505">505</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -241,7 +458,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00280">280</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00442">442</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -261,7 +478,37 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00192">192</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00200">200</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="ae618be434733b5be1b36383bb46658d2" name="ae618be434733b5be1b36383bb46658d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae618be434733b5be1b36383bb46658d2">&#9670;&#160;</a></span>cap_save()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int cap_save </td>
+          <td>(</td>
+          <td class="paramtype">const struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00238">238</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -299,7 +546,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00062">62</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00065">65</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -327,7 +574,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00043">43</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00046">46</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -355,7 +602,79 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00080">80</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00083">83</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="aa0c99b22528c91088424a14f6202ed43" name="aa0c99b22528c91088424a14f6202ed43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0c99b22528c91088424a14f6202ed43">&#9670;&#160;</a></span>isolation_ident_char()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static char isolation_ident_char </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>col</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00288">288</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+
+</div>
+</div>
+<a id="a58533a84d6c33dee6159b720da7bb5a7" name="a58533a84d6c33dee6159b720da7bb5a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58533a84d6c33dee6159b720da7bb5a7">&#9670;&#160;</a></span>isolation_ident_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int isolation_ident_value </td>
+          <td>(</td>
+          <td class="paramtype">char&#160;</td>
+          <td class="paramname"><em>a</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char&#160;</td>
+          <td class="paramname"><em>b</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char&#160;</td>
+          <td class="paramname"><em>c</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00310">310</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -393,7 +712,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00094">94</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00097">97</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
@@ -443,12 +762,12 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00227">227</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00277">277</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
-<a id="a0bd2754812055a6ebb336f6aa6f7a378" name="a0bd2754812055a6ebb336f6aa6f7a378"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0bd2754812055a6ebb336f6aa6f7a378">&#9670;&#160;</a></span>scat_detect_prefix()</h2>
+<a id="aea350dad21066e10bf86a99a4281372a" name="aea350dad21066e10bf86a99a4281372a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aea350dad21066e10bf86a99a4281372a">&#9670;&#160;</a></span>scat_detect_prefix()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -459,7 +778,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">static int scat_detect_prefix </td>
           <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td>
+          <td class="paramtype">const struct <a class="el" href="structcap__deck.html">cap_deck</a> *&#160;</td>
           <td class="paramname"><em>d</em>, </td>
         </tr>
         <tr>
@@ -472,7 +791,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint8_t&#160;</td>
-          <td class="paramname"><em>out</em>[8]&#160;</td>
+          <td class="paramname"><em>out</em>[8], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>eligible_cards</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -487,7 +812,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00240">240</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cap_8c_source.html#l00329">329</a> of file <a class="el" href="cap_8c_source.html">cap.c</a>.</p>
 
 </div>
 </div>
