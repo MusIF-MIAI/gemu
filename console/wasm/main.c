@@ -14,6 +14,8 @@
 #include "../../disasm.h"
 #include "../../binimage.h"
 #include "../../cap.h"
+#include "../../peripherical.h"
+#include "../../sat_batches.h"
 #include "../../transcode.h"
 #include "../../bit.h"
 
@@ -194,6 +196,13 @@ static uint8_t  staged_img[MEM_SIZE];
 static uint16_t staged_origin, staged_entry, staged_len;
 static int      staged = 0;
 
+static void reset_sim_bindings(void)
+{
+    ge_peri_deinit(ge);
+    ge->peri = NULL;
+    printer_register(ge);
+}
+
 void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
 
 /* LOAD.
@@ -231,6 +240,7 @@ void EMSCRIPTEN_KEEPALIVE press_load()  {
  * window for console memory-forcing between the two, and lets START resume a
  * halted machine without re-wiping forced values. */
 int EMSCRIPTEN_KEEPALIVE stage_image(void) {
+    reset_sim_bindings();
     FILE *f = fopen("/image.bin", "rb");
     if (!f)
         return -1;
@@ -252,6 +262,7 @@ int EMSCRIPTEN_KEEPALIVE stage_image(void) {
 int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
     unsigned lo = 0, hi = 0;
 
+    reset_sim_bindings();
     memset(staged_img, 0, sizeof staged_img);
     int nc = cap_load_scattered("/deck.cap", TC_COLBIN, staged_img, &lo, &hi);
     if (nc < 0)
@@ -302,6 +313,7 @@ void EMSCRIPTEN_KEEPALIVE press_start() {
 int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
     int rc;
 
+    reset_sim_bindings();
     /* A real deck-in-reader bootstrap must win over any previously staged
      * direct-load image, otherwise LOAD would still bypass the reader. */
     staged = 0;
@@ -311,6 +323,45 @@ int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
                                   binary ? TC_BINARY : TC_NORMAL, first_card);
     send_console();
     return rc;
+}
+
+int EMSCRIPTEN_KEEPALIVE prepare_sat_batch(const char *id) {
+    const struct sat_batch_info *info;
+    char note[256];
+    unsigned lo = 0, hi = 0;
+    uint16_t entry = 0;
+
+    if (!id)
+        return -1;
+
+    info = sat_batch_find(id);
+    if (!info)
+        return -1;
+
+    reset_sim_bindings();
+    staged = 0;
+    staged_origin = staged_entry = staged_len = 0;
+
+    if (info->launch == SAT_BATCH_IMAGE) {
+        memset(staged_img, 0, sizeof staged_img);
+        if (sat_batch_prepare_image("/sat", id, staged_img, &lo, &hi, &entry,
+                                    note, sizeof(note)) != 0)
+            return -1;
+        memmove(staged_img, staged_img + lo, hi - lo + 1);
+        staged_origin = (uint16_t)lo;
+        staged_entry = entry;
+        staged_len = (uint16_t)(hi - lo + 1);
+        staged = 1;
+    } else {
+        ge_load_1(ge);
+        if (sat_batch_prepare_deck("/sat", id, "/deck.cap", note, sizeof(note)) != 0)
+            return -1;
+        if (cardreader_register(ge, "/deck.cap", TC_NORMAL) != 0)
+            return -1;
+    }
+
+    send_console();
+    return info->launch;
 }
 
 void EMSCRIPTEN_KEEPALIVE set_switches(int flags, int am) {

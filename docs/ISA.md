@@ -665,7 +665,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 | MVQ zones | "zones not processed" interpretation | §3.084/3.098 + hardware trace |
 | SR/SL | ALU done, not wired — SS model-byte/result-register encoding unconfirmed | search-instruction page image |
 | funktionalcpu memory-test execution | option-byte dispatch + halt addresses now recovered from the deck (§6.1); running the tests to their halts needs realistic RAM-above-image + peripheral-output modelling (they wander near `0x2003`). `0x3465` code unverified. | run under a fuller memory/peripheral model |
-| isolation decks (`isolationcpu0x`) | distinct card framing (binary cols 1–76, Hollerith 77–80) + SMAC/INTE interpretation | CPU[1] folio 52/53a + CPU[3]; see `docs/punchcards.md` §5 |
+| isolation decks (`isolationcpu0x`) | distinct card framing is now extracted family-aware (COLBIN cols 1–76, Hollerith 77–79 numbering); higher-level SMAC/INTE interpretation remains open | CPU[1] folio 52/53a + CPU[3]; see `docs/punchcards.md` §5 |
 
 ---
 

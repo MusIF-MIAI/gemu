@@ -7,8 +7,15 @@ CFLAGS=-I../.. -sEXPORTED_RUNTIME_METHODS=callMain,FS,ccall -sFORCE_FILESYSTEM=1
 
 LIBGE=../../libge.a
 
-main: main.o $(LIBGE)
+SAT_DIR=Site_Acceptance_Test
+
+main: main.o $(LIBGE) | sync-sat
 	$(CC) $(CFLAGS) -o $@.mjs $^ $(LIBGE)
+
+.PHONY: sync-sat
+sync-sat:
+	mkdir -p $(SAT_DIR)
+	cp ../../Site_Acceptance_Test/*.cap $(SAT_DIR)/
 
 .PHONY: $(LIBGE)
 $(LIBGE):
@@ -18,6 +25,7 @@ $(LIBGE):
 .PHONY: clean
 clean:
 	rm -f main.o main.js main.wasm main.mjs
+	rm -rf $(SAT_DIR)
 
 # Containerised build (no local emscripten needed). Works with podman or docker;
 # override with CONTAINER=docker / a different WASM_IMAGE if desired.

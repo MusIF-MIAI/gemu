@@ -282,6 +282,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "capcat: cannot parse base deck '%s'\n", base_path);
         goto done;
     }
+    {
+        struct cap_deck_info info;
+        enum cap_deck_family family = cap_detect_family(base, TC_COLBIN, &info);
+        if (family != CAP_FAMILY_SCATTER &&
+            !(have_prefix && family == CAP_FAMILY_UNKNOWN)) {
+            fprintf(stderr, "capcat: base deck '%s' is %s, not scatter; "
+                    "overlay append is only supported for self-addressed scatter decks\n",
+                    base_path, cap_family_name(family));
+            goto done;
+        }
+    }
     if (!have_prefix && detect_prefix(base, prefix) < 0) {
         fprintf(stderr, "capcat: cannot auto-detect a program-card prefix from '%s'\n",
                 base_path);

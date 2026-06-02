@@ -69,19 +69,53 @@ echo "== isolation deck (--iso) extraction =="
 
 ISO=../DUMP1/isolationcpu01.cap
 if [ -f "$ISO" ]; then
-    if "$GDIS" --iso --image -o "$TMP/iso.bin" "$ISO" >/dev/null 2>&1; then
+    if "$GDIS" --image -o "$TMP/iso.bin" "$ISO" >/dev/null 2>&1; then
         # 210 valid cards x 76 cols = 15960 payload bytes + 12-byte header.
         sz=$(wc -c < "$TMP/iso.bin")
         if [ "$sz" -eq 15972 ]; then
-            echo "  ok: isolationcpu01 --iso -> 15960-byte stream (210 cards x 76)"
+            echo "  ok: isolationcpu01 auto-family load -> 15960-byte stream (210 cards x 76)"
         else
             echo "FAIL: isolationcpu01 --iso image is $sz bytes (expected 15972)"; fail=1
         fi
     else
-        echo "FAIL: gdis --iso could not extract $ISO"; fail=1
+        echo "FAIL: gdis could not extract $ISO"; fail=1
     fi
 else
     echo "  skip: $ISO not found"
+fi
+
+echo "== additional real deck families =="
+
+PRT=../DUMP1/printermechanicaltest.cap
+if [ -f "$PRT" ]; then
+    if "$GDIS" --image -o "$TMP/prt.bin" "$PRT" >/dev/null 2>&1; then
+        sz=$(wc -c < "$TMP/prt.bin")
+        if [ "$sz" -eq 3040 ]; then
+            echo "  ok: printermechanicaltest scatter-loads to a 3028-byte image"
+        else
+            echo "FAIL: printermechanicaltest image is $sz bytes (expected 3040)"; fail=1
+        fi
+    else
+        echo "FAIL: gdis could not depunch $PRT"; fail=1
+    fi
+else
+    echo "  skip: $PRT not found"
+fi
+
+CPCR=../DUMP1/control-program-cr.cap
+if [ -f "$CPCR" ]; then
+    if "$GDIS" --image -o "$TMP/cpcr.bin" "$CPCR" >/dev/null 2>&1; then
+        sz=$(wc -c < "$TMP/cpcr.bin")
+        if [ "$sz" -eq 4158 ]; then
+            echo "  ok: control-program-cr scatter-loads to a 4146-byte image"
+        else
+            echo "FAIL: control-program-cr image is $sz bytes (expected 4158)"; fail=1
+        fi
+    else
+        echo "FAIL: gdis could not depunch $CPCR"; fail=1
+    fi
+else
+    echo "  skip: $CPCR not found"
 fi
 
 if [ "$fail" -eq 0 ]; then

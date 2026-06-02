@@ -5,6 +5,43 @@ body {
   color: #eee;
   font-family: Futura;
   font-size: 8pt;
+  margin: 0;
+}
+
+#app_shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(24rem, 0.95fr);
+  gap: 1.2rem;
+  align-items: start;
+  padding: 1rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+#console_pane {
+  min-width: 0;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#tools_pane {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tool-card {
+  background:
+    linear-gradient(180deg, rgba(39, 27, 17, 0.96), rgba(21, 14, 9, 0.98));
+  border: 1px solid rgba(198, 169, 112, 0.45);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 231, 185, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
 
 #verticalcontainer {
@@ -673,85 +710,195 @@ padding: 1px;
  * (dashed border, monospace, muted) so it never reads as a real-machine
  * control. It only mounts a deck "in the hopper"; the actual load is still
  * performed with the real CLEAR / LOAD / START buttons. */
-/* The authentic console is wider than the viewport, so any in-flow panel at its
- * edge scrolls off-screen. This is explicitly NOT a hardware control, so it is
- * floated as a fixed simulator toolbar pinned to the viewport bottom (dashed top
- * border, muted monospace) — always visible no matter how the console scrolls. */
-body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
-
 #simpanel {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.8em 1.6em;
-  padding: 1em 1.4em;
-  background: #16181c;
-  border-top: 2px dashed #5a6b3b;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
+  padding: 1.1em 1.2em 1.2em;
+  background:
+    radial-gradient(circle at top, rgba(201, 180, 127, 0.16), transparent 28%),
+    linear-gradient(180deg, #191109 0%, #120d08 100%);
   font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
-  font-size: 12pt;
-  color: #b9c4a7;
+  color: #ddcfad;
 }
-#simpanel h2 {
+#simpanel h2, #simpanel h3 {
   margin: 0;
-  font-size: 14pt;
-  letter-spacing: 0.12em;
-  color: #9fb36a;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  white-space: nowrap;
 }
-#simpanel .sim-sub { font-size: 10pt; color: #6b7360; max-width: 22em; line-height: 1.3; }
-#simpanel label { font-size: 11pt; white-space: nowrap; }
-#simpanel input[type=file] { max-width: 20em; }
+#simpanel h2 { font-size: 15pt; color: #f1ddb2; }
+#simpanel h3 { font-size: 10pt; color: #d1bb83; }
+#sim_header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2em;
+  align-items: flex-start;
+  margin-bottom: 0.9em;
+}
+#sim_header p {
+  margin: 0.25em 0 0;
+  max-width: 42em;
+  line-height: 1.45;
+  color: #9c8e72;
+  font-size: 10pt;
+}
+#sim_workbench {
+  display: grid;
+  grid-template-columns: minmax(16em, 19em) minmax(0, 1fr);
+  gap: 1em;
+  align-items: stretch;
+}
+.sim-span-2 {
+  grid-column: 1 / -1;
+}
+.sim-pane {
+  background:
+    linear-gradient(180deg, rgba(64, 43, 26, 0.92), rgba(39, 26, 17, 0.94));
+  border: 1px solid rgba(198, 169, 112, 0.45);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 231, 185, 0.1),
+    0 8px 18px rgba(0, 0, 0, 0.35);
+  padding: 0.9em 1em 1em;
+}
+.sim-pane label {
+  display: block;
+  margin-top: 0.7em;
+  font-size: 10pt;
+  color: #dcc79b;
+}
+#simpanel input[type=file] { max-width: 100%; }
 #simpanel input[type=file],
-#simpanel input[type=number] {
-  background: #0c0d10;
-  color: #cdd6bb;
-  border: 1px solid #3a4030;
-  border-radius: 3px;
-  padding: 0.4em;
-  font: inherit;
-  font-size: 11pt;
-}
-#simpanel input[type=number] { width: 4.5em; }
 #simpanel select {
-  background: #0c0d10;
-  color: #cdd6bb;
-  border: 1px solid #3a4030;
-  border-radius: 3px;
-  padding: 0.25em;
+  width: 100%;
+  margin-top: 0.35em;
+  background: #16100a;
+  color: #f1e5c8;
+  border: 1px solid #725d39;
+  border-radius: 6px;
+  padding: 0.45em 0.55em;
   font: inherit;
-  font-size: 11pt;
+  font-size: 10pt;
 }
-#simpanel .sim-check { display: flex; gap: 0.4em; align-items: center; font-size: 11pt; white-space: nowrap; }
+#simpanel .sim-check { display: flex; gap: 0.4em; align-items: center; font-size: 10pt; white-space: nowrap; }
+#sim_header .sim-check select { width: auto; margin-top: 0; }
 #simpanel button {
-  padding: 0.6em 1.4em;
-  background: #2b3320;
-  color: #cfe0a4;
-  border: 1px solid #5a6b3b;
-  border-radius: 3px;
+  margin-top: 0.8em;
+  padding: 0.7em 1.2em;
+  background: linear-gradient(180deg, #5c4728, #3e2f1b);
+  color: #f6e5bd;
+  border: 1px solid #a98a55;
+  border-radius: 6px;
   font: inherit;
-  font-size: 12pt;
+  font-size: 10pt;
   letter-spacing: 0.05em;
   cursor: pointer;
   white-space: nowrap;
 }
-#simpanel button:hover:not(:disabled) { background: #38421f; }
+#simpanel button:hover:not(:disabled) { background: linear-gradient(180deg, #6b5532, #473520); }
 #simpanel button:disabled { opacity: 0.4; cursor: default; }
-#simpanel .sim-status {
+#simpanel .sim-status, #simpanel .sim-hint {
   font-size: 10pt;
-  line-height: 1.4;
+  line-height: 1.45;
   white-space: pre-wrap;
-  min-width: 14em;
-  color: #8fa06a;
+  margin-top: 0.75em;
 }
-#simpanel .sim-seq { font-size: 10pt; color: #7d8768; white-space: nowrap; }
-#simpanel .sim-seq b { color: #b9c4a7; }
+#simpanel .sim-status { color: #e2d4b3; }
+#simpanel .sim-hint { color: #ab9873; }
+
+.loader-tray {
+  position: relative;
+  min-height: 11.5em;
+  margin-top: 0.8em;
+  padding: 1em 1em 1.2em;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(31, 24, 18, 0.68), rgba(15, 11, 8, 0.88)),
+    linear-gradient(90deg, rgba(198, 160, 101, 0.18), rgba(198, 160, 101, 0.04));
+  border: 1px solid rgba(194, 164, 108, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 230, 182, 0.04);
+}
+.loader-tray::before,
+.loader-tray::after {
+  content: "";
+  position: absolute;
+  left: 1em;
+  right: 1em;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #87653b, #c8a56f, #87653b);
+  box-shadow: 0 1px 0 rgba(255, 244, 206, 0.18), 0 3px 7px rgba(0,0,0,0.35);
+}
+.loader-tray::before { top: 0.7em; }
+.loader-tray::after { bottom: 0.7em; }
+.tray-head {
+  font-size: 9pt;
+  color: #bca270;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.8em;
+}
+.tray-visual {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.9em;
+  min-height: 8.3em;
+  overflow-x: auto;
+  padding-bottom: 0.2em;
+}
+.card-pile {
+  min-width: 11em;
+}
+.card-stack {
+  position: relative;
+  height: 6.7em;
+}
+.card-slice {
+  position: absolute;
+  left: 0;
+  width: 9.8em;
+  height: 5.2em;
+  border-radius: 10px 10px 6px 6px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.4), transparent 18%),
+    linear-gradient(180deg, #f7eed6 0%, #e7d6af 100%);
+  border: 1px solid #a2875a;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.18) inset, 0 4px 10px rgba(0,0,0,0.18);
+}
+.card-slice::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 14px;
+  height: 12px;
+  background:
+    radial-gradient(circle, rgba(62,45,21,0.42) 1px, transparent 2px) 0 0 / 18px 6px repeat-x,
+    radial-gradient(circle, rgba(62,45,21,0.18) 1px, transparent 2px) 9px 8px / 18px 6px repeat-x;
+  opacity: 0.65;
+}
+.card-slice.loader-band {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.4), transparent 18%),
+    linear-gradient(180deg, #f0dfb0 0%, #d7b97a 100%);
+}
+.card-slice.sequencer-band {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.4), transparent 18%),
+    linear-gradient(180deg, #ebd8b5 0%, #cfa772 100%);
+}
+.pile-caption {
+  margin-top: 0.55em;
+}
+.pile-caption b {
+  display: block;
+  font-size: 10pt;
+  color: #f3e7ca;
+}
+.pile-caption span {
+  display: block;
+  margin-top: 0.2em;
+  font-size: 8.8pt;
+  color: #ab9873;
+  line-height: 1.35;
+}
 
 /* ---- integrated printer / console-typewriter (channel 2) ---------------- *
  * This represents a real peripheral (the integrated printer-typewriter), not a
@@ -760,18 +907,11 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
  * as paper lines; what the operator types is fed to the keyboard input queue and
  * echoed. Completion/capture is the pragmatic channel-2 model (see printer.c). */
 #teleprinter {
-  position: fixed;
-  right: 1em;
-  bottom: 7.5em;          /* sit above the simulator toolbar */
-  z-index: 1001;
-  width: 26em;
-  max-width: 90vw;
   display: flex;
   flex-direction: column;
+  width: 100%;
   background: #f4f1e6;     /* paper */
   border: 2px solid #2a2d24;
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
   overflow: hidden;
 }
@@ -808,8 +948,53 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
   color: #2a2d24; font: inherit; font-size: 10pt; padding: 0 1em; cursor: pointer;
 }
 #teleprinter .tp-input button:hover { background: #d6cfb4; }
+
+#tools_pane #disasm_card {
+  padding: 0.9em 1em 1em;
+}
+
+#disasm_heading {
+  margin: 0 0 0.55em;
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 10pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d1bb83;
+}
+
+@media (max-width: 1500px) {
+  #app_shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #sim_workbench {
+    grid-template-columns: minmax(16em, 18em) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  #app_shell {
+    padding: 0.6rem;
+    gap: 0.8rem;
+  }
+
+  #maincontent {
+    padding: 2.5em;
+    gap: 2.5em;
+  }
+
+  #sim_workbench {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-span-2 {
+    grid-column: auto;
+  }
+}
 </style>
 
+<div id=app_shell>
+<section id=console_pane>
 <div id=verticalcontainer>
     <div class="horizontal-strut strut-blue"></div>
     <div class="horizontal-strut strut-top"></div>
@@ -890,9 +1075,6 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
     </div>
     <div class="horizontal-strut strut-bottom"></div>
     <div class=strut-blue>
-      <div id=disasm></div>
-    </div>
-    <div class=strut-blue>
         <div class=bottom-panel>
             <div class=buttons>
                 <div class="buttonrow">
@@ -967,30 +1149,7 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
 
     </div>
 </div>
-
-<!-- Simulator toolbar: NOT a real-machine control. Pinned to the viewport so it
-     is always visible regardless of how the (wider-than-screen) console scrolls. -->
-<aside id=simpanel>
-    <h2>Simulator</h2>
-    <span class=sim-sub>not real hardware - loads a program straight into memory</span>
-    <label for=deck_file>Program (.cap deck or .bin)</label>
-    <input type=file id=deck_file accept=".cap,.bin">
-    <button id=mount_button disabled>Stage</button>
-    <span class=sim-status id=mount_status>No program loaded.</span>
-    <span class=sim-seq>then on the console: <b>CLEAR -&gt; LOAD -&gt; START</b></span>
-    <label class=sim-check>speed
-        <select id=speed_sel>
-            <option value="0.1">0.1x</option>
-            <option value="1" selected>real time</option>
-            <option value="10">10x</option>
-            <option value="50">50x</option>
-        </select>
-    </label>
-</aside>
-
-<!-- Integrated printer / console-typewriter (channel 2). Represents a real
-     peripheral; drawn as a paper teletype, separate from the console controls. -->
-<aside id=teleprinter>
+<aside id=teleprinter class=tool-card>
     <div class=tp-bar>
         <span>Printer / Typewriter &nbsp;(channel 2)</span>
         <button id=tp_clear type=button>Clear</button>
@@ -1001,6 +1160,55 @@ body { padding-bottom: 7em; }   /* keep the bar from hiding page content */
         <input id=tp_line type=text autocomplete=off placeholder="type to the operator keyboard...">
         <button id=tp_send type=button>Send</button>
     </div>
+</aside>
+</section>
+
+<aside id=tools_pane>
+<section id=disasm_card class=tool-card>
+    <h3 id=disasm_heading>Live Assembly</h3>
+    <div id=disasm></div>
+</section>
+
+<section id=simpanel class=tool-card>
+    <div id=sim_header>
+        <div>
+            <h2>Program Loader Workbench</h2>
+            <p>Compose the documented Site Acceptance Test batches or stage a custom capture. This panel is a simulator aid only: the actual run still begins on the real console with <b>CLEAR -&gt; LOAD -&gt; START</b>.</p>
+        </div>
+        <label class=sim-check>speed
+            <select id=speed_sel>
+                <option value="0.1">0.1x</option>
+                <option value="1" selected>real time</option>
+                <option value="10">10x</option>
+                <option value="50">50x</option>
+            </select>
+        </label>
+    </div>
+    <div id=sim_workbench>
+        <section class="sim-pane">
+            <h3>Built-in SAT Batches</h3>
+            <label for=batch_sel>Documented batch</label>
+            <select id=batch_sel></select>
+            <button id=batch_prepare_button disabled>Compose Batch</button>
+            <div class=sim-status id=batch_status>Choose a preset to load the documented deck stack into the workbench.</div>
+            <div class=sim-hint id=sim_hint>Batch cards are preserved in the repository and composed with the same SAT rules native `ge --sat ...` uses.</div>
+        </section>
+        <section class="sim-pane">
+            <h3>Custom Deck Or Image</h3>
+            <label for=custom_file>Upload `.cap` or `.bin`</label>
+            <input type=file id=custom_file accept=".cap,.bin">
+            <button id=custom_stage_button disabled>Stage Custom</button>
+            <div class=sim-status id=custom_status>No program loaded.</div>
+        </section>
+        <section class="sim-pane sim-span-2">
+            <h3>Reader Hopper View</h3>
+            <div class=loader-tray>
+                <div class=tray-head>Cards waiting at the reader throat</div>
+                <div id=tray_visual class=tray-visual></div>
+            </div>
+        </section>
+    </div>
+</section>
 </aside>
 
 
@@ -1266,6 +1474,150 @@ import { default as GE_Module } from './main.mjs'
 
 var module;
 
+const SAT_BATCHES = [
+    {
+        id: "cpu-functional",
+        title: "1. CPU Functional Test",
+        launch: "image",
+        note: "Scatter-staged CPU functional deck.",
+        cards: [
+            { label: "CPU functional", file: "funktionalcpu.cap", detail: "full scatter deck", style: "loader-band" },
+        ],
+    },
+    {
+        id: "card-reader-a",
+        title: "2. Card Reader Test",
+        launch: "image",
+        note: "Scatter-staged channel-A reader test.",
+        cards: [
+            { label: "Reading test A", file: "reading-test-chain-01a.cap", detail: "captured test deck", style: "" },
+        ],
+    },
+    {
+        id: "printer-mechanical",
+        title: "3. Printer Test",
+        launch: "image",
+        note: "Scatter-staged printer mechanical deck.",
+        cards: [
+            { label: "Printer mechanical", file: "printermechanicaltest.cap", detail: "captured test deck", style: "" },
+        ],
+    },
+    {
+        id: "control-program-cr",
+        title: "CR Control Program",
+        launch: "reader",
+        note: "Prepared with the serial Hollerith loader card kept at the front.",
+        cards: [
+            { label: "Control Program CR", file: "control-program-cr.cap", detail: "title+summary removed, row-8 loader kept", style: "loader-band" },
+        ],
+    },
+    {
+        id: "ls600-controller-sat",
+        title: "LS600 Controller SAT",
+        launch: "reader",
+        note: "Sequencer Program followed by LS600 Controller Test.",
+        cards: [
+            { label: "Sequencer program", file: "sat-ls600.cap", detail: "SAT loader + sequencer", style: "sequencer-band" },
+            { label: "Controller test", file: "ls600-controller-test.cap", detail: "diagnostic payload deck", style: "" },
+        ],
+    },
+    {
+        id: "ls600-transcoder-sat",
+        title: "LS600 Transcoder SAT",
+        launch: "reader",
+        note: "Sequencer Program followed by LS600 Transcoder Test.",
+        cards: [
+            { label: "Sequencer program", file: "sat-ls600.cap", detail: "SAT loader + sequencer", style: "sequencer-band" },
+            { label: "Transcoder test", file: "ls600-transcoder-test.cap", detail: "diagnostic payload deck", style: "" },
+        ],
+    },
+    {
+        id: "ls600-doe-sat",
+        title: "LS600 D.O.E. SAT",
+        launch: "reader",
+        note: "Sequencer Program followed by the LS600 D.O.E. deck.",
+        cards: [
+            { label: "Sequencer program", file: "sat-ls600.cap", detail: "SAT loader + sequencer", style: "sequencer-band" },
+            { label: "D.O.E. test", file: "ls600-doe.cap", detail: "diagnostic payload deck", style: "" },
+        ],
+    },
+];
+
+const batch_sel = document.getElementById("batch_sel");
+const batch_prepare_button = document.getElementById("batch_prepare_button");
+const batch_status = document.getElementById("batch_status");
+const sim_hint = document.getElementById("sim_hint");
+const tray_visual = document.getElementById("tray_visual");
+const custom_file = document.getElementById("custom_file");
+const custom_stage_button = document.getElementById("custom_stage_button");
+const custom_status = document.getElementById("custom_status");
+
+const satFileCache = new Set();
+let custom_bytes = null;
+let custom_is_cap = false;
+
+function pileMarkup(batch) {
+    tray_visual.textContent = "";
+    for (const [idx, deck] of batch.cards.entries()) {
+        const pile = document.createElement("div");
+        pile.className = "card-pile";
+
+        const stack = document.createElement("div");
+        stack.className = "card-stack";
+
+        for (let i = 0; i < 6; i++) {
+            const slice = document.createElement("div");
+            slice.className = `card-slice ${deck.style || ""}`.trim();
+            slice.style.left = `${i * 5}px`;
+            slice.style.top = `${Math.max(0, 22 - i * 3)}px`;
+            slice.style.transform = `rotate(${(idx * 0.6) - 0.8 + i * 0.12}deg)`;
+            stack.appendChild(slice);
+        }
+
+        const cap = document.createElement("div");
+        cap.className = "pile-caption";
+        cap.innerHTML = `<b>${deck.label}</b><span>${deck.detail}</span>`;
+
+        pile.appendChild(stack);
+        pile.appendChild(cap);
+        tray_visual.appendChild(pile);
+    }
+}
+
+function selectedBatch() {
+    return SAT_BATCHES.find(b => b.id === batch_sel.value) || SAT_BATCHES[0];
+}
+
+function syncBatchView() {
+    const batch = selectedBatch();
+    pileMarkup(batch);
+    sim_hint.textContent = `${batch.note} ${batch.launch === "reader"
+        ? "Use CLEAR -> LOAD -> START to pull the stack through the reader."
+        : "Use CLEAR -> LOAD -> START to drop the staged image into memory and run it."}`;
+}
+
+async function ensureSatFiles(batch) {
+    if (!module) return;
+    try { module.FS.mkdir("/sat"); } catch (_) {}
+
+    for (const deck of batch.cards) {
+        if (satFileCache.has(deck.file))
+            continue;
+        const resp = await fetch(`./Site_Acceptance_Test/${deck.file}`);
+        if (!resp.ok)
+            throw new Error(`missing ${deck.file}`);
+        const bytes = new Uint8Array(await resp.arrayBuffer());
+        module.FS.writeFile(`/sat/${deck.file}`, bytes);
+        satFileCache.add(deck.file);
+    }
+}
+
+batch_sel.innerHTML = SAT_BATCHES
+    .map(batch => `<option value="${batch.id}">${batch.title}</option>`)
+    .join("");
+syncBatchView();
+batch_sel.addEventListener("change", syncBatchView);
+
 power_on_button  .addEventListener("click", e => {
     if (!module) return;
     if (module._press_power_on) module._press_power_on();
@@ -1309,49 +1661,60 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 /* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
 
-/* ---- simulator gadget ---------------------------------------------------
- * Unified `.bin` images stage their unified-format payload directly.
- * `.cap` decks currently use the same staged-image path after host-side
- * scatter decode, because the browser's authentic reader/bootstrap path still
- * shares the incomplete `--deck` loader chain. */
-let deck_bytes = null;
-let deck_is_cap = false;
+batch_prepare_button.addEventListener("click", async () => {
+    if (!module) return;
+    const batch = selectedBatch();
+    batch_status.textContent = `Fetching ${batch.cards.length} deck pile(s)...`;
+    try {
+        await ensureSatFiles(batch);
+        const rc = module.ccall("prepare_sat_batch", "number", ["string"], [batch.id]);
+        if (rc === 1) {
+            batch_status.textContent = `Prepared ${batch.title}.\nBatch staged as an image.\nNow on the console: CLEAR -> LOAD -> START.`;
+        } else if (rc === 2) {
+            batch_status.textContent = `Prepared ${batch.title}.\nBatch mounted in the reader hopper.\nNow on the console: CLEAR -> LOAD -> START.`;
+        } else {
+            batch_status.textContent = `Could not prepare ${batch.title} (rc=${rc}).`;
+        }
+    } catch (err) {
+        batch_status.textContent = `Could not fetch SAT media: ${err}`;
+    }
+});
 
-deck_file.addEventListener("change", async e => {
+custom_file.addEventListener("change", async e => {
     const f = e.target.files[0];
     if (!f) {
-        deck_bytes = null;
-        mount_status.textContent = "No program loaded.";
+        custom_bytes = null;
+        custom_status.textContent = "No program loaded.";
         return;
     }
-    deck_bytes = new Uint8Array(await f.arrayBuffer());
-    deck_is_cap = /\.cap$/i.test(f.name);
-    mount_status.textContent = `Selected ${f.name} (${deck_bytes.length} bytes, `
-        + (deck_is_cap ? ".cap deck" : ".bin image") + ").";
-})
+    custom_bytes = new Uint8Array(await f.arrayBuffer());
+    custom_is_cap = /\.cap$/i.test(f.name);
+    custom_status.textContent = `Selected ${f.name} (${custom_bytes.length} bytes, `
+        + (custom_is_cap ? ".cap deck" : ".bin image") + ").";
+});
 
-mount_button.addEventListener("click", () => {
-    if (!module || !deck_bytes) return;
+custom_stage_button.addEventListener("click", () => {
+    if (!module || !custom_bytes) return;
 
-    const path = deck_is_cap ? '/deck.cap' : '/image.bin';
+    const path = custom_is_cap ? '/deck.cap' : '/image.bin';
     try {
-        module.FS.writeFile(path, deck_bytes);
+        module.FS.writeFile(path, custom_bytes);
     } catch (err) {
-        mount_status.textContent = "FS error: " + err;
+        custom_status.textContent = "FS error: " + err;
         return;
     }
 
-    const rc = deck_is_cap ? module._stage_cap() : module._stage_image();
+    const rc = custom_is_cap ? module._stage_cap() : module._stage_image();
     if (rc === 0) {
-        mount_status.textContent = deck_is_cap
-            ? "Scattered .cap image staged.\nNow: CLEAR -> LOAD -> START."
-            : "Image staged.\nNow: CLEAR -> LOAD -> START.";
+        custom_status.textContent = custom_is_cap
+            ? "Custom .cap staged as a scatter image.\nNow: CLEAR -> LOAD -> START."
+            : "Custom image staged.\nNow: CLEAR -> LOAD -> START.";
     } else {
-        mount_status.textContent = deck_is_cap
-            ? "Could not stage .cap deck (rc=" + rc + ")."
+        custom_status.textContent = custom_is_cap
+            ? "Could not stage custom .cap deck (rc=" + rc + ")."
             : "Not a unified .bin image (rc=" + rc + ").";
     }
-})
+});
 
 document.set_lamp = function(lamp, val) {
     if (!module) return;
@@ -1442,7 +1805,8 @@ document.set_dial = function(e) {
 GE_Module({ print: () => {}, printErr: () => {} })
     .then(m => {
         module = m
-        mount_button.disabled = false
+        batch_prepare_button.disabled = false
+        custom_stage_button.disabled = false
         module._set_load_unit(load1)   /* sync the LOAD selector lamp to the default */
         module._set_speed(parseFloat(speed_sel.value))   /* default: nominal real time */
     })

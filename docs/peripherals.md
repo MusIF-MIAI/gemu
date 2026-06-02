@@ -261,18 +261,18 @@ when you specifically want to exercise the real bootstrap/read path.
 
 ## Limitations (honest scope)
 
-* The **per-character channel-2 transfer** (the `rSI` sequencer states b9/b1 and
-  the `RIVE`/`RIG1` length termination) is **not modelled**. The print `PER`
-  completes in one shot rather than transferring byte-by-byte, so:
-  * Capture reads the order block at `rV2` heuristically — for the funktionalcpu
-    `report_and_end` PER (whose order block is `68 80 01 00 …`, all non-graphic)
-    this renders as `...`, i.e. *not* a decoded line. Glyph rendering itself is
-    correct (the GE graphic set, `gecode.c`); what's missing is the channel-2
-    transfer that would point capture at the actual character buffer.
-  * The **keyboard input queue is filled but not yet consumed** by the CPU —
-    channel-2 *input* transfer is also unmodelled. Typed text is echoed locally
-    in the chat for now; wiring it into a channel-2 read is future work, and will
-    also need the inverse ASCII → GE-graphic encoding at the feed boundary.
+* The **byte-transfer core is modelled for the documented paths**:
+  * output uses the channel-2 `rSI=0x02` state (`Mem[V4] -> RO -> CE16`)
+  * input uses the channel-2 `rSI=0x0C` path (`CI34`, `RO -> Mem[V4]`)
+  * the keyboard queue is therefore **consumed by real channel-2 reads**, not
+    just echoed locally
+* What remains abstracted is the rest of the CAN2 micro-sequence around those
+  bytes:
+  * print/input completion is still finalized by the integrated device shim
+    asserting `PUC2`/`RC00` at the org-phase wait, rather than by a fully
+    recovered `0A|0B`/compare/parity transfer-state implementation
+  * `04|06` compare/parity behavior and the physical printer-mechanism signals
+    (`FIRU`, brake/release timing, etc.) are not yet modelled signal-by-signal
 * The funktionalcpu deck, after the completed print PER, takes its
   `report_restart` branch (the final 40-char signature `CMC` at `0x19d4`
   compares `mem[0x1100]` vs `mem[0x0036]` and mismatches) — i.e. it loops as a

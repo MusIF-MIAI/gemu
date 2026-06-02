@@ -14,6 +14,7 @@
 #include "transcode.h"
 #include "binimage.h"
 #include "log.h"
+#include "sat_batches.h"
 #include <fcntl.h>
 
 /*
@@ -89,6 +90,8 @@ static void print_usage(const char *argv0)
         "  --poke <A=V>         Write byte V to address A after load (repeatable),\n"
         "                       e.g. --poke 0x0E00=0x80 to set a diagnostic option\n"
         "  --deck <path>        Path to a .cap card deck; loaded via the reader (connector 2)\n"
+        "  --sat <id>           Use a built-in Site Acceptance Test batch\n"
+        "  --list-sat           List the built-in SAT batches and exit\n"
         "  --trace <spec>       Enable log types from spec string\n"
         "  --max-cycles <N>     Maximum CPU cycles before forced exit (default: 100000,\n"
         "                       or 500000 for --deck unless overridden)\n"
@@ -114,6 +117,7 @@ int main(int argc, char *argv[])
     int use_tui = 0;
     int trace_set = 0;
     const char *deck_path = NULL;   /* --deck: cycle-faithful card-reader bootstrap */
+    const char *sat_batch = NULL;   /* --sat: built-in SAT batch */
     const char *cap_path = NULL;    /* positional .cap: scatter-load (default) */
     const char *image_path = NULL;
     int raw = 0;
@@ -139,6 +143,19 @@ int main(int argc, char *argv[])
                 return 1;
             }
             deck_path = argv[++i];
+        } else if (strcmp(argv[i], "--sat") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "error: --sat requires an argument\n");
+                return 1;
+            }
+            sat_batch = argv[++i];
+        } else if (strcmp(argv[i], "--list-sat") == 0) {
+            for (int j = 0; j < sat_batch_count(); j++) {
+                const struct sat_batch_info *info = sat_batch_info_at(j);
+                printf("%-20s  %s\n", info->id, info->title);
+                printf("  %s\n", info->summary);
+            }
+            return 0;
         } else if (strcmp(argv[i], "--trace") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --trace requires an argument\n");
@@ -196,7 +213,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "error: unknown option '%s'\n", argv[i]);
             print_usage(argv[0]);
             return 1;
-        } else if (!image_path && !deck_path) {
+        } else if (!image_path && !deck_path && !sat_batch) {
             /* Positional input. The DEFAULT is the authentic card-reader flow:
              * a `.cap` deck is loaded by scattering each card's payload to its
              * embedded load address (cap_load_scattered — the deck format), then
@@ -217,9 +234,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    if ((deck_path && image_path) || (deck_path && cap_path) ||
-        (cap_path && image_path)) {
-        fprintf(stderr, "error: give only one of a .cap deck, --deck, or --bin\n");
+    if ((deck_path && image_path) || (deck_path && cap_path) || (deck_path && sat_batch) ||
+        (cap_path && image_path) || (cap_path && sat_batch) || (image_path && sat_batch)) {
+        fprintf(stderr, "error: give only one of a .cap deck, --deck, --sat, or --bin\n");
         return 1;
     }
 
@@ -227,7 +244,7 @@ int main(int argc, char *argv[])
      * direct binary or scatter-loaded image. Give `--deck` a roomier default so
      * a real deck does not time out during the load unless the user explicitly
      * requested a tighter budget. */
-    if (deck_path && !max_cycles_set)
+    if ((deck_path || sat_batch) && !max_cycles_set)
         max_cycles = 500000;
 
     ge_init(&ge);
@@ -247,7 +264,56 @@ int main(int argc, char *argv[])
      * bootstrap.c test does — no direct mem[] writes. */
     int image_loaded = 0;
     uint16_t image_entry = 0;
-    if (deck_path) {
+    if (sat_batch) {
+        char note[256];
+        const struct sat_batch_info *info = sat_batch_find(sat_batch);
+        if (!info) {
+            fprintf(stderr, "error: unknown SAT batch '%s' (use --list-sat)\n", sat_batch);
+            ge_deinit(&ge);
+            return 1;
+        }
+
+        if (info->launch == SAT_BATCH_IMAGE) {
+            static uint8_t scat[MEM_SIZE];
+            unsigned lo = 0, hi = 0;
+            uint16_t entry = 0;
+
+            if (sat_batch_prepare_image("Site_Acceptance_Test", sat_batch,
+                                        scat, &lo, &hi, &entry,
+                                        note, sizeof(note)) != 0) {
+                fprintf(stderr, "error: failed to prepare SAT batch '%s'\n", sat_batch);
+                ge_deinit(&ge);
+                return 1;
+            }
+
+            if (ge_load_image(&ge, scat + lo, (uint16_t)(hi - lo + 1), (uint16_t)lo) != 0) {
+                fprintf(stderr, "error: SAT image '%s' does not fit in memory\n", sat_batch);
+                ge_deinit(&ge);
+                return 1;
+            }
+            ge_seed_segment_bases(&ge);
+            image_loaded = 1;
+            image_entry = entry;
+            fprintf(stderr, "SAT batch %s: %s\n", sat_batch, note);
+        } else {
+            static const char sat_cap_path[] = "/tmp/gemu_sat_batch.cap";
+            if (sat_batch_prepare_deck("Site_Acceptance_Test", sat_batch,
+                                       sat_cap_path, note, sizeof(note)) != 0) {
+                fprintf(stderr, "error: failed to compose SAT batch '%s'\n", sat_batch);
+                ge_deinit(&ge);
+                return 1;
+            }
+            ge_load_1(&ge);
+            ge_load(&ge);
+            ret = cardreader_register(&ge, sat_cap_path, TC_NORMAL);
+            if (ret != 0) {
+                fprintf(stderr, "error: failed to load SAT batch '%s'\n", sat_batch);
+                ge_deinit(&ge);
+                return ret;
+            }
+            fprintf(stderr, "SAT batch %s: %s\n", sat_batch, note);
+        }
+    } else if (deck_path) {
         ge_load_1(&ge);   /* select connector 2 (LOAD1) */
         ge_load(&ge);     /* set AINI: state 80 -> c8 starts the load sequence */
         ret = cardreader_register(&ge, deck_path, TC_NORMAL);

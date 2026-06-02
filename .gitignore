@@ -19,6 +19,7 @@ disassembler/funktionalcpu.s
 console/wasm/main.mjs
 console/wasm/main.wasm
 console/wasm/main.js
+console/wasm/Site_Acceptance_Test/
 
 # python bytecode (curses console client)
 __pycache__/

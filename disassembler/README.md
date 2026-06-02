@@ -76,11 +76,11 @@ uses a different card framing.
 | `funktionalcpu` | **verified** — the reverse-engineered oracle behind `punchcards.md`; depunches to a clean `0x0100…` CPU image. |
 | `control-program-cr`, `auto-kontr`, `printermechanicaltest`, `reading-test`, `semi-manuale` | same `00 04 ..` record framing, auto-detected and loaded; disassembly is plausible but **not oracle-verified**. |
 | `ls600-*`, `sat-ls600` | **peripheral test decks** — share the framing but their payloads are test patterns, not `0x0100` CPU code (records overlap a small region). |
-| `isolationcpu0x`, `isolat-dsu-erganz` | **different card framing** (no `00 04` prefix; code punched more directly). Not yet cracked — `gdis` warns and the result is poor. Inspect with `--cards`. |
+| `isolationcpu0x`, `isolat-dsu-erganz` | **different framing, auto-detected** — `gdis` extracts COLBIN payload cols `1..76`, gates on the progressive Hollerith id in cols `77..79`, and emits the resulting stream contiguously. This reconstructs the captured payload stream, not the deck's own higher-level loader semantics. |
 
-Only `funktionalcpu` is ground-truth-verified; for the rest, treat the depunched
-image and disassembly as a starting point for reverse engineering, and
-cross-check with `--cards` / `--hex`.
+Only `funktionalcpu` is ground-truth-verified as a CPU image; for the rest,
+treat the depunched image and disassembly as a starting point for reverse
+engineering, and cross-check with `--cards` / `--hex`.
 
 ## Examples
 
@@ -107,6 +107,12 @@ Disassemble a raw image straight from `gasm`:
 ```sh
 gasm -o prog.bin prog.s
 gdis --bin --org 0x0000 prog.bin
+```
+
+Extract an isolation deck via family auto-detection:
+
+```sh
+gdis --image -o isolationcpu01.bin ../../DUMP1/isolationcpu01.cap
 ```
 
 ## Round-trip

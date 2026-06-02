@@ -725,6 +725,24 @@ int main(int argc, char **argv)
     if (do_cards && !is_bin) {
         struct cap_deck *d = cap_load(inpath);
         if (!d) { fprintf(stderr, "gdis: cannot parse '%s'\n", inpath); return 2; }
+        {
+            struct cap_deck_info info;
+            enum cap_deck_family family = cap_detect_family(d, mode, &info);
+            printf("# deck family: %s", cap_family_name(family));
+            if (family == CAP_FAMILY_SCATTER) {
+                printf(" (prefix %02X %02X %02X %02X %02X %02X %02X %02X, %d cards)\n",
+                       info.scatter_prefix[0], info.scatter_prefix[1],
+                       info.scatter_prefix[2], info.scatter_prefix[3],
+                       info.scatter_prefix[4], info.scatter_prefix[5],
+                       info.scatter_prefix[6], info.scatter_prefix[7],
+                       info.scatter_prefix_count);
+            } else if (family == CAP_FAMILY_ISOLATION) {
+                printf(" (%d payload cards of %d 80-col cards)\n",
+                       info.isolation_cards, info.full_80col_cards);
+            } else {
+                printf("\n");
+            }
+        }
         int nc = cap_num_cards(d);
         uint8_t want[8]; int have_want = 0;
         if (have_user_prefix) { memcpy(want, user_prefix, 8); have_want = 1; }
@@ -788,8 +806,25 @@ int main(int argc, char **argv)
     } else if (is_iso) {
         if (load_cap_iso(inpath, org, verbose) != 0) return 1;
     } else {
-        if (load_cap(inpath, mode, loose, verbose,
-                     have_user_prefix ? user_prefix : NULL) != 0) return 1;
+        enum cap_deck_family family = CAP_FAMILY_UNKNOWN;
+
+        if (!loose && !have_user_prefix) {
+            struct cap_deck *probe = cap_load(inpath);
+            if (!probe) {
+                fprintf(stderr, "gdis: cannot parse .cap '%s'\n", inpath);
+                return 2;
+            }
+            family = cap_detect_family(probe, mode, NULL);
+            cap_free(probe);
+        }
+
+        if (family == CAP_FAMILY_ISOLATION) {
+            fprintf(stderr, "gdis: auto-detected isolation deck framing\n");
+            if (load_cap_iso(inpath, org, verbose) != 0) return 1;
+        } else {
+            if (load_cap(inpath, mode, loose, verbose,
+                         have_user_prefix ? user_prefix : NULL) != 0) return 1;
+        }
     }
 
 image_loaded:;

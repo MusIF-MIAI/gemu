@@ -6,8 +6,26 @@
 
 struct cap_deck;  /* opaque */
 
+enum cap_deck_family {
+    CAP_FAMILY_UNKNOWN = 0,
+    CAP_FAMILY_SCATTER,
+    CAP_FAMILY_ISOLATION,
+};
+
+struct cap_deck_info {
+    enum cap_deck_family family;
+    int eligible_scatter_cards;
+    int scatter_prefix_count;
+    int full_80col_cards;
+    int isolation_cards;
+    uint8_t scatter_prefix[8];
+};
+
 /* Parse a .cap file. Returns NULL on open/parse error. */
 struct cap_deck *cap_load(const char *path);
+
+/* Create an empty in-memory deck. Returns NULL on allocation failure. */
+struct cap_deck *cap_create(void);
 
 /* Number of cards parsed. */
 int cap_num_cards(const struct cap_deck *d);
@@ -19,7 +37,22 @@ int cap_card_ncols(const struct cap_deck *d, int i);
  * or NULL if i out of range. Length == cap_card_ncols(d,i). */
 const uint16_t *cap_card_columns(const struct cap_deck *d, int i);
 
+/* Append one card to an in-memory deck. Returns 0 on success, -1 on failure. */
+int cap_append_card(struct cap_deck *d, const uint16_t *cols, int ncols);
+
+/* Save a deck back to the textual .cap format. Returns 0 on success. */
+int cap_save(const struct cap_deck *d, const char *path);
+
 void cap_free(struct cap_deck *d);
+
+/* Inspect a deck's framing. `mode` is an `enum transcode_mode` used when
+ * decoding binary columns for scatter-family detection. On success returns the
+ * detected family and, if `info` is non-NULL, fills the summary fields. */
+enum cap_deck_family cap_detect_family(const struct cap_deck *d, int mode,
+                                       struct cap_deck_info *info);
+
+/* Human-readable family name for logs/errors. */
+const char *cap_family_name(enum cap_deck_family family);
 
 /*
  * cap_load_scattered - load a self-addressed binary card deck into a flat image.
@@ -45,4 +78,13 @@ void cap_free(struct cap_deck *d);
 int cap_load_scattered(const char *path, int mode,
                        unsigned char *image /* 65536 bytes */,
                        unsigned *lo, unsigned *hi);
+
+/* Load a CPU isolation deck's 76-byte payload cards contiguously at `org`.
+ * The title/summary framing cards are skipped via the Hollerith 77-79 card id.
+ * Returns the number of payload cards loaded (>0), or -1 on parse/family/load
+ * failure. */
+int cap_load_isolation_stream(const char *path,
+                              unsigned char *image /* 65536 bytes */,
+                              unsigned org,
+                              unsigned *lo, unsigned *hi);
 #endif

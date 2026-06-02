@@ -100,6 +100,22 @@ static int run_until_mem_nonzero(struct ge *g, uint16_t addr, int max_cycles)
     return g->mem[addr];
 }
 
+static int run_until_mem_bytes(struct ge *g, uint16_t addr,
+                               const uint8_t *bytes, size_t len,
+                               int max_cycles)
+{
+    for (int i = 0; i < max_cycles; i++) {
+        int r = ge_run_cycle(g);
+        if (r != 0)
+            return -1;
+        if (memcmp(&g->mem[addr], bytes, len) == 0)
+            return 1;
+        if (g->halted)
+            return 0;
+    }
+    return memcmp(&g->mem[addr], bytes, len) == 0;
+}
+
 /* --------------------------------------------------------------------------
  * Test: 4-byte synthetic deck, TC_BINARY, expect state 0xe3
  *
@@ -658,12 +674,15 @@ UTEST(cardreader, funktionalcpu_loader_autodetect)
  *
  * This covers the real reader flow: loader card in TC_HEX, subsequent program
  * cards in by-pass/COLBIN, with the loader relocating card payloads into their
- * embedded addresses. The first real code block reaches 0x010C as
- * `43 F0 17 2A` in the oracle image.
+ * embedded addresses. The first real code block reaches 0x0100 as
+ * `43 F0 17 2A` in the reconstructed oracle image; waiting for "first nonzero"
+ * at a later address is too weak because the loader writes transient bytes
+ * while it is still unpacking the deck.
  * -------------------------------------------------------------------------- */
 UTEST(cardreader, funktionalcpu_authentic_load_reaches_payload)
 {
     static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    static const uint8_t expected[] = { 0x43, 0xF0, 0x17, 0x2A };
 
     FILE *probe = fopen(cap_path, "r");
     if (!probe) {
@@ -681,10 +700,7 @@ UTEST(cardreader, funktionalcpu_authentic_load_reaches_payload)
     ASSERT_EQ(cardreader_register(&g, cap_path, TC_NORMAL), 0);
     ge_start(&g);
 
-    ASSERT_EQ(run_until_mem_nonzero(&g, 0x010C, 120000), 0x43);
-    ASSERT_EQ(g.mem[0x010D], 0xF0);
-    ASSERT_EQ(g.mem[0x010E], 0x17);
-    ASSERT_EQ(g.mem[0x010F], 0x2A);
+    ASSERT_EQ(run_until_mem_bytes(&g, 0x0100, expected, sizeof(expected), 120000), 1);
 
     ge_deinit(&g);
 }
