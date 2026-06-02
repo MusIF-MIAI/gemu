@@ -604,7 +604,11 @@ struct ge {
      */
     struct ge_integrated_printer {
         int      present;
-        char     out[8192];     /* captured printed characters (ring/append) */
+        char     out[65536];    /* captured printed chars; per-frame staging only
+                                 * (the wasm console drains+clears each frame, the
+                                 * CLI reads it at end). Sized for a catch-up
+                                 * frame's burst so fast/backgrounded printing
+                                 * doesn't overflow before the drain. */
         int      out_len;
         uint8_t  kbd[256];      /* operator keyboard input queue */
         int      kbd_head, kbd_tail;
@@ -617,6 +621,7 @@ struct ge {
         int      out_active;
         int      out_remaining;
         int      out_total;
+        int      out_line_mode;
         uint8_t  out_saved_so;
     } integrated_printer;
 

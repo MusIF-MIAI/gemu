@@ -224,7 +224,7 @@ UTEST(printer, channel2_output_driven)
     g.mem_written[buf + 1] = 1;
 
     ge_start(&g);
-    printer_begin_output(&g, buf, 2);
+    printer_begin_output(&g, buf, 2, 0);
 
     /* Run enough cycles for the 2 transfers + the end cycle; it self-terminates. */
     for (int i = 0; i < 6; i++)
@@ -322,6 +322,32 @@ UTEST(printer, output_per_prints_and_halts_when_polled)
     ASSERT_EQ(g.mem[0x31], 0x01);
     ASSERT_EQ(printer_output_len(&g), 5);
     ASSERT_STREQ(printer_output(&g), "HELLO");
+
+    ge_deinit(&g);
+}
+
+UTEST(printer, line_printer_write_ends_with_newline)
+{
+    struct ge g;
+    uint16_t buf = 0x0200;
+    ge_init(&g);
+
+    g.mem[buf + 0] = 0x55;  /* E */
+    g.mem[buf + 1] = 0x55;  /* E */
+
+    ge_clear(&g);
+    printer_register(&g);
+    printer_begin_output(&g, buf, 2, 1);
+
+    for (int i = 0; i < 80; i++) {
+        if (ge_run_cycle(&g))
+            break;
+    }
+
+    ASSERT_EQ(printer_output_len(&g), 3);
+    ASSERT_EQ(printer_output(&g)[0], 'E');
+    ASSERT_EQ(printer_output(&g)[1], 'E');
+    ASSERT_EQ(printer_output(&g)[2], '\n');
 
     ge_deinit(&g);
 }

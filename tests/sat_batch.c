@@ -36,6 +36,48 @@ UTEST(sat_batch, cpu_functional_scatter_prepares)
     ASSERT_EQ((int)image[0x0101], 0xF0);
 }
 
+UTEST(sat_batch, printer_mechanical_scatter_uses_start_vector)
+{
+    static unsigned char image[MEM_SIZE];
+    unsigned lo = 0, hi = 0;
+    uint16_t entry = 0;
+    char note[256];
+
+    if (!sat_file_exists("Site_Acceptance_Test/printermechanicaltest.cap")) {
+        printf("  [SKIP] Site_Acceptance_Test/printermechanicaltest.cap not found\n");
+        return;
+    }
+
+    ASSERT_EQ(sat_batch_prepare_image("Site_Acceptance_Test", "printer-mechanical",
+                                      image, &lo, &hi, &entry,
+                                      note, sizeof(note)), 0);
+    ASSERT_EQ((int)lo, 0x001E);
+    ASSERT_EQ((int)entry, 0x0118);
+}
+
+UTEST(sat_batch, printer_mechanical_injects_center_card_defaults)
+{
+    static unsigned char image[MEM_SIZE];
+    unsigned lo = 0, hi = 0;
+    uint16_t entry = 0;
+    char note[256];
+
+    if (!sat_file_exists("Site_Acceptance_Test/printermechanicaltest.cap")) {
+        printf("  [SKIP] Site_Acceptance_Test/printermechanicaltest.cap not found\n");
+        return;
+    }
+
+    ASSERT_EQ(sat_batch_prepare_image("Site_Acceptance_Test", "printer-mechanical",
+                                      image, &lo, &hi, &entry,
+                                      note, sizeof(note)), 0);
+    ASSERT_EQ((int)image[0x0670], 0x01);
+    ASSERT_EQ((int)image[0x0671], 0x01);
+    ASSERT_EQ((int)image[0x0673], 0x01);
+    ASSERT_EQ((int)image[0x0674], 0x01);
+    ASSERT_EQ((int)image[0x0675], 0x00);
+    ASSERT_NE(strstr(note, "center card"), NULL);
+}
+
 UTEST(sat_batch, ls600_controller_batch_composes)
 {
     static const char out_path[] = "/tmp/gemu_sat_ls600_controller.cap";

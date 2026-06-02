@@ -36,9 +36,11 @@ int printer_register(struct ge *ge);
 /* Begin a channel-2 OUTPUT transfer: print `length` characters starting at
  * memory address `buffer`. The printer then requests a channel-2 cycle per
  * character (RC02 + rSI state 0x02) so the machine's microcode drains the buffer
- * to the printer, ending the line when done. (Seam for the org-phase PER hook;
- * also used directly by tests.) */
-void printer_begin_output(struct ge *ge, uint16_t buffer, int length);
+ * to the printer. `line_mode` appends a paper break when the transfer ends;
+ * this is used by the line printer's WRITE order but not by the console
+ * typewriter PUT path. (Seam for the org-phase PER hook; also used directly by
+ * tests.) */
+void printer_begin_output(struct ge *ge, uint16_t buffer, int length, int line_mode);
 
 /* Push one operator-keyboard byte into the input queue (two-way chat). */
 void printer_feed_key(struct ge *ge, uint8_t c);

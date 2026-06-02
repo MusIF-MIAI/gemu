@@ -49,14 +49,22 @@ EM_JS(void, printer_emit, (const char *text), {
 /* Bytes the machine has already printed and echoed to the chat panel. */
 static int printer_echoed = 0;
 
-/* Push any newly-captured printer output to the JS chat transcript. */
+/* Push any newly-captured printer output to the JS chat transcript, then
+ * RECLAIM the capture buffer. The JS side keeps its own scrolling transcript,
+ * so the emulator-side out[] is only a per-frame staging buffer: if we merely
+ * advanced a cursor (the old behaviour) out[] would accumulate across frames
+ * and cap at sizeof(out)-1 within ~50 ms of real-time printing, after which
+ * printer_capture_char drops everything and the panel freezes mid-test (the
+ * line-printer mechanical test alone prints millions of characters). Emitting
+ * the new tail and clearing each frame keeps the stream flowing without bound. */
 static void drain_printer(void) {
     int olen = printer_output_len(ge);
-    if (olen <= printer_echoed)
-        return;
-    /* printer_output() is NUL-terminated; emit only the new tail. */
-    printer_emit(printer_output(ge) + printer_echoed);
-    printer_echoed = olen;
+    if (olen > printer_echoed)
+        printer_emit(printer_output(ge) + printer_echoed);
+    if (olen > 0) {
+        printer_output_clear(ge);
+        printer_echoed = 0;
+    }
 }
 
 /* Feed one operator-keyboard byte (two-way chat input). Exposed to JS. */

@@ -927,12 +927,18 @@ padding: 1px;
   border-radius: 3px; font: inherit; font-size: 8.5pt; padding: 0.1em 0.5em; cursor: pointer;
 }
 #tp_paper {
-  height: 13em; overflow-y: auto;
+  height: 13em; overflow: auto;
   padding: 0.6em 0.8em; margin: 0;
   background:
     repeating-linear-gradient(#f4f1e6, #f4f1e6 1.45em, #e7e3d2 1.45em, #e7e3d2 1.5em);
   color: #23241c; font-size: 10.5pt; line-height: 1.5em;
-  white-space: pre-wrap; word-break: break-word;
+  /* Continuous paper: break lines ONLY on the typewriter's own line feed (the
+   * \n the printer emits per WRITE / spacing order) — no 80-column auto-wrap.
+   * Long lines extend and scroll horizontally. */
+  white-space: pre;
+}
+#tp_paper > span {
+  display: inline;
 }
 #tp_paper .tp-prn { color: #1a1c14; }
 #tp_paper .tp-kbd { color: #6a4a1a; }          /* operator-typed, ink-ribbon brown */

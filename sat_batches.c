@@ -22,6 +22,12 @@ struct sat_batch_def {
     struct sat_batch_info info;
     const struct sat_source *sources;
     int nsources;
+    uint16_t image_entry;
+};
+
+struct sat_image_patch {
+    uint16_t addr;
+    uint8_t value;
 };
 
 static const struct sat_source src_cpu_functional[] = {
@@ -34,6 +40,30 @@ static const struct sat_source src_reader_a[] = {
 
 static const struct sat_source src_printer_mech[] = {
     { "printermechanicaltest.cap", SAT_SRC_AS_IS },
+};
+
+/* Printer Mechanic Test startup: the deck issues PER 0x00,0x0126, whose order
+ * block is {00,40,00,4F,06,70} — a 79-byte "read unchanged" into 0x0670.
+ * In the real SAT stack that record comes from the required center card. The
+ * current scatter-image path has no physical center card, so synthesize the
+ * default raw reader bytes the diagnostic expects:
+ *   col1 integrated, col2 no 2nd transport, col4 normal drum, col5 normal
+ *   ribbon, col6 WITH END OF TEST HLT. The remaining bytes are left zero.
+ *
+ * Confidence:
+ *   - 0x0673 / 0x0674 are directly tested by the deck as 0x01 (normal drum /
+ *     ribbon path).
+ *   - 0x0675 follows the manual's center-card column 6. Under the raw-reader
+ *     low-byte model, a 9-punch collapses to 0x00, so WITH END OF TEST HLT is
+ *     represented here as 0x00.
+ *   - columns not yet evidenced by the code remain zero until more manual
+ *     evidence is recovered. */
+static const struct sat_image_patch printer_mech_center_card[] = {
+    { 0x0670, 0x01 }, /* column 1: integrated subsystem */
+    { 0x0671, 0x01 }, /* column 2: 2nd transport absent */
+    { 0x0673, 0x01 }, /* column 4: normal drum */
+    { 0x0674, 0x01 }, /* column 5: normal ribbon */
+    { 0x0675, 0x00 }, /* column 6: with END OF TEST HLT */
 };
 
 static const struct sat_source src_control_program[] = {
@@ -60,42 +90,50 @@ static const struct sat_batch_def sat_batches[] = {
         { "cpu-functional", "CPU Functional Test",
           "SAT step 1: the functional CPU deck staged through the scatter-image path.",
           SAT_BATCH_IMAGE },
-        src_cpu_functional, (int)(sizeof(src_cpu_functional) / sizeof(src_cpu_functional[0]))
+        src_cpu_functional, (int)(sizeof(src_cpu_functional) / sizeof(src_cpu_functional[0])),
+        0x0000
     },
     {
         { "card-reader-a", "Reading Test Channel A",
           "SAT step 2: the captured card-reader test deck.", SAT_BATCH_IMAGE },
-        src_reader_a, (int)(sizeof(src_reader_a) / sizeof(src_reader_a[0]))
+        src_reader_a, (int)(sizeof(src_reader_a) / sizeof(src_reader_a[0])),
+        0x0000
     },
     {
         { "printer-mechanical", "Printer Mechanical Test",
-          "SAT step 3: the line-printer deck staged through the scatter-image path.",
+          "SAT step 3: the line-printer deck staged through the scatter-image path, "
+          "with the required center card synthesized into the startup input buffer.",
           SAT_BATCH_IMAGE },
-        src_printer_mech, (int)(sizeof(src_printer_mech) / sizeof(src_printer_mech[0]))
+        src_printer_mech, (int)(sizeof(src_printer_mech) / sizeof(src_printer_mech[0])),
+        0x0118
     },
     {
         { "control-program-cr", "Control Program CR",
           "Control-program utility deck with the serial Hollerith loader kept.",
           SAT_BATCH_READER },
-        src_control_program, (int)(sizeof(src_control_program) / sizeof(src_control_program[0]))
+        src_control_program, (int)(sizeof(src_control_program) / sizeof(src_control_program[0])),
+        0x0000
     },
     {
         { "ls600-controller-sat", "LS600 Controller SAT Batch",
           "Sequencer Program followed by LS600 Controller Test, prepared per the SAT notes.",
           SAT_BATCH_READER },
-        src_ls600_controller, (int)(sizeof(src_ls600_controller) / sizeof(src_ls600_controller[0]))
+        src_ls600_controller, (int)(sizeof(src_ls600_controller) / sizeof(src_ls600_controller[0])),
+        0x0000
     },
     {
         { "ls600-transcoder-sat", "LS600 Transcoder SAT Batch",
           "Sequencer Program followed by LS600 Transcoder Test, prepared per the SAT notes.",
           SAT_BATCH_READER },
-        src_ls600_transcoder, (int)(sizeof(src_ls600_transcoder) / sizeof(src_ls600_transcoder[0]))
+        src_ls600_transcoder, (int)(sizeof(src_ls600_transcoder) / sizeof(src_ls600_transcoder[0])),
+        0x0000
     },
     {
         { "ls600-doe-sat", "LS600 D.O.E. SAT Batch",
           "Sequencer Program followed by the LS600 D.O.E. deck, prepared per the SAT notes.",
           SAT_BATCH_READER },
-        src_ls600_doe, (int)(sizeof(src_ls600_doe) / sizeof(src_ls600_doe[0]))
+        src_ls600_doe, (int)(sizeof(src_ls600_doe) / sizeof(src_ls600_doe[0])),
+        0x0000
     },
 };
 
@@ -174,6 +212,20 @@ static const struct sat_batch_def *sat_batch_def_find(const char *id)
     return NULL;
 }
 
+static void sat_apply_image_patches(const struct sat_batch_def *def, unsigned char *image)
+{
+    const struct sat_image_patch *patches = NULL;
+    size_t npatches = 0;
+
+    if (strcmp(def->info.id, "printer-mechanical") == 0) {
+        patches = printer_mech_center_card;
+        npatches = sizeof(printer_mech_center_card) / sizeof(printer_mech_center_card[0]);
+    }
+
+    for (size_t i = 0; i < npatches; i++)
+        image[patches[i].addr] = patches[i].value;
+}
+
 static void sat_note(char *note, size_t note_sz, const struct sat_batch_def *def)
 {
     if (!note || note_sz == 0)
@@ -218,7 +270,8 @@ int sat_batch_prepare_image(const char *root, const char *id,
     if (rc < 0)
         return -1;
 
-    *entry = (uint16_t)*lo;
+    sat_apply_image_patches(def, image);
+    *entry = def->image_entry ? def->image_entry : (uint16_t)*lo;
     sat_note(note, note_sz, def);
     return 0;
 }

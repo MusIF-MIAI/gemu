@@ -69,11 +69,41 @@ struct printer_ctx {
 
 #define STDIO_STATUS_ADDR 0x0030
 #define STDIO_COUNT_ADDR  0x0032
+#define LP_CMD_SINGLE_SPACE 0x2E
+#define LP_CMD_TRIPLE_SPACE 0x5A
 
 static void store16(struct ge *ge, uint16_t addr, uint16_t value)
 {
     ge_mem_store8(ge, addr, (uint8_t)(value >> 8));
     ge_mem_store8(ge, (uint16_t)(addr + 1), (uint8_t)value);
+}
+
+static void printer_capture_char(struct ge_integrated_printer *p, char c)
+{
+    if (p->out_len >= (int)sizeof(p->out) - 1)
+        return;
+    p->out[p->out_len++] = c;
+    p->out[p->out_len] = '\0';
+}
+
+static void printer_capture_breaks(struct ge_integrated_printer *p, int count)
+{
+    for (int i = 0; i < count; i++)
+        printer_capture_char(p, '\n');
+}
+
+static void printer_capture_control(struct ge_integrated_printer *p, uint8_t cmd)
+{
+    switch (cmd) {
+        case LP_CMD_SINGLE_SPACE:
+            printer_capture_breaks(p, 1);
+            break;
+        case LP_CMD_TRIPLE_SPACE:
+            printer_capture_breaks(p, 3);
+            break;
+        default:
+            break;
+    }
 }
 
 static int kbd_ready(const struct ge_integrated_printer *p)
@@ -188,9 +218,12 @@ static int printer_on_clock(struct ge *ge, void *opaque)
              * the stolen cycles clobbered, and end the line. */
             ge->RC02 = 0;
             ge->rSO  = p->out_saved_so;
+            if (p->out_line_mode)
+                printer_capture_breaks(p, 1);
             store16(ge, STDIO_COUNT_ADDR, (uint16_t)p->out_total);
             store16(ge, STDIO_STATUS_ADDR, 1);
             p->out_active = 0;
+            p->out_line_mode = 0;
         }
         return 0;
     }
@@ -217,7 +250,7 @@ static int printer_on_clock(struct ge *ge, void *opaque)
                          ge->mem[(uint16_t)(base + 5)];
         ctx->per_pending = 0;
         if (IS_OUTPUT_CMD(cmd) && len >= 1 && len <= PRINT_LEN_MAX)
-            printer_begin_output(ge, buf, len);
+            printer_begin_output(ge, buf, len, cmd == LP_CMD_WRITE);
         else if (cmd == KBD_CMD_LINE && len >= 1 && len <= PRINT_LEN_MAX)
             service_input_line(ge, buf, len);
         else if (cmd == KBD_CMD_CHAR && len >= 1 && len <= PRINT_LEN_MAX)
@@ -250,6 +283,8 @@ static int printer_on_clock(struct ge *ge, void *opaque)
                             cmd != KBD_CMD_CHAR &&
                             !write_ready;
         if (write_ready || input_ready || control_ready) {
+            if (control_ready)
+                printer_capture_control(p, cmd);
             ge->PUC2 = 1;   /* channel-2 unit ready -> DU97 completes the PER */
             ge->RC00 = 1;   /* CPU-active request   -> rSO=b8 routed into rSA */
             ctx->stall = 0;
@@ -281,6 +316,10 @@ static int printer_on_clock(struct ge *ge, void *opaque)
      * such as funktionalcpu's banner/report. Complete it via the native path so
      * the CPU resumes, but emit nothing: real printed text comes only from an
      * armed output transfer, not from heuristically scraping the order block. */
+    if (ctx->per_pending) {
+        uint8_t cmd = ge->mem[(uint16_t)(ctx->per_base + 1)];
+        printer_capture_control(p, cmd);
+    }
     ge->PUC2 = 1;   /* channel-2 unit ready  -> DU97 = 1 (PUC2 ^ L2.3) */
     ge->RC00 = 1;   /* CPU-active request    -> NA_knot routes rSO=b8 into rSA */
     ctx->stall = 0; /* one-shot; rSO leaves b8 next cycle */
@@ -304,9 +343,7 @@ static void printer_sink(struct ge *ge, struct ge_channel *ch, uint8_t c)
     struct ge_integrated_printer *p = &ge->integrated_printer;
     (void)ch;
 
-    if (p->out_len < (int)sizeof(p->out) - 1)
-        p->out[p->out_len++] = ge_glyph(c);
-    p->out[p->out_len] = '\0';
+    printer_capture_char(p, ge_glyph(c));
 }
 
 int printer_register(struct ge *ge)
@@ -333,12 +370,13 @@ int printer_register(struct ge *ge)
     return ge_register_peri(ge, &ctx->peri);
 }
 
-void printer_begin_output(struct ge *ge, uint16_t buffer, int length)
+void printer_begin_output(struct ge *ge, uint16_t buffer, int length, int line_mode)
 {
     ge->rV4 = buffer;
     ge->integrated_printer.out_active    = 1;
     ge->integrated_printer.out_remaining = length;
     ge->integrated_printer.out_total     = length;
+    ge->integrated_printer.out_line_mode = line_mode;
     ge->integrated_printer.out_saved_so  = ge->rSO;  /* resume here when done */
 }
 
