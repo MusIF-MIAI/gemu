@@ -700,6 +700,67 @@ static void emit_check_io_ok(int Lfail)
 
 static int gen_builtin_call(Node *n, int dst)
 {
+    /* Console / lamp / timing / RNG built-ins. These need no peripheral channel
+     * (they ride on real CPU instructions only), so they are handled before the
+     * stdio gate below and work without #include <stdio.h>. gec has no `long`
+     * or `bool` type, so counts and returns are plain `int`. */
+    if (!strcmp(n->name, "lon")) {            /* light the OPER. CALL lamp     */
+        EM("LON\n");                          /* 02 80: CI87 sets ALAM         */
+        emit_word_imm(dst, 0);
+        return 1;
+    }
+    if (!strcmp(n->name, "loff")) {           /* extinguish it                 */
+        EM("LOFF\n");                         /* 02 40: CI88 resets ALAM       */
+        emit_word_imm(dst, 0);
+        return 1;
+    }
+    if (!strcmp(n->name, "sleep")) {          /* busy-wait n milliseconds      */
+        /* The emulator clock is 4 us/cycle (250 cycles = 1 ms). Spend ~250
+         * cycles per ms with an outer (ms) loop around a fixed inner spin; the
+         * inner count below is calibrated so each outer pass ~= 1 ms. */
+        if (n->nargs != 1)
+            die("sleep() expects 1 argument");
+        int t = push2();
+        gen_expr(n->args[0], t);
+        int Lo = lbl(), Ld = lbl(), Li = lbl(), Lie = lbl();
+        fprintf(out, "L%d:\tCMC 2, %d(5), __zero\n", Lo, t);
+        EM("JC 0x20, L%d\n", Ld);             /* ms == 0 -> done               */
+        EM("MVI 0, __acc\n");
+        EM("MVI 9, __acc+1\n");               /* inner spins per ms (calibrated)*/
+        fprintf(out, "L%d:\tCMC 2, __acc, __zero\n", Li);
+        EM("JC 0x20, L%d\n", Lie);
+        EM("SB 2,2, __acc+1, __one+1\n");
+        EM("JU L%d\n", Li);
+        fprintf(out, "L%d:\tSB 2,2, %d(5), __one+1\n", Lie, t + 1); /* ms -= 1  */
+        EM("JU L%d\n", Lo);
+        fprintf(out, "L%d:\n", Ld);
+        emit_word_imm(dst, 0);
+        return 1;
+    }
+    if (!strcmp(n->name, "rand")) {           /* full-period 16-bit LCG        */
+        /* s = (s * 25173 + 13849) mod 2^16. No hardware shift, so a Lehmer LCG
+         * (a-1 mult. of 4, c odd) gives a full 65536 period via __mul + AB. */
+        EM("MVC 2, __a, __rseed\n");
+        EM("MVI 0x62, __b\n");
+        EM("MVI 0x55, __b+1\n");              /* 25173 = 0x6255                */
+        EM("JRT 0xF0, __mul\n");              /* __rv = (s * 25173) mod 2^16   */
+        EM("MVI 0x36, __acc\n");
+        EM("MVI 0x19, __acc+1\n");            /* 13849 = 0x3619                */
+        EM("MVC 2, __rseed, __rv\n");
+        EM("AB 2,2, __rseed+1, __acc+1\n");   /* s += 13849                    */
+        EM("MVC 2, %d(5), __rseed\n", dst);
+        return 1;
+    }
+    if (!strcmp(n->name, "srand")) {          /* seed rand()                   */
+        if (n->nargs != 1)
+            die("srand() expects 1 argument");
+        int t = push2();
+        gen_expr(n->args[0], t);
+        EM("MVC 2, __rseed, %d(5)\n", t);
+        emit_word_imm(dst, 0);
+        return 1;
+    }
+
     int pct = ge100('%');
     int spc = ge100(' ');
     int ch_c = ge100('c');
@@ -998,6 +1059,7 @@ static void emit_runtime(FILE *o) {
         "__lr4  EQU 0x0046\n"
         "__io_len EQU 0x0048\n"
         "__io_ptr EQU 0x004A\n"        /* saved pointer across putchar calls    */
+        "__rseed  EQU 0x004C\n"        /* rand() LCG state (16-bit, seeded crt0) */
         /* Code + globals live above 0x1000. With bit-15 absolute/modified
          * addressing honored (gemu indexing micro-cycle), absolute code/data
          * references are used verbatim and no longer alias the reloaded base
@@ -1007,7 +1069,8 @@ static void emit_runtime(FILE *o) {
         "__start:\n"
         "\tLA 5, 0x000(6)\n"            /* FP = SP (R6 = 0x6000 by reset identity) */
         "\tMVI 0, __one\n\tMVI 1, __one+1\n"
-        "\tMVI 0, __zero\n\tMVI 0, __zero+1\n");
+        "\tMVI 0, __zero\n\tMVI 0, __zero+1\n"
+        "\tMVI 0xAC, __rseed\n\tMVI 0xE1, __rseed+1\n");  /* nonzero rand() seed */
     /* Seed the channel-2 output PER order block's buffer address. Only emit
      * this when stdio.h is in use — the __io_* order block and addrmask only
      * exist in that case (otherwise these are undefined symbols). */
