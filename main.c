@@ -11,6 +11,7 @@
 #include "cardreader.h"
 #include "printer.h"
 #include "disk.h"
+#include "tape.h"
 #include "cap.h"
 #include "transcode.h"
 #include "binimage.h"
@@ -119,6 +120,7 @@ int main(int argc, char *argv[])
     int trace_set = 0;
     const char *deck_path = NULL;   /* --deck: cycle-faithful card-reader bootstrap */
     const char *disk_path = NULL;   /* --disk: DSS pack image on connector 3 unit 0 */
+    const char *tape_path = NULL;   /* --tape: MTC reel image on connector 4 unit 0 */
     const char *sat_batch = NULL;   /* --sat: built-in SAT batch */
     const char *cap_path = NULL;    /* positional .cap: scatter-load (default) */
     const char *image_path = NULL;
@@ -151,6 +153,12 @@ int main(int argc, char *argv[])
                 return 1;
             }
             disk_path = argv[++i];   /* DSS pack image; connector 3, unit 0 */
+        } else if (strcmp(argv[i], "--tape") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "error: --tape requires an argument\n");
+                return 1;
+            }
+            tape_path = argv[++i];   /* MTC reel image; connector 4, unit 0 */
         } else if (strcmp(argv[i], "--sat") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --sat requires an argument\n");
@@ -425,6 +433,14 @@ int main(int argc, char *argv[])
             fprintf(stderr, "warning: failed to attach disk '%s'\n", disk_path);
         else
             fprintf(stderr, "disk: attached '%s' on connector 3 unit 0\n", disk_path);
+    }
+
+    /* Attach an MTC tape reel on connector 4 (standard GE-100), if requested. */
+    if (tape_path) {
+        if (tape_register(&ge, tape_path, 4, 0) != 0)
+            fprintf(stderr, "warning: failed to attach tape '%s'\n", tape_path);
+        else
+            fprintf(stderr, "tape: attached '%s' on connector 4 unit 0\n", tape_path);
     }
 
     int printer_enabled = 0;
