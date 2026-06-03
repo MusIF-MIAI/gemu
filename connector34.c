@@ -143,6 +143,15 @@ void connector34_set_busy(struct ge *ge, unsigned ticks)
         c->busy_until = c->ticks + ticks;
 }
 
+void connector34_raise_interrupt(struct ge *ge)
+{
+    /* The CPU samples INTE = RINT & !MASC at alpha and vectors through the PSR
+     * area at 0x0300/0x0304. We only request it here; the machine performs the
+     * save/restore itself (see the LPSR interrupt sequence). */
+    ge->RINT = 1;
+    ge_log(LOG_PERI, "connector34: end-of-operation interrupt raised\n");
+}
+
 static int connector34_on_clock(struct ge *ge, void *opaque)
 {
     struct connector34_core *c = (struct connector34_core *)opaque;

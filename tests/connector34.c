@@ -229,3 +229,44 @@ UTEST(connector34, reject_sets_error_status)
      * (0x42 sets RO1 so an EPER's DU95 "no-error" decode reads error). */
     ASSERT_EQ(g.inject_chan1_status, 0x42);
 }
+
+/* ---- test 5: a device can raise an end-of-operation interrupt ------------ */
+
+static std_reaction irq_transfer(struct ge *ge, void *ctx,
+                                 struct std_unitname un, int dir,
+                                 uint8_t *buf, uint16_t *len, uint16_t cap)
+{
+    (void)ctx; (void)un; (void)dir; (void)cap;
+    connector34_raise_interrupt(ge);       /* signal end-of-operation */
+    buf[0] = 0x01;                          /* low nibbles 1,2 -> mem 0x12 */
+    buf[1] = 0x02;
+    *len = 2;
+    return STD_ACCEPTED_END;
+}
+
+UTEST(connector34, end_of_op_interrupt)
+{
+    const uint16_t dst = 0x0040;
+    struct ge g;
+    struct ge_std_device dev;
+
+    ge_init(&g);
+    build_per(&g, 0x00, dst);              /* connector-3 read */
+
+    ge_clear(&g);
+    stub_init(&dev);
+    dev.transfer = irq_transfer;
+    connector34_init(&g);
+    connector34_attach(&g, &dev, 3);
+    ge_start(&g);
+
+    for (int i = 0; i < 80; i++)
+        ge_run_cycle(&g);
+
+    /* The transfer completed and the device's end-of-operation interrupt is
+     * pending (RINT). Servicing is the machine's own interrupt vector through
+     * 0x0300/0x0304 (decimal 768-775) once the program has interrupts enabled
+     * (MASC=0) — that path is exercised by tests/interrupt.c. */
+    ASSERT_EQ(g.mem[dst], 0x12);           /* transfer completed */
+    ASSERT_TRUE(g.RINT);                   /* end-of-op interrupt request pending */
+}

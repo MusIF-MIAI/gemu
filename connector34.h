@@ -90,6 +90,16 @@ struct std_unitname connector34_decode(struct ge *ge);
  * disk seek / tape motion time. */
 void connector34_set_busy(struct ge *ge, unsigned ticks);
 
+/* Raise an end-of-operation interrupt (connectors 3/4 are interrupt-enableable).
+ * Callable from a device's command()/transfer() hook. Sets RINT; the machine
+ * vectors at the next alpha (if unmasked, MASC=0) through the PSR save/restore
+ * at 0x0300/0x0304 (= decimal 768-775). The interrupt fires only once the PER
+ * has returned to alpha, so a synchronous transfer still completes first.
+ * NOTE: this is the interrupt-on-completion primitive; true overlap (CPU
+ * computing on channel 1 while the device transfers on channel 2/3) needs the
+ * channel-2/3 transfer micro-flow, which is future work. */
+void connector34_raise_interrupt(struct ge *ge);
+
 /* Forwarded by reader.c's connector_send_tu00() when a CPER/order byte is
  * clocked to the selected connector. Internal seam — not for device modules. */
 void connector34_deliver_order(struct ge *ge, struct ge_connector *conn);
