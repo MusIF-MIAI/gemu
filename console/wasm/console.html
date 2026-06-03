@@ -694,7 +694,8 @@ padding: 1px;
   border-radius: 2px;
   padding: 0.5em 0.8em;
   height: 18em;
-  overflow: hidden;
+  position: relative;          /* so .dline offsetTop is relative to this box */
+  overflow: auto;              /* scroll to read the program while stopped */
   box-shadow: inset 1px 1px 1px #181818, inset 0 -2px 1px #2a2a2a;
 }
 #disasm .dline { white-space: pre; }
@@ -1738,18 +1739,77 @@ document.set_lamp = function(lamp, val) {
 
 /* live disassembly: each line is "<marker><AAAA>: <hex>  <asm>"; the line whose
  * marker is '>' is the currently-executing instruction (black on green). */
-document.set_disasm = function(text) {
+/* Live Assembly: a scrollable disassembly of the whole populated address space.
+ * The C side pushes the full listing occasionally (set_disasm_full) and the
+ * current PC every frame (disasm_set_pc). We keep the executing line
+ * highlighted; while "following" we auto-scroll it into view, and clicking the
+ * panel re-attaches and recentres on it. Scrolling with the wheel detaches so
+ * you can browse the entire address space freely. */
+let _dasmFollow = true;
+let _dasmLastPc = -1;
+let _dasmLastText = null;
+
+function _dasmFind(el, pc) {            /* line div with the largest addr <= pc */
+    const kids = el.children;
+    let lo = 0, hi = kids.length - 1, idx = -1;
+    while (lo <= hi) {
+        const m = (lo + hi) >> 1;
+        const a = parseInt(kids[m].dataset.addr, 16);
+        if (a <= pc) { idx = m; lo = m + 1; } else hi = m - 1;
+    }
+    return idx >= 0 ? kids[idx] : null;
+}
+function _dasmCenter(el, d) {
+    el.scrollTop = d.offsetTop - (el.clientHeight - d.offsetHeight) / 2;
+}
+
+document.set_disasm_full = function(text) {
     const el = document.getElementById('disasm');
     if (!el) return;
+    if (text === _dasmLastText) return;   /* unchanged: don't churn the DOM */
+    _dasmLastText = text;
+    const savedTop = el.scrollTop;
     el.textContent = '';
+    const frag = document.createDocumentFragment();
     for (const line of text.split('\n')) {
         if (line === '') continue;
         const d = document.createElement('div');
-        d.className = 'dline' + (line[0] === '>' ? ' cur' : '');
+        d.className = 'dline';
+        d.dataset.addr = line.slice(0, 4);
         d.textContent = line;
-        el.appendChild(d);
+        frag.appendChild(d);
     }
-}
+    el.appendChild(frag);
+    if (_dasmLastPc >= 0) {
+        const d = _dasmFind(el, _dasmLastPc);
+        if (d) d.classList.add('cur');
+        if (_dasmFollow && d) _dasmCenter(el, d);
+        else el.scrollTop = savedTop;     /* preserve the browse position */
+    }
+};
+
+document.disasm_set_pc = function(pc) {
+    _dasmLastPc = pc;
+    const el = document.getElementById('disasm');
+    if (!el || el.children.length === 0) return;
+    const prev = el.querySelector('.dline.cur');
+    if (prev) prev.classList.remove('cur');
+    const d = _dasmFind(el, pc);
+    if (!d) return;
+    d.classList.add('cur');
+    if (_dasmFollow) _dasmCenter(el, d);
+};
+
+(function () {
+    const el = document.getElementById('disasm');
+    if (!el) return;
+    el.addEventListener('wheel', () => { _dasmFollow = false; }, { passive: true });
+    el.addEventListener('click', () => {            /* return to the current PC */
+        _dasmFollow = true;
+        const d = el.querySelector('.dline.cur') || _dasmFind(el, _dasmLastPc);
+        if (d) { d.classList.add('cur'); _dasmCenter(el, d); }
+    });
+})();
 
 document.set_switches = function() {
   console.log(am_from_switches())

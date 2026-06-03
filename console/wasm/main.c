@@ -37,9 +37,42 @@ EM_JS(void, set_lamp, (const char *lamp, int val), {
     document.set_lamp(UTF8ToString(lamp), val);
 });
 
-EM_JS(void, set_disasm, (const char *text), {
-    document.set_disasm(UTF8ToString(text));
+/* Live Assembly: the full-space listing (rebuilt occasionally — it is large)
+ * and the per-frame current-instruction marker (cheap; JS just moves the
+ * highlight and, while "following", scrolls it into view). */
+EM_JS(void, set_disasm_full, (const char *text), {
+    if (document.set_disasm_full) document.set_disasm_full(UTF8ToString(text));
 });
+EM_JS(void, disasm_set_pc, (int pc), {
+    if (document.disasm_set_pc) document.disasm_set_pc(pc);
+});
+
+/* Disassemble the populated address space (0x0000 .. highest non-zero byte +
+ * a margin) into a static buffer for the scrollable Live Assembly panel.
+ * Called occasionally from send_console(), not every frame. */
+static const char *disasm_all(void) {
+    static char buf[2621440];   /* 2.5 MiB; worst case ~64K one-byte lines */
+    unsigned hi = 0;
+    for (unsigned a = 0; a <= 0xFFFF; a++)
+        if (ge->mem[a]) hi = a;
+    unsigned end = (hi + 0x100u > 0xFFFFu) ? 0xFFFFu : hi + 0x100u;
+    size_t used = 0;
+    buf[0] = '\0';
+    for (unsigned a = 0; a <= end && used < sizeof buf - 96; ) {
+        char text[64];
+        int l = ge_disasm_one(ge->mem, (uint16_t)a, text, sizeof text);
+        if (l <= 0) l = 1;
+        char hex[24];
+        int hp = 0;
+        for (int k = 0; k < l && hp < 20; k++)
+            hp += snprintf(hex + hp, sizeof hex - (size_t)hp, "%02X ",
+                           ge->mem[(uint16_t)(a + k)]);
+        used += (size_t)snprintf(buf + used, sizeof buf - used,
+                                 "%04X: %-14s %s\n", a, hex, text);
+        a += (unsigned)l;
+    }
+    return buf;
+}
 
 /* Integrated printer/typewriter (channel 2) -> the chat transcript. */
 EM_JS(void, printer_emit, (const char *text), {
@@ -172,10 +205,15 @@ void send_console() {
      * (latched in the alpha fetch), so the highlight stays on the instruction
      * being executed instead of drifting onto operand bytes / the next line as
      * the live PO advances mid-instruction (e.g. while computing a jump). */
+    /* Mark the current instruction every frame (cheap: JS moves the highlight
+     * and, while following, scrolls it into view). Rebuild the full-space
+     * listing only occasionally (~2 Hz) since it covers the whole program and
+     * is large; the JS skips the DOM rebuild when the text is unchanged. */
+    disasm_set_pc(ge->instr_pc);
     {
-        static char dis[1536];
-        ge_disasm_window(ge->mem, ge->instr_pc, 5, 6, dis, sizeof dis);
-        set_disasm(dis);
+        static unsigned dcount = 0;
+        if ((dcount++ % 30u) == 0u)
+            set_disasm_full(disasm_all());
     }
 }
 
