@@ -647,6 +647,13 @@ struct ge {
     struct ge_peri *peri;
 
     /**
+     * Shared core for Standard-GE-100 controllers on connectors 3/4 (disk/tape).
+     * Owned by connector34.c; NULL until connector34_init(). Opaque here to
+     * avoid a header dependency — see connector34.h.
+     */
+    void *std_core;
+
+    /**
      * Workaround for pulse TO50
      *
      * Currently we first run the common machine logic, then the

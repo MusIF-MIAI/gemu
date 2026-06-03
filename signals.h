@@ -765,7 +765,7 @@ static inline uint16_t NE_knot(struct ge *ge) {
 
     if (PIB41(ge)) {
         where = "ST4";
-        ret = ge->ST3.data;
+        ret = ge->ST4.data;
     }
 
     ge_log(LOG_PERI, "READING FROM NE KNOT %s --> %03x\n", where, ret);

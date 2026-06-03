@@ -1,6 +1,7 @@
 #include "ge.h"
 #include "log.h"
 #include "signals.h"
+#include "connector34.h"
 
 #define ENUMERATE_READER_COMMANDS \
     X(0x40, read,          "Read unchanged") \
@@ -225,4 +226,8 @@ void connector_send_tu00(struct ge *ge, struct ge_connector *conn)
 #undef X
     }
 
+    /* Hand the order byte to a Standard-GE-100 controller (disk/tape) on this
+     * connector, if one is attached. Inert when no connector-3/4 core exists. */
+    if (ge->std_core)
+        connector34_deliver_order(ge, conn);
 }
