@@ -56,10 +56,31 @@ struct connector34_core {
     uint16_t              pos;
     int                   filled;
 
+    /* functional access-latency model: a free-running on_clock counter (no real
+     * clock is available) and the tick at which the current op may transfer. */
+    unsigned long         ticks;
+    unsigned long         busy_until;
+
     enum c34_state        state;
 
     struct ge_peri        peri;
 };
+
+/* Map a device reaction onto the channel-1 examine status byte (read back by an
+ * EPER via CE_chan1_status): 0x40 = RO6 set, no error; 0x42 also sets RO1 so the
+ * DU95 "no-error" decode reads error. */
+static void apply_reaction(struct ge *ge, std_reaction r)
+{
+    switch (r) {
+    case STD_NOT_ACCEPTED:
+    case STD_NOT_POSSIBLE:
+        ge->inject_chan1_status = 0x42;   /* abnormal: EPER examine reads error */
+        break;
+    default:
+        ge->inject_chan1_status = 0x00;   /* clean: CE_chan1_status uses 0x40   */
+        break;
+    }
+}
 
 static struct std_unitname decode_name(uint8_t nb)
 {
@@ -109,14 +130,25 @@ void connector34_deliver_order(struct ge *ge, struct ge_connector *conn)
         return;
     c->order      = ge->rRE;
     c->order_seen = 1;
-    if (c->cur && c->cur->command)
-        c->cur->command(ge, c->cur->ctx, c->un, c->order);
+    if (c->cur && c->cur->command) {
+        std_reaction r = c->cur->command(ge, c->cur->ctx, c->un, c->order);
+        apply_reaction(ge, r);
+    }
+}
+
+void connector34_set_busy(struct ge *ge, unsigned ticks)
+{
+    struct connector34_core *c = (struct connector34_core *)ge->std_core;
+    if (c)
+        c->busy_until = c->ticks + ticks;
 }
 
 static int connector34_on_clock(struct ge *ge, void *opaque)
 {
     struct connector34_core *c = (struct connector34_core *)opaque;
     struct ge_connector *conn;
+
+    c->ticks++;
 
     /* Per-cycle device housekeeping (seek / motion timers). */
     for (struct ge_std_device *d = c->dev3; d; d = d->next)
@@ -133,10 +165,12 @@ static int connector34_on_clock(struct ge *ge, void *opaque)
         c->name_captured = 0;
         c->order_seen    = 0;
         c->filled        = 0;
-        c->len = c->pos = 0;
-        c->state       = C34_IDLE;
-        ge->ST3.mare   = 0;
-        ge->ST4.mare   = 0;
+        c->len = c->pos  = 0;
+        c->busy_until    = 0;
+        c->state         = C34_IDLE;
+        ge->ST3.mare     = 0;
+        ge->ST4.mare     = 0;
+        ge->inject_chan1_status = 0;   /* clean unless a device reports error */
         return 0;
     }
 
@@ -207,19 +241,28 @@ static int connector34_on_clock(struct ge *ge, void *opaque)
      * PER. Gated on connector selection, so reader/channel-2 ops are unaffected. */
     ge->RC00 = 1;
 
-    /* Lazily pull the input record from the device on first entry. */
+    /* Lazily pull the input record from the device on first entry. The transfer
+     * hook may declare access latency here (connector34_set_busy) before any
+     * byte is presented, so the whole transfer is delayed from the start. */
     if (!c->filled) {
         uint16_t n = C34_XFER_MAX;
+        std_reaction r;
         c->len = 0;
         if (c->cur->transfer) {
-            c->cur->transfer(ge, c->cur->ctx, c->un, 0 /*input*/,
-                             c->buf, &n, C34_XFER_MAX);
+            r = c->cur->transfer(ge, c->cur->ctx, c->un, 0 /*input*/,
+                                 c->buf, &n, C34_XFER_MAX);
             c->len = (n > C34_XFER_MAX) ? C34_XFER_MAX : n;
+            apply_reaction(ge, r);
         }
         c->pos    = 0;
         c->filled = 1;
         c->state  = C34_IDLE;
     }
+
+    /* Access latency: while the unit is still "busy" (seek/motion), present no
+     * data — the PER simply waits here (RC00 held) like any slow peripheral. */
+    if (c->ticks < c->busy_until)
+        return 0;
 
     /* C34_IDLE: present the next byte (the last one carries end=1 -> RIG1). */
     if (conn->te10)                 /* previous byte not yet consumed */

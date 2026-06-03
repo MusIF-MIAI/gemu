@@ -84,6 +84,12 @@ int connector34_attach(struct ge *ge, struct ge_std_device *dev, uint8_t connect
  * low six bits -> unit). */
 struct std_unitname connector34_decode(struct ge *ge);
 
+/* Declare access latency for the current operation, callable from a device's
+ * command()/transfer() hook. The core then delays the data transfer by `ticks`
+ * machine cycles (the PER waits at its channel-1 request, RC00 held), modelling
+ * disk seek / tape motion time. */
+void connector34_set_busy(struct ge *ge, unsigned ticks);
+
 /* Forwarded by reader.c's connector_send_tu00() when a CPER/order byte is
  * clocked to the selected connector. Internal seam — not for device modules. */
 void connector34_deliver_order(struct ge *ge, struct ge_connector *conn);

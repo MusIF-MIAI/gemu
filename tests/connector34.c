@@ -144,3 +144,88 @@ UTEST(connector34, no_interference_reader)
     ASSERT_FALSE(stub_claimed);            /* a conn-2 name never resolves to it  */
     ASSERT_TRUE(reached_transfer);         /* the reader PER proceeded normally   */
 }
+
+/* ---- test 3: access latency (busy) delays but completes the transfer ----- */
+
+static std_reaction busy_transfer(struct ge *ge, void *ctx,
+                                  struct std_unitname un, int dir,
+                                  uint8_t *buf, uint16_t *len, uint16_t cap)
+{
+    (void)ctx; (void)un; (void)dir;
+    connector34_set_busy(ge, 60);          /* model a 60-cycle seek/motion */
+    uint16_t n = sizeof stub_pattern;
+    if (n > cap)
+        n = cap;
+    memcpy(buf, stub_pattern, n);
+    *len = n;
+    return STD_ACCEPTED_END;
+}
+
+UTEST(connector34, busy_latency)
+{
+    const uint16_t dst = 0x0030;
+    struct ge g;
+    struct ge_std_device dev;
+
+    ge_init(&g);
+    build_per(&g, 0x00, dst);
+
+    ge_clear(&g);
+    stub_init(&dev);
+    dev.transfer = busy_transfer;          /* declares latency before transfer */
+    connector34_init(&g);
+    connector34_attach(&g, &dev, 3);
+    ge_start(&g);
+
+    int mem_at_40 = -1;
+    for (int i = 0; i < 160; i++) {
+        if (i == 40)
+            mem_at_40 = g.mem[dst];
+        ge_run_cycle(&g);
+    }
+
+    ASSERT_EQ(mem_at_40, 0x00);            /* still busy at cycle 40: no data yet */
+    ASSERT_EQ(g.mem[dst], 0x69);           /* the transfer completes once ready   */
+    ASSERT_EQ(g.mem[dst + 1], 0x69);
+}
+
+/* ---- test 4: a rejected command reports an abnormal examine status -------- */
+
+static std_reaction reject_command(struct ge *ge, void *ctx,
+                                   struct std_unitname un, uint8_t order)
+{
+    (void)ge; (void)ctx; (void)un; (void)order;
+    return STD_NOT_POSSIBLE;
+}
+static std_reaction reject_transfer(struct ge *ge, void *ctx,
+                                    struct std_unitname un, int dir,
+                                    uint8_t *buf, uint16_t *len, uint16_t cap)
+{
+    (void)ge; (void)ctx; (void)un; (void)dir; (void)buf; (void)cap;
+    *len = 0;
+    return STD_NOT_POSSIBLE;
+}
+
+UTEST(connector34, reject_sets_error_status)
+{
+    struct ge g;
+    struct ge_std_device dev;
+
+    ge_init(&g);
+    build_per(&g, 0x00, 0x0030);
+
+    ge_clear(&g);
+    stub_init(&dev);
+    dev.command  = reject_command;
+    dev.transfer = reject_transfer;
+    connector34_init(&g);
+    connector34_attach(&g, &dev, 3);
+    ge_start(&g);
+
+    for (int i = 0; i < 30; i++)
+        ge_run_cycle(&g);
+
+    /* The rejected reaction is mapped onto the channel-1 examine status byte
+     * (0x42 sets RO1 so an EPER's DU95 "no-error" decode reads error). */
+    ASSERT_EQ(g.inject_chan1_status, 0x42);
+}
