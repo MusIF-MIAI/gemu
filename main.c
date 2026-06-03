@@ -10,6 +10,7 @@
 #include "console_socket.h"
 #include "cardreader.h"
 #include "printer.h"
+#include "disk.h"
 #include "cap.h"
 #include "transcode.h"
 #include "binimage.h"
@@ -117,6 +118,7 @@ int main(int argc, char *argv[])
     int use_tui = 0;
     int trace_set = 0;
     const char *deck_path = NULL;   /* --deck: cycle-faithful card-reader bootstrap */
+    const char *disk_path = NULL;   /* --disk: DSS pack image on connector 3 unit 0 */
     const char *sat_batch = NULL;   /* --sat: built-in SAT batch */
     const char *cap_path = NULL;    /* positional .cap: scatter-load (default) */
     const char *image_path = NULL;
@@ -143,6 +145,12 @@ int main(int argc, char *argv[])
                 return 1;
             }
             deck_path = argv[++i];
+        } else if (strcmp(argv[i], "--disk") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "error: --disk requires an argument\n");
+                return 1;
+            }
+            disk_path = argv[++i];   /* DSS pack image; connector 3, unit 0 */
         } else if (strcmp(argv[i], "--sat") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --sat requires an argument\n");
@@ -410,6 +418,14 @@ int main(int argc, char *argv[])
     /* Console switch initial state (after ge_start, which clears them). */
     ge.JS1 = sw1_init;
     ge.JS2 = sw2_init;
+
+    /* Attach a DSS disk pack on connector 3 (standard GE-100), if requested. */
+    if (disk_path) {
+        if (disk_register(&ge, disk_path, 3, 0) != 0)
+            fprintf(stderr, "warning: failed to attach disk '%s'\n", disk_path);
+        else
+            fprintf(stderr, "disk: attached '%s' on connector 3 unit 0\n", disk_path);
+    }
 
     int printer_enabled = 0;
     int printed = 0;
