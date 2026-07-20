@@ -205,15 +205,10 @@ static void CI00s(struct ge* ge) {
     ge->rPO = NI_knot(ge) & 0x7FFFu;
 }
 
-static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), mem_rd16_op(ge, eff_v1_l2(ge))); }
-static void EXEC_STR(struct ge* ge) { mem_wr16_op(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
 /* JRT (Jump Return, op 0x41): deposits the address of the subsequent instruction
  * (rPO before the jump rewrites it at TI05/CI00s) into index register 7
  * (mem 254/255). Unconditional, per CPU[4] sec.5.5.6.2 / 5.6.5.1: the link is
  * reserved even when the conditional form does not take the jump. */
-static void EXEC_CMR(struct ge* ge) { alu_cmr(ge, cr_rd16(ge, reg_addr_of(ge)), mem_rd16_op(ge, eff_v1_l2(ge))); }
-static void EXEC_AMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_amr(ge, &r, mem_rd16_op(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
-static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_smr(ge, &r, mem_rd16_op(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
 
 /* SS (Storage-to-Storage) data-op execution (hybrid one-shot).
  *

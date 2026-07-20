@@ -656,6 +656,14 @@ static uint8_t pm_imm_exec(struct ge *ge) {
 /* PM register ops (change registers, memory-mapped at 240+N*2): arrive in
  * beta with V1=I1 address, L1=register-code aux char. */
 static uint8_t is_lr (struct ge *ge) { return ge->rFO == LR_OPCODE;  }
+static uint8_t not_str(struct ge *ge) { return ge->rFO != STR_OPCODE; }
+static uint8_t not_cmr(struct ge *ge) { return ge->rFO != CMR_OPCODE; }
+static uint8_t is_smr_or_cmr(struct ge *ge) {
+    return ge->rFO == SMR_OPCODE || ge->rFO == CMR_OPCODE;
+}
+/* Pass 2 of the executive byte loop = the state's own X bit (62/52/42). */
+static uint8_t SA01_pass2(struct ge *ge) { return BIT(ge->rSA, 1); }
+static uint8_t SA01_pass1(struct ge *ge) { return !BIT(ge->rSA, 1); }
 static uint8_t is_str(struct ge *ge) { return ge->rFO == STR_OPCODE; }
 static uint8_t is_cmr(struct ge *ge) { return ge->rFO == CMR_OPCODE; }
 static uint8_t is_amr(struct ge *ge) { return ge->rFO == AMR_OPCODE; }
@@ -840,11 +848,32 @@ static const struct msl_timing_chart beta_64_lpsr[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-/* CPU[7] fo.11: LR/AMR/CMR/SMR/STR preliminary beta sheet. */
+/* cp07 fo.37: LR-AMR-SMR-CMR-STR beta sheet. The forcings build the
+ * change-register low-byte address 1111 nnn 1 (N = L1 bits 6-4); CO01
+ * {/STR} = DE04A0 (family & FO03: STR is 0xb4, the others 0xbd-0xbf, so
+ * bit 3 alone splits them) loads it into V1 for the non-STR ops — their
+ * WRITE/target side — while V2 keeps the operand EA from alpha as the
+ * SOURCE side; CO02 {STR} = DE05A0 does the reverse for STR. CI05's
+ * loop-counter init and the CI41/CI42 rows are not carried: the pass
+ * counter is architecturally visible as the state's own X bit (60/62,
+ * 50/52, 40/42 -- pass 1 vs pass 2), which the 40|42 exit rows drive
+ * (CU01 sets it looping back, CU07 {pass 2} leaves). CI89 {FUL4} not
+ * modeled. */
 static const struct msl_timing_chart beta_64_register[] = {
-    { TO65, CO49, 0 },
+    { TO10, CO18, 0 },               /* forcing in NO21 */
+    { TO10, CO97, 0 },
+    { TO10, CO96, 0 },
+    { TO10, CO95, 0 },
+    { TO10, CO94, 0 },
+    { TO10, CO93, LI06 },            /* N2 -> NO03 */
+    { TO10, CO92, LI05 },            /* N1 -> NO02 */
+    { TO10, CO91, LI04 },            /* N0 -> NO01 */
+    { TO10, CO90, 0 },               /* 1 -> NO00: odd (low) byte */
+    { TO40, CO01, not_str },         /* {/STR}: V1 = register-cell address */
+    { TO40, CO02, is_str },          /* {STR}:  V2 = register-cell address */
+    { TO65, CO49, 0 },               /* reset URPE/URPU */
     { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
+    { TI06, CU12, 0 },               /* -> 60|62 (pass 1 = 60) */
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -916,40 +945,95 @@ static const struct msl_timing_variant beta_64_variants[] = {
     { 0, 0, 0, 0 },
 };
 
-/* Executive phase: register and immediate operations.
- *
- * CPU[7] fo.38-45 gives the shared topology
- *
- *   64|65 -> 60|62 -> [50|52] -> 40|42 -> E2|E3
- *
- * with LR/STR and MVI bypassing 50|52.  MVI and NI/XI/OI/TM below are direct
- * transcriptions using the memory cycle, knots, and CI45/46/47 UA mode lines.
- * CMI uses the charted complement-add/subtract and qualitative-result gates.
- * Register operations retain terminal architectural commits until the
- * register-address counter is transcribed. */
+/* Register-family executive states, cp07 fo.38/39/40, verified row-by-row.
+ * Two passes over the 16-bit quantities, low byte then high byte, encoded in
+ * the state X bit: 60 -> (50) -> 40 -> 62 -> (52) -> 42 -> E2/E3, with
+ * LR/STR skipping 50|52 (CU04 set + CU14 {LR+STR} reset). Per pass:
+ * 60|62 reads the SOURCE byte at V2-- (memory operand for the non-STR ops,
+ * the register cell for STR) and stages it in L1's high byte (CI60/CI65 +
+ * CI05); 50|52 (arithmetic only) reads the register byte at V1, runs the UA
+ * (CI47 subtract for SMR/CMR, CO48 {/SA01} presets the borrow on pass 1,
+ * URPE carries between passes) and restages the result; 40|42 writes the
+ * staged byte to V1-- ({LR+AMR+SMR+STR} -- CMR writes nothing) and sets the
+ * qualitative flags: FI04 = pass carry (CI84 re-arms it each pass in 60|62),
+ * FI05 = result zero accumulated across passes (CI85 arms on pass 1 only).
+ * The printed 40|42 exit gate is {(L1_2=1i)}, the loop counter the CI41/42
+ * init rows feed; the state X bit is the architecturally equivalent pass
+ * encoding gemu uses while that counter init remains undecoded. */
+
+static uint8_t reg_arith_pass1(struct ge *ge) {
+    return beta_register_arithmetic(ge) && SA01_pass1(ge);
+}
+
+static uint8_t beta_register_lr_str(struct ge *ge) {
+    return is_lr(ge) || is_str(ge);
+}
+
+static uint8_t reg_arith50_pass1_sub(struct ge *ge) {
+    return is_smr_or_cmr(ge) && SA01_pass1(ge);
+}
+
+static uint8_t reg_result_nonzero(struct ge *ge) {
+    /* {/(dRO=0i).(AMR+SMR+CMR)} -- the sheet's condition is OVERBARRED:
+     * set FI05 when the pass result byte is NONZERO. CI85 arms (resets)
+     * FI05 on pass 1, so the two passes OR into it: FA05 = result != 0,
+     * exactly the manual's CC tables (cp04 sec.5.6.4.2-4), where the
+     * carry/nonzero pair encodes compare results for CMR (unsigned) and
+     * SMR (signed, two's complement) alike. */
+    return beta_register_arithmetic(ge) && ge->rUA != 0;
+}
+
+static uint8_t reg_carry(struct ge *ge) {
+    return beta_register_arithmetic(ge) && ge->URPE;
+}
 
 static const struct msl_timing_chart exec_60_register[] = {
-    { TI06, CU04, beta_register_arithmetic }, /* AMR/SMR/CMR: 60 -> 50 */
-    { TI06, CU15, 0 },                       /* LR/STR: 60 -> 40 */
+    { TO10, CO12, 0 },               /* V2 -> NO: source address */
+    { TO10, CO41, 0 },               /* V2 - 1 ... */
+    { TO10, CO40, 0 },
+    { TO25, CO30, 0 },               /* MEM -> RO: source byte */
+    { TO30, CI15, 0 },               /* L1 -> NO (counter path) */
+    { TO30, CI41, 0 },               /* CI-phase count rows as printed */
+    { TO30, CI42, 0 },
+    { TO30, CI40, 0 },
+    { TO30, CI44, 0 },               /* byte-local */
+    { TO40, CO02, 0 },               /* V2 = V2 - 1 */
+    { TO70, CI65, 0 },               /* RO1 -> NI3 */
+    { TO70, CI60, 0 },               /* RO2 -> NI4: stage source byte */
+    { TI05, CI05, 0 },               /* L1 = [source byte][counted low] */
+    { TI06, CI85, reg_arith_pass1 }, /* arm FI05 {/SA01.(AMR+SMR+CMR)} */
+    { TI06, CI84, beta_register_arithmetic }, /* re-arm FI04 each pass */
+    { TI06, CU04, 0 },               /* set S004... */
+    { TI06, CU14, beta_register_lr_str },     /* ...{LR+STR}: skip 50|52 */
+    { TI06, CU15, 0 },               /* -> 50|52 or 40|42 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_50_register[] = {
-    { TI06, CU14, 0 },                       /* 50 -> 40 */
+    { TO10, CO11, 0 },               /* V1 -> NO: register address */
+    { TO25, CO30, 0 },               /* MEM -> RO: register byte */
+    { TO30, CI15, 0 },               /* L1 -> NO: staged source in BO high */
+    { TO50, CO48, reg_arith50_pass1_sub }, /* {(SMR+CMR)./SA01}: borrow in */
+    { TO50, CI47, is_smr_or_cmr },   /* subtract mode */
+    { TO70, CI68, 0 },               /* UA: RO (+/-) BO-high -> NI43 */
+    { TI05, CI05, 0 },               /* restage result in L1 high */
+    { TI06, CU14, 0 },               /* -> 40|42 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_40_register[] = {
-    { TO65, EXEC_LR,  is_lr  },
-    { TO65, EXEC_STR, is_str },
-    { TO65, EXEC_CMR, is_cmr },
-    { TO65, EXEC_AMR, is_amr },
-    { TO65, EXEC_SMR, is_smr },
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },
-    { TI06, CU07, 0 },
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
+    { TO10, CO11, 0 },               /* V1 -> NO: destination address */
+    { TO10, CO41, 0 },               /* V1 - 1 ... */
+    { TO10, CO40, 0 },
+    { TO25, CO31, not_cmr },         /* {LR+AMR+SMR+STR}: write result */
+    { TO30, CI15, 0 },               /* L1 -> NO */
+    { TO40, CO01, 0 },               /* V1 = V1 - 1 */
+    { TO50, CI32, 0 },               /* NO43 -> RO: the staged byte */
+    { TI06, CI75, reg_result_nonzero }, /* FI05: pass byte nonzero {/(dRO=0)} */
+    { TI06, CI74, reg_carry },       /* FI04: pass carry {URPE.(A/S/CMR)} */
+    { TI06, CU01, 0 },               /* set X bit: pass 2 */
+    { TI06, CU05, 0 },               /* back toward 6x */
+    { TI06, CU07, SA01_pass2 },      /* pass 2 done -> E2/E3 */
     { END_OF_STATUS, 0, 0 },
 };
 

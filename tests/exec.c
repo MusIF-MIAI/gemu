@@ -135,7 +135,10 @@ UTEST(exec, mvi_bypasses_50_52_state_pair)
 UTEST(exec, lr_bypasses_50_52_state_pair)
 {
     uint8_t prog[] = { LR_OPCODE, 0xC0, 0x00, 0x61 };
-    uint8_t want[] = { 0x64, 0x60, 0x40, 0xe2 };
+    /* Two passes per the fo.38/40 sheets: low byte then high byte, the
+     * state X bit (62/42) is the pass counter — canonicalized to 60/40 by
+     * collect_exec_path. No 50|52 for LR. */
+    uint8_t want[] = { 0x64, 0x60, 0x40, 0x60, 0x40, 0xe2 };
     uint8_t got[8] = {0};
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[0x60] = 0x12; g.mem[0x61] = 0x34;
