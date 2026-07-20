@@ -127,16 +127,10 @@ static void CO49(struct ge* ge) {
     ge->URPU = 0;
 };
 
-/* Instruction execution commands (hybrid: invoke the pure ALU helpers once,
- * in the beta phase, using operands already fetched into V1/L1).
- * These cover the PM/SI immediate-format ops: opcode, immediate(->L1), addr(->V1). */
+/* Remaining single-address architectural commits.  The immediate family no
+ * longer lives here: its CPU[7] CI/CO timing rows drive the normal knots,
+ * memory cycle and UA. */
 static uint16_t eff_v1_l2(struct ge* ge);
-static void EXEC_MVI(struct ge* ge) { alu_mvi(ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
-static void EXEC_NI (struct ge* ge) { alu_ni (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
-static void EXEC_CI (struct ge* ge) { alu_oi (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }  /* CI 0x96 = OR Immediate */
-static void EXEC_CMI(struct ge* ge) { alu_ci (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }  /* CMI 0x95 = Compare Immediate */
-static void EXEC_XI (struct ge* ge) { alu_xi (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
-static void EXEC_TM (struct ge* ge) { alu_tm (ge, eff_v1_l2(ge), ge->rL1 & 0xff); }
 
 /* Change registers are memory-mapped, 16-bit big-endian, at addresses
  * 240 + N*2 (N = 0..7). The register-op aux char (in L1) carries the 4-bit
@@ -210,11 +204,6 @@ static void CI00s(struct ge* ge) {
 static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), mem_rd16_op(ge, eff_v1_l2(ge))); }
 static void EXEC_STR(struct ge* ge) { mem_wr16_op(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
 static void EXEC_LA (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), eff_v1_l2(ge)); }
-/* LPSR instruction (0x9d): load the PSR (status + PO) from its operand by
- * entering the shared C-sequence (C2->C3->C0->C1), exactly like the interrupt
- * restore but reading from the instruction's address operand (V1) instead of
- * the interrupt-save area 0x0304. Per the LPSR flowchart: alpha -> 64|65 -> C2. */
-static void EXEC_LPSR(struct ge* ge) { ge->rV1 = eff_v1_l2(ge); ge->future_state = 0xc2; }
 /* JRT (Jump Return, op 0x41): deposits the address of the subsequent instruction
  * (rPO before the jump rewrites it at TI05/CI00s) into index register 7
  * (mem 254/255). Unconditional, per CPU[4] sec.5.5.6.2 / 5.6.5.1: the link is
@@ -226,8 +215,8 @@ static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge));
 
 /* SS (Storage-to-Storage) data-op execution (hybrid one-shot).
  *
- * EXEC_SS fires in the beta phase (state 64|65 family, TO65) like the other
- * EXEC_* hybrids, once the alpha operand-fetch micro-loop has resolved both
+ * EXEC_SS fires in the beta phase (state 64|65 family, TO65), once the
+ * alpha operand-fetch micro-loop has resolved both
  * operands: E7 routes an SS op to beta via its documented CU rows (absolute
  * second operand), or through the indexing micro-cycle ED|EC -> EF|EE first
  * (modified second operand). The per-clock executive-phase recipes for the
@@ -380,6 +369,20 @@ static void CE_chan1_status(struct ge *ge)
 static void CI40(struct ge *ge) { CO40(ge); }
 static void CI41(struct ge *ge) { CO41(ge); }
 
+/* Arithmetic-unit mode selection (cp06 ch.190/196 and CPU[7] timing sheets
+ * fo.43-45).  The manual issues combinations of these lines and admits the
+ * resulting byte through CI68/CI69 later in the same state:
+ *
+ *   CI45+CI46       AND
+ *   CI45+CI47       XOR
+ *   CI45+CI46+CI47  OR
+ *
+ * Other combinations belong to decimal/subtract families not yet transcribed.
+ */
+static void CI45(struct ge *ge) { ge->ua_controls.logic = 1; }
+static void CI46(struct ge *ge) { ge->ua_controls.decimal_and = 1; }
+static void CI47(struct ge *ge) { ge->ua_controls.subtract_xor = 1; }
+
 
 /* NI Knot Selection Commands */
 /* -------------------------- */
@@ -419,15 +422,47 @@ static void CI67(struct ge *ge) { ge->kNI.ni1 = NS_RO1; }
 static void NI4_ZERO(struct ge *ge) { ge->kNI.ni4 = NS_ZERO; }
 
 static void CI68(struct ge *ge) {
-    unsigned sum = ((ge->rBO >> 8) & 0xff) + (ge->rRO & 0xff) + ge->URPE;
-    ge->rUA  = (uint8_t)sum;
-    ge->URPE = sum > 0xff;
+    uint8_t bo = (uint8_t)(ge->rBO >> 8);
+    uint8_t ro = (uint8_t)ge->rRO;
+
+    if (ge->ua_controls.logic) {
+        if (ge->ua_controls.decimal_and && ge->ua_controls.subtract_xor)
+            ge->rUA = bo | ro;
+        else if (ge->ua_controls.decimal_and)
+            ge->rUA = bo & ro;
+        else if (ge->ua_controls.subtract_xor)
+            ge->rUA = bo ^ ro;
+        else
+            ge->rUA = ro;
+    } else {
+        unsigned sum = ge->ua_controls.subtract_xor
+                     ? ro + (uint8_t)~bo + ge->URPE
+                     : bo + ro + ge->URPE;
+        ge->rUA  = (uint8_t)sum;
+        ge->URPE = sum > 0xff;
+    }
     ge->kNI.ni4 = NS_UA2; ge->kNI.ni3 = NS_UA1;
 }
 static void CI69(struct ge *ge) {
-    unsigned sum = (ge->rBO & 0xff) + (ge->rRO & 0xff) + ge->URPE;
-    ge->rUA  = (uint8_t)sum;
-    ge->URPE = sum > 0xff;
+    uint8_t bo = (uint8_t)ge->rBO;
+    uint8_t ro = (uint8_t)ge->rRO;
+
+    if (ge->ua_controls.logic) {
+        if (ge->ua_controls.decimal_and && ge->ua_controls.subtract_xor)
+            ge->rUA = bo | ro;
+        else if (ge->ua_controls.decimal_and)
+            ge->rUA = bo & ro;
+        else if (ge->ua_controls.subtract_xor)
+            ge->rUA = bo ^ ro;
+        else
+            ge->rUA = ro;
+    } else {
+        unsigned sum = ge->ua_controls.subtract_xor
+                     ? ro + (uint8_t)~bo + ge->URPE
+                     : bo + ro + ge->URPE;
+        ge->rUA  = (uint8_t)sum;
+        ge->URPE = sum > 0xff;
+    }
     ge->kNI.ni2 = NS_UA2; ge->kNI.ni1 = NS_UA1;
 }
 

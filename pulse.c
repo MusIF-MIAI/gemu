@@ -54,6 +54,9 @@ static void on_TO00(struct ge *ge) {
      * later +1 advance into a -1 (now that the counting network honours it). */
     ge->counting_network.cmds.from_zero = 0;
     ge->counting_network.cmds.decresing = 0;
+
+    /* CI45/46/47 are state-local UA mode pulses. */
+    memset(&ge->ua_controls, 0, sizeof(ge->ua_controls));
 }
 
 static void on_TO10(struct ge *ge) {

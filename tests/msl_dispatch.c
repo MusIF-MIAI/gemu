@@ -39,7 +39,8 @@ UTEST(msl_dispatch, undocumented_codes_use_explicit_compatibility_sheet)
 UTEST(msl_dispatch, downstream_pairs_keep_instruction_family)
 {
     ASSERT_STREQ(variant_for(0x60, LR_OPCODE, 0xc0), "exec-register-60|62");
-    ASSERT_STREQ(variant_for(0x62, MVI_OPCODE, 0xab), "exec-immediate-60|62");
+    ASSERT_STREQ(variant_for(0x62, MVI_OPCODE, 0xab), "exec-mvi-60|62");
+    ASSERT_STREQ(variant_for(0x50, NI_OPCODE, 0x0f), "exec-immediate-50|52");
     ASSERT_STREQ(variant_for(0x50, AMR_OPCODE, 0xc0), "exec-register-50|52");
-    ASSERT_STREQ(variant_for(0x42, CMI_OPCODE, 0x42), "exec-immediate-40|42");
+    ASSERT_STREQ(variant_for(0x42, CMI_OPCODE, 0x42), "exec-cmi-40|42");
 }

@@ -518,7 +518,8 @@ the segment base from `L2`'s modifier (`eff_v1_l2`).
 ### 6.4 Immediate (single byte `K`) — PM format (4 bytes)
 
 The aux char **is** the immediate operand `K`; the address selects the target byte
-(`eff_v1_l2`). Dispatched from beta via `pm_imm_exec` (`msl-states.c:325`).
+(`V1`). The beta family shifts `K` through RO/NI into the UA byte position,
+then dispatches the manual `60|62`, `50|52`, and `40|42` executive charts.
 
 | Mn | Op | Summary | CC | St |
 |----|----|---------|----|----|
@@ -530,7 +531,9 @@ The aux char **is** the immediate operand `K`; the address selects the target by
 
 > Resolved (§0.5 #1, deck step 0x32): `0x96` (CI) is the **OR-immediate** op (the
 > APS "OI"), it MODIFIES memory; the compare-immediate op is **CMI `0x95`**. The
-> older "both route to alu_ci" note is obsolete — `EXEC_CI`→`alu_oi`, `EXEC_CMI`→`alu_ci`.
+> older "both route to alu_ci" note is obsolete. Both now use the charted
+> memory/UA path: CI selects OR with `CI45+CI46+CI47`; CMI selects complement-add
+> subtraction with `CI47`, and the result/carry gates set the qualitative result.
 
 ### 6.5 Character / logical strings — SS format (6 bytes)
 
@@ -641,9 +644,10 @@ passes through CPU **phases**, advanced by timing pulses `TO00…TI10`:
 3. **Beta** (states `0x64`/`0x65`/`0x66`) — a sparse instruction-family matrix
    selects the same per-family sheet used by the manual. Branch/control and PER
    families take their direct exits; register and immediate families continue
-   through the executive pairs `60|62`, `50|52`, and `40|42`. SS/decimal
-   datapaths remain hybrid pending transcription of their arithmetic-unit
-   commands, but no longer share an interleaved beta table.
+   through the executive pairs `60|62`, `50|52`, and `40|42`. MVI and
+   NI/XI/OI/TM and CMI use the charted CI/CO memory and UA commands; register
+   arithmetic and SS/decimal datapaths remain hybrid pending their counter and
+   multi-cycle transcription. They no longer share an interleaved beta table.
 
 The CC computed in beta (`ffFI`) becomes visible to the next instruction's branch
 test when latched into `ffFA` at the following `TO10` (§5.2).

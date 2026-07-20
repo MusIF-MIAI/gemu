@@ -517,6 +517,32 @@ static uint8_t beta_register_arithmetic(struct ge *ge) {
     return is_cmr(ge) || is_amr(ge) || is_smr(ge);
 }
 
+static uint8_t beta_immediate_logic(struct ge *ge) {
+    return is_ni(ge) || is_ci(ge) || is_xi(ge) || is_tm(ge);
+}
+
+static uint8_t beta_immediate_shift(struct ge *ge) {
+    return is_mvi(ge) || beta_immediate_logic(ge) || is_cmi(ge);
+}
+
+static uint8_t immediate_and_mode(struct ge *ge) {
+    return is_ni(ge) || is_ci(ge) || is_tm(ge);
+}
+
+static uint8_t immediate_xor_or_mode(struct ge *ge) {
+    return is_xi(ge) || is_ci(ge);
+}
+
+static uint8_t immediate_writes_memory(struct ge *ge) { return !is_tm(ge); }
+static uint8_t immediate_sets_cc(struct ge *ge) {
+    return is_ci(ge) || is_xi(ge) || is_tm(ge);
+}
+static uint8_t immediate_nonzero_cc(struct ge *ge) {
+    return immediate_sets_cc(ge) && (ge->rRO & 0xff) != 0;
+}
+static uint8_t cmi_result_nonzero(struct ge *ge) { return (ge->rRO & 0xff) != 0; }
+static uint8_t cmi_borrow(struct ge *ge) { return !ge->URPE; }
+
 static uint8_t beta_always(struct ge *ge) { (void)ge; return 1; }
 
 static uint8_t jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(struct ge *ge) {
@@ -618,10 +644,10 @@ static const struct msl_timing_chart beta_64_la[] = {
 
 /* CPU[7] fo.8: LPSR preliminary beta sheet. */
 static const struct msl_timing_chart beta_64_lpsr[] = {
-    { TO65, EXEC_LPSR, is_lpsr },
-    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU01, 0 },               /* 64|65 -> C2 */
+    { TI06, CU07, 0 },
+    { TI06, CU15, 0 },
     { TI06, CU10, 0 },
-    { TI06, CU07, DE00A0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
@@ -635,8 +661,13 @@ static const struct msl_timing_chart beta_64_register[] = {
 };
 
 /* CPU[7] fo.12 plus CMI/CHI sheet: immediate logical operations. */
-static const struct msl_timing_chart beta_64_immediate[] = {
-    { TO65, CO49, 0 },
+static const struct msl_timing_chart beta_64_immediate_shift[] = {
+    { TO30, CI15, 0 },             /* L1 -> NO */
+    { TO50, CI33, 0 },             /* NO21 -> RO */
+    { TO65, CO49, 0 },             /* reset URPE/URPU */
+    { TO70, CI60, 0 },             /* RO2 -> NI4 */
+    { TO70, CI65, 0 },             /* RO1 -> NI3 */
+    { TI05, CI05, 0 },             /* immediate byte -> L1 high byte */
     { TI06, CU10, 0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
@@ -688,7 +719,8 @@ static const struct msl_timing_variant beta_64_variants[] = {
     { is_la,             beta_64_la,      "beta-la",       "CPU[7] fo.10" },
     { is_lpsr,           beta_64_lpsr,    "beta-lpsr",     "CPU[7] fo.8" },
     { beta_register,     beta_64_register,"beta-register", "CPU[7] fo.11" },
-    { pm_imm_exec,       beta_64_immediate,"beta-immediate","CPU[7] fo.12/CMI" },
+    { beta_immediate_shift, beta_64_immediate_shift,
+                                      "beta-immediate", "CPU[7] fo.41/73/76" },
     { per_peri,          beta_64_per,     "beta-per",      "CPU[7] fo.13" },
     { is_ss_data_op,     beta_64_ss,      "beta-ss",       "CPU[7] fo.44-45" },
     { beta_always,       beta_64_undocumented,
@@ -702,11 +734,11 @@ static const struct msl_timing_variant beta_64_variants[] = {
  *
  *   64|65 -> 60|62 -> [50|52] -> 40|42 -> E2|E3
  *
- * with LR/STR bypassing 50|52.  These arrays establish that real state path
- * now.  The terminal EXEC rows remain temporary architectural commits until
- * the missing arithmetic-unit commands CI45/CI46/CI47 and their DA/DE decode
- * gates are implemented from cp06; importantly, they no longer flatten the
- * entire instruction into beta state 64|65. */
+ * with LR/STR and MVI bypassing 50|52.  MVI and NI/XI/OI/TM below are direct
+ * transcriptions using the memory cycle, knots, and CI45/46/47 UA mode lines.
+ * CMI uses the charted complement-add/subtract and qualitative-result gates.
+ * Register operations retain terminal architectural commits until the
+ * register-address counter is transcribed. */
 
 static const struct msl_timing_chart exec_60_register[] = {
     { TI06, CU04, beta_register_arithmetic }, /* AMR/SMR/CMR: 60 -> 50 */
@@ -739,18 +771,84 @@ static const struct msl_timing_chart exec_60_immediate[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+static const struct msl_timing_chart exec_60_mvi[] = {
+    { TI06, CU15, 0 },                       /* 60 -> 40 (fo.74) */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_60_cmi[] = {
+    { TI06, CI74, 0 },                       /* initial compare CC = equal */
+    { TI06, CI85, 0 },
+    { TI06, CU04, 0 },                       /* 60 -> 50 */
+    { TI06, CU15, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
 static const struct msl_timing_chart exec_50_immediate[] = {
+    { TO10, CO11, 0 },                       /* V1 -> NO */
+    { TO25, CO30, 0 },                       /* memory -> RO */
+    { TO30, CI15, 0 },                       /* L1 -> NO; BO latches K */
+    { TO30, CI45, 0 },                       /* logical operation */
+    { TO30, CI46, immediate_and_mode },
+    { TO30, CI47, immediate_xor_or_mode },
+    { TO50, CO48, immediate_xor_or_mode },
+    { TO70, CI68, 0 },                       /* UA -> NI43 */
+    { TI05, CI05, 0 },                       /* result -> L1 */
     { TI06, CU14, 0 },                       /* 50 -> 40 */
     { END_OF_STATUS, 0, 0 },
 };
 
+static const struct msl_timing_chart exec_50_cmi[] = {
+    { TO10, CO11, 0 },                       /* V1 -> NO */
+    { TO25, CO30, 0 },                       /* memory -> RO */
+    { TO30, CI15, 0 },                       /* immediate -> NO/BO */
+    { TO30, CI47, 0 },                       /* subtract operation */
+    { TO50, CO48, 0 },                       /* carry-in for complement add */
+    { TO70, CI68, 0 },                       /* mem - immediate -> NI43 */
+    { TI05, CI05, 0 },                       /* result -> L1 */
+    { TI06, CU14, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
 static const struct msl_timing_chart exec_40_immediate[] = {
-    { TO65, EXEC_MVI, is_mvi },
-    { TO65, EXEC_NI,  is_ni  },
-    { TO65, EXEC_CI,  is_ci  },
-    { TO65, EXEC_CMI, is_cmi },
-    { TO65, EXEC_XI,  is_xi  },
-    { TO65, EXEC_TM,  is_tm  },
+    { TO10, CO11, 0 },                       /* V1 -> NO */
+    { TO25, CO31, immediate_writes_memory }, /* result -> memory */
+    { TO30, CI15, 0 },                       /* L1 -> NO */
+    { TO40, CO01, 0 },                       /* V1+1 -> V1 */
+    { TO50, CI32, 0 },                       /* NO43 -> RO */
+    { TI06, CI85, immediate_sets_cc },
+    { TI06, CI74, immediate_sets_cc },
+    { TI06, CI75, immediate_nonzero_cc },
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU07, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+
+static const struct msl_timing_chart exec_40_mvi[] = {
+    { TO10, CO11, 0 },                       /* V1 -> NO */
+    { TO25, CO31, 0 },                       /* immediate -> memory */
+    { TO30, CI15, 0 },                       /* L1 -> NO */
+    { TO40, CO01, 0 },
+    { TO50, CI32, 0 },                       /* NO43 -> RO */
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU07, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_40_cmi[] = {
+    { TO10, CO11, 0 },                       /* V1 -> NO */
+    { TO30, CI15, 0 },                       /* result -> NO */
+    { TO40, CO01, 0 },
+    { TO50, CI32, 0 },                       /* result -> RO */
+    { TI06, CI75, cmi_result_nonzero },      /* unequal */
+    { TI06, CI84, cmi_borrow },              /* memory < immediate */
     { TI06, CU01, 0 },
     { TI06, CU05, 0 },
     { TI06, CU07, 0 },
@@ -761,19 +859,27 @@ static const struct msl_timing_chart exec_40_immediate[] = {
 
 static const struct msl_timing_variant exec_60_variants[] = {
     { beta_register, exec_60_register, "exec-register-60|62", "CPU[7] fo.38" },
-    { pm_imm_exec,   exec_60_immediate,"exec-immediate-60|62","CPU[7] fo.43" },
+    { is_mvi,        exec_60_mvi,      "exec-mvi-60|62",      "CPU[7] fo.74" },
+    { beta_immediate_logic, exec_60_immediate,
+                                      "exec-immediate-60|62", "CPU[7] fo.42" },
+    { is_cmi,        exec_60_cmi,      "exec-cmi-60|62",      "CPU[7] fo.77" },
     { 0, 0, 0, 0 },
 };
 
 static const struct msl_timing_variant exec_50_variants[] = {
     { beta_register, exec_50_register, "exec-register-50|52", "CPU[7] fo.39" },
-    { pm_imm_exec,   exec_50_immediate,"exec-immediate-50|52","CPU[7] fo.44" },
+    { beta_immediate_logic, exec_50_immediate,
+                                      "exec-immediate-50|52", "CPU[7] fo.43" },
+    { is_cmi,        exec_50_cmi,      "exec-cmi-50|52",      "CPU[7] fo.78" },
     { 0, 0, 0, 0 },
 };
 
 static const struct msl_timing_variant exec_40_variants[] = {
     { beta_register, exec_40_register, "exec-register-40|42", "CPU[7] fo.40" },
-    { pm_imm_exec,   exec_40_immediate,"exec-immediate-40|42","CPU[7] fo.45" },
+    { is_mvi,        exec_40_mvi,      "exec-mvi-40|42",      "CPU[7] fo.75" },
+    { beta_immediate_logic, exec_40_immediate,
+                                      "exec-immediate-40|42", "CPU[7] fo.44" },
+    { is_cmi,        exec_40_cmi,      "exec-cmi-40|42",      "CPU[7] fo.79" },
     { 0, 0, 0, 0 },
 };
 

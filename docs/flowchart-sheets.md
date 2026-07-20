@@ -24,17 +24,17 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 | 24 | 14023130A  | DISPLAY SEQUENCE | `00` | ✅ verified row-by-row |
 | 25 | 14023130B  | FORCING SEQUENCE | `08` | ◑ states match; a few bracket conditions need a higher-DPI/physical recheck |
 | 26 | 14023130C  | INTERRUPTION | `F0`,`D2`,`D3`,`D0`,`D1` | ✅ implemented (PSR save → 0x0300) + test |
-| 27 | 14023130D  | LPSR SEQUENCE | `C2`,`C3`,`C0`,`C1` | ✅ interrupt restore implemented; the `0x9d` instruction entry is isolated as `beta-lpsr`, with its datapath commit still hybrid |
+| 27 | 14023130D  | LPSR SEQUENCE | `C2`,`C3`,`C0`,`C1` | ✅ interrupt restore implemented; `0x9d` now enters `C2` through real `CU` routing with no beta commit |
 | 28 | 14023130…  | JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL SEQUENCES | `beta-control` variant of `64/65` | ◑ isolated manual sheet; datapath rows retained from prior implementation |
 | 29 | 14023130E  | JU‑JC‑JRT‑JS‑JE SEQUENCE | `beta-jrt` / control variants (`CI00s`, `verified_condition`, `JRT_LINK`) | ◑ isolated and validated; JRT executive path still hybrid |
 | 30 | 14023130…  | LR‑AMR‑CMR‑SMR‑STR SEQUENCES | `beta-register` → `60/62` → `[50/52]` → `40/42` | ◑ manual state path wired; terminal datapath commit still hybrid |
-| 31 | 14023130O  | NI‑XI‑OI‑TM SEQUENCES | `beta-immediate` → `60/62` → `50/52` → `40/42` | ◑ manual state path wired; terminal datapath commit still hybrid |
+| 31 | 14023130O  | NI‑XI‑OI‑TM SEQUENCES | `beta-immediate` → `60/62` → `50/52` → `40/42` | ✅ memory, knot, UA (`CI45/46/47/68`) and result rows transcribed |
 | 32 | 14023130F  | PER‑PERI (preliminary phase) | `64/65`→`c8`→`d8/d9/da/db`→`dc`→`cc` | ✅ cluster verified row-by-row; only residual is the `PCOV` status stub |
 | 33 | 14023130G  | TPER‑CPER external sequence | `ca`, `a8`, `a9`, `aa`, `ab` | ◑ states present; per-row needs higher-DPI recheck |
 | 34 | 14023130₁  | CHANNEL‑**1** DATA TRANSFER phase | `b8`, `b9`, `ea`, `eb` | ◑ states present; write-back condition reworked (`L207_output_writeback`) |
 | 35 | 14023130O  | CHANNEL‑**3** DATA TRANSFER phase | (channel‑3 `rSI` sub-states) | ✗ not modelled |
 | 36 | 14023130₁  | CHANNEL‑**2** DATA TRANSFER phase | `rSI` sub-states `0C/0E` (in), `04/06` (compare), `02/03` (printer out, `CE16`), `0A/0B` (end print) | ◑ recovered (docs/peripherals.md "CAN2 data-transfer phase"); wiring is Phase 3/5 |
-| 38 | 14023130…  | CMI‑CHI sequence | immediate-family variant and executive state pairs | ◑ state path wired; arithmetic commands pending |
+| 38 | 14023130…  | CMI‑CHI sequence | immediate-family variant and executive state pairs | ✅ CMI complement-add and qualitative-result rows transcribed; CMC remains in SS hybrid |
 | 44‑45 | 14023130…| EXECUTIVE PHASE OP (data ops) | `64/65` (`EXEC_SS` + `alu_*`) | ◑ hybrid (SS executes in beta at TO65 like every other `EXEC_*` one-shot; per-clock executive states p93-p120 not transcribed) |
 
 (Render-pages 28/30 drawing-suffix letters were not legible at 300 DPI; the
@@ -91,18 +91,18 @@ the printed sheet. `tests/msl_dispatch.c` locks the decode mapping and gives
 undocumented codes a visible compatibility chart rather than an accidental
 fall-through through unrelated rows.
 
-Register and immediate operations now traverse the documented executive-state
-pairs: immediate operations use `64|65 → 60|62 → 50|52 → 40|42 → E2|E3`, while
-LR/STR take the manual's `50|52` bypass. State-path tests lock both routes.
+Register and logical-immediate operations traverse the documented executive
+state pairs. NI/XI/OI/TM use `64|65 → 60|62 → 50|52 → 40|42 → E2|E3`;
+LR/STR and MVI take their documented `50|52` bypasses. State-path tests lock
+these routes.
 
-The remaining fidelity gap is inside those executive states: cp07 sheets 38–45
-drive arithmetic-unit commands `CI45`, `CI46`, and `CI47` through DA/DE decode
-gates which gemu does not implement yet. Until those cp06 datapaths are
-transcribed, terminal `40|42` charts retain the existing `EXEC_*` architectural
-commit to keep register/memory/CC results correct. SS/decimal sheets 44 onward
-still commit in beta for the same reason. These rows are explicitly marked as
-temporary; removing them before the missing commands exist would produce a
-cycle-shaped implementation with incorrect data.
+The logical UA combinations are now implemented from sheets 41–44:
+`CI45+CI46` selects AND, `CI45+CI47` XOR, and all three select OR; `CI68`
+admits the result through NI before the ordinary memory-write cycle. MVI uses
+the same knots and memory cycle without a UA operation. The remaining
+executive fidelity gap is register-address generation plus the word-arithmetic
+gates for AMR/SMR/CMR. Their terminal commits remain explicit. SS/decimal
+sheets still commit in beta pending their multi-cycle transcription.
 
 ### PER‑PERI preliminary phase — ✅ routing / ◑ status decode
 - **`64/65`→`c8`→`d8`→`d9`→`da`→`db`→⟨!FA05·!FA04⟩→`dc`→`cc`** and

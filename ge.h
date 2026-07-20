@@ -48,6 +48,15 @@ struct ge_counting_network {
     } cmds;
 };
 
+/* Arithmetic-unit mode lines selected by CI45/CI46/CI47 for the duration of
+ * one sequencer state.  Their combinations are decoded by CI68/CI69 when the
+ * UA result is admitted to the NI knot. */
+struct ge_ua_controls {
+    uint8_t logic:1;          /* CI45: logical-operation group */
+    uint8_t decimal_and:1;    /* CI46: decimal / AND group */
+    uint8_t subtract_xor:1;   /* CI47: subtract / XOR group */
+};
+
 struct ge_knot_no {
     uint8_t forcings;
 
@@ -605,6 +614,7 @@ struct ge {
     uint8_t inject_chan1_status;
 
     struct ge_counting_network counting_network;
+    struct ge_ua_controls ua_controls;
 
     /**
      * The I/O interface for the integrated reader (RI)

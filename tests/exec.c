@@ -10,8 +10,8 @@
  * Instruction-execution tests (Wave 5).
  *
  * These exercise the full fetch -> decode -> operand-fetch -> beta-execute
- * -> alpha pipeline for the PM/SI immediate-format data ops, which are
- * executed in the beta phase (state 64/65) via the alu_* helpers.
+ * -> alpha pipeline for the PM/SI immediate-format data ops, including their
+ * manual beta and executive-state CI/CO datapaths.
  *
  * Operand layout at beta for these ops: V1 = address, L1 = immediate byte.
  */
@@ -108,8 +108,21 @@ static int collect_exec_path(struct ge *g, uint8_t *path, int capacity)
 
 UTEST(exec, immediate_uses_manual_executive_state_path)
 {
-    uint8_t prog[] = { MVI_OPCODE, 0xAB, 0x00, 0x50 };
+    uint8_t prog[] = { NI_OPCODE, 0x0F, 0x00, 0x50 };
     uint8_t want[] = { 0x64, 0x60, 0x50, 0x40, 0xe2 };
+    uint8_t got[8] = {0};
+    struct ge g; setup(&g, prog, sizeof(prog));
+
+    int n = collect_exec_path(&g, got, sizeof(got));
+    ASSERT_EQ(n, (int)sizeof(want));
+    for (int i = 0; i < n; i++)
+        ASSERT_EQ(got[i], want[i]);
+}
+
+UTEST(exec, mvi_bypasses_50_52_state_pair)
+{
+    uint8_t prog[] = { MVI_OPCODE, 0xAB, 0x00, 0x50 };
+    uint8_t want[] = { 0x64, 0x60, 0x40, 0xe2 };
     uint8_t got[8] = {0};
     struct ge g; setup(&g, prog, sizeof(prog));
 
@@ -190,6 +203,33 @@ UTEST(exec, cmi_compare_low_sets_cc1)
     g.mem[0x50] = 0x10;                        /* mem < immediate */
     run_one(&g);
     ASSERT_EQ(alu_get_cc(&g), ALU_CC_LOW);     /* first < second -> cc 1 */
+}
+
+UTEST(exec, cmi_compare_high_sets_cc3)
+{
+    uint8_t prog[] = { CMI_OPCODE, 0x42, 0x00, 0x50 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x50] = 0x80;
+    run_one(&g);
+    ASSERT_EQ(alu_get_cc(&g), ALU_CC_HIGH);
+    ASSERT_EQ(g.mem[0x50], 0x80);
+}
+
+UTEST(exec, lpsr_enters_shared_restore_sequence_without_beta_commit)
+{
+    uint8_t prog[] = { LPSR_OPCODE, 0x00, 0x00, 0x50 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x50] = 0x21; /* FI04, FI06 */
+    g.mem[0x51] = 0x00;
+    g.mem[0x52] = 0x12;
+    g.mem[0x53] = 0x34;
+
+    run_one(&g);
+
+    ASSERT_EQ(g.rPO, 0x1234);
+    ASSERT_TRUE(g.ffFI & (1u << 4));
+    ASSERT_FALSE(g.ffFI & (1u << 5));
+    ASSERT_TRUE(g.ffFI & (1u << 6));
 }
 
 /* Change registers are memory-mapped 16-bit at 240 + N*2.  The register-code
