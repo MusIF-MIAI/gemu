@@ -37,6 +37,42 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 | 38 | 14023130…  | CMI‑CHI sequence | immediate-family variant and executive state pairs | ✅ CMI complement-add and qualitative-result rows transcribed; CMC remains in SS hybrid |
 | 44‑45 | 14023130…| EXECUTIVE PHASE OP (data ops) | `64/65` (`EXEC_SS` + `alu_*`) | ◑ hybrid (SS executes in beta at TO65 like every other `EXEC_*` one-shot; per-clock executive states p93-p120 not transcribed) |
 
+
+## Executive-phase timing-chart map (cp07 p80-136, dwg 14024137) — audit round 3
+
+Complete sheet index, read from source (headers + exit boxes; fo. = pdf-page*2
+-113/-112 for L/R, chained with no gaps fo.47-159). Peripheral chains p80-92:
+PER-PERI C8>D8>D9>DA>DB(>D8 loop)>DC>CC, TPER-CPER CA>A8>A9>AA>AB>B8>EA>EB,
+TPER data B9/B1/01/0C-0E/04-06/02-03/0A-0B. Instruction families p93-136, each
+entering from beta 64|65 (SS-conversion roadmap; * = converted to per-clock):
+
+| family | pages | topology |
+|---|---|---|
+| MVI*-MVC | 93-94 | 64>60>40, loop {L1(2,1)=1i} |
+| CMC-CMI* | 94-96 | 64>60>50>40, loop + {dRO=0} |
+| AP-SP | 96-101 | 64>20>60>50>40 loop; recomplement tail 22>26>A6-A7>A4-A5>A0-A1 |
+| MVP | 101-103 | 64>20>60>40 loop |
+| CMP | 103-105 | 64>20>60>50>40 loop |
+| MP-DP | 106-118 | 64>20-21>28-29 loop>23; MP/DP bodies on 4-state codes 60-63/50-53/40-43 + 5B-59, 7A-7B, F2-F3, FA-FB, F8-F9 |
+| PKS | 118-120 | 64>60-63>40-43 loop |
+| UPKS | 120-122 | 64>60-63>40-43 loop |
+| PK | 122-123 | 64>60-63>40-43 loop {+SA00} |
+| UPK | 124-126 | 64>60-63>{50-53}>40-43 loop {SA00} |
+| AB-SB-AD-SD-MVQ-CMQ | 126-128 | 64>60>50>40 loop |
+| XC-OC-NC | 128-130 | 64>60>50>40 loop |
+| EDT | 130-132 | 64>50>60>40 loop (50 first) |
+| SR-SL | 132-134 | 64>60>50>40, exit to EA {(dRO=0)+(L1=1i)} (the EA/EB register write) |
+| TR | 134-136 | 64>50>60>40 loop (50 first; last sheet fo.159) |
+| LR-AMR-SMR-CMR-STR* | 75-76 | 64>60>(50)>40, X-bit two-pass (converted) |
+| JRT*/LA* | 73-74 | 64>EA>EB (converted) |
+| LPSR*/interruption* | 67-72 | 64>C2>C3>C0>C1 / E2>F0>D2>D3>D0>D1>C2.. (converted) |
+
+Exit-loop conditions on the 40-group sheets are the {(L1_2,1=1i)} terminal
+count (with overbar ambiguities noted in the round-3 survey); the X-bit pass
+encoding used for the register family generalizes only to 2-pass ops — the
+byte-loop families (MVC etc.) need the L1 terminal count, i.e. the CI41/CI42
+counter-init decode, before conversion.
+
 (Render-pages 28/30 drawing-suffix letters were not legible at 300 DPI; the
 render-page is authoritative. Beyond render-45 the set continues with the
 remaining data-op sequences — PKS at render-46, etc.)
