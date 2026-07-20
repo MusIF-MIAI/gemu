@@ -42,3 +42,47 @@ UTEST(halt, hlt_sets_halted)
     ASSERT_EQ(g.ALTO, 1);
     ASSERT_EQ(g.halted, 1);
 }
+
+/*
+ * Unknown function codes must not wedge the sequencer.
+ *
+ * The GE-120 has no invalid-operation trap: a function code that matches no
+ * decode performs no datapath commands in beta and execution falls through to
+ * the next fetch. Before the not_per_peri fix on the beta CU01 row, any FO
+ * outside the implemented op groups looped e0<->64 forever (seen with the
+ * funktionalcpu deck's continuous-restart jump into swept core, FO=0x00).
+ * Both a 0-address-class (0x00) and an addressed-class (0x80) unknown code
+ * must march through to the following HLT.
+ */
+UTEST(halt, unknown_opcode_0x00_reaches_hlt)
+{
+    uint8_t program[4] = { 0x00, 0x00, HLT_OPCODE, 0x00 };
+    struct ge g;
+
+    ge_init(&g);
+    ge_clear(&g);
+    ASSERT_EQ(ge_load_program(&g, program, sizeof(program)), 0);
+    ge_start(&g);
+
+    for (int i = 0; i < 40 && !g.halted; i++)
+        ge_run_cycle(&g);
+
+    ASSERT_EQ(g.halted, 1);
+    ASSERT_EQ(g.rPO, 2);   /* stopped at the HLT, not wandering */
+}
+
+UTEST(halt, unknown_opcode_0x80_reaches_hlt)
+{
+    uint8_t program[6] = { 0x80, 0x00, 0x00, 0x00, HLT_OPCODE, 0x00 };
+    struct ge g;
+
+    ge_init(&g);
+    ge_clear(&g);
+    ASSERT_EQ(ge_load_program(&g, program, sizeof(program)), 0);
+    ge_start(&g);
+
+    for (int i = 0; i < 40 && !g.halted; i++)
+        ge_run_cycle(&g);
+
+    ASSERT_EQ(g.halted, 1);
+}

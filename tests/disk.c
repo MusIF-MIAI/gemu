@@ -35,11 +35,17 @@ UTEST(disk, read_sector0)
     ge_init(&g);
 
     /* PER naming connector-3 unit 0; order block: z=0, order=READ(0x40),
-     * length 0x0040, destination 0x0040. */
+     * length 0x0040, destination 0x0040. HLT after the PER: the CPU keeps
+     * executing while channel 3 steals cycles (it used to park only because
+     * unknown opcodes wedged the sequencer -- a real program halts or loops
+     * here), and marching into the landing sector data would corrupt the
+     * transfer check. */
     g.mem[0x00] = PER_OPCODE;
     g.mem[0x01] = 0x00;
     g.mem[0x02] = 0x00;
     g.mem[0x03] = 0x10;
+    g.mem[0x04] = HLT_OPCODE;
+    g.mem[0x05] = 0x00;
     g.mem[0x10] = 0x00;
     g.mem[0x11] = 0x40;
     g.mem[0x12] = 0x00;

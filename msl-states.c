@@ -513,6 +513,26 @@ static uint8_t per_peri_TO25_CO30(struct ge *ge) {
     return per_peri(ge) && !BIT(ge->rFO, 1);
 }
 
+/* Beta exit, return-to-alpha gate (the CU01 "Set S001" row): every operation
+ * except PER/PERI/RDC leaves 64|65 for E2 (CU01+CU07+CU10+CU12 -> 1110 0010);
+ * the external instructions instead route to CC via CU15/CU03 and must NOT
+ * get bit 1.
+ *
+ * This was previously gated on the explicit list of implemented op groups
+ * (jc/js/lon/ins/nop/pm/ss), which wedged the sequencer on any OTHER function
+ * code: with no CU01, beta exited to E0 (1110 0000), whose decode sent a
+ * 0-address-class FO straight back to beta -- an infinite e0<->64 ping-pong no
+ * real MSL can produce (the decode gates always yield a defined route, and the
+ * GE-120 has no invalid-operation trap: an unknown code performs no datapath
+ * commands and falls through to the next fetch). Observed in the field with
+ * the funktionalcpu deck, whose continuous-restart path jumps into swept core
+ * and executes FO=0x00. The printed row condition is the DExx decode behind
+ * DE00A (stubbed -- see signals.h); this complement-of-PER gate reproduces its
+ * effect for every code class. */
+static uint8_t not_per_peri(struct ge *ge) {
+    return !per_peri(ge);
+}
+
 /* EPER "examine" operation: Z character (in L2) = 0xC0 (bits 7,6 set).
  * (TPER read Z=0x00 -> bit7=0; "set by-pass" Z=0x80 -> bit6=0.) */
 static uint8_t is_eper_examine(struct ge *ge) {
@@ -565,7 +585,7 @@ static const struct msl_timing_chart state_64_65[] = {
     { TO89, CI88, loff },
     { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
     { TI05, CI00s, jc_js1_js2_jie_condition_verified },
-    { TI06, CU01, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop, DE00A0 },
+    { TI06, CU01, not_per_peri, DE00A0 },
     { TI06, CU10, 0 },
     { TI06, CU07, DE00A0 },
     { TI06, CU12, 0 },
