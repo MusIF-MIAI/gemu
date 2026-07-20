@@ -48,8 +48,8 @@ entering from beta 64|65 (SS-conversion roadmap; * = converted to per-clock):
 
 | family | pages | topology |
 |---|---|---|
-| MVI*-MVC | 93-94 | 64>60>40, loop {L1(2,1)=1i} |
-| CMC-CMI* | 94-96 | 64>60>50>40, loop + {dRO=0} |
+| MVI*-MVC* | 93-94 | 64>60>40, loop {L1(2,1)=1i} |
+| CMC*-CMI* | 94-96 | 64>60>50>40, loop + {dRO=0} |
 | AP-SP | 96-101 | 64>20>60>50>40 loop; recomplement tail 22>26>A6-A7>A4-A5>A0-A1 |
 | MVP | 101-103 | 64>20>60>40 loop |
 | CMP | 103-105 | 64>20>60>50>40 loop |
@@ -58,10 +58,10 @@ entering from beta 64|65 (SS-conversion roadmap; * = converted to per-clock):
 | UPKS | 120-122 | 64>60-63>40-43 loop |
 | PK | 122-123 | 64>60-63>40-43 loop {+SA00} |
 | UPK | 124-126 | 64>60-63>{50-53}>40-43 loop {SA00} |
-| AB-SB-AD-SD-MVQ-CMQ | 126-128 | 64>60>50>40 loop |
-| XC-OC-NC | 128-130 | 64>60>50>40 loop |
+| AB-SB-AD-SD-MVQ-CMQ (transcribed: docs/transcriptions/) | 126-128 | 64>60>50>40 loop |
+| XC-OC-NC* | 128-130 | 64>60>50>40 loop |
 | EDT | 130-132 | 64>50>60>40 loop (50 first) |
-| SR-SL | 132-134 | 64>60>50>40, exit to EA {(dRO=0)+(L1=1i)} (the EA/EB register write) |
+| SR-SL (transcribed: docs/transcriptions/) | 132-134 | 64>60>50>40, exit to EA {(dRO=0)+(L1=1i)} (the EA/EB register write) |
 | TR | 134-136 | 64>50>60>40 loop (50 first; last sheet fo.159) |
 | LR-AMR-SMR-CMR-STR* | 75-76 | 64>60>(50)>40, X-bit two-pass (converted) |
 | JRT*/LA* | 73-74 | 64>EA>EB (converted) |
