@@ -27,7 +27,7 @@ UTEST(msl_dispatch, beta_families_select_manual_sheets)
     ASSERT_STREQ(variant_for(0x64, LR_OPCODE, 0xc0), "beta-register");
     ASSERT_STREQ(variant_for(0x64, MVI_OPCODE, 0xab), "beta-immediate");
     ASSERT_STREQ(variant_for(0x64, PER_OPCODE, 0x80), "beta-per");
-    ASSERT_STREQ(variant_for(0x64, MVC_OPCODE, 0x02), "beta-ss");
+    ASSERT_STREQ(variant_for(0x64, MVC_OPCODE, 0x02), "beta-mvc");
 }
 
 UTEST(msl_dispatch, undocumented_codes_use_explicit_compatibility_sheet)

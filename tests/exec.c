@@ -54,10 +54,12 @@ static void run_one_ss(struct ge *g)
 {
     sync_cr_cache(g);
     int last = -1;
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 200; i++) {
         ge_run_cycle(g);
+        /* Converted SS families return to alpha from the executive 40|42
+         * pair; the remaining hybrids still return from beta 64|65. */
         if ((g->rSO == 0xe2 || g->rSO == 0xe3) &&
-            (last == 0x64 || last == 0x65))
+            (last == 0x64 || last == 0x65 || last == 0x40 || last == 0x42))
             return;
         last = g->rSO;
     }

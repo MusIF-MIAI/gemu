@@ -656,6 +656,10 @@ static uint8_t pm_imm_exec(struct ge *ge) {
 /* PM register ops (change registers, memory-mapped at 240+N*2): arrive in
  * beta with V1=I1 address, L1=register-code aux char. */
 static uint8_t is_lr (struct ge *ge) { return ge->rFO == LR_OPCODE;  }
+static uint8_t is_mvc(struct ge *ge) { return ge->rFO == MVC_OPCODE; }
+/* SS byte-loop terminal count: L1 low byte underflowed to all ones — the
+ * same convention as the channel length (RL1U1): the loop runs L1+1 times. */
+static uint8_t L1_21_ones(struct ge *ge) { return (ge->rL1 & 0xff) == 0xff; }
 static uint8_t not_str(struct ge *ge) { return ge->rFO != STR_OPCODE; }
 static uint8_t not_cmr(struct ge *ge) { return ge->rFO != CMR_OPCODE; }
 static uint8_t is_smr_or_cmr(struct ge *ge) {
@@ -930,6 +934,21 @@ static const struct msl_timing_chart beta_64_undocumented[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+/* MVC (cp07 fo.73/74/75, verified row-by-row): the SS byte-copy loop.
+ * beta contributes only CO49 + the exit to 60|62 (all datapath rows on the
+ * shared sheet are {MVI}-gated); 60|62 reads the source byte at V2++ and
+ * stages it in L1's high byte while the CI-phase count decrements the
+ * length in L1's low byte (CI40+CI44+CI41: -1, byte-local); 40|42 writes
+ * the staged byte at V1++ and loops {/(L1_2,1=1i)} back to 60+62 or exits
+ * to E2/E3 on the terminal count {L1_2,1=1i} (overbar placement verified
+ * at high zoom: the loop condition carries the full-expression overbar). */
+static const struct msl_timing_chart beta_64_mvc[] = {
+    { TO65, CO49, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU12, 0 },               /* -> 60|62 */
+    { END_OF_STATUS, 0, 0 },
+};
+
 static const struct msl_timing_variant beta_64_variants[] = {
     { beta_jump_control, beta_64_control,  "beta-control",  "CPU[7] fo.9" },
     { is_jrt,            beta_64_jrt,     "beta-jrt",      "CPU[7] fo.10" },
@@ -939,6 +958,7 @@ static const struct msl_timing_variant beta_64_variants[] = {
     { beta_immediate_shift, beta_64_immediate_shift,
                                       "beta-immediate", "CPU[7] fo.41/73/76" },
     { per_peri,          beta_64_per,     "beta-per",      "CPU[7] fo.13" },
+    { is_mvc,            beta_64_mvc,     "beta-mvc",      "cp07 fo.73" },
     { is_ss_data_op,     beta_64_ss,      "beta-ss",       "CPU[7] fo.44-45" },
     { beta_always,       beta_64_undocumented,
                                            "beta-undocumented", "compat aa7ed63" },
@@ -1129,12 +1149,46 @@ static const struct msl_timing_chart exec_40_cmi[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+
+
+static const struct msl_timing_chart exec_60_mvc[] = {
+    { TO10, CO12, 0 },               /* V2 -> NO: source address */
+    { TO10, CO41, 0 },               /* V2 + 1 */
+    { TO25, CO30, 0 },               /* {MVC} MEM -> RO: source byte */
+    { TO30, CI15, 0 },               /* L1 -> NO (count path) */
+    { TO30, CI40, 0 },               /* CI-phase: L1 low byte - 1 ... */
+    { TO30, CI44, 0 },               /* ...byte-local */
+    { TO30, CI41, 0 },
+    { TO40, CO02, 0 },               /* V2 = V2 + 1 */
+    { TO70, CI60, 0 },               /* {MVC} RO2 -> NI4 */
+    { TO70, CI65, 0 },               /* {MVC} RO1 -> NI3: stage byte */
+    { TI05, CI05, 0 },               /* L1 = [byte][count-1] */
+    { TI06, CU04, 0 },               /* set S004... */
+    { TI06, CU15, 0 },
+    { TI06, CU14, 0 },               /* ...reset: -> 40|42 (no 50|52) */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_40_mvc[] = {
+    { TO10, CO11, 0 },               /* V1 -> NO: destination address */
+    { TO10, CO41, 0 },               /* V1 + 1 */
+    { TO25, CO31, 0 },               /* RO -> MEM: write staged byte */
+    { TO30, CI15, 0 },               /* L1 -> NO */
+    { TO40, CO01, 0 },               /* V1 = V1 + 1 */
+    { TO50, CI32, 0 },               /* NO43 -> RO: the staged byte */
+    { TI06, CU07, L1_21_ones },      /* {L1_2,1=1i}: terminal -> E2/E3 */
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },               /* loop -> 60+62 */
+    { END_OF_STATUS, 0, 0 },
+};
+
 static const struct msl_timing_variant exec_60_variants[] = {
     { beta_register, exec_60_register, "exec-register-60|62", "CPU[7] fo.38" },
     { is_mvi,        exec_60_mvi,      "exec-mvi-60|62",      "CPU[7] fo.74" },
     { beta_immediate_logic, exec_60_immediate,
                                       "exec-immediate-60|62", "CPU[7] fo.42" },
     { is_cmi,        exec_60_cmi,      "exec-cmi-60|62",      "CPU[7] fo.77" },
+    { is_mvc,        exec_60_mvc,      "exec-mvc-60|62",      "cp07 fo.74" },
     { 0, 0, 0, 0 },
 };
 
@@ -1152,6 +1206,7 @@ static const struct msl_timing_variant exec_40_variants[] = {
     { beta_immediate_logic, exec_40_immediate,
                                       "exec-immediate-40|42", "CPU[7] fo.44" },
     { is_cmi,        exec_40_cmi,      "exec-cmi-40|42",      "CPU[7] fo.79" },
+    { is_mvc,        exec_40_mvc,      "exec-mvc-40|42",      "cp07 fo.75" },
     { 0, 0, 0, 0 },
 };
 
