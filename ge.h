@@ -45,7 +45,16 @@ struct ge_counting_network {
     struct cmds {
         uint8_t from_zero:1;
         uint8_t decresing:1;
+        uint8_t from_04:1;   /* count injected at bit 04 (CI42) */
+        uint8_t stop_07:1;   /* carry/borrow blocked past bit 07 (CI44) */
     } cmds;
+
+    /* Second-phase (CI-side) counting selection: CI40/41/42/44 stage their
+     * configuration here; it becomes active when TO65 "enables the second
+     * phase commands for count selection" (cpu fo. 142) — i.e. the CO-phase
+     * flags are replaced by these for the TI05 loads (CI05 NI->L1 etc.).
+     * This is what makes the b9/b1 per-character L1 decrement effective. */
+    struct cmds ci_cmds;
 };
 
 /* Arithmetic-unit mode lines selected by CI45/CI46/CI47 for the duration of

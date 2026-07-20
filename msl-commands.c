@@ -368,8 +368,12 @@ static void CE_chan1_status(struct ge *ge)
     ge->rRO = ge->inject_chan1_status ? ge->inject_chan1_status : 0x40;
 }
 
-static void CI40(struct ge *ge) { CO40(ge); }
-static void CI41(struct ge *ge) { CO41(ge); }
+/* CI-side counting selection: staged, becomes active at TO65 (second
+ * phase) — see ge_counting_network.ci_cmds. */
+static void CI40(struct ge *ge) { ge->counting_network.ci_cmds.decresing = 1; }
+static void CI41(struct ge *ge) { ge->counting_network.ci_cmds.from_zero = 1; }
+static void CI42(struct ge *ge) { ge->counting_network.ci_cmds.from_04 = 1; }
+static void CI44(struct ge *ge) { ge->counting_network.ci_cmds.stop_07 = 1; }
 
 /* Arithmetic-unit mode selection (cp06 ch.190/196 and CPU[7] timing sheets
  * fo.43-45).  The manual issues combinations of these lines and admits the

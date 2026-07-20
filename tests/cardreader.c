@@ -378,10 +378,11 @@ UTEST(cardreader, tu03_feeds_at_end_of_card)
  * Test (Phase 5): the RENIA length-count terminal is inert for a FININ read.
  *
  * The RENIA equation (L1 all-ones AND L204) is wired, but the current read
- * datapath does not decrement L1 and never sets the order-block length bit
- * (L204), so a read must still keep L1 constant at the order length and end on
- * FININ — byte-identically. This guards that the wiring stays inert: across the
- * whole 4-byte load, rL1 never changes and L204 stays 0, yet the load completes.
+ * datapath keeps L204 clear on the bootstrap read, so the transfer must end
+ * on FININ (RENIA = !(RL1U1 & L204) stays 1 regardless of L1). Since the
+ * CI-phase counting network went live (audit round 3), L1 is no longer frozen
+ * during the b1 packing states — the invariants are: L204 stays 0, the read
+ * is FININ-bounded, and the packed data lands intact.
  * -------------------------------------------------------------------------- */
 UTEST(cardreader, renia_length_count_inert)
 {
@@ -401,15 +402,13 @@ UTEST(cardreader, renia_length_count_inert)
     /* Reach the input-wait and capture the order length. */
     int got = run_until_state(&g, 0xb8, 256);
     ASSERT_EQ(got, 0xb8);
-    uint16_t order_len = g.rL1;
-    ASSERT_EQ((int)order_len, 0x80);
+    ASSERT_EQ((int)g.rL1, 0x80);   /* order length captured at the wait */
 
     int reached_e3 = 0;
     for (int i = 0; i < 2048; i++) {
         ASSERT_EQ(ge_run_cycle(&g), 0);
-        /* Length counter never decrements and length-count bit never sets, so
-         * the terminal can never be reached: the read is FININ-bounded. */
-        ASSERT_EQ((int)g.rL1, (int)order_len);
+        /* The length-count bit never sets on the bootstrap read, so the
+         * terminal cannot gate RENIA: the read stays FININ-bounded. */
         ASSERT_EQ((int)((g.rL2 >> 4) & 1), 0);   /* L204 stays clear */
         if (g.rSO == 0xe3) { reached_e3 = 1; break; }
         if (g.halted) break;

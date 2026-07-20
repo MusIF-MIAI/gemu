@@ -143,16 +143,30 @@ SIG(AF53) { return ge->register_selector == RS_FO;      }
 /** @} */
 
 static inline uint16_t ge_counting_network_output(struct ge *ge) {
-    if (ge->counting_network.cmds.from_zero) {
-        /* The flow charts spell an increment as CO41 (from_zero) alone and a
-         * decrement as CO40+CO41 (decreasing+from_zero): V1+1->V1 is "...41...",
-         * V1-1->V1 and L1-1->L1 are "...40-41...". So `decreasing` selects -1;
-         * without it, +1. (CPU[7] p33 external-sequence charts.) */
-        if (ge->counting_network.cmds.decresing)
-            return ge->rBO - 1;
-        return ge->rBO + 1;
+    /* The flow charts spell an increment as CO41 (from_zero) alone and a
+     * decrement as CO40+CO41 (decreasing+from_zero): V1+1->V1 is "...41...",
+     * V1-1->V1 and L1-1->L1 are "...40-41...". `decreasing` selects -1;
+     * without it, +1. CI42 injects the count at bit 04 instead, and CI44
+     * blocks the carry/borrow past bit 07 (byte-local count). The active
+     * flags are the CO-phase ones until TO65 swaps in the CI-phase staging
+     * (pulse.c). (CPU[7] p33 external charts; fo.38/62 CI rows.) */
+    struct cmds *c = &ge->counting_network.cmds;
+    uint16_t delta = 0;
+
+    if (c->from_zero)
+        delta += 1;
+    if (c->from_04)
+        delta += 0x10;
+    if (!delta)
+        return ge->rBO;
+    if (c->decresing) {
+        if (c->stop_07)
+            return (ge->rBO & 0xff00) | ((ge->rBO - delta) & 0x00ff);
+        return ge->rBO - delta;
     }
-    return ge->rBO;
+    if (c->stop_07)
+        return (ge->rBO & 0xff00) | ((ge->rBO + delta) & 0x00ff);
+    return ge->rBO + delta;
 }
 
 /**

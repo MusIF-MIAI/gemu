@@ -52,8 +52,8 @@ static void on_TO00(struct ge *ge) {
      * like a reasonable place to reset this. CO40 (decreasing) must be reset
      * here too, otherwise a stale "decreasing" from one decrement turns every
      * later +1 advance into a -1 (now that the counting network honours it). */
-    ge->counting_network.cmds.from_zero = 0;
-    ge->counting_network.cmds.decresing = 0;
+    memset(&ge->counting_network.cmds, 0, sizeof(ge->counting_network.cmds));
+    memset(&ge->counting_network.ci_cmds, 0, sizeof(ge->counting_network.ci_cmds));
 
     /* CI45/46/47 are state-local UA mode pulses. */
     memset(&ge->ua_controls, 0, sizeof(ge->ua_controls));
@@ -191,10 +191,11 @@ static void on_TO65(struct ge *ge) {
         ge->memory_command = MC_NONE;
     }
 
-    /* "enables the second phase commands for count selection"
-     * (cpu fo. 142), not sure this is what it means */
-    ge->counting_network.cmds.from_zero = 0;
-    ge->counting_network.cmds.decresing = 0;
+    /* "enables the second phase commands for count selection" (cpu fo.142):
+     * the CO-phase counting flags are replaced by the CI-phase staging, so
+     * the TI05 loads (CI05 NI->L1, ...) see the CI40/41/42/44 selection. */
+    ge->counting_network.cmds = ge->counting_network.ci_cmds;
+    memset(&ge->counting_network.ci_cmds, 0, sizeof(ge->counting_network.ci_cmds));
 }
 
 static void on_TO70(struct ge *ge) {
