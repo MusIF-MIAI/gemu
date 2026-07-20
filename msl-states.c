@@ -503,6 +503,22 @@ static uint8_t pm_reg_exec(struct ge *ge) {
     return is_lr(ge) || is_str(ge) || is_cmr(ge) || is_amr(ge) || is_smr(ge) || is_la(ge);
 }
 
+static uint8_t beta_jump_control(struct ge *ge) {
+    return (!is_jrt(ge) && jc_js1_js2_jie(ge)) || lon_loll(ge) ||
+           loff(ge) || ins(ge) || ens(ge) || nop(ge) ||
+           ge->rFO == HLT_OPCODE;
+}
+
+static uint8_t beta_register(struct ge *ge) {
+    return is_lr(ge) || is_str(ge) || is_cmr(ge) || is_amr(ge) || is_smr(ge);
+}
+
+static uint8_t beta_register_arithmetic(struct ge *ge) {
+    return is_cmr(ge) || is_amr(ge) || is_smr(ge);
+}
+
+static uint8_t beta_always(struct ge *ge) { (void)ge; return 1; }
+
 static uint8_t jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(struct ge *ge) {
     return jc_js1_js2_jie(ge) || lon_loll(ge) || loff(ge) || ins(ge) || ens(ge) || nop(ge)
            || pm_imm_exec(ge) || pm_reg_exec(ge) || is_ss_data_op(ge);
@@ -546,59 +562,219 @@ static uint8_t is_eper_examine(struct ge *ge) {
     return BIT(ge->rL2, 7) && BIT(ge->rL2, 6);
 }
 
-/* Beta phase. The per-opcode beta recipes are flow charts 14023130E (JU/JC/JRT/
- * JS/JE), the JS/JC/NOP/HLT/INS/ENS/LON/LOFF/LOLL sheet (render-pg 28), the
- * LR/AMR/CMR/SMR/STR sheet (render-pg 30), 14023130O (NI/XI/OI/TM, render-pg 31),
- * the CMI/CHI sheet (render-pg 38) and the EXECUTIVE-PHASE data-op sheets
- * (render-pg 44-45). gemu implements these HYBRIDLY: the MSL drives routing here
- * while the operation is performed once by an alu_* helper (EXEC_*), rather than
- * transcribing each sheet's per-clock datapath. Functionally validated by
- * tests/exec.c + the deck + cc; not cycle-accurate. See docs/flowchart-sheets.md. */
-static const struct msl_timing_chart state_64_65[] = {
+/* Beta phase instruction sheets.
+ *
+ * CPU[7] prints multiple 64|65 timing sheets, selected by the
+ * instruction decode matrix.  Do not fold these arrays together: deliberate
+ * duplication of rows such as CU10/CU12 keeps each array readable side-by-side
+ * with one physical sheet.  Some rows remain to be transcribed; the EXEC rows
+ * are temporary markers pending the downstream datapath commands described
+ * below and in docs/flowchart-sheets.md. */
+
+/* CPU[7] fo.9 + fo.10: JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL. */
+static const struct msl_timing_chart beta_64_control[] = {
     { TO10, CO10, jc_js1_js2_jie },
+    { TO20, CI87, lon_loll },
+    { TO20, CI77, ins },
+    { TO30, CI12, jc_js1_js2_jie },
+    { TO40, CO01, jc_js1_js2_jie },
+    { TO60, CO35, jie },
+    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
+    { TO70, CI78, ens },
+    { TO89, CI88, loff },
+    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
+    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, DE00A0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.10: JRT preliminary beta sheet. */
+static const struct msl_timing_chart beta_64_jrt[] = {
+    { TO10, CO10, jc_js1_js2_jie },
+    { TO30, CI12, jc_js1_js2_jie },
+    { TO40, CO01, jc_js1_js2_jie },
+    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
+    { TO65, JRT_LINK, is_jrt },
+    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
+    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, DE00A0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.10: LA preliminary beta sheet. */
+static const struct msl_timing_chart beta_64_la[] = {
+    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
+    { TO65, EXEC_LA, is_la },
+    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, DE00A0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.8: LPSR preliminary beta sheet. */
+static const struct msl_timing_chart beta_64_lpsr[] = {
+    { TO65, EXEC_LPSR, is_lpsr },
+    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, DE00A0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.11: LR/AMR/CMR/SMR/STR preliminary beta sheet. */
+static const struct msl_timing_chart beta_64_register[] = {
+    { TO65, CO49, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.12 plus CMI/CHI sheet: immediate logical operations. */
+static const struct msl_timing_chart beta_64_immediate[] = {
+    { TO65, CO49, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.44-45: currently implemented executive data operations. */
+static const struct msl_timing_chart beta_64_ss[] = {
+    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
+    { TO65, EXEC_SS, is_ss_data_op },
+    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, DE00A0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* CPU[7] fo.13: PER/PERI preliminary beta sheet. */
+static const struct msl_timing_chart beta_64_per[] = {
     { TO10, CO18, per_peri },
     { TO10, CO95, per_peri, DE07A0 },
     { TO10, CO96, per_peri, DE07A0 },
     { TO10, CO97, per_peri, DE07A0 },
-    { TO20, CI87, lon_loll },
-    { TO20, CI77, ins },
     { TO25, CO30, per_peri_TO25_CO30, DE08A0 },
-    { TO30, CI12, jc_js1_js2_jie },
-    { TO40, CO01, jc_js1_js2_jie },
-    { TO60, CO35, jie },
-    { TO60, CI38, jc_js1_js2_jie },   /* set AVER = verified_condition before the TI05 jump */
-    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
+    { TO70, CI62, per_peri, DE07A0 },
+    { TO70, CI67, per_peri, DE07A0 },
+    { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, per_peri, DE07A0 },
+    { TI06, CU12, 0 },
+    { TI06, CU15, per_peri },
+    { TI06, CU03, per_peri },
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* Compatibility route for undocumented function codes.  This is intentionally
+ * explicit: the cp06 DE00A transcription is incomplete and aa7ed63 established
+ * that swept-core bytes must not wedge the emulator. */
+static const struct msl_timing_chart beta_64_undocumented[] = {
+    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU10, 0 },
+    { TI06, CU07, DE00A0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_variant beta_64_variants[] = {
+    { beta_jump_control, beta_64_control,  "beta-control",  "CPU[7] fo.9" },
+    { is_jrt,            beta_64_jrt,     "beta-jrt",      "CPU[7] fo.10" },
+    { is_la,             beta_64_la,      "beta-la",       "CPU[7] fo.10" },
+    { is_lpsr,           beta_64_lpsr,    "beta-lpsr",     "CPU[7] fo.8" },
+    { beta_register,     beta_64_register,"beta-register", "CPU[7] fo.11" },
+    { pm_imm_exec,       beta_64_immediate,"beta-immediate","CPU[7] fo.12/CMI" },
+    { per_peri,          beta_64_per,     "beta-per",      "CPU[7] fo.13" },
+    { is_ss_data_op,     beta_64_ss,      "beta-ss",       "CPU[7] fo.44-45" },
+    { beta_always,       beta_64_undocumented,
+                                           "beta-undocumented", "compat aa7ed63" },
+    { 0, 0, 0, 0 },
+};
+
+/* Executive phase: register and immediate operations.
+ *
+ * CPU[7] fo.38-45 gives the shared topology
+ *
+ *   64|65 -> 60|62 -> [50|52] -> 40|42 -> E2|E3
+ *
+ * with LR/STR bypassing 50|52.  These arrays establish that real state path
+ * now.  The terminal EXEC rows remain temporary architectural commits until
+ * the missing arithmetic-unit commands CI45/CI46/CI47 and their DA/DE decode
+ * gates are implemented from cp06; importantly, they no longer flatten the
+ * entire instruction into beta state 64|65. */
+
+static const struct msl_timing_chart exec_60_register[] = {
+    { TI06, CU04, beta_register_arithmetic }, /* AMR/SMR/CMR: 60 -> 50 */
+    { TI06, CU15, 0 },                       /* LR/STR: 60 -> 40 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_50_register[] = {
+    { TI06, CU14, 0 },                       /* 50 -> 40 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_40_register[] = {
+    { TO65, EXEC_LR,  is_lr  },
+    { TO65, EXEC_STR, is_str },
+    { TO65, EXEC_CMR, is_cmr },
+    { TO65, EXEC_AMR, is_amr },
+    { TO65, EXEC_SMR, is_smr },
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU07, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU12, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_60_immediate[] = {
+    { TI06, CU04, 0 },                       /* 60 -> 50 */
+    { TI06, CU15, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_50_immediate[] = {
+    { TI06, CU14, 0 },                       /* 50 -> 40 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_40_immediate[] = {
     { TO65, EXEC_MVI, is_mvi },
     { TO65, EXEC_NI,  is_ni  },
     { TO65, EXEC_CI,  is_ci  },
     { TO65, EXEC_CMI, is_cmi },
     { TO65, EXEC_XI,  is_xi  },
     { TO65, EXEC_TM,  is_tm  },
-    { TO65, EXEC_LR,  is_lr  },
-    { TO65, EXEC_STR, is_str },
-    { TO65, EXEC_CMR, is_cmr },
-    { TO65, EXEC_AMR, is_amr },
-    { TO65, EXEC_SMR, is_smr },
-    { TO65, EXEC_LA,  is_la  },
-    { TO65, EXEC_LPSR, is_lpsr },
-    /* SS data ops arrive here from E7 (absolute source) or from the indexing
-     * micro-cycle EF|EE (modified source) with V1/V2 holding the resolved
-     * effective addresses and L1 the length byte. */
-    { TO65, EXEC_SS,  is_ss_data_op },
-    { TO65, JRT_LINK, is_jrt },
-    { TO70, CI78, ens },
-    { TO70, CI62, per_peri, DE07A0 },
-    { TO70, CI67, per_peri, DE07A0 },
-    { TO89, CI88, loff },
-    { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
-    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
-    { TI06, CU01, not_per_peri, DE00A0 },
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU07, 0 },
     { TI06, CU10, 0 },
-    { TI06, CU07, DE00A0 },
     { TI06, CU12, 0 },
-    { TI06, CU15, per_peri },
-    { TI06, CU03, per_peri },
     { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_variant exec_60_variants[] = {
+    { beta_register, exec_60_register, "exec-register-60|62", "CPU[7] fo.38" },
+    { pm_imm_exec,   exec_60_immediate,"exec-immediate-60|62","CPU[7] fo.43" },
+    { 0, 0, 0, 0 },
+};
+
+static const struct msl_timing_variant exec_50_variants[] = {
+    { beta_register, exec_50_register, "exec-register-50|52", "CPU[7] fo.39" },
+    { pm_imm_exec,   exec_50_immediate,"exec-immediate-50|52","CPU[7] fo.44" },
+    { 0, 0, 0, 0 },
+};
+
+static const struct msl_timing_variant exec_40_variants[] = {
+    { beta_register, exec_40_register, "exec-register-40|42", "CPU[7] fo.40" },
+    { pm_imm_exec,   exec_40_immediate,"exec-immediate-40|42","CPU[7] fo.45" },
+    { 0, 0, 0, 0 },
 };
 
 /* Display */

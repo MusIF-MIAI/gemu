@@ -4,6 +4,7 @@
 #include "ge.h"
 
 typedef void (*msl_command_cb)(struct ge*);
+typedef uint8_t (*msl_condition_cb)(struct ge*);
 
 /**
  * Timing chart row
@@ -29,7 +30,7 @@ struct msl_timing_chart {
      * the command will get executed only if the condition
      * returns true.
      */
-    uint8_t (*condition)(struct ge*);
+    msl_condition_cb condition;
 
 
     /**
@@ -41,7 +42,27 @@ struct msl_timing_chart {
      * will be executed if both `condition` and `additional` return
      * true.
      */
-    uint8_t (*additional)(struct ge*);
+    msl_condition_cb additional;
+};
+
+/**
+ * One instruction-family variant of a sequencer state.
+ *
+ * The GE-120 manual prints several timing charts for the same numerical
+ * state (notably 64|65 and the executive-state pairs), selected by the
+ * instruction decode matrix.  Keeping each sheet in a separate chart makes
+ * the transcribed rows directly comparable with the corresponding manual page.
+ */
+struct msl_timing_variant {
+    /** Instruction-family decode.  A NULL match terminates the variant list. */
+    msl_condition_cb match;
+
+    /** Timing rows currently transcribed for this family and state. */
+    const struct msl_timing_chart *chart;
+
+    /** Stable names used in diagnostics and timing-trace tests. */
+    const char *name;
+    const char *manual_ref;
 };
 
 /**
@@ -50,7 +71,11 @@ struct msl_timing_chart {
  * The timing chart for an entire state of the MSL.
  */
 struct msl_timing_state {
+    /** Ordinary single-chart state, mutually exclusive with variants. */
     const struct msl_timing_chart *chart;
+
+    /** Sparse instruction-family matrix for states with multiple sheets. */
+    const struct msl_timing_variant *variants;
 };
 
 /**

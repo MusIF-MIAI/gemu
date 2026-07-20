@@ -24,17 +24,17 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 | 24 | 14023130A  | DISPLAY SEQUENCE | `00` | ✅ verified row-by-row |
 | 25 | 14023130B  | FORCING SEQUENCE | `08` | ◑ states match; a few bracket conditions need a higher-DPI/physical recheck |
 | 26 | 14023130C  | INTERRUPTION | `F0`,`D2`,`D3`,`D0`,`D1` | ✅ implemented (PSR save → 0x0300) + test |
-| 27 | 14023130D  | LPSR SEQUENCE | `C2`,`C3`,`C0`,`C1` | ✅ implemented as the interrupt restore (load new PSR ← 0x0304); the `0x9d` LPSR *instruction* entry still TODO |
-| 28 | 14023130…  | JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL SEQUENCES | `64/65` (`jc_js1_js2_jie`, `nop`, `lon_loll`, `ins`, `ens`, `loff`, HLT) | ◑ hybrid (functionally wired, not per-clock) |
-| 29 | 14023130E  | JU‑JC‑JRT‑JS‑JE SEQUENCE | `64/65` jump path (`CI00s`, `verified_condition`, `JRT_LINK`) | ◑ hybrid (validated by `tests/exec.c` jumps + JRT) |
-| 30 | 14023130…  | LR‑AMR‑CMR‑SMR‑STR SEQUENCES | `64/65` (`EXEC_LR/STR/CMR/AMR/SMR`) | ◑ hybrid (validated by `tests/exec.c` reg ops) |
-| 31 | 14023130O  | NI‑XI‑OI‑TM SEQUENCES | `64/65` (`EXEC_NI/XI/TM`, + `MVI/CI/CMI`) | ◑ hybrid |
+| 27 | 14023130D  | LPSR SEQUENCE | `C2`,`C3`,`C0`,`C1` | ✅ interrupt restore implemented; the `0x9d` instruction entry is isolated as `beta-lpsr`, with its datapath commit still hybrid |
+| 28 | 14023130…  | JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL SEQUENCES | `beta-control` variant of `64/65` | ◑ isolated manual sheet; datapath rows retained from prior implementation |
+| 29 | 14023130E  | JU‑JC‑JRT‑JS‑JE SEQUENCE | `beta-jrt` / control variants (`CI00s`, `verified_condition`, `JRT_LINK`) | ◑ isolated and validated; JRT executive path still hybrid |
+| 30 | 14023130…  | LR‑AMR‑CMR‑SMR‑STR SEQUENCES | `beta-register` → `60/62` → `[50/52]` → `40/42` | ◑ manual state path wired; terminal datapath commit still hybrid |
+| 31 | 14023130O  | NI‑XI‑OI‑TM SEQUENCES | `beta-immediate` → `60/62` → `50/52` → `40/42` | ◑ manual state path wired; terminal datapath commit still hybrid |
 | 32 | 14023130F  | PER‑PERI (preliminary phase) | `64/65`→`c8`→`d8/d9/da/db`→`dc`→`cc` | ✅ cluster verified row-by-row; only residual is the `PCOV` status stub |
 | 33 | 14023130G  | TPER‑CPER external sequence | `ca`, `a8`, `a9`, `aa`, `ab` | ◑ states present; per-row needs higher-DPI recheck |
 | 34 | 14023130₁  | CHANNEL‑**1** DATA TRANSFER phase | `b8`, `b9`, `ea`, `eb` | ◑ states present; write-back condition reworked (`L207_output_writeback`) |
 | 35 | 14023130O  | CHANNEL‑**3** DATA TRANSFER phase | (channel‑3 `rSI` sub-states) | ✗ not modelled |
 | 36 | 14023130₁  | CHANNEL‑**2** DATA TRANSFER phase | `rSI` sub-states `0C/0E` (in), `04/06` (compare), `02/03` (printer out, `CE16`), `0A/0B` (end print) | ◑ recovered (docs/peripherals.md "CAN2 data-transfer phase"); wiring is Phase 3/5 |
-| 38 | 14023130…  | CMI‑CHI sequence | `64/65` (`EXEC_CMI`/`EXEC_CI`) | ◑ hybrid |
+| 38 | 14023130…  | CMI‑CHI sequence | immediate-family variant and executive state pairs | ◑ state path wired; arithmetic commands pending |
 | 44‑45 | 14023130…| EXECUTIVE PHASE OP (data ops) | `64/65` (`EXEC_SS` + `alu_*`) | ◑ hybrid (SS executes in beta at TO65 like every other `EXEC_*` one-shot; per-clock executive states p93-p120 not transcribed) |
 
 (Render-pages 28/30 drawing-suffix letters were not legible at 300 DPI; the
@@ -81,21 +81,28 @@ transcription, or partially transcribed · ⚠️ flagged for recheck · ✗ abs
   foldout or a higher-quality scan before changing** — `forcing.c` currently
   passes, so the live behaviour is constrained.
 
-### Beta execution — ◑ hybrid by design (the main fidelity gap)
-Sheets **28, 29, 30, 31, 38, 44, 45** are the per-clock recipes for the beta
-phase (jumps, JS/JC/NOP/HLT/INS/ENS/LON/LOFF/LOLL, register ops, immediate
-logic ops, compares, and the SS data ops). gemu implements all of these in
-`state_64_65` (and `EXEC_SS` for SS) via the **hybrid mechanism**: the MSL drives
-fetch/decode/sequence and routing, but the actual operation is performed once by
-a pure `alu_*` helper rather than transcribing the chart's per-clock datapath
-micro-steps. This is functionally correct and validated end-to-end
-(`tests/exec.c`, the `funktionalcpu` deck to 0x175a, `cc/test.sh`), **but it is
-not cycle-accurate** to these sheets.
-> **Roadmap to close it:** transcribe sheets 28/29/30/31/38/44/45 box-by-box
-> into proper `state_64_65`-family charts (or per-opcode beta states), replacing
-> the `EXEC_*` one-shots with the charted CO/CI/CU steps. Large, must stay green
-> against `exec.c` + the deck + `cc`. Lower priority than correctness, since the
-> observable result already matches.
+### Beta execution — ◑ manual-sheet dispatcher; datapath transcription ongoing
+The old interleaved `state_64_65[]` has been replaced by a sparse timing-chart
+matrix. Each instruction family selects a separate chart bearing its CPU[7]
+sheet reference (`beta-control`, `beta-jrt`, `beta-la`, `beta-lpsr`,
+`beta-register`, `beta-immediate`, `beta-per`, or `beta-ss`). Repeated rows are
+deliberately kept in each array so the source can be reviewed directly beside
+the printed sheet. `tests/msl_dispatch.c` locks the decode mapping and gives
+undocumented codes a visible compatibility chart rather than an accidental
+fall-through through unrelated rows.
+
+Register and immediate operations now traverse the documented executive-state
+pairs: immediate operations use `64|65 → 60|62 → 50|52 → 40|42 → E2|E3`, while
+LR/STR take the manual's `50|52` bypass. State-path tests lock both routes.
+
+The remaining fidelity gap is inside those executive states: cp07 sheets 38–45
+drive arithmetic-unit commands `CI45`, `CI46`, and `CI47` through DA/DE decode
+gates which gemu does not implement yet. Until those cp06 datapaths are
+transcribed, terminal `40|42` charts retain the existing `EXEC_*` architectural
+commit to keep register/memory/CC results correct. SS/decimal sheets 44 onward
+still commit in beta for the same reason. These rows are explicitly marked as
+temporary; removing them before the missing commands exist would produce a
+cycle-shaped implementation with incorrect data.
 
 ### PER‑PERI preliminary phase — ✅ routing / ◑ status decode
 - **`64/65`→`c8`→`d8`→`d9`→`da`→`db`→⟨!FA05·!FA04⟩→`dc`→`cc`** and

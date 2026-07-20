@@ -32,13 +32,17 @@ static void sync_cr_cache(struct ge *g)
 static void run_one(struct ge *g)
 {
     sync_cr_cache(g);
-    int last = -1;
-    for (int i = 0; i < 40; i++) {
+    int entered_execution = 0;
+    for (int i = 0; i < 100; i++) {
         ge_run_cycle(g);
+        if (g->rSO == 0x64 || g->rSO == 0x65 || g->rSO == 0x66 ||
+            g->rSO == 0x60 || g->rSO == 0x62 ||
+            g->rSO == 0x50 || g->rSO == 0x52 ||
+            g->rSO == 0x40 || g->rSO == 0x42)
+            entered_execution = 1;
         if ((g->rSO == 0xe2 || g->rSO == 0xe3) &&
-            (last == 0x64 || last == 0x65))
+            entered_execution)
             return;
-        last = g->rSO;
     }
 }
 
@@ -65,6 +69,68 @@ static void setup(struct ge *g, uint8_t *prog, int n)
     ge_load_program(g, prog, (uint8_t)n);
     ge_clear(g);
     ge_start(g);
+}
+
+static uint8_t canonical_exec_state(uint8_t state)
+{
+    switch (state) {
+        case 0x65: case 0x66: return 0x64;
+        case 0x62: return 0x60;
+        case 0x52: return 0x50;
+        case 0x42: return 0x40;
+        case 0xe3: return 0xe2;
+        default: return state;
+    }
+}
+
+static int collect_exec_path(struct ge *g, uint8_t *path, int capacity)
+{
+    int collecting = 0, count = 0;
+    uint8_t previous = 0xff;
+
+    sync_cr_cache(g);
+    for (int i = 0; i < 100; i++) {
+        ge_run_cycle(g);
+        uint8_t state = canonical_exec_state(g->rSO);
+
+        if (!collecting && state == 0x64)
+            collecting = 1;
+        if (!collecting || state == previous)
+            continue;
+        if (count < capacity)
+            path[count++] = state;
+        previous = state;
+        if (state == 0xe2)
+            break;
+    }
+    return count;
+}
+
+UTEST(exec, immediate_uses_manual_executive_state_path)
+{
+    uint8_t prog[] = { MVI_OPCODE, 0xAB, 0x00, 0x50 };
+    uint8_t want[] = { 0x64, 0x60, 0x50, 0x40, 0xe2 };
+    uint8_t got[8] = {0};
+    struct ge g; setup(&g, prog, sizeof(prog));
+
+    int n = collect_exec_path(&g, got, sizeof(got));
+    ASSERT_EQ(n, (int)sizeof(want));
+    for (int i = 0; i < n; i++)
+        ASSERT_EQ(got[i], want[i]);
+}
+
+UTEST(exec, lr_bypasses_50_52_state_pair)
+{
+    uint8_t prog[] = { LR_OPCODE, 0xC0, 0x00, 0x61 };
+    uint8_t want[] = { 0x64, 0x60, 0x40, 0xe2 };
+    uint8_t got[8] = {0};
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x60] = 0x12; g.mem[0x61] = 0x34;
+
+    int n = collect_exec_path(&g, got, sizeof(got));
+    ASSERT_EQ(n, (int)sizeof(want));
+    for (int i = 0; i < n; i++)
+        ASSERT_EQ(got[i], want[i]);
 }
 
 UTEST(exec, mvi_stores_immediate)

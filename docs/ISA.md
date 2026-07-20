@@ -638,9 +638,12 @@ passes through CPU **phases**, advanced by timing pulses `TO00…TI10`:
 2. **Operand fetch** (`0xE0`, `0xE4–0xE7`) — pull addresses into `V1`/`V2`,
    length into `L1`; the micro-loop count depends on format (P → none, PM → one
    address, SS → two).
-3. **Beta** (states `0x64`/`0x65`/`0x66`) — execute: branches resolve the target
-   (`CI00s`), immediate/register/SS ops call their `alu_*` helper, then the
-   future-state network points back to alpha for the next instruction.
+3. **Beta** (states `0x64`/`0x65`/`0x66`) — a sparse instruction-family matrix
+   selects the same per-family sheet used by the manual. Branch/control and PER
+   families take their direct exits; register and immediate families continue
+   through the executive pairs `60|62`, `50|52`, and `40|42`. SS/decimal
+   datapaths remain hybrid pending transcription of their arithmetic-unit
+   commands, but no longer share an interleaved beta table.
 
 The CC computed in beta (`ffFI`) becomes visible to the next instruction's branch
 test when latched into `ffFA` at the following `TO10` (§5.2).

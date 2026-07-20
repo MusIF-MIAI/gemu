@@ -5,6 +5,7 @@
 #include "ge.h"
 
 struct msl_timing_state;
+struct msl_timing_variant;
 
 /**
  * Gets timing state
@@ -14,7 +15,11 @@ struct msl_timing_state;
  * @param  state the state as used by the SO cpu sequencer
  * @return a pointer to a static definition of the given state
  */
-struct msl_timing_state* msl_get_state(uint8_t state);
+const struct msl_timing_state* msl_get_state(uint8_t state);
+
+/** Select the first matching manual-sheet variant for an instruction state. */
+const struct msl_timing_variant *msl_select_variant(
+    struct ge *ge, const struct msl_timing_state *state);
 
 /**
  * Runs a machine state
@@ -25,6 +30,6 @@ struct msl_timing_state* msl_get_state(uint8_t state);
  * @param ge    the emulator state
  * @param state the state to run
  */
-void msl_run_state(struct ge* ge, struct msl_timing_state *state);
+void msl_run_state(struct ge* ge, const struct msl_timing_state *state);
 
 #endif /* MSL_H */

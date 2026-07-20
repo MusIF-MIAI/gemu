@@ -293,7 +293,7 @@ uint8_t ge_clock_is_last(struct ge* ge)
 int ge_run_pulse(struct ge *ge)
 {
     int r;
-    struct msl_timing_state *state;
+    const struct msl_timing_state *state;
 
     if (ge_clock_is_first(ge)) {
         r = ge_peri_on_clock(ge);
