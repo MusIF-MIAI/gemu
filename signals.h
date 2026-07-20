@@ -266,6 +266,8 @@ static inline uint8_t NI_source(struct ge *ge, enum knot_ni_source source) {
     uint16_t cn = ge_counting_network_output(ge);
 
     switch (source) {
+        case NS_ZERO:
+            return 0;
         case NS_CN1:
             return (cn & 0x000f) >>  0;
         case NS_CN2:
@@ -356,9 +358,17 @@ SIG(DI20A) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
 SIG(DI201) { return !DI20A(ge); }
 /* State decodes for the modified-address indexing micro-cycle (timing tables
  * CPU[7] p64, "FASE ALFA ED-EC / EF-EE"). The xxA equations are derived from
- * the state codes (ED|EC = 1110 11x0, EF|EE = 1110 111x, E7 = 1110 0111); the
- * signal names are confirmed by the CPU[6] signal index but their printed
- * equations have not been located — confidence: medium. */
+ * the state codes; audit round-2 evidence from the cp06 sheets:
+ *  - DI13A = NAND(DI101, SA03, SA02) READ on ch.225-18 — matches exactly.
+ *  - DI65A reconstructed from fan-out callouts as NAND(DI131, SA01M)
+ *    == this derivation (the generating ch.239 sheet is missing from the
+ *    scan — see DI60A below).
+ *  - DI67A partially reconstructed as NAND(DI031, ...): DI031 = SA00·SA01,
+ *    functionally identical to this derivation (DI13·SA1·SA0 = EF).
+ *  - DI66A partially reconstructed (SA016 confirmed as one input).
+ *  - DI64A EXISTS at ch.232-19 (p292, read at 600dpi; missing from the
+ *    parsed signal index — DI181-style parser gap); it is an inverter there,
+ *    upstream AND-decode not yet located. Derived E7-only equation kept. */
 SIG(DI13A) { return !(DI101(ge) && BIT(ge->rSA, 3) && BIT(ge->rSA, 2)); }  /* ED|EC + EF|EE */
 SIG(DI64A) { return !(DI121(ge) && BIT(ge->rSA, 2) &&
                       BIT(ge->rSA, 1) && BIT(ge->rSA, 0)); }               /* E7 only */
@@ -389,8 +399,16 @@ SIG(DI57A) { return !(!BIT(ge->rSA, 1) && DI581(ge) && DI691(ge)); }
 SIG(DI572) { return !DI57A(ge); }
 SIG(DI57B) { return DI57A(ge) ; }
 SIG(DI79A) { return !(DI151(ge) && DI021(ge)); }
-SIG(DI82A) { return 0; } // TODO: MISSING MANUAL PAGE!!
-SIG(DI83A) { return 1; } // TODO: MISSING MANUAL PAGE!!
+/* DI82A/DI83A live on the same missing ch.239 sheet as DI60A (see above).
+ * DI82A = NAND(DI111 [274-11], SA006 [110-2]) reconstructed from fan-out
+ * callouts (medium confidence): the E9|EB decode. Currently unused by any
+ * state table. */
+SIG(DI82A) { return !(DI111(ge) && BIT(ge->rSA, 0)); }
+/* DI83A: only one input recovered from callouts (SA00F = /SA00); the second
+ * input is unrecoverable without the missing sheet. Kept as the historical
+ * stub (DI83A0 = 0, so state_ea's CI33 row stays inert) rather than guessing
+ * an equation that could change state_ea behavior. */
+SIG(DI83A) { return 1; } // ch.239 sheet missing from scan; eq. partially known
 SIG(DI84A) { return !(DI011(ge) && DI291(ge)); }
 SIG(DI85A) { return !(DI291(ge) && DI031(ge)); }
 SIG(DI86A) { return !(!BIT(ge->rSA, 0) && DI291(ge)); }
@@ -456,7 +474,15 @@ SIG(DI28B0) { return !DI28B(ge); }
 SIG(DI29A0) { return !DI29A(ge); }
 SIG(DI57A0) { return !DI57A(ge); }
 SIG(DI57B0) { return !DI57B(ge); }
-SIG(DI60A0) { return 1; } // TODO: Missing page in manual (!)
+/* DI60A: the ch.239 sheet (foglio 217) is PHYSICALLY MISSING from the cp06
+ * scan (audit round-2: p298=ch238 -> p299=ch240, and ch256 is bound twice at
+ * p315/316). Equation reconstructed from fan-out callouts on surviving
+ * sheets: DI60A = NAND(DI121 [252-11], SA028 [256-4]) — i.e. the E4|E5|E6|E7
+ * band decode. Within the only states that use DI60A0 (E4/E5/E6/E7) it is
+ * identically 1, matching the previous stub. Medium confidence (callout
+ * reconstruction; the generating sheet itself is unscanned). */
+SIG(DI60A) { return !(DI121(ge) && BIT(ge->rSA, 2)); }
+SIG(DI60A0) { return !DI60A(ge); }
 SIG(DI64A0) { return !DI64A(ge); }
 SIG(DI65A0) { return !DI65A(ge); }
 SIG(DI66A0) { return !DI66A(ge); }
@@ -731,7 +757,11 @@ SIG(RA101) { return !(PA11A(ge) && PA12A(ge) && PA13A(ge) && PA13A(ge) && PA14A(
  *   reader selectable only on channel 1 (via PB12A); these light the channel-2
  *   path. Off for channel-1 ops (RIA2=0 / PUC2=0), so the channel-1 bootstrap is
  *   unaffected. */
-SIG(RET21) { return ge->RIA2; }
+/* RET21: channel-2 cycle-assignment memory, the T010-clocked latch of RES2
+ * (cp06 ch.132-6, verified on the sheet: RET21 = /((RES2A·T0107)+(T010C·RET2A))).
+ * Was approximated as raw RIA2, which ignored the priority masking in RES2
+ * (ch.1/ch.3 contention) and the latching. */
+SIG(RET21) { return ge->RET2; }
 SIG(PC221) { return !PC22A(ge); }
 
 /**

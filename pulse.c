@@ -27,6 +27,7 @@ static void on_TO00(struct ge *ge) {
     ge->RIA3 = ge->RC03;
 
     ge->RETO = RES01(ge);
+    ge->RET2 = RES2(ge);   /* T010 latch, cp06 ch.132-6 (see ge.h RET2) */
 
     /* TODO: a "counter" with RAMO, RAMI should condition RIA0 */
 

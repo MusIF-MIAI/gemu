@@ -408,8 +408,18 @@ static void CI67(struct ge *ge) { ge->kNI.ni1 = NS_RO1; }
  * hardware mechanism for excluding it has not been located in the timing
  * tables — open question; recheck the UA pages before trusting bit-level
  * fidelity here. */
+/* Flow chart E4/E5 box "0 -> V_4 [R007]" (dwg 14023130, transcribed in
+ * reference_operand_fetch_flowchart): on a MODIFIED address the top quartet of
+ * the operand register is explicitly ZEROED at fetch (the modifier+flag nibble
+ * is stripped; the change register is added later in ED|EC->EF|EE). Without
+ * this, gemu's NI quartet-4 default (the counting network) leaks program-
+ * counter bits into V's quartet 4 for code running at addresses >= 0x1000 —
+ * the "fetch residue" the old CI68 nibble mask compensated for. The silicon
+ * has no such mask (cp06 ch.087/088: all eight BO->UA muxes identical). */
+static void NI4_ZERO(struct ge *ge) { ge->kNI.ni4 = NS_ZERO; }
+
 static void CI68(struct ge *ge) {
-    unsigned sum = ((ge->rBO >> 8) & 0x0f) + (ge->rRO & 0xff) + ge->URPE;
+    unsigned sum = ((ge->rBO >> 8) & 0xff) + (ge->rRO & 0xff) + ge->URPE;
     ge->rUA  = (uint8_t)sum;
     ge->URPE = sum > 0xff;
     ge->kNI.ni4 = NS_UA2; ge->kNI.ni3 = NS_UA1;

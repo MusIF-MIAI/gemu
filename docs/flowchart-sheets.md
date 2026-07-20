@@ -212,6 +212,19 @@ Evento rows):
   *value* instead of setting `force_mode`, so every CO18+CO9x NO-address build
   in the machine was inert. Fixed; the full suite (deck bootstrap, PER/PERI,
   channel transfers) stays green with the forcing active.
+- **Beta phase structure** (audit round-2, cp07 p70-p79 read from source): the
+  64|65 state is SEVEN per-instruction-family timing sheets with different
+  exits — jump/control family (JS1-JS2-JIE-JC-NOP2-HLT-INS-ENS-LON-LOFF-LOLL)
+  -> `E2` via `CU01/CU07 = CM01A0 (DE00A0)`; LPSR -> `C2`; JRT and LA -> `EA`;
+  LR-AMR-SMR-CMR-STR and NI-XI-OI-TM -> `60+62` (the per-clock executive
+  states, still untranscribed); PER-PERI -> `C8`. `CU10/CU12 = DI06A0` are
+  unconditional in beta on every sheet. The CU01 combiner (cp06 ch.219-1) is
+  an 8-input wired-OR (CM01A, CM02A, DE53A, ED35A, ED10A, ED84A, ED66A,
+  ED50A). gemu's one-shot hybrid returns every non-PER op to `E2` directly
+  (the `not_per_peri` CU01 gate) — the correct abstraction while 60/62/EA/C2
+  executive recipes are not modeled. `DE00A = NAND(DO011, DI062)` verified on
+  cp06 ch.248-9; `CI38`'s real home is E6/E7 TO80 with gate `DE51A =
+  NAND(DO011, DI201)` (ch.261-8) — no CI38 row exists on any beta sheet.
 **Caveat:** the OCR renders `CO1x` as `CO1O` (letter O), so plain token-diffs
 miss CO-family commands — cross-check the rendered image when auditing E5/E6/E7
 and the beta/peripheral tables. **Next:** walk pages 61+ row-by-row for the

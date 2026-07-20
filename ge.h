@@ -72,6 +72,7 @@ struct ge_knot_no {
 };
 
 enum knot_ni_source {
+    NS_ZERO,   /* quartet driven by nothing: non-storing knot reads 0 */
     NS_CN1,
     NS_CN2,
     NS_CN3,
@@ -278,6 +279,16 @@ struct ge {
      * When setting RETO, if PAPA switch is set, rotary is neither in normal, nor
      * in position 8 to store in memory, should set ALTO */
     uint8_t RETO:1;
+
+    /**
+     * Channel-2 cycle-assignment memory.
+     *
+     * T010-clocked latch of RES2 (cp06 ch.132-6/7/8, "OPERATING SIMULTANEITY
+     * LOGIC": RET21 = /((RES2A·T0107)+(T010C·RET2A)), RET2A = /RET21,
+     * RET26 = /RET2A). Remembers that the current cycle was assigned to
+     * channel 2 — including the priority masking in RES2 (!RIA3 && !RESI
+     * && RIA2), which a raw RIA2 read would miss. Twin of RETO.
+     */
     uint8_t RET2:1;
 
     /**

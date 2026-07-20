@@ -218,6 +218,7 @@ static uint8_t is_ss_data_op(struct ge *ge) {
  * modified case the hardware zeroes V4 and indexes in ED|EC|EF|EE — transcribed
  * in reference_operand_fetch_flowchart, to be implemented cycle-accurately.) */
 static uint8_t state_E4_TO70_CI60(struct ge *ge) { return not_RO07(ge); }
+static uint8_t RO07(struct ge *ge) { return BIT(ge->rRO, 7); }
 
 static const struct msl_timing_chart state_E4[] = {
     { TO10, CO10, 0, DI60A0 },
@@ -228,6 +229,7 @@ static const struct msl_timing_chart state_E4[] = {
     { TO70, CI62, 0, DI12A0 },
     { TO70, CI65, 0, DI19A0 },
     { TO70, CI60, state_E4_TO70_CI60 },
+    { TO70, NI4_ZERO, RO07 },            /* 0->V_4 [R007]: strip modifier+flag */
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0, DI60A0 },
@@ -239,7 +241,11 @@ static const struct msl_timing_chart state_E4[] = {
 //                           CU00 leaves bit 0 SET = first operand <SA00>)
 //          64+65 if !L207 & (!FO07 | !FO06)
 
-static uint8_t state_E6_TO80_CI38(struct ge *ge) { /* DO01? */ return 0; }
+/* CI38 "set AVER auto" in E6/E7: gate DE51A0 = DO011 & DI201 (cp06 ch.261
+ * gate 8, read on the sheet: DE51A = NAND(DO011, DI201)) — fires only for the
+ * jump-class function codes (DO011 = FO06 & !FO03 & !FO07). Previously E6
+ * returned 0 and E7 returned 1, both guesses ("DO01?"). */
+static uint8_t state_E6_TO80_CI38(struct ge *ge) { return DO011(ge); }
 
 static uint8_t state_E6_TI06_CU17(struct ge *ge) {
     return (!BIT(ge->rL2, 7) &&
@@ -282,6 +288,7 @@ static const struct msl_timing_chart state_E5[] = {
     { TO70, CI65, 0, DI19A0 },
     { TO70, CI60, not_RO07 },            /* ni4 [/R007]: top quartet from RO only
                                           * for absolute (CPU[7] E5 box) */
+    { TO70, NI4_ZERO, RO07 },            /* 0->V_4 [R007]: strip modifier+flag */
     { TI05, CI02, 0 },
     { TI06, CI06, 0 },
     { TI06, CU01, 0, DI60A0 },
@@ -292,7 +299,7 @@ static const struct msl_timing_chart state_E5[] = {
 //          ED+EC if L207    (the CU10 = DI64A0 reset of bit 0 lands on EC =
 //                            second operand, the <SA00> diamond cleared)
 
-static uint8_t state_E7_TO80_CI38(struct ge *ge) { return 1; /* DO01 ?!? */ }
+static uint8_t state_E7_TO80_CI38(struct ge *ge) { return DO011(ge); /* DE51A0, see E6 */ }
 
 /* Timing table CPU[7] p63 (state 1110 0111, DA-FROM E5), verified row-by-row:
  *   TO10 CO10 = CB19A0 (DI60A0)   PO->NO

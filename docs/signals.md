@@ -370,9 +370,12 @@ exact logic equation for a signal we promote from ☐/◑ to ✅.
 > `PB12A=!(RESI1·PC121)` (ch-1), `PB22A=!(RET21·PC221)` (ch-2),
 > `PB32A=!(RES31·PC321)` (ch-3). For channel 2: `PC221=!PC22A=PUC21·¬PB26` (conn-2
 > on ch-2: channel-2 unit `PUC2` selected and the connector-1/2 selector `PB26=0`)
-> and `RET21` (ch-2 cycle active — the sync `RIA2`, mirroring ch-1's `RESI1`).
-> `PC221`/`RET21` are presently stubs (→0); promoting them is what lights `PIB21`
-> on a channel-2 read so `CI34`/`NE_knot` latches `integrated_reader.data`.
+> and `RET21` (ch-2 cycle-assignment memory). Both are implemented; audit
+> round-2 verified them on the cp06 sheets: `PC22F = NAND(PUC26, PB26A)`
+> (ch.135-24) with `PC221 = /PC22F` (ch.160-1) — gemu's equation exact — and
+> `RET21` is a T010-clocked latch of RES2 (ch.132-6: `RET21 =
+> /((RES2A·T0107)+(T010C·RET2A))`), now modeled as the `RET2` latch in
+> pulse.c (was: raw `RIA2`, which missed the RES2 priority masking).
 
 ### 4.8 Arithmetic unit (UA)
 
@@ -437,12 +440,9 @@ read (`CI34`) is gated on the reader-input select **`PIB21`**, which on a
 channel-2 cycle needs `PB22A=0` ⇒ **`RET21 && PC221`** (ch-2 cycle-assignment
 stored AND connector-2/channel-2 selected).
 
-⚠ **Open blocker — channel-2 reader selection.** `RET21` and `PC221` are
-currently **stubs** (`return 0`, signals.h). With them 0, `PIB21` can only assert
-via `PB12A = RESI1 && PC121` — i.e. gemu's integrated reader selects on
-**channel 1**, not channel 2. So a channel-2 read latches nothing, and the
-loader's connector-2 read PER (which routes to channel 2 and parks at `b8`) is
-unfed. Finishing the channel-2 read therefore needs **Phase 4**: implement
+(Resolved: `RET21` and `PC221` are implemented and schematic-verified — see
+§ above. The historical blocker note is kept for context: finishing the
+channel-2 read needed **Phase 4**: implement
 `RET21` (ch.132) + `PC221` (ch.160) for the channel-2 reader selection and/or
 reconcile the integrated reader's channel (the `RA101→RC01` channel-1 wiring vs
 the documented `LU08→RC02` channel-2), without breaking the channel-1 bootstrap
