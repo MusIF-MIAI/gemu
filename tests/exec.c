@@ -42,20 +42,18 @@ static void run_one(struct ge *g)
     }
 }
 
-/* Run whole cycles until the machine returns to alpha (e2/e3) right after
- * the SS-format operand-fetch micro-loop (state E7) — i.e. one SS instruction
- * has completed via Mechanism B. */
+/* Run whole cycles until one SS instruction has completed: per the documented
+ * routing (timing tables CPU[7] p63-64) the operand-fetch micro-loop exits E7
+ * (or the indexing micro-cycle's EF|EE) to beta, where the op executes, and
+ * beta returns to alpha — same completion signature as any other instruction. */
 static void run_one_ss(struct ge *g)
 {
     sync_cr_cache(g);
     int last = -1;
     for (int i = 0; i < 40; i++) {
         ge_run_cycle(g);
-        /* Completion lands in alpha from the second-operand fetch (E7, absolute
-         * source) or from the indexing micro-cycle's EF|EE (0xee, modified
-         * source). */
         if ((g->rSO == 0xe2 || g->rSO == 0xe3) &&
-            (last == 0xe7 || last == 0xee))
+            (last == 0x64 || last == 0x65))
             return;
         last = g->rSO;
     }

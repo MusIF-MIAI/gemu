@@ -30,12 +30,19 @@ static uint8_t not_RO06(struct ge *ge) { return !BIT(ge->rRO, 6); }
 static uint8_t not_RO07(struct ge *ge) { return !BIT(ge->rRO, 7); }
 
 /* Address modify flag (bit 15 of the operand address = L2 bit 7 once the
- * addr-hi byte has been read into L2). Used to route operand fetch into the
- * modified-address indexing micro-cycle. (SIG(L207)/SIG(not_L207) are defined
- * later in this file for the TPER/CPER path; these mirror them but are visible
- * to the alpha-phase states below.) */
-static uint8_t addr_modified(struct ge *ge) { return BIT(ge->rL2, 7); }
+ * addr-hi byte has been read into L2). An absolute address exits operand
+ * fetch to beta; a modified one detours through the indexing micro-cycle.
+ * (SIG(L207)/SIG(not_L207) are defined later in this file for the TPER/CPER
+ * path; this mirrors them but is visible to the alpha-phase states below.) */
 static uint8_t addr_absolute(struct ge *ge) { return !BIT(ge->rL2, 7); }
+
+/* Change-register modifier bits of the operand field (L2 bits 4-6 = address
+ * bits 12-14). Gate the NO-knot forcings CO91/CO92/CO93 that build the
+ * change-register byte address in the indexing micro-cycle (CPU[7] p64,
+ * equations EG63A0/EG62A0/EG61A0). Also used by the TPER/CPER cluster. */
+SIG(L204) { return BIT(ge->rL2, 4); }
+SIG(L205) { return BIT(ge->rL2, 5); }
+SIG(L206) { return BIT(ge->rL2, 6); }
 
 /* Initialitiation */
 /* --------------- */
@@ -163,8 +170,10 @@ static const struct msl_timing_chart state_E0[] = {
 // SS (Storage-to-Storage) data ops: opcode list from opcodes.h.
 // These are 6-byte instructions (opcode, LL, A1hi, A1lo, A2hi, A2lo).
 // Operands are loaded by the E4->E6->E5->E7 micro-loop:
-//   E4 -> E6 (first pass, loads V1/V2 base), E5 (loads V1 from A1),
-//   E7 (CI02 at TI05 loads V2 from A2), then EXEC_SS + SS_TO_ALPHA at TI06.
+//   E4 -> E6 (loads V1 from A1), E5 -> E7 (loads V2 from A2); a modified
+//   address detours through the indexing micro-cycle ED|EC -> EF|EE. E7 then
+//   exits to beta (64|65 family) via its documented CU rows, where the op
+//   executes (EXEC_SS at TO65, like the other EXEC_* hybrids).
 // V1 = destination address, V2 = source address, L1 = length byte.
 static uint8_t is_ss_data_op(struct ge *ge) {
     switch (ge->rFO) {
@@ -225,12 +234,12 @@ static const struct msl_timing_chart state_E4[] = {
     { END_OF_STATUS, 0, 0 }
 };
 
-// to state E5 if !L207 & (FO07 & FO06)
-//          ED+EC if L207   (modified-address indexing cycle, not yet implemented)
+// to state E5    if !L207 & (FO07 & FO06)
+//          ED    if L207   (modified-address indexing cycle; the unconditional
+//                           CU00 leaves bit 0 SET = first operand <SA00>)
 //          64+65 if !L207 & (!FO07 | !FO06)
 
 static uint8_t state_E6_TO80_CI38(struct ge *ge) { /* DO01? */ return 0; }
-static uint8_t state_E6_TI06_CU03(struct ge *ge) { return BIT(ge->rL2, 7); }
 
 static uint8_t state_E6_TI06_CU17(struct ge *ge) {
     return (!BIT(ge->rL2, 7) &&
@@ -249,18 +258,15 @@ static const struct msl_timing_chart state_E6[] = {
     { TI05, CI01, 0 },
     { TI05, CI02, 0 },
     { TI06, CU00, 0, DI20A0 },
-    { TI06, CU03, state_E6_TI06_CU03, EC56A0 },
+    /* EC56A0 = DI201 & L207: enter the indexing micro-cycle on a modified
+     * address (timing table CPU[7] p63 prints the same gate for E7). */
+    { TI06, CU03, 0, EC56A0 },
 
     /* in the manual this is CU10, but it maybe a mistake.. there's no way to reach
      * the alpha states if we don't reset this bit 1 instead of bit 0 */
     { TI06, CU11, 0 },
 
     { TI06, CU17, state_E6_TI06_CU17 },
-
-    /* Modified first operand (L207 = address bit 15): enter the indexing
-     * micro-cycle (ED|EC -> EF|EE). INDEX_OP1 sets SA00 (first operand) and
-     * forces the next state to 0xec, overriding the CU bits above. */
-    { TI06, INDEX_OP1, addr_modified },
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -282,86 +288,115 @@ static const struct msl_timing_chart state_E5[] = {
     { END_OF_STATUS, 0, 0 }
 };
 
-// to state 64+65 if !L207
-//          ED+EC if L207
+// to state 64+65 if !L207   (beta: the SS op executes there)
+//          ED+EC if L207    (the CU10 = DI64A0 reset of bit 0 lands on EC =
+//                            second operand, the <SA00> diamond cleared)
 
 static uint8_t state_E7_TO80_CI38(struct ge *ge) { return 1; /* DO01 ?!? */ }
-static uint8_t state_E7_TI06_CU03(struct ge *ge) { return BIT(ge->rL2, 7); }
 
-static uint8_t state_E7_TI06_CU17(struct ge *ge) {
-    return BIT(ge->rL2, 7) && (BIT(ge->rFO, 7) || BIT(ge->rFO, 6));
-}
-
+/* Timing table CPU[7] p63 (state 1110 0111, DA-FROM E5), verified row-by-row:
+ *   TO10 CO10 = CB19A0 (DI60A0)   PO->NO
+ *   TO10 CO41 = CB14A0 (DI60A0)   count from 00
+ *   TO25 CO30 = CB07A0 (DI12A0)   MEM->RO
+ *   TO30 CI12 = DI20A0            V2->NO
+ *   TO40 CO00 = CB00A0 (DI60A0)   NI->PO
+ *   TO50 (hardware)               NO->BO
+ *   TO70 CI67 = CD14A0 (DI12A0)   RO1->NI1
+ *   TO70 CI62 = CD14A0 (DI12A0)   RO2->NI2
+ *   TO80 CI38 = DE51A0 {DO01}     set AVER auto
+ *   TI05 CI02 = DI60A0            NI->V2
+ *   TI06 CU00 = CM00A0 (DI20A0)   Set S000
+ *   TI06 CU03 = CM05A0 (EC56A0)   Set S003   (modified address)
+ *   TI06 CU10 = DI64A0            Reset S000 (E7-only: operand 2 -> EC)
+ *   TI06 CU17 = EC57A0 {/L207}    Reset S007 (absolute -> beta)
+ * Exit box: 64+65 (0110 0100) {/L207} | ED+EC (1110 1100) {L207}.
+ * Reaching those exact exit codes needs a bit-1 reset the printed rows lack;
+ * a CU11 is added below — the same manual CU10/CU11 ambiguity already noted
+ * in state_E6. The exit-box state codes are unambiguous. */
 static const struct msl_timing_chart state_E7[] = {
     { TO10, CO10, 0, DI60A0 },
     { TO10, CO41, 0, DI60A0 },
     { TO25, CO30, 0, DI12A0 },
-    { TO30, CI12, 0 },
+    { TO30, CI12, 0, DI20A0 },
     { TO40, CO00, 0, DI60A0 },
     { TO70, CI67, 0, DI12A0 },
-    { TO70, CI62, 0 },
+    { TO70, CI62, 0, DI12A0 },
     { TO80, CI38, state_E7_TO80_CI38 },
-    { TI05, CI02, 0 },
+    { TI05, CI02, 0, DI60A0 },
     { TI06, CU00, 0, DI20A0 },
     { TI06, CU03, 0, EC56A0 },
-    { TI06, CU10, 0 },
-    { TI06, CU17, state_E7_TI06_CU17 },
-    /* Mechanism B (hybrid one-shot): execute SS op here at TI06, after CI02 at
-     * TI05 has loaded V2 (source address) and V1 (destination address) was loaded
-     * during the preceding E5 pass.  SS_TO_ALPHA overrides the future state to
-     * e2 (alpha), breaking out of the operand-fetch micro-loop.
-     *
-     * Only when the second operand is ABSOLUTE (not_L207). A modified second
-     * operand instead enters the indexing micro-cycle via INDEX_OP2 (SA00 = 0,
-     * no V1 copy); the SS op is then executed by INDEX_DONE in state EF|EE once
-     * V2 holds the resolved source address. */
-    { TI06, EXEC_SS,     is_ss_data_op, addr_absolute },
-    { TI06, SS_TO_ALPHA, is_ss_data_op, addr_absolute },
-    { TI06, INDEX_OP2,   addr_modified },
+    { TI06, CU10, 0, DI64A0 },
+    { TI06, CU11, 0, DI64A0 },
+    { TI06, CU17, addr_absolute },   /* CU17A0 = EC57A0 {/L207} */
     { END_OF_STATUS, 0, 0 }
 };
 
 /* Modified-Address Indexing Micro-Cycle */
 /* ------------------------------------- */
 
-/* Entered from E6 (operand 1) or E7 (operand 2) when the address is modified
- * (L207 = bit 15 of the address field). Faithful to flow chart dwg 14023130:
+/* Entered from E6 (operand 1 -> ED, SA bit 0 set) or E7 (operand 2 -> EC,
+ * SA bit 0 cleared by CU10 = DI64A0); SA bit 0 IS the flow chart's <SA00>
+ * first-vs-second operand diamond. Per-clock transcription of the timing
+ * tables CPU[7] p64 ("FASE ALFA ED-EC / EF-EE", dwg 14024137₀, fo.15-16):
  *
- *   ED|EC  — compute EA = change_register[N] + displacement into V2, and copy
- *            it to V1 for the first operand (SA00). (EXEC_INDEX fuses the
- *            flow chart's low-byte add ED|EC and high-byte/carry add EF|EE into
- *            one hybrid step; the two sheets survive as two states so the
- *            control flow still mirrors the chart.)
- *   EF|EE  — route onward (INDEX_DONE):
- *              first operand of a two-address (PMM) op -> fetch/index op 2 (E5)
- *              SS data op, both operands resolved       -> EXEC_SS, then alpha
- *              single-address op (data or jump)         -> beta (0x64) to run it
+ *   ED|EC — CO18 + CO97..CO90 force the NO knot to the change-register LOW
+ *           byte address 1111 nnn 1 = 241+2N (N = modifier, L2 bits 4-6 via
+ *           the {L206}/{L205}/{L204} gates; CO90's DI65A0 gate sets the odd
+ *           byte only in this state); MEM->RO reads it; V2->NO / NO->BO put
+ *           the displacement on the UA's other input; CO49 resets the carry
+ *           FFs; CI69 latches UA = BO.low + RO into NI21; CI02 stores NI
+ *           (V2 high byte unchanged through the counting network) to V2;
+ *           CU01 -> EF|EE.
+ *   EF|EE — same address build WITHOUT CO90 (= 240+2N, the HIGH byte);
+ *           CI68 latches UA = BO.high + RO + carry into NI43; CI02 stores
+ *           the resolved EA to V2; CI01 (DI67A0 {SA00}) copies it to V1 for
+ *           the first operand. Routing: CU01/CU11 (net Reset S001) + CU13
+ *           always; CU17 = DE52A0 {/FO07+/FO06+/SA00} exits to beta except
+ *           for the first operand of a two-address op, which goes to E5 to
+ *           fetch operand 2. Exit box: 64+65 {/(SA00·FO07·FO06)} |
+ *           E5 {SA00·FO07·FO06}.
  */
-static uint8_t is_pmm(struct ge *ge) { return BIT(ge->rFO, 6) && BIT(ge->rFO, 7); }
-
-static void INDEX_DONE(struct ge *ge) {
-    if (ge->SA00 && is_pmm(ge)) {
-        /* first operand of a two-address op resolved -> go fetch operand 2 */
-        ge->SA00 = 0;
-        ge->future_state = 0xe5;
-    } else if (is_ss_data_op(ge)) {
-        /* both SS operands resolved -> execute and return to alpha */
-        EXEC_SS(ge);
-        ge->future_state = 0xe2;
-    } else {
-        /* single-address op (data op or jump) -> execute in beta */
-        ge->future_state = 0x64;
-    }
+static uint8_t state_EF_EE_TI06_CU17(struct ge *ge) {
+    return !(BIT(ge->rFO, 7) && BIT(ge->rFO, 6) && BIT(ge->rSA, 0));
 }
 
 static const struct msl_timing_chart state_ED_EC[] = {
-    { TI06, EXEC_INDEX, 0 },
-    { TI06, INDEX_NEXT, 0 },   /* -> EF|EE (0xee) */
+    { TO10, CO18, 0, DI13A0 },          /* forcing in NO21 */
+    { TO10, CO97, 0, DI13A0 },          /* 1->NO07 */
+    { TO10, CO96, 0, DI13A0 },          /* 1->NO06 */
+    { TO10, CO95, 0, DI13A0 },          /* 1->NO05 */
+    { TO10, CO94, 0, DI13A0 },          /* 1->NO04 */
+    { TO10, CO93, L206, DI13A0 },       /* EG61A0 {L206}: N2->NO03 */
+    { TO10, CO92, L205, DI13A0 },       /* EG62A0 {L205}: N1->NO02 */
+    { TO10, CO91, L204, DI13A0 },       /* EG63A0 {L204}: N0->NO01 */
+    { TO10, CO90, 0, DI65A0 },          /* 1->NO00: low (odd) cr byte */
+    { TO25, CO30, 0, DI13A0 },          /* MEM->RO */
+    { TO30, CI12, 0, DI13A0 },          /* V2->NO */
+    { TO65, CO49, 0, DI65A0 },          /* reset URPE/URPU (carry) */
+    { TO70, CI69, 0, DI65A0 },          /* UA->NI21: BO.low + RO */
+    { TI05, CI02, 0, DI13A0 },          /* NI->V2 */
+    { TI06, CU01, 0, DI13A0 },          /* Set S001 -> EF|EE */
     { END_OF_STATUS, 0, 0 }
 };
 
 static const struct msl_timing_chart state_EF_EE[] = {
-    { TI06, INDEX_DONE, 0 },
+    { TO10, CO18, 0, DI13A0 },          /* forcing in NO21 */
+    { TO10, CO97, 0, DI13A0 },          /* 1->NO07 */
+    { TO10, CO96, 0, DI13A0 },          /* 1->NO06 */
+    { TO10, CO95, 0, DI13A0 },          /* 1->NO05 */
+    { TO10, CO94, 0, DI13A0 },          /* 1->NO04 */
+    { TO10, CO93, L206, DI13A0 },       /* EG61A0 {L206}: N2->NO03 */
+    { TO10, CO92, L205, DI13A0 },       /* EG62A0 {L205}: N1->NO02 */
+    { TO10, CO91, L204, DI13A0 },       /* EG63A0 {L204}: N0->NO01 */
+    { TO25, CO30, 0, DI13A0 },          /* MEM->RO (high/even cr byte) */
+    { TO30, CI12, 0, DI13A0 },          /* V2->NO */
+    { TO70, CI68, 0, DI66A0 },          /* UA->NI43: BO.high + RO + carry */
+    { TI05, CI02, 0, DI13A0 },          /* NI->V2: resolved EA */
+    { TI05, CI01, 0, DI67A0 },          /* NI->V1 {SA00}: first operand only */
+    { TI06, CU01, 0, DI13A0 },          /* Set S001 ... */
+    { TI06, CU11, 0, DI66A0 },          /* ... net Reset S001 in EF|EE */
+    { TI06, CU13, 0, DI66A0 },          /* Reset S003 */
+    { TI06, CU17, state_EF_EE_TI06_CU17 }, /* DE52A0 {/FO07+/FO06+/SA00} */
     { END_OF_STATUS, 0, 0 }
 };
 
@@ -463,7 +498,7 @@ static uint8_t pm_reg_exec(struct ge *ge) {
 
 static uint8_t jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(struct ge *ge) {
     return jc_js1_js2_jie(ge) || lon_loll(ge) || loff(ge) || ins(ge) || ens(ge) || nop(ge)
-           || pm_imm_exec(ge) || pm_reg_exec(ge);
+           || pm_imm_exec(ge) || pm_reg_exec(ge) || is_ss_data_op(ge);
 }
 
 /*  PER - PERI: conditions from fo. 46 */
@@ -519,6 +554,10 @@ static const struct msl_timing_chart state_64_65[] = {
     { TO65, EXEC_SMR, is_smr },
     { TO65, EXEC_LA,  is_la  },
     { TO65, EXEC_LPSR, is_lpsr },
+    /* SS data ops arrive here from E7 (absolute source) or from the indexing
+     * micro-cycle EF|EE (modified source) with V1/V2 holding the resolved
+     * effective addresses and L1 the length byte. */
+    { TO65, EXEC_SS,  is_ss_data_op },
     { TO65, JRT_LINK, is_jrt },
     { TO70, CI78, ens },
     { TO70, CI62, per_peri, DE07A0 },
@@ -977,11 +1016,6 @@ static const struct msl_timing_chart state_b8[] = {
     { TI10, CE09, state_b8_TI10_CE09 },
     { END_OF_STATUS, 0, 0 },
 };
-
-SIG(L204) { return BIT(ge->rL2, 4); }
-SIG(L205) { return BIT(ge->rL2, 5); }
-SIG(L206) { return BIT(ge->rL2, 6); }
-
 
 SIG(FA01) { return BIT(ge->ffFA, 1); }
 SIG(not_FA01) { return !FA01(ge); }

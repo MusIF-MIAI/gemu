@@ -126,16 +126,15 @@ struct ge {
     uint16_t rV4; ///< Addresser for external instructions using channel 2
 
     /**
-     * Change/segment-register CACHE used for modified-address resolution.
-     * The eight change registers are hardware-cached: addressing (EXEC_INDEX ->
-     * cr_base) reads this cache, which is updated only by the register
-     * instructions (LR/LA/AMR/SMR/JRT, via cr_wr16) and by ge_seed_segment_bases
-     * — NOT by general memory writes. This mirrors real hardware: a destructive
-     * memory test that writes the change-register shadow RAM at mem[240+2N]
-     * (0xF0-0xFF) as part of testing the 0-8K region does NOT corrupt live
-     * addressing (the CPU keeps using the cached registers), so the test's own
-     * save/restore logic can run. mem[240+2N] remains the shadow RAM the
-     * register instructions read/write and that the test exercises.
+     * Change/segment-register cache (kept in sync by the register
+     * instructions via cr_wr16 and by ge_seed_segment_bases).
+     *
+     * NOTE: modified-address resolution no longer reads this cache. The
+     * indexing micro-cycle ED|EC -> EF|EE (timing tables CPU[7] p64) reads
+     * the change register from memory at 240+2N byte by byte, exactly as the
+     * hardware does — so a memory write to 0xF0-0xFF DOES affect addressing,
+     * as on the real machine. The cache remains only as a debugging/UI aid
+     * pending a decision on removing it.
      */
     uint16_t cr_cache[8];
 
@@ -169,6 +168,18 @@ struct ge {
      * Stores the read signal from memory (e.g. the result of transfer command MEM).
      */
     uint16_t rRO;
+
+    /**
+     * UA (arithmetic unit) output latch
+     *
+     * The UA continuously combines a byte of BO with RO; gemu latches its
+     * output when a "UA in NI" command (CI68 high byte / CI69 low byte) is
+     * issued, and the NI knot sources NS_UA2/NS_UA1 read it back. The binary
+     * carry between the two byte passes travels through the URPE flip-flop
+     * (reset by CO49). Used by the modified-address indexing micro-cycle
+     * ED|EC -> EF|EE (timing tables CPU[7] p64).
+     */
+    uint8_t rUA;
 
     /**
      * Default memory addresser
@@ -342,16 +353,11 @@ struct ge {
      */
     uint8_t AVER:1;
 
-    /**
-     * First-vs-second operand flag for address modification
-     *
-     * Sequencer flag (the flow chart's <SA00> diamond, dwg 14023130) that
-     * distinguishes the FIRST operand (write the resolved effective address
-     * back to V1) from the SECOND operand (V2 only) during the modified-address
-     * indexing micro-cycle (states ED|EC -> EF|EE). Set when entering the index
-     * pass for operand 1, cleared for operand 2.
-     */
-    uint8_t SA00:1;
+    /* The flow chart's <SA00> first-vs-second operand diamond (dwg 14023130)
+     * is bit 0 of the SA state code itself: E6 routes operand 1 to ED (bit 0
+     * set, via its unconditional CU00) and E7 routes operand 2 to EC (bit 0
+     * cleared by CU10 = DI64A0) — see the indexing states in msl-states.c.
+     * No separate flag is needed. */
 
     /**
      * Disable Step By Step

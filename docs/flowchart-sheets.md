@@ -20,7 +20,7 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 
 | CPU[7] render‑pg | Drawing | Sheet title | gemu state(s) | Status |
 |---|---|---|---|---|
-| 23 | 14023130   | FASE ALFA / ALPHA PHASE | `e2/e3`, `e0`, `e4`, `e6`, `e5`, `e7` (+ `ec/ed`, `ee/ef` indexing) | ✅ faithful (alpha + modified-index micro-cycle) |
+| 23 | 14023130   | FASE ALFA / ALPHA PHASE | `e2/e3`, `e0`, `e4`, `e6`, `e5`, `e7` (+ `ec/ed`, `ee/ef` indexing) | ✅ faithful — all rows are documented CO/CI/CE/CU commands; `e5`/`e7` and the indexing pair verified row-by-row against the p63-p64 timing tables |
 | 24 | 14023130A  | DISPLAY SEQUENCE | `00` | ✅ verified row-by-row |
 | 25 | 14023130B  | FORCING SEQUENCE | `08` | ◑ states match; a few bracket conditions need a higher-DPI/physical recheck |
 | 26 | 14023130C  | INTERRUPTION | `F0`,`D2`,`D3`,`D0`,`D1` | ✅ implemented (PSR save → 0x0300) + test |
@@ -35,7 +35,7 @@ title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].
 | 35 | 14023130O  | CHANNEL‑**3** DATA TRANSFER phase | (channel‑3 `rSI` sub-states) | ✗ not modelled |
 | 36 | 14023130₁  | CHANNEL‑**2** DATA TRANSFER phase | `rSI` sub-states `0C/0E` (in), `04/06` (compare), `02/03` (printer out, `CE16`), `0A/0B` (end print) | ◑ recovered (docs/peripherals.md "CAN2 data-transfer phase"); wiring is Phase 3/5 |
 | 38 | 14023130…  | CMI‑CHI sequence | `64/65` (`EXEC_CMI`/`EXEC_CI`) | ◑ hybrid |
-| 44‑45 | 14023130…| EXECUTIVE PHASE OP (data ops) | `64/65` (`EXEC_SS` + `alu_*`) | ◑ hybrid (SS executed by Mechanism B in `e7`/`ef`) |
+| 44‑45 | 14023130…| EXECUTIVE PHASE OP (data ops) | `64/65` (`EXEC_SS` + `alu_*`) | ◑ hybrid (SS executes in beta at TO65 like every other `EXEC_*` one-shot; per-clock executive states p93-p120 not transcribed) |
 
 (Render-pages 28/30 drawing-suffix letters were not legible at 300 DPI; the
 render-page is authoritative. Beyond render-45 the set continues with the
@@ -51,9 +51,21 @@ transcription, or partially transcribed · ⚠️ flagged for recheck · ✗ abs
   corroborated by the operand-fetch analysis and `tests/alpha.c`. The E4/E5
   symmetry (`not_RO07` gating CI60) is the key fix that makes the modifier
   reach V1; verified.
-- **`ec/ed` + `ee/ef`** (modified-address indexing): a hybrid fusion of the
-  sheet-23 `ED|EC`/`EF|EE` boxes (one C-add instead of bit-serial low+high
-  passes). Faithful in result and control flow; 4 unit tests in `tests/exec.c`.
+- **`ec/ed` + `ee/ef`** (modified-address indexing): per-clock transcription of
+  the timing tables CPU[7] **p64** (`ED-EC` fo.15, `EF-EE` fo.16): CO18 +
+  CO97..CO90 force the change-register byte address `1111 nnn b` (= 240/241+2N)
+  onto NO, MEM→RO reads it from the shadow RAM, and the UA byte-adder
+  (CI69 low + CI68 high, carry through URPE, reset by CO49) accumulates
+  `V2 + cr[N]` into V2 (CI02), with CI01 `{SA00}` copying to V1 for the first
+  operand. The `<SA00>` diamond is SA **bit 0** itself: E6 routes operand 1 to
+  `ED` (bit 0 set via its unconditional CU00), E7 routes operand 2 to `EC`
+  (bit 0 cleared by CU10 = DI64A0). Every row is a documented CXXX command;
+  4 unit tests in `tests/exec.c` + the deck + `cc` stay green. Residuals:
+  the DI13/DI64/DI65/DI66/DI67 gate equations are derived from the state codes
+  (names confirmed in the CPU[6] signal index, printed equations not located),
+  and CI68 masks BO bits 15-12 from the high-byte add (fetch residue in the
+  operand register's top quartet; hardware exclusion mechanism not yet found —
+  recheck the UA pages).
 - **`00` DISPLAY** (sheet 24): verified row-by-row — every CO/CI command and
   console-selector (`AFxx`) condition matches. One scan artifact: the chart's
   `V3 → BO` row reads `[AF36]`, which is `[AF30]` (= `RS_V3`); gemu uses `AF30`.
@@ -177,6 +189,29 @@ Evento rows):
   RO7-based decode) and `CI65 = (DI19A0)` confirm the bit-15 operand-fetch fix —
   gemu's `not_RO07` on CI60 captures EC54A0's discriminating term, symmetric with
   E5. ✅
+- **`state_E5`** (p63 bottom, code `1110 0101`, DA-FROM E6): **1:1 match** with
+  the gemu chart (CO10/CO41/CO30/CO00/CI67/CI62/CI65/CI60`{/R007}`/CI02/CI06/
+  CU01), exit box `E7`. ✅
+- **`state_E7`** (p63 top, code `1110 0111`, DA-FROM E5): verified row-by-row
+  (transcribed in full in the msl-states.c comment). Two fixes fell out:
+  `CI12 = DI20A0` / `CI62 (DI12A0)` gates added, and the **routing** was wrong —
+  the table's `CU17 = EC57A0 {/L207}` exits to *beta* on an absolute second
+  operand (the old condition had the polarity inverted) and `CU10 = DI64A0`
+  clears SA bit 0 so a modified second operand enters `EC`. The exit box
+  (`64+65 {/L207}` / `ED+EC {L207}`) requires a bit-1 reset the printed rows
+  lack; a `CU11` is added — the same manual CU10/CU11 ambiguity already noted
+  in `state_E6`. The `EXEC_SS`/`SS_TO_ALPHA`/`INDEX_*` future-state-forcing
+  pseudo-commands this state used to carry are **gone**: SS ops now reach beta
+  through the documented CU rows and execute there (`EXEC_SS` at TO65).
+- **`DI201` polarity** (decode behind `EC56A0`, the E6/E7 modified-address
+  CU03 gate): was transcribed as `DI201 = DI20A`, making EC56A0 constant-0 —
+  the reason the indexing entry previously needed future-state forcing. Fixed
+  to `DI201 = /DI20A` per the xxA/xx1 naming convention used by every sibling
+  signal.
+- **`CO18`** ("forcing in NO21"): assigned the enum constant to the forcings
+  *value* instead of setting `force_mode`, so every CO18+CO9x NO-address build
+  in the machine was inert. Fixed; the full suite (deck bootstrap, PER/PERI,
+  channel transfers) stays green with the forcing active.
 **Caveat:** the OCR renders `CO1x` as `CO1O` (letter O), so plain token-diffs
 miss CO-family commands — cross-check the rendered image when auditing E5/E6/E7
 and the beta/peripheral tables. **Next:** walk pages 61+ row-by-row for the

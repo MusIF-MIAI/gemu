@@ -208,7 +208,15 @@ static inline uint16_t NO_knot(struct ge *ge)
         case KNOT_FORCING_NONE:
             break;
         case KNOT_FORCING_NO_21:
-            no = (no & 0x00ff) | (ge->kNO.forcings << 0);
+            /* "Forcing in NO21" (CO18): the forcings drive quartets 2,1.
+             * In every state that raises CO18 with an address build (the
+             * indexing micro-cycle ED|EC / EF|EE, CPU[7] p64), no register
+             * selection is active while BO/VO latch the knot at TO20 — the
+             * selection commands are pulsed later in the cycle — so the knot
+             * carries the forced byte alone (quartets 4,3 read 0). gemu's
+             * kNO.cmd persists across cycles, so the previous state's
+             * selection must not leak into the forced address here. */
+            no = ge->kNO.forcings;
             break;
         case KNOT_FORCING_NO_43:
             no = (no & 0xff00) | (ge->kNO.forcings << 8);
@@ -271,9 +279,9 @@ static inline uint8_t NI_source(struct ge *ge, enum knot_ni_source source) {
         case NS_RO2:
             return (ge->rRO & 0xf0) >> 4;
         case NS_UA2:
-            return 0;
+            return (ge->rUA & 0xf0) >> 4;
         case NS_UA1:
-            return 0;
+            return (ge->rUA & 0x0f) >> 0;
     }
 }
 
@@ -341,7 +349,22 @@ SIG(DI181) { return !DI18A(ge); }
 SIG(DI18B) { return !DI181(ge); }
 SIG(DI19A) { return !(!BIT(ge->rSA, 1) && DI121(ge) && BIT(ge->rSA, 2)); }
 SIG(DI20A) { return !(BIT(ge->rSA, 1) && BIT(ge->rSA, 2) && DI121(ge)); }
-SIG(DI201) { return DI20A(ge); }
+/* DI201 = /DI20A (the E6|E7 state decode, active-high). Was transcribed as
+ * DI201 = DI20A, which made EC56A0 (the modified-address CU03 gate in E6/E7,
+ * timing tables CPU[7] p63) a constant 0 — the reason the indexing micro-cycle
+ * previously needed future-state forcing instead of its documented CU rows. */
+SIG(DI201) { return !DI20A(ge); }
+/* State decodes for the modified-address indexing micro-cycle (timing tables
+ * CPU[7] p64, "FASE ALFA ED-EC / EF-EE"). The xxA equations are derived from
+ * the state codes (ED|EC = 1110 11x0, EF|EE = 1110 111x, E7 = 1110 0111); the
+ * signal names are confirmed by the CPU[6] signal index but their printed
+ * equations have not been located — confidence: medium. */
+SIG(DI13A) { return !(DI101(ge) && BIT(ge->rSA, 3) && BIT(ge->rSA, 2)); }  /* ED|EC + EF|EE */
+SIG(DI64A) { return !(DI121(ge) && BIT(ge->rSA, 2) &&
+                      BIT(ge->rSA, 1) && BIT(ge->rSA, 0)); }               /* E7 only */
+SIG(DI65A) { return !(!DI13A(ge) && !BIT(ge->rSA, 1)); }                   /* ED|EC only */
+SIG(DI66A) { return !(!DI13A(ge) && BIT(ge->rSA, 1)); }                    /* EF|EE only */
+SIG(DI67A) { return !(!DI66A(ge) && BIT(ge->rSA, 0)); }                    /* EF|EE, 1st operand {SA00} */
 SIG(DI21A) { return !( DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && !BIT(ge->rSA, 2)); }
 SIG(DI211) { return !DI21A(ge); }
 SIG(DI22A) { return !(DI141(ge) && BIT(ge->rSA, 4) && BIT(ge->rSA, 3) && BIT(ge->rSA, 2)); }
@@ -418,6 +441,7 @@ SIG(DE08A0) { return !(!BIT(ge->rFO, 1) && DI062(ge) && DO071(ge)); }
 SIG(DA25A0) { return !DA25A(ge); }
 SIG(DI11A0) { return !DI11A(ge); }
 SIG(DI12A0) { return !DI12A(ge); }
+SIG(DI13A0) { return !DI13A(ge); }
 SIG(DI17A0) { return !DI17A(ge); }
 SIG(DI18A0) { return !DI18A(ge); }
 SIG(DI18B0) { return !DI18B(ge); }
@@ -433,6 +457,10 @@ SIG(DI29A0) { return !DI29A(ge); }
 SIG(DI57A0) { return !DI57A(ge); }
 SIG(DI57B0) { return !DI57B(ge); }
 SIG(DI60A0) { return 1; } // TODO: Missing page in manual (!)
+SIG(DI64A0) { return !DI64A(ge); }
+SIG(DI65A0) { return !DI65A(ge); }
+SIG(DI66A0) { return !DI66A(ge); }
+SIG(DI67A0) { return !DI67A(ge); }
 SIG(DI79A0) { return !DI79A(ge); }
 SIG(DI82A0) { return !DI82A(ge); }
 SIG(DI83A0) { return !DI83A(ge); }

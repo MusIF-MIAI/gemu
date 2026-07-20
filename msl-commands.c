@@ -43,7 +43,11 @@ static void CO12(struct ge* ge) { ge->kNO.cmd = KNOT_V2_IN_NO; }
 static void CO13(struct ge* ge) { ge->kNO.cmd = KNOT_V3_IN_NO; }
 static void CO14(struct ge* ge) { ge->kNO.cmd = KNOT_V4_IN_NO; }
 static void CO16(struct ge* ge) { ge->kNO.cmd = KNOT_L2_IN_NO; }
-static void CO18(struct ge *ge) { ge->kNO.forcings = KNOT_FORCING_NO_21; }
+/* "Forcing in NO21": enable the program forcings (CO90-CO97) onto quartets
+ * 2,1 of the NO knot. Previously assigned the enum constant to the forcings
+ * VALUE (leaving force_mode off), which made every CO18+CO9x address build
+ * inert. */
+static void CO18(struct ge *ge) { ge->kNO.force_mode = KNOT_FORCING_NO_21; }
 
 static void CI11(struct ge* ge) { CO11(ge);                          }
 static void CI12(struct ge* ge) { CO12(ge);                          }
@@ -183,21 +187,15 @@ static void mem_wr16_op(struct ge* ge, uint16_t a, uint16_t v) {
  *
  * The GE-130 resolves this *during operand fetch*: an absolute field is left in
  * V verbatim (bit 15 = 0, so V < 0x8000); a modified field is reduced to its
- * 12-bit displacement (top quartet zeroed) in V and the change register is then
- * added by the indexing micro-cycle ED|EC -> EF|EE (EXEC_INDEX below), which
- * leaves the resolved EA in V2 and (for the first operand, SA00) copies it to V1.
+ * 12-bit displacement in V and the change register is then added by the
+ * indexing micro-cycle ED|EC -> EF|EE (per-clock states in msl-states.c,
+ * timing tables CPU[7] p64), which reads the change register from mem[240+2N]
+ * byte by byte, leaves the resolved EA in V2 and (for the first operand,
+ * SA = ED|EF with bit 0 set) copies it to V1 (CI01).
  * So after fetch the operand registers hold the RESOLVED effective address and
  * execution uses them directly — eff_v1_l2 / CI00s / EXEC_SS just mask to the
  * 15-bit address space. The change registers live at mem[240+2N] and default to
  * base[N] = N<<12 at reset (ge_clear); programs reload a base via LR/LA/AMR. */
-
-/* Read change register N for modified-address resolution. Reads the hardware
- * CACHE (cr_cache), not the mem[240+2N] shadow RAM, so a destructive memory test
- * writing 0xF0-0xFF does not corrupt live addressing. The cache is kept in sync
- * with register-instruction writes by cr_wr16 and seeded by ge_seed_segment_bases. */
-static uint16_t cr_base(struct ge* ge, int n) {
-    return ge->cr_cache[n & 7];
-}
 
 /* Effective V1 for single-address PM/SI ops: V1 already holds the resolved EA
  * (absolute field, or change_register+displacement after the indexing cycle). */
@@ -208,28 +206,6 @@ static uint16_t eff_v1_l2(struct ge* ge) { return ge->rV1 & 0x7FFFu; }
 static void CI00s(struct ge* ge) {
     ge->rPO = NI_knot(ge) & 0x7FFFu;
 }
-
-/* Modified-address indexing (flow chart ED|EC, the low-byte add, fused with the
- * EF|EE high-byte/carry add into one hybrid step). The displacement sits in
- * V2 bits 0-11 (top quartet was zeroed during the high-byte read for a modified
- * address); the modifier N is L2 bits 4-6 (= address bits 12-14, since L2 holds
- * the current operand's addr-hi byte). EA = change_register[N] + displacement,
- * 16-bit wrap (carry beyond word 2 lost). The resolved EA is written to V2 and,
- * for the first operand (SA00), copied to V1. */
-static void EXEC_INDEX(struct ge* ge) {
-    uint8_t  n    = (ge->rL2 >> 4) & 7;
-    uint16_t disp = ge->rV2 & 0x0FFFu;
-    uint16_t ea   = (uint16_t)(cr_base(ge, n) + disp);
-    ge->rV2 = ea;
-    if (ge->SA00)
-        ge->rV1 = ea;
-}
-
-/* Index-cycle sequencing helpers (explicit future-state forcing, like
- * SS_TO_ALPHA — see msl-states.c for the routing). */
-static void INDEX_OP1(struct ge* ge)  { ge->SA00 = 1; ge->future_state = 0xec; }
-static void INDEX_OP2(struct ge* ge)  { ge->SA00 = 0; ge->future_state = 0xec; }
-static void INDEX_NEXT(struct ge* ge) { ge->future_state = 0xee; }
 
 static void EXEC_LR (struct ge* ge) { cr_wr16(ge, reg_addr_of(ge), mem_rd16_op(ge, eff_v1_l2(ge))); }
 static void EXEC_STR(struct ge* ge) { mem_wr16_op(ge, eff_v1_l2(ge), cr_rd16(ge, reg_addr_of(ge))); }
@@ -248,14 +224,18 @@ static void EXEC_CMR(struct ge* ge) { alu_cmr(ge, cr_rd16(ge, reg_addr_of(ge)), 
 static void EXEC_AMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_amr(ge, &r, mem_rd16_op(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
 static void EXEC_SMR(struct ge* ge) { uint16_t r = cr_rd16(ge, reg_addr_of(ge)); alu_smr(ge, &r, mem_rd16_op(ge, eff_v1_l2(ge))); cr_wr16(ge, reg_addr_of(ge), r); }
 
-/* SS (Storage-to-Storage) data-op execution commands (Wave 5 / Mechanism B).
+/* SS (Storage-to-Storage) data-op execution (hybrid one-shot).
  *
- * EXEC_SS fires from state_E7 at TI06, after CI02 at TI05 has loaded V2
- * (source address) and V1 (destination address) was already set by the
- * preceding E5 pass.  SS_TO_ALPHA then overrides the future state to
- * 0xe2 (alpha), breaking out of the operand-fetch micro-loop.
+ * EXEC_SS fires in the beta phase (state 64|65 family, TO65) like the other
+ * EXEC_* hybrids, once the alpha operand-fetch micro-loop has resolved both
+ * operands: E7 routes an SS op to beta via its documented CU rows (absolute
+ * second operand), or through the indexing micro-cycle ED|EC -> EF|EE first
+ * (modified second operand). The per-clock executive-phase recipes for the
+ * data ops (CPU[7] sheets 44+ / timing tables p93-p120) are NOT transcribed —
+ * the operation happens once here via the alu_* helpers; see
+ * docs/flowchart-sheets.md for the fidelity roadmap.
  *
- * Operand layout at TI06 of state_E7:
+ * Operand layout on entering beta:
  *   V1 = destination address
  *   V2 = source address
  *   L1 = length byte
@@ -382,13 +362,6 @@ static void EXEC_SS(struct ge *ge)
     }
 }
 
-/* Force future state to alpha (0xe2).
- * Must be placed AFTER the regular CU commands in state_E7 so it wins. */
-static void SS_TO_ALPHA(struct ge *ge)
-{
-    ge->future_state = 0xe2;
-}
-
 /* EPER "examine abnormal conditions": load the channel-1 peripheral status
  * into RO so the qualitative-result decode (DU95 = !RO1 && !RO2 && RO6 = "no
  * error") reflects the real status. Our integrated-reader feed is always
@@ -419,8 +392,34 @@ static void CI64(struct ge *ge) { ge->kNI.ni4 = NS_RO1; }
 static void CI65(struct ge *ge) { ge->kNI.ni3 = NS_RO1; }
 static void CI66(struct ge *ge) { ge->kNI.ni2 = NS_RO1; }
 static void CI67(struct ge *ge) { ge->kNI.ni1 = NS_RO1; }
-static void CI68(struct ge *ge) { ge->kNI.ni4 = NS_UA2; ge->kNI.ni3 = NS_UA1; }
-static void CI69(struct ge *ge) { ge->kNI.ni2 = NS_UA2; ge->kNI.ni1 = NS_UA1; }
+/* "UA in NI": the same command selects which byte of BO drives the UA and
+ * which half of NI the UA output drives (cpu fo. 125-126). gemu latches the
+ * UA output (BO byte + RO, binary, carry through URPE) at command time; the
+ * NI knot then reads the latch through NS_UA2/NS_UA1.
+ *
+ * Used by the modified-address indexing micro-cycle (CPU[7] p64): ED|EC adds
+ * the change-register low byte (CI69, carry FFs freshly reset by CO49) and
+ * EF|EE adds the high byte with the propagated carry (CI68).
+ *
+ * CI68 masks BO bits 15-12 to the displacement's quartet 3: the operand field
+ * is a 12-bit displacement (bits 12-14 modifier, 15 the modify flag, both
+ * stripped during fetch), and the fetch leaves quartet 4 of the operand
+ * register holding counting-network residue that must not enter the add. The
+ * hardware mechanism for excluding it has not been located in the timing
+ * tables — open question; recheck the UA pages before trusting bit-level
+ * fidelity here. */
+static void CI68(struct ge *ge) {
+    unsigned sum = ((ge->rBO >> 8) & 0x0f) + (ge->rRO & 0xff) + ge->URPE;
+    ge->rUA  = (uint8_t)sum;
+    ge->URPE = sum > 0xff;
+    ge->kNI.ni4 = NS_UA2; ge->kNI.ni3 = NS_UA1;
+}
+static void CI69(struct ge *ge) {
+    unsigned sum = (ge->rBO & 0xff) + (ge->rRO & 0xff) + ge->URPE;
+    ge->rUA  = (uint8_t)sum;
+    ge->URPE = sum > 0xff;
+    ge->kNI.ni2 = NS_UA2; ge->kNI.ni1 = NS_UA1;
+}
 
 /* Commands To Set And Reset FF Of Condition */
 /* ----------------------------------------- */
