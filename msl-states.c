@@ -44,6 +44,13 @@ SIG(L204) { return BIT(ge->rL2, 4); }
 SIG(L205) { return BIT(ge->rL2, 5); }
 SIG(L206) { return BIT(ge->rL2, 6); }
 
+/* Register-number bits of the register-instruction format (L1 bits 4-6),
+ * gating the change-register address build CO91/CO92/CO93 in the LA and
+ * LR-family beta sheets (cp07 fo.36/37, equations EG60A0/EG59A0/EG58A0). */
+static uint8_t LI04(struct ge *ge) { return BIT(ge->rL1, 4); }
+static uint8_t LI05(struct ge *ge) { return BIT(ge->rL1, 5); }
+static uint8_t LI06(struct ge *ge) { return BIT(ge->rL1, 6); }
+
 /* Initialitiation */
 /* --------------- */
 
@@ -772,28 +779,51 @@ static const struct msl_timing_chart beta_64_control[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-/* CPU[7] fo.10: JRT preliminary beta sheet. */
+/* cp07 fo.33: JRT beta sheet, verified row-by-row. V1 ends up holding the
+ * RETURN address (CO10 PO->NO at TO10 -> BO at TO20 -> CO01 at TO40) and PO
+ * the jump target (CI12 V2->NO at TO30 -> BO relatch at TO50 -> CI00 {AVER
+ * JRT} at TI05). The link write itself happens in EA/EB (fo.34/35), reached
+ * via CU03: the forced address 0xFF/0xFE = change register 7. */
 static const struct msl_timing_chart beta_64_jrt[] = {
-    { TO10, CO10, jc_js1_js2_jie },
-    { TO30, CI12, jc_js1_js2_jie },
-    { TO40, CO01, jc_js1_js2_jie },
-    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
-    { TO65, JRT_LINK, is_jrt },
-    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
-    { TI06, CU01, not_per_peri, DE00A0 },
+    { TO10, CO10, 0 },               /* PO -> NO (return address) */
+    { TO30, CI12, 0 },               /* V2 -> NO (jump target) */
+    { TO40, CO01, 0 },               /* NI -> V1: V1 = return address */
+    { TO65, CO49, 0 },
+    { TI05, CI00s, jc_js1_js2_jie_condition_verified },  /* {AVER.JRT} */
+    { TI06, CU01, 0 },               /* sets first */
+    { TI06, CU07, 0 },
+    { TI06, CU03, 0 },               /* {JRT}: -> EA */
     { TI06, CU10, 0 },
-    { TI06, CU07, DE00A0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
-/* CPU[7] fo.10: LA preliminary beta sheet. */
+/* cp07 fo.36: LA beta sheet. The forcings build the change-register LOW-byte
+ * address 1111 nnn 1 (= 241+2N, N = L1 bits 6-4 via {LI06}/{LI05}/{LI04})
+ * onto NO21; CO02 stores it to V2 for the EA/EB write walk. V1 keeps the
+ * operand EA from alpha — it is the DATUM the EA/EB states write into the
+ * register cell. (CI89 SET ALTO {FUL4} not modeled. The printed CI41/CI42
+ * "CONTA DA 00/04" rows are NOT carried: they configure the CI-side counting
+ * network gemu does not model yet, and routing them through the single CN
+ * would corrupt the forced address; the net V2 result — the register-cell
+ * low-byte address — is produced by the passthrough.) */
 static const struct msl_timing_chart beta_64_la[] = {
-    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
-    { TO65, EXEC_LA, is_la },
-    { TI06, CU01, not_per_peri, DE00A0 },
+    { TO10, CO18, 0 },               /* forcing in NO21 */
+    { TO10, CO97, 0 },
+    { TO10, CO96, 0 },
+    { TO10, CO95, 0 },
+    { TO10, CO94, 0 },
+    { TO10, CO93, LI06 },            /* N2 -> NO03 */
+    { TO10, CO92, LI05 },            /* N1 -> NO02 */
+    { TO10, CO91, LI04 },            /* N0 -> NO01 */
+    { TO10, CO90, 0 },               /* 1 -> NO00: odd (low) byte */
+    { TO40, CO02, 0 },               /* NI -> V2: register-cell address */
+    { TO65, CO49, 0 },
+    { TI05, CI05, 0 },               /* NI -> L1 */
+    { TI06, CU01, 0 },               /* sets first */
+    { TI06, CU07, 0 },
+    { TI06, CU03, 0 },               /* -> EA */
     { TI06, CU10, 0 },
-    { TI06, CU07, DE00A0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
@@ -1638,4 +1668,69 @@ static const struct msl_timing_chart state_eb[] = {
     { TI06, CU00, 0 },
     { TI06, CU13, 0, DI82A0 },
     { END_OF_STATUS, 0, 0 },
+};
+
+/* Instruction-side EA/EB (cp07 fo.34/35, "JRT - SR - SL - LA", DA-FROM
+ * 64+65 / 40+42): the two-byte register-cell write walk. EA writes the LOW
+ * byte, EB the HIGH byte, V1 holds the datum (JRT: the return address; LA:
+ * the operand EA), and the cell address comes from the forced 0xFF (= change
+ * register 7, {SR+SL+JRT}) or from V2 built in the LA beta sheet; CO40/CO41
+ * walk it down for the second byte. SR/SL will route here once their
+ * executive states (cp07 fo.152-155) are transcribed. NOTE: the write goes
+ * through the ordinary memory path, so cr_cache (a debug aid) is not synced
+ * by JRT/LA anymore -- live addressing reads memory, as on the machine. */
+static uint8_t is_jrt_or_la(struct ge *ge) { return is_jrt(ge) || is_la(ge); }
+
+static const struct msl_timing_chart state_ea_instr[] = {
+    { TO10, CO18, is_jrt },          /* {SR+SL+JRT}: forced address... */
+    { TO10, CO97, 0 },               /* ...1111 1111 = 0xFF = cr7 low byte */
+    { TO10, CO96, 0 },
+    { TO10, CO95, 0 },
+    { TO10, CO94, 0 },
+    { TO10, CO93, 0 },
+    { TO10, CO92, 0 },
+    { TO10, CO91, 0 },
+    { TO10, CO90, 0 },
+    { TO10, CO12, is_la },           /* {LA}: address from V2 (beta build) */
+    { TO10, CO40, 0 },               /* decreasing... */
+    { TO10, CO41, 0 },               /* ...count: next byte address */
+    { TO25, CO31, 0 },               /* RO -> MEM (ED92A0) */
+    { TO30, CI11, 0 },               /* V1 -> NO: the datum */
+    { TO40, CO02, 0 },               /* NI -> V2: address-1 */
+    { TO50, CI33, 0 },               /* NO21 -> RO: datum low */
+    { TI06, CU00, 0 },               /* -> EB */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_eb_instr[] = {
+    { TO10, CO12, 0 },               /* V2 -> NO: the walked-down address */
+    { TO10, CO97, 0 },               /* forcings as printed (no CO18: inert) */
+    { TO10, CO96, 0 },
+    { TO10, CO95, 0 },
+    { TO10, CO94, 0 },
+    { TO10, CO93, 0 },
+    { TO10, CO92, 0 },
+    { TO10, CO91, 0 },
+    { TO10, CO90, 0 },
+    { TO10, CO40, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO31, 0 },               /* RO -> MEM */
+    { TO30, CI11, 0 },
+    { TO40, CO02, 0 },
+    { TO50, CI32, 0 },               /* NO43 -> RO: datum high */
+    { TI06, CU00, 0 },               /* sets first */
+    { TI06, CU13, 0 },               /* -> E2/E3 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_variant ea_variants[] = {
+    { is_jrt_or_la, state_ea_instr, "ea-jrt-la",     "cp07 fo.34" },
+    { beta_always,  state_ea,       "ea-peripheral", "cp07 fo.60" },
+    { 0, 0, 0, 0 },
+};
+
+static const struct msl_timing_variant eb_variants[] = {
+    { is_jrt_or_la, state_eb_instr, "eb-jrt-la",     "cp07 fo.35" },
+    { beta_always,  state_eb,       "eb-peripheral", "cp07 fo.61" },
+    { 0, 0, 0, 0 },
 };
