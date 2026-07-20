@@ -657,6 +657,19 @@ static uint8_t pm_imm_exec(struct ge *ge) {
  * beta with V1=I1 address, L1=register-code aux char. */
 static uint8_t is_lr (struct ge *ge) { return ge->rFO == LR_OPCODE;  }
 static uint8_t is_mvc(struct ge *ge) { return ge->rFO == MVC_OPCODE; }
+static uint8_t is_cmc(struct ge *ge) { return ge->rFO == CMC_OPCODE; }
+static uint8_t is_xc (struct ge *ge) { return ge->rFO == XC_OPCODE;  }
+static uint8_t is_xoc_nc(struct ge *ge) {
+    return ge->rFO == XC_OPCODE || ge->rFO == OC_OPCODE ||
+           ge->rFO == NC_OPCODE;
+}
+static uint8_t is_oc_or_nc(struct ge *ge) {
+    return ge->rFO == OC_OPCODE || ge->rFO == NC_OPCODE;
+}
+static uint8_t is_xc_or_oc(struct ge *ge) {
+    return ge->rFO == XC_OPCODE || ge->rFO == OC_OPCODE;
+}
+static uint8_t not_FA03(struct ge *ge) { return !BIT(ge->ffFA, 3); }
 /* SS byte-loop terminal count: L1 low byte underflowed to all ones — the
  * same convention as the channel length (RL1U1): the loop runs L1+1 times. */
 static uint8_t L1_21_ones(struct ge *ge) { return (ge->rL1 & 0xff) == 0xff; }
@@ -934,6 +947,30 @@ static const struct msl_timing_chart beta_64_undocumented[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+static uint8_t xc_first_pass(struct ge *ge) {
+    return is_xc(ge) && SA01_pass1(ge);
+}
+static uint8_t xc_byte_nonzero(struct ge *ge) {
+    return is_xc(ge) && ge->rUA != 0;
+}
+static uint8_t cmc_byte_differs(struct ge *ge) { return ge->rUA != 0; }
+static uint8_t cmc_borrow(struct ge *ge) { return !ge->URPE; }
+static uint8_t cmc_done(struct ge *ge) {
+    return L1_21_ones(ge) || ge->rUA != 0;
+}
+
+/* XC-OC-NC (cp07 fo.144-147) and CMC (fo.76-79), verified row-by-row.
+ * Both share the MVC-style byte loop (source byte staged at V2++ in 60|62
+ * with the CI-phase length count, result/write at V1++ in 40|42); the logic
+ * family adds the 50|52 UA pass with the mode selectors exactly as gemu's
+ * CI68 table expects (CI45 logic + CI46 {OC+NC} + CI47 {XC+OC}: XC=xor,
+ * OC=or, NC=and), and CMC's 50|52 is a per-byte compare: CO48 presets the
+ * borrow EVERY pass, CI68 subtracts (op1 byte - op2 byte), and 40|42 exits
+ * early on the first difference {(L1_2,1=1i) + /(dRO=0i)} with the flags of
+ * that pass: FI04 armed on the first byte (CI74 {/SA01}) and reset on
+ * borrow {/URPE}, FI05 set on a differing byte {/(dRO=0)} -- the FA04/FA05
+ * pair lands on the manual's compare table (equal=2, low=1, high=3). */
+
 /* MVC (cp07 fo.73/74/75, verified row-by-row): the SS byte-copy loop.
  * beta contributes only CO49 + the exit to 60|62 (all datapath rows on the
  * shared sheet are {MVI}-gated); 60|62 reads the source byte at V2++ and
@@ -959,6 +996,8 @@ static const struct msl_timing_variant beta_64_variants[] = {
                                       "beta-immediate", "CPU[7] fo.41/73/76" },
     { per_peri,          beta_64_per,     "beta-per",      "CPU[7] fo.13" },
     { is_mvc,            beta_64_mvc,     "beta-mvc",      "cp07 fo.73" },
+    { is_cmc,            beta_64_mvc,     "beta-cmc",      "cp07 fo.76" },
+    { is_xoc_nc,         beta_64_mvc,     "beta-xoc-nc",   "cp07 fo.144" },
     { is_ss_data_op,     beta_64_ss,      "beta-ss",       "CPU[7] fo.44-45" },
     { beta_always,       beta_64_undocumented,
                                            "beta-undocumented", "compat aa7ed63" },
@@ -1182,6 +1221,98 @@ static const struct msl_timing_chart exec_40_mvc[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
+static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
+    { TO10, CO12, 0 },               /* V2 -> NO */
+    { TO10, CO41, 0 },               /* V2 + 1 */
+    { TO25, CO30, not_FA03 },        /* {/FA03} MEM -> RO */
+    { TO30, CI15, 0 },               /* L1 -> NO */
+    { TO30, CI40, 0 },
+    { TO30, CI44, 0 },
+    { TO30, CI41, 0 },               /* CI-phase: length - 1 */
+    { TO40, CO02, 0 },               /* V2 = V2 + 1 */
+    { TO70, CI60, 0 },
+    { TO70, CI65, 0 },               /* stage source byte */
+    { TI05, CI05, 0 },
+    { TI06, CI74, xc_first_pass },   /* SET FI04 {/SA01.XC} */
+    { TI06, CI85, xc_first_pass },   /* RESET FI05 {/SA01.XC} */
+    { TI06, CU04, 0 },
+    { TI06, CU15, 0 },               /* -> 50|52 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_50_xoc[] = {   /* fo.146 */
+    { TO10, CO11, 0 },               /* V1 -> NO */
+    { TO25, CO30, 0 },               /* MEM -> RO: destination byte */
+    { TO30, CI15, 0 },               /* L1 -> NO: staged source in BO high */
+    { TO30, CI45, 0 },               /* logic mode */
+    { TO30, CI46, is_oc_or_nc },     /* {OC+NC} */
+    { TO30, CI47, is_xc_or_oc },     /* {XC+OC} */
+    { TO50, CO48, is_xc_or_oc },     /* {XC+OC} as printed */
+    { TO70, CI68, 0 },               /* UA logic result -> NI43 */
+    { TI05, CI05, 0 },               /* restage result */
+    { TI06, CU14, 0 },               /* -> 40|42 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_40_xoc[] = {   /* fo.147 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },               /* V1 + 1 */
+    { TO25, CO31, 0 },               /* write result byte */
+    { TO30, CI15, 0 },
+    { TO40, CO01, 0 },
+    { TO50, CI32, 0 },
+    { TI06, CI75, xc_byte_nonzero }, /* SET FI05 {XC./(dRO=0i)} */
+    { TI06, CU07, L1_21_ones },      /* terminal -> E2/E3 */
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },               /* loop -> 60+62 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
+    { TO10, CO12, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO30, 0 },               /* MEM -> RO: operand-2 byte */
+    { TO30, CI15, 0 },
+    { TO30, CI40, 0 },
+    { TO30, CI44, 0 },
+    { TO30, CI41, 0 },
+    { TO40, CO02, 0 },
+    { TO70, CI60, 0 },               /* {CMC} */
+    { TO70, CI65, 0 },
+    { TI05, CI05, 0 },
+    { TI06, CI74, SA01_pass1 },      /* SET FI04 {/SA01} */
+    { TI06, CI85, SA01_pass1 },      /* RESET FI05 {/SA01} */
+    { TI06, CU04, 0 },
+    { TI06, CU15, 0 },               /* -> 50|52 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_50_cmc[] = {   /* fo.78 */
+    { TO10, CO11, 0 },               /* V1 -> NO */
+    { TO25, CO30, 0 },               /* MEM -> RO: operand-1 byte */
+    { TO30, CI15, 0 },
+    { TO30, CI47, 0 },               /* subtract */
+    { TO50, CO48, 0 },               /* borrow preset EVERY byte */
+    { TO70, CI68, 0 },               /* op1 - op2 -> NI43 */
+    { TI05, CI05, 0 },
+    { TI06, CU14, 0 },               /* -> 40|42 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart exec_40_cmc[] = {   /* fo.79 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO30, CI15, 0 },
+    { TO40, CO01, 0 },               /* V1 + 1 */
+    { TO50, CI32, 0 },
+    { TI06, CI75, cmc_byte_differs },/* SET FI05 {/(dRO=0i)} */
+    { TI06, CI84, cmc_borrow },      /* RESET FI04 {/URPE} */
+    { TI06, CU07, cmc_done },        /* {(L1=1i) + /(dRO=0i)} per exit box */
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
 static const struct msl_timing_variant exec_60_variants[] = {
     { beta_register, exec_60_register, "exec-register-60|62", "CPU[7] fo.38" },
     { is_mvi,        exec_60_mvi,      "exec-mvi-60|62",      "CPU[7] fo.74" },
@@ -1189,6 +1320,8 @@ static const struct msl_timing_variant exec_60_variants[] = {
                                       "exec-immediate-60|62", "CPU[7] fo.42" },
     { is_cmi,        exec_60_cmi,      "exec-cmi-60|62",      "CPU[7] fo.77" },
     { is_mvc,        exec_60_mvc,      "exec-mvc-60|62",      "cp07 fo.74" },
+    { is_cmc,        exec_60_cmc,      "exec-cmc-60|62",      "cp07 fo.77" },
+    { is_xoc_nc,     exec_60_xoc,      "exec-xoc-60|62",      "cp07 fo.145" },
     { 0, 0, 0, 0 },
 };
 
@@ -1197,6 +1330,8 @@ static const struct msl_timing_variant exec_50_variants[] = {
     { beta_immediate_logic, exec_50_immediate,
                                       "exec-immediate-50|52", "CPU[7] fo.43" },
     { is_cmi,        exec_50_cmi,      "exec-cmi-50|52",      "CPU[7] fo.78" },
+    { is_cmc,        exec_50_cmc,      "exec-cmc-50|52",      "cp07 fo.78" },
+    { is_xoc_nc,     exec_50_xoc,      "exec-xoc-50|52",      "cp07 fo.146" },
     { 0, 0, 0, 0 },
 };
 
@@ -1207,6 +1342,8 @@ static const struct msl_timing_variant exec_40_variants[] = {
                                       "exec-immediate-40|42", "CPU[7] fo.44" },
     { is_cmi,        exec_40_cmi,      "exec-cmi-40|42",      "CPU[7] fo.79" },
     { is_mvc,        exec_40_mvc,      "exec-mvc-40|42",      "cp07 fo.75" },
+    { is_cmc,        exec_40_cmc,      "exec-cmc-40|42",      "cp07 fo.79" },
+    { is_xoc_nc,     exec_40_xoc,      "exec-xoc-40|42",      "cp07 fo.147" },
     { 0, 0, 0, 0 },
 };
 
