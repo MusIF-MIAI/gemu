@@ -410,25 +410,181 @@ static const struct msl_timing_chart state_EF_EE[] = {
 /* Interruption + LPSR */
 /* ------------------- */
 
-/* Flow charts 14023130C "INTERRUPTION" (CPU[7] render-pg 26) and 14023130D
- * "LPSR SEQUENCE" (render-pg 27). Entered from alpha (e2/e3) when INTE =
- * RINT & /MASC routes there (the existing CU04 path: 0xE2 -> 0xF0). The graph
- * F0 -> D2 -> D3 -> D0 -> D1 -> C2 -> C3 -> C0 -> C1 -> alpha saves the current
- * PSR to 0x0300 and loads the new PSR (handler) from 0x0304. Each box is one
- * hybrid command (INT_*, msl-commands.c) issued at TI06 that performs its byte
- * transfer + V1 walk + routing; the states are otherwise inert. The earlier
- * `INTE` diamond and CU04 routing already existed — only these target states
- * were missing (empty slots). RINT is never asserted by the deck/tests, so the
- * path is dormant there; tests/exec.c drives it explicitly. */
-static const struct msl_timing_chart state_F0[] = { { TI06, INT_F0, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_D2[] = { { TI06, INT_D2, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_D3[] = { { TI06, INT_D3, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_D0[] = { { TI06, INT_D0, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_D1[] = { { TI06, INT_D1, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_C2[] = { { TI06, INT_C2, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_C3[] = { { TI06, INT_C3, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_C0[] = { { TI06, INT_C0, 0 }, { END_OF_STATUS, 0, 0 } };
-static const struct msl_timing_chart state_C1[] = { { TI06, INT_C1, 0 }, { END_OF_STATUS, 0, 0 } };
+/* Interruption + LPSR chain, per-clock (cp07 timing charts fo.22-31, dwg
+ * 14024137, read from source at 600dpi):
+ *
+ *   E2/E3 --INTE--> F0 -> D2 -> D3 -> D0 -> D1 -> C2 -> C3 -> C0 -> C1 -> E2/E3
+ *   LPSR (beta 64|65, fo.27) ------------------------^ (C2 header: "DA-FROM 64+65 D1")
+ *
+ * F0 forces 0x0300 into V1 (CI19 + C091/C090 -> NO43, latched into BO at the
+ * TO50 relatch, stored by CI01). The D-states WRITE the old PSR at V1++:
+ * D2 = status byte from the FA-gated forcings via NO43 (FA06->b0, FA05->b4,
+ * FA04->b5), D3 = zero (its forcing rows have no mode command, and the NO
+ * selection pulse has decayed by TO50 -> NO_UNDRIVEN), D0/D1 = PO high/low
+ * (CI10 PO->NO at TO30, CI32/CI33 at TO50). The C-states READ the new PSR at
+ * V1++ (0x0304 onward for the interrupt path; the LPSR operand address for
+ * LPSR): C2 = status byte -> FI04/05/06 (set, then conditional reset on the
+ * R0 bits — reset listed after set, as the hardware resolves it), C3 = skip
+ * byte, C0/C1 = PO high/low assembled through NI (RO halves + the BO
+ * passthrough of the counting network, CI00s at TI05).
+ *
+ * TI06 CU rows are ordered sets-before-resets so gemu's sequential dispatch
+ * preserves the hardware "reset prevails" rule; the printed row order on the
+ * sheets is data-equivalent. All exits are unconditional per the sheets. */
+
+static uint8_t FA04(struct ge *ge) { return BIT(ge->ffFA, 4); }
+static uint8_t FA05(struct ge *ge) { return BIT(ge->ffFA, 5); }
+static uint8_t FA06(struct ge *ge) { return BIT(ge->ffFA, 6); }
+
+static const struct msl_timing_chart state_F0[] = {          /* fo.22 */
+    { TO30, CI19, 0 },              /* forcing in NO43 */
+    { TO30, CO91, 0 },              /* 1 -> NO09 */
+    { TO30, CO90, 0 },              /* 1 -> NO08: NO = 0x0300 */
+    { TO50, NO_UNDRIVEN, 0 },       /* selection decayed: BO relatch reads
+                                     * the pure forced 0x0300 */
+    { TI05, CI01, 0 },              /* NI -> V1 (save address) */
+    { TI06, INT_ACK, 0 },           /* gemu request handshake (see command) */
+    { TI06, CU01, 0 },              /* Set S001 */
+    { TI06, CU15, 0 },              /* Reset S005 -> D2 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_D2[] = {          /* fo.23 */
+    { TO10, CO11, 0 },              /* V1 -> NO (address latch at TO20) */
+    { TO10, CO41, 0 },              /* count from 00 */
+    { TO25, CO31, 0 },              /* RO -> MEM (fires at TO65 on rRO) */
+    { TO30, CI19, 0 },              /* forcing in NO43 */
+    { TO30, CO90, FA06 },           /* status bit 0 */
+    { TO30, CO94, FA05 },           /* status bit 4 */
+    { TO30, CO95, FA04 },           /* status bit 5 */
+    { TO40, CO01, 0 },              /* NI -> V1 : V1+1 */
+    { TO50, NO_UNDRIVEN, 0 },       /* selection decayed by TO50 */
+    { TO50, CI32, 0 },              /* NO43 -> RO: the status byte */
+    { TI06, CU00, 0 },              /* -> D3 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_D3[] = {          /* fo.24 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO31, 0 },
+    { TO30, CO90, FA06 },           /* forcings fire but no mode command: */
+    { TO30, CO94, FA05 },           /*  they reach nothing (cf. D1, where   */
+    { TO30, CO95, FA04 },           /*  they must not corrupt PO-low)      */
+    { TO40, CO01, 0 },
+    { TO50, NO_UNDRIVEN, 0 },       /* selection pulse decayed by TO50 */
+    { TO50, CI33, 0 },              /* NO21 -> RO: zero byte */
+    { TI06, CU00, 0 },              /* sets first... */
+    { TI06, CU01, 0 },
+    { TI06, CU10, 0 },              /* ...resets prevail -> D0 */
+    { TI06, CU11, 0 },
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_D0[] = {          /* fo.25 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO31, 0 },
+    { TO30, CO90, FA06 },           /* inert: no mode command */
+    { TO30, CO94, FA05 },
+    { TO30, CO95, FA04 },
+    { TO30, CI10, 0 },              /* PO -> NO */
+    { TO40, CO01, 0 },
+    { TO50, CI32, 0 },              /* NO43 -> RO: PO high */
+    { TI06, CU00, 0 },              /* -> D1 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_D1[] = {          /* fo.26 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO31, 0 },
+    { TO30, CO90, FA06 },           /* inert */
+    { TO30, CO94, FA05 },
+    { TO30, CO95, FA04 },
+    { TO30, CI10, 0 },
+    { TO40, CO01, 0 },
+    { TO50, CI33, 0 },              /* NO21 -> RO: PO low */
+    { TI06, CU00, 0 },              /* sets first */
+    { TI06, CU01, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU14, 0 },              /* -> C2 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_C2[] = {          /* fo.28 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO30, 0 },              /* MEM -> RO: new status byte */
+    { TO30, CI19, 0 },              /* forcing in NO43 (as printed; harmless) */
+    { TO30, CO90, FA06 },
+    { TO30, CO94, FA05 },
+    { TO30, CO95, FA04 },
+    { TO40, CO01, 0 },
+    { TO70, CI60, 0 },              /* RO2 -> NI4 */
+    { TO70, CI65, 0 },              /* RO1 -> NI3 */
+    { TI06, CI74, 0 },              /* set FI04... */
+    { TI06, CI75, 0 },              /* set FI05... */
+    { TI06, CI76, 0 },              /* set FI06... */
+    { TI06, CI84, not_RO05 },       /* ...reset FI04 {/R005} */
+    { TI06, CI85, not_RO04 },       /* ...reset FI05 {/R004} */
+    { TI06, CI86, not_RO00 },       /* ...reset FI06 {/R000} */
+    { TI06, CU00, 0 },              /* -> C3 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_C3[] = {          /* fo.29 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO30, 0 },
+    { TO30, CO90, FA06 },           /* inert */
+    { TO30, CO94, FA05 },
+    { TO30, CO95, FA04 },
+    { TO40, CO01, 0 },
+    { TO70, CI62, 0 },              /* RO2 -> NI2 */
+    { TO70, CI67, 0 },              /* RO1 -> NI1 */
+    { TI06, CU00, 0 },              /* sets first */
+    { TI06, CU01, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU11, 0 },              /* -> C0 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_C0[] = {          /* fo.30 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO30, 0 },              /* MEM -> RO: new PO high */
+    { TO30, CO90, FA06 },           /* inert */
+    { TO30, CO94, FA05 },
+    { TO30, CO95, FA04 },
+    { TO30, CI10, 0 },              /* PO -> NO: low half passthrough */
+    { TO40, CO01, 0 },
+    { TO70, CI60, 0 },              /* RO2 -> NI4 */
+    { TO70, CI65, 0 },              /* RO1 -> NI3 */
+    { TI05, CI00s, 0 },             /* NI -> PO */
+    { TI06, CU00, 0 },              /* -> C1 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+static const struct msl_timing_chart state_C1[] = {          /* fo.31 */
+    { TO10, CO11, 0 },
+    { TO10, CO41, 0 },
+    { TO25, CO30, 0 },              /* MEM -> RO: new PO low */
+    { TO30, CO90, FA06 },           /* inert */
+    { TO30, CO94, FA05 },
+    { TO30, CO95, FA04 },
+    { TO30, CI10, 0 },              /* PO -> NO: high half passthrough */
+    { TO40, CO01, 0 },
+    { TO70, CI62, 0 },              /* RO2 -> NI2 */
+    { TO70, CI67, 0 },              /* RO1 -> NI1 */
+    { TI05, CI00s, 0 },             /* NI -> PO */
+    { TI06, CU00, 0 },              /* sets first */
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU10, 0 },
+    { TI06, CU14, 0 },              /* -> E2/E3 */
+    { END_OF_STATUS, 0, 0 },
+};
 
 /* Beta Phase */
 /* ---------- */
@@ -642,8 +798,10 @@ static const struct msl_timing_chart beta_64_la[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-/* CPU[7] fo.8: LPSR preliminary beta sheet. */
+/* cp07 fo.27: LPSR beta sheet (CI89 SET ALTO {FUL4} not modeled: FUL4
+ * strapping unimplemented). */
 static const struct msl_timing_chart beta_64_lpsr[] = {
+    { TO65, CO49, 0 },               /* reset URPE/URPU */
     { TI06, CU01, 0 },               /* 64|65 -> C2 */
     { TI06, CU07, 0 },
     { TI06, CU15, 0 },

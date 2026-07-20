@@ -202,6 +202,9 @@ static inline uint16_t NO_knot(struct ge *ge)
         case KNOT_RI_IN_NO_43:
             no = ge->rRI << 8;
             break;
+        case KNOT_NONE_IN_NO:
+            no = 0;
+            break;
     }
 
     switch (ge->kNO.force_mode) {
@@ -219,6 +222,12 @@ static inline uint16_t NO_knot(struct ge *ge)
             no = ge->kNO.forcings;
             break;
         case KNOT_FORCING_NO_43:
+            /* "Forcing in NO43" (CI19): forcings drive quartets 4,3 on top
+             * of whatever selection still drives them, and the low quartets
+             * are blanked (the TPER-CPER a8/a9 flow depends on both). Where
+             * a sheet's data path instead needs the PURE forced byte because
+             * the selection pulse has decayed (interruption F0/D2), the
+             * state issues NO_UNDRIVEN first — see KNOT_NONE_IN_NO. */
             no = (no & 0xff00) | (ge->kNO.forcings << 8);
             break;
     }

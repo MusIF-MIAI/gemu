@@ -77,6 +77,11 @@ struct ge_knot_no {
         KNOT_L3_IN_NO,
         KNOT_AM_IN_NO,
         KNOT_RI_IN_NO_43,
+        /* Explicit "no selection drives the knot": hardware selections are
+         * pulses, so a knot with no active selection reads 0 at latch time.
+         * gemu's cmd persists across pulses; NO_UNDRIVEN models the decay
+         * where a sheet's data path depends on it (interruption D3). */
+        KNOT_NONE_IN_NO,
     } cmd;
 };
 
