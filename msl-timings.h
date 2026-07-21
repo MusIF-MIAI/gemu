@@ -52,6 +52,10 @@ struct msl_timing_chart {
  * state (notably 64|65 and the executive-state pairs), selected by the
  * instruction decode matrix.  Keeping each sheet in a separate chart makes
  * the transcribed rows directly comparable with the corresponding manual page.
+ *
+ * A variant now holds only the rows that CARRY A FAMILY TERM.  Rows the
+ * sheets print identically for every family live in the state's common
+ * chart -- see `msl_timing_state::chart`.
  */
 struct msl_timing_variant {
     /** Instruction-family decode.  A NULL match terminates the variant list. */
@@ -69,13 +73,44 @@ struct msl_timing_variant {
  * Timing chart
  *
  * The timing chart for an entire state of the MSL.
+ *
+ * The GE-120 has ONE micro-sequence logic per sequencer state.  The several
+ * per-family sheets the manual prints for 64|65 and for the executive states
+ * are not separate hardware: they are the same gate network read through a
+ * decode filter, printed once per instruction family because the manual is
+ * organised by family.  A row that carries no family term is therefore a
+ * property of the STATE, and the CPU performs it for every instruction that
+ * enters the state.
+ *
+ * gemu models that directly: `chart` holds the rows common to every family,
+ * `variants` holds only what the decode actually multiplexes.
  */
 struct msl_timing_state {
-    /** Ordinary single-chart state, mutually exclusive with variants. */
+    /**
+     * Rows the state performs unconditionally, whatever the decode.
+     *
+     * Run BEFORE the selected variant's rows at each clock, so that a
+     * variant row may still refine state set up by a common row within the
+     * same clock (the printed sheets order them the same way).
+     *
+     * For a state with no `variants` this is simply the whole chart, which
+     * is the ordinary case.
+     */
     const struct msl_timing_chart *chart;
 
     /** Sparse instruction-family matrix for states with multiple sheets. */
     const struct msl_timing_variant *variants;
+
+    /**
+     * Sheets that print the rows in `chart`.
+     *
+     * Only meaningful when `chart` and `variants` are both present: the
+     * common rows were factored out of several per-family sheets, so no
+     * single `msl_timing_variant::manual_ref` covers them and every
+     * contributing sheet is listed here instead.  This keeps every flow
+     * affected by the state traceable back to a physical page.
+     */
+    const char *chart_ref;
 };
 
 /**

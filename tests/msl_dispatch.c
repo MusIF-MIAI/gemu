@@ -44,3 +44,53 @@ UTEST(msl_dispatch, downstream_pairs_keep_instruction_family)
     ASSERT_STREQ(variant_for(0x50, AMR_OPCODE, 0xc0), "exec-register-50|52");
     ASSERT_STREQ(variant_for(0x42, CMI_OPCODE, 0x42), "exec-cmi-40|42");
 }
+
+/* The multi-sheet states are one MSL: the rows carrying no family term live
+ * in the state's common chart, and every sheet they were factored out of is
+ * named in chart_ref so the provenance survives the factoring. */
+static const uint8_t MULTI_SHEET_STATES[] = {
+    0x40, 0x42, 0x50, 0x52, 0x60, 0x62, 0x64, 0x65, 0x66,
+};
+
+UTEST(msl_dispatch, multi_sheet_states_carry_common_rows_and_provenance)
+{
+    for (size_t i = 0; i < sizeof(MULTI_SHEET_STATES); i++) {
+        uint8_t code = MULTI_SHEET_STATES[i];
+        const struct msl_timing_state *st = msl_get_state(code);
+
+        ASSERT_TRUE(st != NULL);
+        ASSERT_TRUE(st->variants != NULL);
+        ASSERT_TRUE(st->chart != NULL);      /* common rows present */
+        ASSERT_TRUE(st->chart_ref != NULL);  /* ...and traceable */
+        ASSERT_TRUE(st->chart_ref[0] != '\0');
+    }
+}
+
+/* A row belongs to exactly one place.  If a (clock, command) pair sits in the
+ * common chart, no variant may repeat it: that would run the command twice in
+ * the same clock, and it also means the factoring drifted out of step with
+ * the sheets.  Guards the next family conversion against re-introducing the
+ * per-sheet duplication this model exists to remove. */
+UTEST(msl_dispatch, common_rows_are_not_repeated_by_any_variant)
+{
+    for (size_t i = 0; i < sizeof(MULTI_SHEET_STATES); i++) {
+        uint8_t code = MULTI_SHEET_STATES[i];
+        const struct msl_timing_state *st = msl_get_state(code);
+        const struct msl_timing_variant *v;
+
+        for (v = st->variants; v && v->match; v++) {
+            const struct msl_timing_chart *row, *common;
+
+            for (row = v->chart; row->clock < END_OF_STATUS; row++) {
+                for (common = st->chart; common->clock < END_OF_STATUS;
+                     common++) {
+                    if (common->clock == row->clock &&
+                        common->command == row->command) {
+                        /* Report which sheet drifted. */
+                        ASSERT_STREQ("no duplicate of a common row", v->name);
+                    }
+                }
+            }
+        }
+    }
+}

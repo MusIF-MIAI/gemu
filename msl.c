@@ -31,13 +31,22 @@ const struct msl_timing_variant *msl_select_variant(
     return NULL;
 }
 
-static const struct msl_timing_chart *select_chart(
+/**
+ * Rows the decode multiplexes for the instruction currently in FO.
+ *
+ * NULL when the state has no variant matrix, or -- the tripwire -- when it
+ * has one and nothing matched, which means a family reached an executive
+ * state whose sheet has not been transcribed yet.  The state's common rows
+ * still run in that case: they carry no family term, so the real MSL would
+ * perform them regardless of what the decode matrix says.
+ */
+static const struct msl_timing_chart *select_variant_chart(
     struct ge *ge, const struct msl_timing_state *state)
 {
     const struct msl_timing_variant *variant;
 
-    if (state->chart)
-        return state->chart;
+    if (!state->variants)
+        return NULL;
 
     variant = msl_select_variant(ge, state);
     if (variant) {
@@ -52,14 +61,10 @@ static const struct msl_timing_chart *select_chart(
     return NULL;
 }
 
-void msl_run_state(struct ge* ge, const struct msl_timing_state *state)
+static void run_rows(struct ge *ge, const struct msl_timing_chart *rows)
 {
-    const struct msl_timing_chart *rows, *chart;
+    const struct msl_timing_chart *chart;
     uint32_t i = 0;
-
-    rows = select_chart(ge, state);
-    if (!rows)
-        return;
 
     do {
         const char *clock_name = ge_clock_name(ge->current_clock);
@@ -90,4 +95,24 @@ void msl_run_state(struct ge* ge, const struct msl_timing_state *state)
         ge_log(LOG_CMDS, "    %s\n", msl_comment_for_command(chart->command));
         chart->command(ge);
     } while (chart->clock < END_OF_STATUS);
+}
+
+void msl_run_state(struct ge* ge, const struct msl_timing_state *state)
+{
+    const struct msl_timing_chart *variant_rows;
+
+    /* Resolve the decode first so the "chart <name>" trace line is emitted
+     * before the rows it explains, but run the common rows first: they are
+     * the state's own, and the sheets print them ahead of the family rows
+     * they share a clock with. */
+    variant_rows = select_variant_chart(ge, state);
+
+    if (state->chart) {
+        if (state->variants && state->chart_ref && ge->current_clock == TO00)
+            ge_log(LOG_CONDS, "  chart common (%s)\n", state->chart_ref);
+        run_rows(ge, state->chart);
+    }
+
+    if (variant_rows)
+        run_rows(ge, variant_rows);
 }

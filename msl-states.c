@@ -778,15 +778,43 @@ static uint8_t is_eper_examine(struct ge *ge) {
 
 /* Beta phase instruction sheets.
  *
- * CPU[7] prints multiple 64|65 timing sheets, selected by the
- * instruction decode matrix.  Do not fold these arrays together: deliberate
- * duplication of rows such as CU10/CU12 keeps each array readable side-by-side
- * with one physical sheet.  Some rows remain to be transcribed; the EXEC rows
- * are temporary markers pending the downstream datapath commands described
- * below and in docs/flowchart-sheets.md. */
+ * CPU[7] prints multiple 64|65 timing sheets, selected by the instruction
+ * decode matrix.  They are one MSL, not several: the sheets differ only where
+ * a row carries a family term, and every sheet reprints the rows that do not.
+ * Those go in beta_64_common below and run for every instruction entering the
+ * state; each array that follows carries only what the decode multiplexes, so
+ * it reads as the DELTA against the physical sheet rather than the whole page.
+ *
+ * Some rows remain to be transcribed; the EXEC rows are temporary markers
+ * pending the downstream datapath commands described below and in
+ * docs/flowchart-sheets.md. */
+
+/* Rows every 64|65|66 sheet prints, with no family term on any of them: the
+ * beta phase always clears the two future-state bits that route it out of
+ * 0110 01XX.  CU10 (reset S000) retires the X bit -- beta is entered as 64 or
+ * 65 depending on the alpha exit, and neither successor keeps bit 0 -- and
+ * CU12 (reset S002) drops the 0x04 that distinguishes beta from the executive
+ * and alpha bands.  Whichever CU0x SETS follow from the variant then name the
+ * successor: +CU01+CU07 -> E2 (return to alpha), +CU03 -> EA (link/register
+ * write), +CU15+CU03 -> CC (external), none -> 60|62 (executive loop).
+ *
+ * Safe to hoist ahead of the variant rows: no 64|65 sheet issues CU00 or CU02,
+ * so no variant row contends with these two bits. */
+static const struct msl_timing_chart beta_64_common[] = {
+    { TI06, CU10, 0 },               /* reset S000: retire the state X bit */
+    { TI06, CU12, 0 },               /* reset S002: leave the beta band */
+    { END_OF_STATUS, 0, 0 },
+};
 
 /* CPU[7] fo.9 + fo.10: JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL. */
 static const struct msl_timing_chart beta_64_control[] = {
+    /* One sheet, ten opcodes: every datapath row here is gated on the
+     * sub-group that actually uses it, and the groups are disjoint.
+     *   {JC+JS1+JS2+JIE} take the address path (CO10 PO->NO, CI12 V2->NO,
+     *     CO01 NI->V1) -- only these opcodes compute a branch target;
+     *   {JIE} alone adds CO35 (TO60), the interrupt-enable side effect;
+     *   {LON+LOLL} / {INS} / {ENS} / {LOFF} each drive exactly one console
+     *     or interrupt flip-flop and touch no address register at all. */
     { TO10, CO10, jc_js1_js2_jie },
     { TO20, CI87, lon_loll },
     { TO20, CI77, ins },
@@ -796,11 +824,12 @@ static const struct msl_timing_chart beta_64_control[] = {
     { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
     { TO70, CI78, ens },
     { TO89, CI88, loff },
+    /* {AVER.JC+JS1+JS2+JIE}: the branch is taken only when the condition
+     * mask in the operand matches the current FA -- an unmatched jump falls
+     * through with V1/PO untouched. */
     { TI05, CI00s, jc_js1_js2_jie_condition_verified },
     { TI06, CU01, not_per_peri, DE00A0 },
-    { TI06, CU10, 0 },
     { TI06, CU07, DE00A0 },
-    { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -815,11 +844,9 @@ static const struct msl_timing_chart beta_64_jrt[] = {
     { TO40, CO01, 0 },               /* NI -> V1: V1 = return address */
     { TO65, CO49, 0 },
     { TI05, CI00s, jc_js1_js2_jie_condition_verified },  /* {AVER.JRT} */
-    { TI06, CU01, 0 },               /* sets first */
+    { TI06, CU01, 0 },
     { TI06, CU07, 0 },
     { TI06, CU03, 0 },               /* {JRT}: -> EA */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -833,6 +860,12 @@ static const struct msl_timing_chart beta_64_jrt[] = {
  * would corrupt the forced address; the net V2 result — the register-cell
  * low-byte address — is produced by the passthrough.) */
 static const struct msl_timing_chart beta_64_la[] = {
+    /* CO90-97 are not an opcode multiplex but an OPERAND-FIELD one: the three
+     * gated forcings select change register N from the instruction's register
+     * field, L1 bits 6-4, one bit per NO position. {LI06}/{LI05}/{LI04} are
+     * that field read bit-by-bit, so the eight registers share one row set
+     * instead of eight sheets. CO90 is ungated: bit 0 of the address is always
+     * 1 because a change register's LOW byte lives at the odd address. */
     { TO10, CO18, 0 },               /* forcing in NO21 */
     { TO10, CO97, 0 },
     { TO10, CO96, 0 },
@@ -845,11 +878,9 @@ static const struct msl_timing_chart beta_64_la[] = {
     { TO40, CO02, 0 },               /* NI -> V2: register-cell address */
     { TO65, CO49, 0 },
     { TI05, CI05, 0 },               /* NI -> L1 */
-    { TI06, CU01, 0 },               /* sets first */
+    { TI06, CU01, 0 },
     { TI06, CU07, 0 },
     { TI06, CU03, 0 },               /* -> EA */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -860,8 +891,6 @@ static const struct msl_timing_chart beta_64_lpsr[] = {
     { TI06, CU01, 0 },               /* 64|65 -> C2 */
     { TI06, CU07, 0 },
     { TI06, CU15, 0 },
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -886,12 +915,16 @@ static const struct msl_timing_chart beta_64_register[] = {
     { TO10, CO92, LI05 },            /* N1 -> NO02 */
     { TO10, CO91, LI04 },            /* N0 -> NO01 */
     { TO10, CO90, 0 },               /* 1 -> NO00: odd (low) byte */
+    /* The one place this family's five opcodes diverge in beta, and it is a
+     * single FO bit that does it: STR is 0xb4, LR/AMR/SMR/CMR are 0xbd-0xbf,
+     * so FO bit 3 alone separates "store to memory" from "load/operate into
+     * the register". Same forcings, same address on NI -- only its DESTINATION
+     * register swaps, which is what makes V1 the write side for four opcodes
+     * and the read side for the fifth. */
     { TO40, CO01, not_str },         /* {/STR}: V1 = register-cell address */
     { TO40, CO02, is_str },          /* {STR}:  V2 = register-cell address */
     { TO65, CO49, 0 },               /* reset URPE/URPU */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },               /* -> 60|62 (pass 1 = 60) */
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* common CU10+CU12 -> 60|62 (pass 1) */
 };
 
 /* CPU[7] fo.12 plus CMI/CHI sheet: immediate logical operations. */
@@ -902,9 +935,7 @@ static const struct msl_timing_chart beta_64_immediate_shift[] = {
     { TO70, CI60, 0 },             /* RO2 -> NI4 */
     { TO70, CI65, 0 },             /* RO1 -> NI3 */
     { TI05, CI05, 0 },             /* immediate byte -> L1 high byte */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },       /* common CU10+CU12 -> 60|62 */
 };
 
 /* CPU[7] fo.44-45: currently implemented executive data operations. */
@@ -912,9 +943,7 @@ static const struct msl_timing_chart beta_64_ss[] = {
     { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
     { TO65, EXEC_SS, is_ss_data_op },
     { TI06, CU01, not_per_peri, DE00A0 },
-    { TI06, CU10, 0 },
     { TI06, CU07, DE00A0 },
-    { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -924,15 +953,18 @@ static const struct msl_timing_chart beta_64_per[] = {
     { TO10, CO95, per_peri, DE07A0 },
     { TO10, CO96, per_peri, DE07A0 },
     { TO10, CO97, per_peri, DE07A0 },
+    /* PER vs PERI vs RDC: FO bit 1 is the discriminator (per_peri_TO25_CO30).
+     * The two rows it gates are the ones that FETCH a control byte from
+     * memory -- PERI carries its order inline and needs the read; the other
+     * form takes it from the channel and must not disturb RO/L1. Every other
+     * row here is common to all three external opcodes. */
     { TO25, CO30, per_peri_TO25_CO30, DE08A0 },
     { TO70, CI62, per_peri, DE07A0 },
     { TO70, CI67, per_peri, DE07A0 },
     { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
-    { TI06, CU10, 0 },
     { TI06, CU07, per_peri, DE07A0 },
-    { TI06, CU12, 0 },
     { TI06, CU15, per_peri },
-    { TI06, CU03, per_peri },
+    { TI06, CU03, per_peri },        /* +common CU10+CU12 -> CC, not E2 */
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -941,9 +973,7 @@ static const struct msl_timing_chart beta_64_per[] = {
  * that swept-core bytes must not wedge the emulator. */
 static const struct msl_timing_chart beta_64_undocumented[] = {
     { TI06, CU01, not_per_peri, DE00A0 },
-    { TI06, CU10, 0 },
     { TI06, CU07, DE00A0 },
-    { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -981,9 +1011,7 @@ static uint8_t cmc_done(struct ge *ge) {
  * at high zoom: the loop condition carries the full-expression overbar). */
 static const struct msl_timing_chart beta_64_mvc[] = {
     { TO65, CO49, 0 },
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },               /* -> 60|62 */
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* common CU10+CU12 -> 60|62 */
 };
 
 static const struct msl_timing_variant beta_64_variants[] = {
@@ -1046,6 +1074,70 @@ static uint8_t reg_carry(struct ge *ge) {
     return beta_register_arithmetic(ge) && ge->URPE;
 }
 
+/* Executive-state common rows.
+ * ---------------------------
+ * The three executive states are a fetch/operate/store pipeline that every
+ * family walks the same way, and the sheets show it: the rows below are
+ * printed with no family term on any of the sheets listed in chart_ref, so
+ * they belong to the state rather than to the instruction.  What the decode
+ * multiplexes is only WHERE the byte comes from, WHAT the arithmetic unit
+ * does to it, and WHEN the loop stops -- which is exactly what is left in
+ * each variant array.
+ *
+ * 60|62 is the source-fetch state.  Only the exit is universal: CU15 (reset
+ * S005) drops the 0x20 that holds the sequencer in the 6x band, and whether
+ * the successor is 50|52 or 40|42 is then decided by the CU04/CU14 pair the
+ * variants issue -- LR/STR and MVC/MVI have nothing for the UA to do and
+ * reset S004 straight back out, skipping the operate state entirely. */
+static const struct msl_timing_chart exec_60_common[] = {
+    { TI06, CU15, 0 },               /* reset S005: leave the 6x band */
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* 50|52 is the OPERATE state, and it is the same six rows for every family
+ * that enters it: read the operand-1 byte at V1 (CO11 + CO30), put the byte
+ * staged by 60|62 on NO so it reaches BO (CI15), run the arithmetic unit
+ * (CI68), restage the result in L1's high byte (CI05), and hand on to 40|42
+ * (CU14).  No family alters that skeleton -- what each one contributes is
+ * only the UA MODE SELECTORS (CI45/CI46/CI47 and the CO48 carry-in preset),
+ * which is why the variant arrays below are two to four rows long.  The
+ * families that need no operate step never enter the state at all. */
+static const struct msl_timing_chart exec_50_common[] = {
+    { TO10, CO11, 0 },               /* V1 -> NO: operand-1 address */
+    { TO25, CO30, 0 },               /* MEM -> RO: operand-1 byte */
+    { TO30, CI15, 0 },               /* L1 -> NO: staged byte reaches BO */
+    { TO70, CI68, 0 },               /* UA -> NI43, in the mode set below */
+    { TI05, CI05, 0 },               /* restage result in L1 high byte */
+    { TI06, CU14, 0 },               /* reset S004 -> 40|42 */
+    { END_OF_STATUS, 0, 0 },
+};
+
+/* 40|42 is the STORE-and-advance state.  Common: address operand 1 (CO11),
+ * put the staged byte back on NO (CI15), step V1 through the counting
+ * network (CO01), and latch the byte into RO for the write (CI32).  The two
+ * unconditional CU sets are the loop arc -- CU01+CU05 turn 40|42 back into
+ * 60|62 -- so a family LEAVES the loop by adding CU07 under its own terminal
+ * condition, never by withholding these.
+ *
+ * Multiplexed per family, and deliberately not hoisted:
+ *   TO10 CO41/CO40  -- direction. Ascending for the SS byte loops, absent
+ *     for the single-byte immediates, descending (CO40) for the register
+ *     family, which walks 16-bit quantities LSB-first for the carry chain.
+ *   TO25 CO31       -- whether the byte is WRITTEN at all: CMR and CMC
+ *     compare without storing, TM tests without storing.
+ *   TI06 CU07       -- the terminal condition, different for every family
+ *     (state X bit for the register pair, L1 all-ones for MVC/XC, either
+ *     that or first-difference for CMC). */
+static const struct msl_timing_chart exec_40_common[] = {
+    { TO10, CO11, 0 },               /* V1 -> NO: operand-1 address */
+    { TO30, CI15, 0 },               /* L1 -> NO: the staged result byte */
+    { TO40, CO01, 0 },               /* NI -> V1: stepped address */
+    { TO50, CI32, 0 },               /* NO43 -> RO: byte to write */
+    { TI06, CU01, 0 },               /* set S001... */
+    { TI06, CU05, 0 },               /* ...+S005: loop arc back to 60|62 */
+    { END_OF_STATUS, 0, 0 },
+};
+
 static const struct msl_timing_chart exec_60_register[] = {
     { TO10, CO12, 0 },               /* V2 -> NO: source address */
     { TO10, CO41, 0 },               /* V2 - 1 ... */
@@ -1062,97 +1154,85 @@ static const struct msl_timing_chart exec_60_register[] = {
     { TI05, CI05, 0 },               /* L1 = [source byte][counted low] */
     { TI06, CI85, reg_arith_pass1 }, /* arm FI05 {/SA01.(AMR+SMR+CMR)} */
     { TI06, CI84, beta_register_arithmetic }, /* re-arm FI04 each pass */
+    /* {LR+STR} vs {AMR+SMR+CMR}: the same FO bit-3 split as the beta sheet,
+     * read here as "is there anything for the UA to do". CU04 sets S004 and
+     * the two pure MOVE opcodes immediately reset it, routing 60|62 -> 40|42
+     * and skipping the operate state; the three arithmetic opcodes leave it
+     * set and go through 50|52. */
     { TI06, CU04, 0 },               /* set S004... */
     { TI06, CU14, beta_register_lr_str },     /* ...{LR+STR}: skip 50|52 */
-    { TI06, CU15, 0 },               /* -> 50|52 or 40|42 */
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* common CU15 -> 50|52 or 40|42 */
 };
 
+/* UA mode delta only -- see exec_50_common for the six shared rows.
+ * {SMR+CMR} select subtract; {AMR} leaves the UA in its default add mode and
+ * so appears in neither row.  CO48 is additionally gated on /SA01 because the
+ * borrow-in preset belongs to pass 1 only: pass 2 must inherit URPE from
+ * pass 1, which is what makes the 16-bit borrow chain work. */
 static const struct msl_timing_chart exec_50_register[] = {
-    { TO10, CO11, 0 },               /* V1 -> NO: register address */
-    { TO25, CO30, 0 },               /* MEM -> RO: register byte */
-    { TO30, CI15, 0 },               /* L1 -> NO: staged source in BO high */
     { TO50, CO48, reg_arith50_pass1_sub }, /* {(SMR+CMR)./SA01}: borrow in */
     { TO50, CI47, is_smr_or_cmr },   /* subtract mode */
-    { TO70, CI68, 0 },               /* UA: RO (+/-) BO-high -> NI43 */
-    { TI05, CI05, 0 },               /* restage result in L1 high */
-    { TI06, CU14, 0 },               /* -> 40|42 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_40_register[] = {
-    { TO10, CO11, 0 },               /* V1 -> NO: destination address */
     { TO10, CO41, 0 },               /* V1 - 1 ... */
-    { TO10, CO40, 0 },
-    { TO25, CO31, not_cmr },         /* {LR+AMR+SMR+STR}: write result */
-    { TO30, CI15, 0 },               /* L1 -> NO */
-    { TO40, CO01, 0 },               /* V1 = V1 - 1 */
-    { TO50, CI32, 0 },               /* NO43 -> RO: the staged byte */
+    { TO10, CO40, 0 },               /* ...DESCENDING: LSB-first, for carry */
+    { TO25, CO31, not_cmr },         /* {LR+AMR+SMR+STR}: CMR compares only */
     { TI06, CI75, reg_result_nonzero }, /* FI05: pass byte nonzero {/(dRO=0)} */
     { TI06, CI74, reg_carry },       /* FI04: pass carry {URPE.(A/S/CMR)} */
-    { TI06, CU01, 0 },               /* set X bit: pass 2 */
-    { TI06, CU05, 0 },               /* back toward 6x */
-    { TI06, CU07, SA01_pass2 },      /* pass 2 done -> E2/E3 */
+    { TI06, CU07, SA01_pass2 },      /* {SA01} pass 2 done -> E2/E3 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_60_immediate[] = {
-    { TI06, CU04, 0 },                       /* 60 -> 50 */
-    { TI06, CU15, 0 },
+    { TI06, CU04, 0 },                       /* +common CU15: 60 -> 50 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_60_mvi[] = {
-    { TI06, CU15, 0 },                       /* 60 -> 40 (fo.74) */
+    /* MVI has no operate step -- the byte to store is already in L1 from
+     * beta -- so it withholds CU04 and the common CU15 alone routes 60 -> 40
+     * (fo.74). It is the only immediate that skips 50|52. */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_60_cmi[] = {
     { TI06, CI74, 0 },                       /* initial compare CC = equal */
     { TI06, CI85, 0 },
-    { TI06, CU04, 0 },                       /* 60 -> 50 */
-    { TI06, CU15, 0 },
+    { TI06, CU04, 0 },                       /* +common CU15: 60 -> 50 */
     { END_OF_STATUS, 0, 0 },
 };
 
+/* UA mode delta only -- see exec_50_common. Four opcodes on one sheet,
+ * separated purely by which mode lines they raise: CI45 is common to all
+ * (select the logic unit), then {NI+CI+TM} add CI46 and {XI+CI} add CI47,
+ * so NI=and, XI=xor, CI=or, TM=and. CI (the or) is the only one in both
+ * groups, and TM raises the same pair as NI because a test IS an and -- the
+ * two differ downstream in 40|42, at the write, not here. */
 static const struct msl_timing_chart exec_50_immediate[] = {
-    { TO10, CO11, 0 },                       /* V1 -> NO */
-    { TO25, CO30, 0 },                       /* memory -> RO */
-    { TO30, CI15, 0 },                       /* L1 -> NO; BO latches K */
     { TO30, CI45, 0 },                       /* logical operation */
-    { TO30, CI46, immediate_and_mode },
-    { TO30, CI47, immediate_xor_or_mode },
+    { TO30, CI46, immediate_and_mode },      /* {NI+CI+TM} */
+    { TO30, CI47, immediate_xor_or_mode },   /* {XI+CI} */
     { TO50, CO48, immediate_xor_or_mode },
-    { TO70, CI68, 0 },                       /* UA -> NI43 */
-    { TI05, CI05, 0 },                       /* result -> L1 */
-    { TI06, CU14, 0 },                       /* 50 -> 40 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_50_cmi[] = {
-    { TO10, CO11, 0 },                       /* V1 -> NO */
-    { TO25, CO30, 0 },                       /* memory -> RO */
-    { TO30, CI15, 0 },                       /* immediate -> NO/BO */
     { TO30, CI47, 0 },                       /* subtract operation */
     { TO50, CO48, 0 },                       /* carry-in for complement add */
-    { TO70, CI68, 0 },                       /* mem - immediate -> NI43 */
-    { TI05, CI05, 0 },                       /* result -> L1 */
-    { TI06, CU14, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_40_immediate[] = {
-    { TO10, CO11, 0 },                       /* V1 -> NO */
-    { TO25, CO31, immediate_writes_memory }, /* result -> memory */
-    { TO30, CI15, 0 },                       /* L1 -> NO */
-    { TO40, CO01, 0 },                       /* V1+1 -> V1 */
-    { TO50, CI32, 0 },                       /* NO43 -> RO */
-    { TI06, CI85, immediate_sets_cc },
+    /* {/TM} on the write: NI/XI/CI store the result, TM only tests it. That
+     * one gate is the whole difference between a logical operation and a
+     * mask test -- both compute the same and in 50|52. */
+    { TO25, CO31, immediate_writes_memory }, /* {/TM}: result -> memory */
+    { TI06, CI85, immediate_sets_cc },       /* {CI+XI+TM}: NI sets no CC */
     { TI06, CI74, immediate_sets_cc },
     { TI06, CI75, immediate_nonzero_cc },
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },
-    { TI06, CU07, 0 },
+    { TI06, CU07, 0 },                       /* single byte: always exit */
     { TI06, CU10, 0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
@@ -1160,29 +1240,19 @@ static const struct msl_timing_chart exec_40_immediate[] = {
 
 
 static const struct msl_timing_chart exec_40_mvi[] = {
-    { TO10, CO11, 0 },                       /* V1 -> NO */
     { TO25, CO31, 0 },                       /* immediate -> memory */
-    { TO30, CI15, 0 },                       /* L1 -> NO */
-    { TO40, CO01, 0 },
-    { TO50, CI32, 0 },                       /* NO43 -> RO */
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },
-    { TI06, CU07, 0 },
+    { TI06, CU07, 0 },                       /* single byte: always exit */
     { TI06, CU10, 0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_40_cmi[] = {
-    { TO10, CO11, 0 },                       /* V1 -> NO */
-    { TO30, CI15, 0 },                       /* result -> NO */
-    { TO40, CO01, 0 },
-    { TO50, CI32, 0 },                       /* result -> RO */
+    /* No CO31: a compare never writes. The common CI32 still latches the
+     * result byte into RO, because the CC rows below test it there. */
     { TI06, CI75, cmi_result_nonzero },      /* unequal */
     { TI06, CI84, cmi_borrow },              /* memory < immediate */
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },
-    { TI06, CU07, 0 },
+    { TI06, CU07, 0 },                       /* single byte: always exit */
     { TI06, CU10, 0 },
     { TI06, CU12, 0 },
     { END_OF_STATUS, 0, 0 },
@@ -1203,22 +1273,15 @@ static const struct msl_timing_chart exec_60_mvc[] = {
     { TO70, CI65, 0 },               /* {MVC} RO1 -> NI3: stage byte */
     { TI05, CI05, 0 },               /* L1 = [byte][count-1] */
     { TI06, CU04, 0 },               /* set S004... */
-    { TI06, CU15, 0 },
     { TI06, CU14, 0 },               /* ...reset: -> 40|42 (no 50|52) */
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* common CU15 leaves the 6x band */
 };
 
 static const struct msl_timing_chart exec_40_mvc[] = {
-    { TO10, CO11, 0 },               /* V1 -> NO: destination address */
-    { TO10, CO41, 0 },               /* V1 + 1 */
+    { TO10, CO41, 0 },               /* V1 + 1: ASCENDING, unlike register */
     { TO25, CO31, 0 },               /* RO -> MEM: write staged byte */
-    { TO30, CI15, 0 },               /* L1 -> NO */
-    { TO40, CO01, 0 },               /* V1 = V1 + 1 */
-    { TO50, CI32, 0 },               /* NO43 -> RO: the staged byte */
     { TI06, CU07, L1_21_ones },      /* {L1_2,1=1i}: terminal -> E2/E3 */
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },               /* loop -> 60+62 */
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* else common CU01+CU05 loop -> 60|62 */
 };
 
 static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
@@ -1233,39 +1296,32 @@ static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
     { TO70, CI60, 0 },
     { TO70, CI65, 0 },               /* stage source byte */
     { TI05, CI05, 0 },
+    /* {/SA01.XC}: only XC reports a condition code, and only on the first
+     * byte does it arm the accumulating flags -- OC and NC leave FA alone
+     * entirely, which is the sole flag difference between the three. */
     { TI06, CI74, xc_first_pass },   /* SET FI04 {/SA01.XC} */
     { TI06, CI85, xc_first_pass },   /* RESET FI05 {/SA01.XC} */
-    { TI06, CU04, 0 },
-    { TI06, CU15, 0 },               /* -> 50|52 */
+    { TI06, CU04, 0 },               /* +common CU15 -> 50|52 */
     { END_OF_STATUS, 0, 0 },
 };
 
+/* UA mode delta only -- see exec_50_common. Three opcodes, one sheet, the
+ * mode picked by a two-bit code exactly as CI68's table reads it:
+ * CI46{OC+NC} and CI47{XC+OC} give XC=xor(01), OC=or(11), NC=and(10). */
 static const struct msl_timing_chart exec_50_xoc[] = {   /* fo.146 */
-    { TO10, CO11, 0 },               /* V1 -> NO */
-    { TO25, CO30, 0 },               /* MEM -> RO: destination byte */
-    { TO30, CI15, 0 },               /* L1 -> NO: staged source in BO high */
     { TO30, CI45, 0 },               /* logic mode */
     { TO30, CI46, is_oc_or_nc },     /* {OC+NC} */
     { TO30, CI47, is_xc_or_oc },     /* {XC+OC} */
     { TO50, CO48, is_xc_or_oc },     /* {XC+OC} as printed */
-    { TO70, CI68, 0 },               /* UA logic result -> NI43 */
-    { TI05, CI05, 0 },               /* restage result */
-    { TI06, CU14, 0 },               /* -> 40|42 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_40_xoc[] = {   /* fo.147 */
-    { TO10, CO11, 0 },
-    { TO10, CO41, 0 },               /* V1 + 1 */
+    { TO10, CO41, 0 },               /* V1 + 1: ascending */
     { TO25, CO31, 0 },               /* write result byte */
-    { TO30, CI15, 0 },
-    { TO40, CO01, 0 },
-    { TO50, CI32, 0 },
     { TI06, CI75, xc_byte_nonzero }, /* SET FI05 {XC./(dRO=0i)} */
     { TI06, CU07, L1_21_ones },      /* terminal -> E2/E3 */
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },               /* loop -> 60+62 */
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* else common CU01+CU05 loop -> 60|62 */
 };
 
 static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
@@ -1282,35 +1338,26 @@ static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
     { TI05, CI05, 0 },
     { TI06, CI74, SA01_pass1 },      /* SET FI04 {/SA01} */
     { TI06, CI85, SA01_pass1 },      /* RESET FI05 {/SA01} */
-    { TI06, CU04, 0 },
-    { TI06, CU15, 0 },               /* -> 50|52 */
+    { TI06, CU04, 0 },               /* +common CU15 -> 50|52 */
     { END_OF_STATUS, 0, 0 },
 };
 
+/* UA mode delta only -- see exec_50_common. Unlike the register family's
+ * 50|52, CO48 carries no /SA01 term: CMC compares byte by byte and each byte
+ * starts from a fresh borrow, so the preset is reissued every pass. */
 static const struct msl_timing_chart exec_50_cmc[] = {   /* fo.78 */
-    { TO10, CO11, 0 },               /* V1 -> NO */
-    { TO25, CO30, 0 },               /* MEM -> RO: operand-1 byte */
-    { TO30, CI15, 0 },
     { TO30, CI47, 0 },               /* subtract */
     { TO50, CO48, 0 },               /* borrow preset EVERY byte */
-    { TO70, CI68, 0 },               /* op1 - op2 -> NI43 */
-    { TI05, CI05, 0 },
-    { TI06, CU14, 0 },               /* -> 40|42 */
     { END_OF_STATUS, 0, 0 },
 };
 
 static const struct msl_timing_chart exec_40_cmc[] = {   /* fo.79 */
-    { TO10, CO11, 0 },
-    { TO10, CO41, 0 },
-    { TO30, CI15, 0 },
-    { TO40, CO01, 0 },               /* V1 + 1 */
-    { TO50, CI32, 0 },
+    { TO10, CO41, 0 },               /* V1 + 1: ascending */
+                                     /* no CO31: a compare never writes */
     { TI06, CI75, cmc_byte_differs },/* SET FI05 {/(dRO=0i)} */
     { TI06, CI84, cmc_borrow },      /* RESET FI04 {/URPE} */
     { TI06, CU07, cmc_done },        /* {(L1=1i) + /(dRO=0i)} per exit box */
-    { TI06, CU01, 0 },
-    { TI06, CU05, 0 },
-    { END_OF_STATUS, 0, 0 },
+    { END_OF_STATUS, 0, 0 },         /* else common CU01+CU05 loop -> 60|62 */
 };
 
 static const struct msl_timing_variant exec_60_variants[] = {
