@@ -1,17 +1,20 @@
 # AB-SB-AD-SD-MVQ-CMQ timing sheets (cp07 fo.140-143, PDF p126-128)
 
-Read from source at 600dpi, audit round 3 (2026-07-21). Conversion DEFERRED:
-needs the UA decimal mode (CI46 decimal + CI50 "work only UA1") and the
-digit/quartet length-count decode (CI42 count-from-04 in the loop; CU01 gated
-{(L1_1 = 1i)} — the X bit is a *quartet* counter here, not a pass counter).
-OVERBAR(x) marks a printed negation bar. Family walks V2 DESCENDING (CO40 in
-60|62): arithmetic runs LSB-first for the carry chain.
+Read from source at 600dpi, audit round 3 (2026-07-21). OVERBAR(x) marks a
+printed negation bar. Family walks V2 DESCENDING (CO40 in 60|62): arithmetic
+runs LSB-first for the carry chain.
 
-**2026-07-21 re-read, all four sheets at 600 dpi.** The UA prerequisite has
-since landed (`ge_ua_decimal`, fdc1afe) and the two common-row conflicts are
-gated (2f5680e), so the blockers below are the only ones left. See
-"Second read" at the end for what the page images settled and for the three
-contradictions that stopped the conversion.
+> **Read "Second read" at the end before using the row list below.** Two of
+> its conditions do not survive contact with the gates: fo.143's
+> `{(L1_1 = 1i)}` against CU01 is a sheet error (CU01 is unconditional), and
+> fo.143's EMPTY condition cell on CI73 is also wrong (CI73 is gated on an L1
+> signal, and that gate is the family's zero-extension). The first read's
+> conclusion that "the X bit is a quartet counter, not a pass counter" was
+> drawn from the first of those and is WRONG -- X is a pass counter here,
+> exactly as in the register family.
+>
+> Prerequisites now met: the UA decimal mode landed in fdc1afe
+> (`ge_ua_decimal`). One unknown is left, named at the end: what `L1U16` is.
 
 ## fo.140 — 64|65 beta (SA 0110 0101)
 Rows: TO50 NO->BO; TO65 CO49 = DI06A0 (RES URPE E URPU); TI06 CU10 = DI06A0;
