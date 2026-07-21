@@ -500,7 +500,7 @@ SIG(FUL36) { return ge->options.E04 != PONT_2N; }
 /* TAB.1 selection signals for the processor version.  FEL06 is high only on
  * the 6 usec UCE 466; FEL16 separates the 4 usec 467 from the 2 usec 468. */
 SIG(FEL06) { return ge->options.E03 == PONT_NONE; }
-SIG(FEL16) { return ge->options.E03 != PONT_2H; }
+SIG(FEL16) { return ge->options.E03 != PONT_2N; }
 
 /* TAB.1 + TAB.2 -- which connectors may raise an interruption.  A strapped
  * F04 is one of the "interruptions NO" versions and holds both low; only an
@@ -543,16 +543,16 @@ static inline uint16_t ge_cycle_period_ns(const struct ge *ge)
  *   version  | memory | E05    | F05    || VAMA2 | VEMB6 | VAMC2
  *   ---------+--------+--------+--------++-------+-------+-------
  *   UCE 460  |   8K   | /      | /      ||   1   |   1   |   1
- *   UCE 461  |  12K   | PONT2H | /      ||   1   |   1   |   0
- *   UCE 462  |  16K   | /      | PONT2H ||   1   |   0   |   1
- *   UCE 463  |  24K   | PONT2P | PONT2H ||   0   |   0   |   1
- *   UCE 464  |  32K   | PONT2H | PONT2P ||   0   |   0   |   0
+ *   UCE 461  |  12K   | PONT2N | /      ||   1   |   1   |   0
+ *   UCE 462  |  16K   | /      | PONT2N ||   1   |   0   |   1
+ *   UCE 463  |  24K   | PONT2P | PONT2N ||   0   |   0   |   1
+ *   UCE 464  |  32K   | PONT2N | PONT2P ||   0   |   0   |   0
  *
  * Note the UCE numbering runs on two independent axes: 460-464 is the memory
  * capacity, 466-468 the processor version on ch.002.  A machine is one of
  * each, which is why every title block reads "UCE 460" -- that is the drawing
  * set, not the machine. */
-SIG(VAMC2) { return ge->options.E05 != PONT_2H; }
+SIG(VAMC2) { return ge->options.E05 != PONT_2N; }
 SIG(VEMB6) { return ge->options.F05 == PONT_NONE; }
 SIG(VAMA2) {
     return !(ge->options.E05 != PONT_NONE && ge->options.F05 != PONT_NONE);
@@ -589,19 +589,19 @@ static inline uint16_t ge_memory_capacity_k(const struct ge *ge)
  *
  *   version  | cycle  | perf | interrupts | E03    | F04    || FUL4G
  *   ---------+--------+------+------------+--------+--------++-------
- *   UCE 466  | 6 usec | MIN  | no         | /      | PONT2H ||   0
+ *   UCE 466  | 6 usec | MIN  | no         | /      | PONT2N ||   0
  *   UCE 467  | 4 usec | MAX  | no         | PONT2P | PONT2P ||   1
  *   UCE 467  | 4 usec | MAX  | YES        | PONT2P | /      ||   1
- *   UCE 468  | 2 usec | MAX  | no         | PONT2H | PONT2P ||   1
- *   UCE 468  | 2 usec | MAX  | YES        | PONT2H | /      ||   1
+ *   UCE 468  | 2 usec | MAX  | no         | PONT2N | PONT2P ||   1
+ *   UCE 468  | 2 usec | MAX  | YES        | PONT2N | /      ||   1
  *
  * FUL4G reads "this machine has the MAX instruction set", and it is low for
- * exactly ONE strap: F04 = PONT2H, the 6 usec UCE 466.  An EMPTY F04 is the
+ * exactly ONE strap: F04 = PONT2N, the 6 usec UCE 466.  An EMPTY F04 is the
  * interrupts-enabled variant of the two fast models, so it gives FUL4G = 1 --
- * which is why this tests for PONT2H rather than for PONT2P.  (It did test
+ * which is why this tests for PONT2N rather than for PONT2P.  (It did test
  * for PONT2P, which read the table off the "no interrupts" rows only and got
  * an empty F04 backwards.) */
-SIG(FUL4G) { return ge->options.F04 != PONT_2H; }
+SIG(FUL4G) { return ge->options.F04 != PONT_2N; }
 
 /* The note on ch.002: FUL01/FUL11/FUL4F follow FEL06/FEL16/FUL4G unless the
  * maintenance panel's S42 "LAMPS" switch is in position DIAG, in which case

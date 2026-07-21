@@ -14,18 +14,32 @@
 void ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
-    /* Strapped as the machine at Electric Dreams: a UCE 468 processor (2 usec,
-     * MAX instruction set, interruptions enabled) with 32K of core, i.e. a
-     * UCE 464 memory.  Both readings come from the same assignment of the two
-     * option part numbers -- 0618034Z = PONT2H in row E, 0618035V = PONT2P in
-     * row F -- which is what makes the configuration self-consistent across
-     * ch.001 and ch.002.  See docs/hardware-options.md. */
-    ge->options.E03 = PONT_2H;   /* UCE 468: 2 usec, MAX                     */
-    ge->options.F03 = PONT_2P;   /* interruption enabled on connector 4      */
+    /* Strapped as the machine at Electric Dreams, per the physical card
+     * identification of 2026-07-21: 0618034Z reads PONT2N on the board, and
+     * 0618035V is electrically a PONT2N as well (different part code, same
+     * strap).  E03 = PONT2N is the UCE 468 row of TAB.1 (2 usec, MAX), so
+     * the assumed model survives the re-identification; F03 = PONT2N flips
+     * TAB.2 to "interruption enabled on connector 3" (it was modelled as
+     * connector 4).  E04/F04 are believed empty, pending a physical check.
+     *
+     * (The F03 card itself is currently mislaid -- last seen in a 2018
+     * photo -- so the physical machine momentarily runs the TAB.2 "/" row,
+     * interrupts on BOTH connectors.  gemu models the intended, restuffed
+     * configuration.)
+     *
+     * Card 05 follows the same both-are-PONT2N identification, which lands
+     * OFF the ch.001 table: the five printed rows stop at {N,P} = 32K and
+     * never define {N,N}.  Under gemu's inferred selection equations the
+     * N+N levels come out (VAMA2,VEMB6,VAMC2) = (0,0,0), identical to the
+     * 32K row, so 32K is still what gets reported -- but that equivalence
+     * hangs on the VAMA2 inference, not on a printed row.  See
+     * docs/hardware-options.md. */
+    ge->options.E03 = PONT_2N;   /* UCE 468: 2 usec, MAX                     */
+    ge->options.F03 = PONT_2N;   /* interruption enabled on connector 3      */
     ge->options.F04 = PONT_NONE; /* empty = the interrupts-enabled variant   */
     ge->options.E04 = PONT_NONE; /* loading enabled on connectors 2 and 3    */
-    ge->options.E05 = PONT_2H;   /* 32K ...                                  */
-    ge->options.F05 = PONT_2P;   /* ... = UCE 464                            */
+    ge->options.E05 = PONT_2N;   /* both 05 cards PONT2N: off-table combo,   */
+    ge->options.F05 = PONT_2N;   /* reads as 32K under the inferred VAM eqs  */
 
     ge->ALTO = 1;      /* stopped until CLEAR + START */
     ge->powered = 1;
@@ -55,7 +69,6 @@ static const char *pont_name(enum ge_pont p)
     switch (p) {
         case PONT_2N: return "PONT2N";
         case PONT_2P: return "PONT2P";
-        case PONT_2H: return "PONT2H";
         default:      return "(empty)";
     }
 }

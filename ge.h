@@ -131,7 +131,12 @@ struct ge_knot_ni {
  * See docs/hardware-options.md for the tables and for what to probe on a
  * physical machine.
  */
-enum ge_pont { PONT_NONE = 0, PONT_2N, PONT_2P, PONT_2H };
+/* Strap-card types actually printed in the ch.001/ch.002 tables: only PONT2N
+ * and PONT2P exist.  "PONT2H" was a misread of PONT2N in the 1968 typeface,
+ * caught when the physical machine's cards were identified (2026-07-21):
+ * 0618034Z reads PONT2N on the board, and 0618035V is electrically a PONT2N
+ * too, under a different part code. */
+enum ge_pont { PONT_NONE = 0, PONT_2N, PONT_2P };
 
 struct ge_options {
     /** E03: machine version, paired with F04 (TAB.1) -- FEL06 / FEL16. */

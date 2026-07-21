@@ -17,10 +17,10 @@ ch.002. Same mechanism, two more connector positions, **E05** and **F05**:
 | version | memory | E05 | F05 | VAMA2 | VEMB6 | VAMC2 |
 |---|---|---|---|---|---|---|
 | UCE 460 | 8K  | / | / | 1 | 1 | 1 |
-| UCE 461 | 12K | PONT2H | / | 1 | 1 | 0 |
-| UCE 462 | 16K | / | PONT2H | 1 | 0 | 1 |
-| UCE 463 | 24K | PONT2P | PONT2H | 0 | 0 | 1 |
-| UCE 464 | 32K | PONT2H | PONT2P | 0 | 0 | 0 |
+| UCE 461 | 12K | PONT2N | / | 1 | 1 | 0 |
+| UCE 462 | 16K | / | PONT2N | 1 | 0 | 1 |
+| UCE 463 | 24K | PONT2P | PONT2N | 0 | 0 | 1 |
+| UCE 464 | 32K | PONT2N | PONT2P | 0 | 0 | 0 |
 
 The connector blocks: E05 carries `VAMC2` on pin 4 and `VAMA2` on pin 3; F05
 carries `VAMA2` on pin 3 and `VEMB6` on pin 1. The same S42 "LAMPS" note
@@ -45,9 +45,18 @@ four `COIN` blocks and labelled by position:
 | **F03** | which connectors may raise an interruption | `INES3`, `INES4` |
 | **F04** | machine version: cycle period and instruction set | `FEL06`, `FEL16`, `FUL4G` |
 
-The jumper cards are **`PONT2N`** and **`PONT2P`** (and `PONT2H` on F03/F04);
+The jumper cards are **`PONT2N`** and **`PONT2P`** -- those two types only;
 "no card fitted" is itself a valid configuration and is what the tables print
 as `/`.
+
+> **Correction, 2026-07-21.** Earlier revisions of this file (and of
+> signals.h/ge.c) named a third type, "PONT2H".  It does not exist: every
+> "PONT2H" was a misread of **PONT2N** in the 1968 typewriter face of
+> ch.001/ch.002, re-read at 400 dpi after the physical cards were identified
+> at Electric Dreams: **0618034Z reads PONT2N on the board**, and
+> **0618035V is electrically a PONT2N as well** (different part code, same
+> strap function).  The identification question this file used to pose --
+> "is 0618034Z a PONT2P or a PONT2H?" -- was therefore answered *neither*.
 
 One **maintenance panel switch**: **`S42`, labelled "LAMPS"**, whose `DIAG`
 position overrides part of the strapping (see the note below).
@@ -56,11 +65,11 @@ position overrides part of the strapping (see the note below).
 
 | version | cycle period | performances | interruptions | E03 | F04 | FEL06 | FEL16 | FUL4G |
 |---|---|---|---|---|---|---|---|---|
-| UCE 466 | 6 µsec | MIN | no | / | PONT2H | 1 | 1 | 0 |
+| UCE 466 | 6 µsec | MIN | no | / | PONT2N | 1 | 1 | 0 |
 | UCE 467 | 4 µsec | MAX | no | PONT2P | PONT2P | 0 | 1 | 1 |
 | UCE 467 | 4 µsec | MAX | yes | PONT2P | / | 0 | 1 | 1 |
-| UCE 468 | 2 µsec | MAX | no | PONT2H | PONT2P | 0 | 0 | 1 |
-| UCE 468 | 2 µsec | MAX | yes | PONT2H | / | 0 | 0 | 1 |
+| UCE 468 | 2 µsec | MAX | no | PONT2N | PONT2P | 0 | 0 | 1 |
+| UCE 468 | 2 µsec | MAX | yes | PONT2N | / | 0 | 0 | 1 |
 
 So **`FUL4G` reads "this machine has the MAX instruction set"** — it is 0 only
 on the slow 6 µsec UCE 466.
@@ -143,14 +152,51 @@ Reading that against the tables:
     interrupts-ENABLED rows, which are UCE 467 and UCE 468 -- both MAX
     performance, both **FUL4G = 1**.
   * **E03 populated** -> TAB.1 distinguishes the two: PONT2P is the 4 usec
-    UCE 467, PONT2H the 2 usec UCE 468. So identifying whether `0618034Z` is
-    PONT2P or PONT2H tells you which model the machine is.
+    UCE 467, PONT2N the 2 usec UCE 468.
   * **F03 populated** -> TAB.2: interruption enabled on ONE connector (3 with
     PONT2N, 4 with PONT2P), not both.
 
 That F04 reading corrected a bug here: FUL4G had been derived as
 `F04 == PONT2P`, which reads TAB.1 off the "no interrupts" rows only and gets
-an empty F04 backwards. It is low for exactly one strap, F04 = PONT2H.
+an empty F04 backwards. It is low for exactly one strap, F04 = PONT2N.
+
+### Physical identification, 2026-07-21 (settles E03/F03)
+
+Read off the machine: **E03 carries 0618034Z, which is printed PONT2N**, and
+**F03 carries 0618035V, which is electrically a PONT2N too** despite the
+different part code (identified by its trace pattern against the confirmed
+2N).  Against the tables:
+
+  * **E03 = PONT2N -> UCE 468**: 2 usec, MAX instruction set.  gemu's assumed
+    model was right, but for the wrong reason -- it had 34Z down as "PONT2H",
+    a card type that does not exist (see the correction above).
+  * **F03 = PONT2N -> interruption enabled on connector 3 only**
+    (INES3 = 1, INES4 = 0).  gemu had modelled connector 4; fixed in ge.c.
+
+### The card-05 pair: an off-table combination
+
+Both part numbers being PONT2N applies at card 05 too (E05 = 34Z,
+F05 = 35V), so the machine's capacity straps are **E05 = N, F05 = N -- a
+combination the ch.001 table never defines**.  The five printed rows are
+`/ /` (8K), `N /` (12K), `/ N` (16K), `P N` (24K), `N P` (32K).
+
+gemu straps N+N as found.  Under its inferred selection equations the levels
+come out (VAMA2, VEMB6, VAMC2) = (0, 0, 0) -- identical to the printed 32K
+row -- so `ge_memory_capacity_k()` still reports 32K.  Flagged inference:
+that equivalence hangs on gemu's guessed VAMA2 equation
+(`!(E05 fitted && F05 fitted)`), which fits all five printed rows but is not
+gate-traced.  If instead each card type grounds a fixed pin set
+(E05-N: VAMC2, E05-P: VAMA2, F05-N: VEMB6, F05-P: VEMB6+VAMA2 -- the other
+assignment consistent with the table), N+N would give (1, 0, 0), which is no
+row at all.  Deciding between the two readings means tracing the PONT2N card
+itself (which pins it bridges) or metering VAMA2 on the machine.
+
+### F03 momentarily absent
+
+The physical F03 card is mislaid (last seen in a 2018 photo).  While the
+socket is empty the real machine runs the TAB.2 `/` row -- interruptions
+enabled on BOTH connectors -- and will return to connector-3-only when the
+card is restuffed.  gemu models the intended, restuffed configuration.
 
 ### Not to be confused with the 44-tango
 

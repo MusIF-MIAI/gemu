@@ -258,13 +258,13 @@ UTEST(signals, e04_selects_the_loading_connectors)
 }
 
 /* FUL4G reads "this machine has the MAX instruction set": the 6us UCE 466
- * straps F04 with PONT2H and gets 0, the 4us and 2us models use PONT2P. */
+ * straps F04 with PONT2N and gets 0, the 4us and 2us models use PONT2P. */
 UTEST(signals, f04_straps_the_machine_version)
 {
     struct ge g;
 
     ge_init(&g);
-    g.options.F04 = PONT_2H;              /* UCE 466, 6us, MIN */
+    g.options.F04 = PONT_2N;              /* UCE 466, 6us, MIN */
     ASSERT_FALSE(FUL4G(&g));
 
     g.options.F04 = PONT_2P;              /* UCE 467/468, MAX, no interrupts */
@@ -284,7 +284,7 @@ UTEST(signals, s42_diag_overrides_the_version_strap)
     struct ge g;
 
     ge_init(&g);
-    g.options.F04 = PONT_2H;              /* MIN machine: FUL4G low ... */
+    g.options.F04 = PONT_2N;              /* MIN machine: FUL4G low ... */
     ASSERT_FALSE(FUL4F(&g));
 
     g.options.S42_diag = 1;               /* ... but DIAG forces it high */
@@ -293,10 +293,11 @@ UTEST(signals, s42_diag_overrides_the_version_strap)
 }
 
 /* gemu is strapped as the machine at Electric Dreams: UCE 468 processor
- * (2 usec, MAX, interruptions enabled) with 32K of core, i.e. a UCE 464
- * memory. Both readings follow from one assignment of the two option part
- * numbers -- 0618034Z = PONT2H in row E, 0618035V = PONT2P in row F -- which
- * is what makes the configuration consistent across ch.001 and ch.002. */
+ * (2 usec, MAX, interruptions enabled).  Physical identification 2026-07-21:
+ * BOTH option part numbers are PONT2N -- 0618034Z prints it on the board,
+ * 0618035V is electrically the same strap under a different code.  (The F03
+ * card is currently mislaid -- located in a 2018 photo -- and is modelled as
+ * fitted, per the machine's intended configuration.) */
 UTEST(signals, default_straps_are_a_uce468_with_32k)
 {
     struct ge g;
@@ -315,9 +316,9 @@ UTEST(signals, default_straps_are_a_uce468_with_32k)
     ASSERT_TRUE(FUL26(&g));
     ASSERT_TRUE(FUL36(&g));
 
-    /* ch.002 TAB.2: F04 empty lets F03 choose; PONT2P = connector 4 alone */
-    ASSERT_FALSE(INES3(&g));
-    ASSERT_TRUE(INES4(&g));
+    /* ch.002 TAB.2: F04 empty lets F03 choose; PONT2N = connector 3 alone */
+    ASSERT_TRUE(INES3(&g));
+    ASSERT_FALSE(INES4(&g));
 
     /* ch.001, the UCE 464 row: all three selection signals low */
     ASSERT_FALSE(VAMA2(&g));
