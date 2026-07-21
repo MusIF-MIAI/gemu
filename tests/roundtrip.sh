@@ -14,11 +14,11 @@
 GE=./ge
 GASM=assembler/gasm
 GDIS=disassembler/gdis
-# The functional deck ships in the tree; ../DUMP1 is the raw-scan drop the
-# other decks below still come from, so prefer it only if the tracked copy
-# has been removed.
-CAP=Site_Acceptance_Test/funktionalcpu.cap
-[ -f "$CAP" ] || CAP=../DUMP1/funktionalcpu.cap
+# The scanned decks are available separately; ../DUMP1 is the working drop
+# holding them and is the source of record, same as for the other decks
+# checked below. Site_Acceptance_Test/ is the fallback without the drop.
+CAP=../DUMP1/funktionalcpu.cap
+[ -f "$CAP" ] || CAP=Site_Acceptance_Test/funktionalcpu.cap
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT

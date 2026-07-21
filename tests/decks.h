@@ -6,28 +6,27 @@
 /*
  * Diagnostic deck locations for the tests.
  *
- * The CPU functional deck is tracked in this repository under
- * Site_Acceptance_Test/, so any checkout can run it.  The other diagnostic
- * decks (printermechanicaltest, control-program-cr, isolationcpu01) and the
- * .bin oracles still live only in the untracked ../DUMP1 scan drop, and the
- * tests that need those skip legitimately when it is absent.
+ * The scanned decks are available separately; ../DUMP1 is the working drop
+ * where they live, and is the source of record -- look there first, so the
+ * tests exercise the originals.  Site_Acceptance_Test/ is the fallback for an
+ * environment without the drop.
  *
- * The funktionalcpu tests used to hardcode the ../DUMP1 path and so skipped
- * everywhere too, silently, even though the deck was sitting in the tree.
- * Resolve it here instead: prefer the tracked copy, fall back to ../DUMP1 if
- * it has been removed.
+ * The funktionalcpu tests used to hardcode the ../DUMP1 path with no fallback
+ * at all and returned early whenever the drop was not visible, printing
+ * "[SKIP] ... not found" and passing -- reporting green coverage that never
+ * ran.  Resolving here fixes that in both directions.
  */
 static inline const char *deck_funktionalcpu_cap(void)
 {
-    static const char tracked[] = "Site_Acceptance_Test/funktionalcpu.cap";
-    static const char dump1[]   = "../DUMP1/funktionalcpu.cap";
-    FILE *probe = fopen(tracked, "rb");
+    static const char dump1[]    = "../DUMP1/funktionalcpu.cap";
+    static const char fallback[] = "Site_Acceptance_Test/funktionalcpu.cap";
+    FILE *probe = fopen(dump1, "rb");
 
     if (probe) {
         fclose(probe);
-        return tracked;
+        return dump1;
     }
-    return dump1;
+    return fallback;
 }
 
 #endif /* TESTS_DECKS_H */
