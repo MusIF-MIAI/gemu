@@ -402,3 +402,15 @@ Residual uncertainties, stated: cp08 cells were read from 300-dpi renders
 is an SA02 rail form and the conclusion is unaffected. The gate template
 assumes A16's backplane follows the same LOSE2M internal wiring as A17,
 which the 12/12 output-pin/gate-number match makes near-certain.
+
+**VERIFIED AGAINST THE REAL SHEET (2026-07-21, later).** The physical ch.239
+page ("STATUS DECODING / DECODIFICA DI STATO", board A16, dwg 14013 065o,
+fo.218-217) was found in the paper manual -- the chapter is missing from the
+scan only. All twelve reconstructed gates match the print: every input
+signal, every shared-input junction, every connector pin, every output, and
+every fan-out. g12 in close-up: `D160A = NAND(D1121, SA028)`, NAND1 U08
+pins 13/12 -> 11 at B16-09/10 -> B16-11, fan-out (199-2) (263-4) **(252-8)**
+(182-1) (317-29). Both residuals above resolve: SA028 is as printed, and
+the LOSE2M template transfer was exact. The cp08-layout reconstruction
+method is validated end to end on a blind target. TODO: photograph the
+page into the corpus so the scan gap closes.
