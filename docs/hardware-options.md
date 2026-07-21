@@ -198,6 +198,29 @@ assignment consistent with the table), N+N would give (1, 0, 0), which is no
 row at all.  Deciding between the two readings means tracing the PONT2N card
 itself (which pins it bridges) or metering VAMA2 on the machine.
 
+### The physical card (photographed 2026-07-21)
+
+One of the machine's strap cards, in hand: an orange single-sided board in a
+blue carrier, 17-pin gold edge connector -- matching cp08's PIEDINI DEL
+CONNETTORE 01-17 -- date-stamped 19 APR 1971.  Three findings:
+
+  * **Both catalog numbers are on the SAME card**: `18035` stamped in ink,
+    `618034` handwritten in red.  0618034Z and 0618035V are two identities of
+    one physical card, which retires the "different code, same strap"
+    puzzle completely.
+  * **The strap type is set at jumpering time, not in the etch**: the board
+    is a generic PONT2 with three full-width rows of plated holes, and the
+    type is selected by where bare-wire staples are soldered ("PONT 2N" is
+    handwritten on this one).  Four staples visible: two adjacent at the
+    left and one at the right bridging the top row to the middle row, one at
+    the lower right bridging middle to bottom.
+  * **The card in hand can settle the N+N capacity question**: buzz the 17
+    edge pins pairwise with a tester to get the card's short map, then apply
+    it to the ch.001 connector assignments (E05: VAMC2 pin 4, VAMA2 pin 3;
+    F05: VAMA2 pin 3, VEMB6 pin 1).  Whether a PONT2N shorts pin 3 decides
+    between the (0,0,0) = 32K reading and the (1,0,0) = off-table reading
+    above.  A photo of the trace side would serve equally.
+
 ### F03 momentarily absent
 
 The physical F03 card is mislaid (last seen in a 2018 photo).  While the
