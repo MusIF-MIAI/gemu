@@ -65,3 +65,47 @@ Exit: 60+62 {OVERBAR(L1_2 = 1i)} | E2+E3 {(L1_2 = 1i)}.
 Scan notes: fo.140 command cell prints "CC49" (=CO49); fo.142 CI46's command
 glyph resembles CI45 (equation CI4611 settles it); CO11 schema 205-7/206-7
 ambiguous on fo.142 (fo.143 reads 206-7).
+
+
+## UA control: what CI50 does (RESOLVED 2026-07-21)
+
+Read from cp06 **chapter 094, PDF page 170** ("ARITHMETICAL UNIT / UNITA'
+ARITMETICA", dwg 14013 0650). Page = chapter + 76 in this band; confirmed
+against the cartiglios of p163/164/170/171 = ch.087/088/094/095.
+
+    gate 8  (NAND1 U30)  CI50B = /CI501      inputs tied, the inverter idiom
+    gate 9  (NAND3 U25)  UZE71 = NAND(UR071, TI051, CI50B, ...)
+    gate 12 (NAND3 U25)  UZE81 = NAND(..., CI50B, ...)
+
+`CI50B` is the *complement* of the command, so asserting CI50 drives CI50B low
+and **inhibits UZE71 and UZE81** -- the enables for the upper zones of the
+arithmetic unit. That is the sheet's "OPERA SOLO UA1 / WORK ONLY UA1" in
+gates: CI50 does not select a mode, it *disables the high zones* so only the
+low unit participates. Which is what a digit-at-a-time decimal operation
+needs.
+
+gemu has no CI50 command at all today. Adding it means gating the UA width
+rather than its function.
+
+## What is still unread
+
+**The CI45/CI46/CI47 -> UA function table.** cp06 **chapter 087, PDF page
+163** ("ARITHMETICAL UNIT, CONCENTRATOR", dwg 14013 0651) carries the mode
+decode in its bottom-left block:
+
+    gate 22 (U25)  CI451 (from 196-2) -> CI45D
+    gate 26 (U25)  CI461 (from 196-1) -> CI46B      <- the index's 087-26
+    gate 31 (U25)  CI471 (from 190-3) -> CI47B
+    gate 23        UCO4A = NAND(CI471, CI451)
+    gate 27        UCO0A = NAND(CI45D, CI47B)
+    gates 24/25/28/29/30/32/33/34 -> UCO01 UCO11 UCO21 UCO41 UCOA1 + /A forms
+
+Those UCOxx lines are what the concentrator gates (1-21 on the same sheet,
+continuing onto ch.088 / p164) use to build the adder function. gemu models
+CI46 as `ua_controls.decimal_and`, a logic-mode flag, which cannot be right
+for both roles: fo.142 has `CI46 = DE99A0 {(AD+SD+CMQ)}` selecting DECIMAL,
+while fo.43/fo.146 use the same command as part of the AND/OR code.
+
+Deriving the full table means tracing ~20 concentrator gates across two
+sheets. Before doing that by hand, check cp04 (the prose volume) for a
+printed UA function table -- it would give the same answer as data.
