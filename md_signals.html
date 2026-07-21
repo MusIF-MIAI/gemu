@@ -44,16 +44,16 @@
   <div class="headertitle"><div class="title">GE-120 signal reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md184"></a> Global table of the hardware signals the emulator models (or is being driven to model), what each represents, what it is used for, and the side-effects / conditions it activates.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md195"></a> Global table of the hardware signals the emulator models (or is being driven to model), what each represents, what it is used for, and the side-effects / conditions it activates.</p>
 <p>This document is the authoritative reference for the <b>pin-by-pin, signal-level</b> reader↔CPU effort: the goal is to connect the card reader to the CPU channel <em>signal by signal</em> (the COCA connector), drive each line, and have the emulator react to it exactly as the hardware would. New signals are added here as they are implemented; each entry states its <b>direction</b>, <b>type</b>, <b>meaning</b>, and the <b>effect/condition</b> it drives in the model.</p>
 <p>Status legend: ✅ implemented · ◑ partial / abstracted · ☐ not yet modelled.</p>
 <p>Polarity convention (GE): a numeric mnemonic suffix denotes a positive-going signal; an alphabetic suffix (e.g. trailing <code>N</code>) denotes negative-going / active-low. gemu works in logical-true terms (the <code>N</code> is the wire polarity).</p>
 <p><b>Backplane (card·pin) column.</b> Each signal table now carries the signal's location(s) on the CPU <b>card-layout Atlas</b> (<code>/Atlas/row_*_pinout_verified.csv</code>, backplane rows A–T = drawing <em>14026 136</em>, cabinet <b>section 2A</b>). Format: <code>&lt;row&gt;&lt;slot&gt;·&lt;pin&gt;</code> — e.g. <code>G7·07</code> = row G, slot 7, pin 07. Entries are matched on the 4-character signal <b>base</b> (mnemonic+number), so every suffix/polarity variant is listed with its actual backplane code (e.g. <code>LU08B</code> the conn-2 line and <code>LU082</code> its companion). All 20 Atlas rows (A–T) are now alphabet-cleaned to <code>[A-Z0-9]</code>, so the index covers every legible pin on the 2A layout. <code>—</code> means the signal is <b>not on the 2A card-layout pins</b>: it lives on another cabinet section not in this Atlas, or the only pin that would carry it was illegible on the scan and left blank. A handful of located cells still carry residual OCR glyph slips (O↔0 / B↔8 / I↔1 / S↔B, e.g. <code>LU01S</code> for <code>LU01B</code>) — the <b>position</b> (card·pin) is correct; the suffix may need a glance. The microcode-command tables (§6 CO/CI/CU/CA) are mostly <code>—</code>: those are timed micro-commands, not pin-labelled backplane lines.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md186"></a>
+<h1><a class="anchor" id="autotoc_md197"></a>
 1. Card reader ↔ CPU/channel — the COCA connector</h1>
 <p>The card reader (LS 600 / GIS 450 controller) attaches on <b>connector 2</b>. COCA is the controller↔channel connector (CRZ schematics, dwg 14112 0781). These are the target pins for the signal-level model. Where gemu already carries the line, the "gemu" column names the signal/field; otherwise it is the next thing to wire.</p>
-<h2><a class="anchor" id="autotoc_md187"></a>
+<h2><a class="anchor" id="autotoc_md198"></a>
 1.1 Reader → CPU/channel</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -81,7 +81,7 @@
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>PICON</code>   </td><td class="markdownTableBodyNone">handshake   </td><td class="markdownTableBodyNone">first-column check   </td><td class="markdownTableBodyNone">✅ <code>integrated_reader.picon</code> (<code>PICO1</code>)   </td><td class="markdownTableBodyNone"><code>cardreader_on_clock</code>: high while presenting column 0 of a card — the leading-column marker. Observable. (Test <code>cardreader.feed_state_lines_pom_pico_bi20</code>.)   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md188"></a>
+<h2><a class="anchor" id="autotoc_md199"></a>
 1.2 CPU/channel → reader</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -108,7 +108,7 @@
 <td class="markdownTableBodyNone"><code>COCON</code>   </td><td class="markdownTableBodyNone">clock   </td><td class="markdownTableBodyNone">mode-select clock to the transcoder   </td><td class="markdownTableBodyNone">☐   </td><td class="markdownTableBodyNone">Latches the selected read mode (<code>N001/N002/DEBI/MI01/MI02</code>) into the transcoder/controller.   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
 <hr  />
-<h1><a class="anchor" id="autotoc_md190"></a>
+<h1><a class="anchor" id="autotoc_md201"></a>
 2. CPU channel &amp; sequencer signals (the transfer machinery)</h1>
 <p>These are the internal signals that drive a peripheral transfer; the reader pins above feed into them. Implemented in <code><a class="el" href="signals_8h.html" title="Signals.">signals.h</a></code> (<code><a class="el" href="signals_8h.html#a1060b5bf1f9b3c6bc140e60360688609">SIG(...)</a></code>) and <code>struct ge</code>.</p>
 <table class="markdownTable">
@@ -160,7 +160,7 @@
 <td class="markdownTableBodyNone"><code>L204</code>/<code>L206</code>/<code>L207</code>   </td><td class="markdownTableBodyNone">order-block control bits (<code>rL2</code>)   </td><td class="markdownTableBodyNone">Direction/qualifier of the transfer: <code>L207</code> selects OUTPUT vs INPUT; <code>L204/L206</code> qualify the <code>b9</code> branch.   </td><td class="markdownTableBodyNone">L204F: D34·04, D34·05, D35·03, M28·09; L206F: A25·02, A26·04, A26·06, E14·11, F13·07, N28·13; L207F: A26·09, A27·07, B31·05, F8·06, F22·05, F38·05, N28·10   </td></tr>
 </table>
 <hr  />
-<h1><a class="anchor" id="autotoc_md192"></a>
+<h1><a class="anchor" id="autotoc_md203"></a>
 3. Notes on the current model vs the pin-by-pin target</h1>
 <ul>
 <li><b>Channel-1 read</b> (<code>b8/b9/b1</code>, driven by <code>LU08</code>/<code>FINI</code>/<code>RASI</code>) is fully implemented and is the working integrated-reader read path. The bootstrap IPL uses it.</li>
@@ -170,11 +170,11 @@
 </ul>
 <p>Extend this table whenever a new signal is wired; keep the <b>Effect / condition</b> column concrete (what it sets/clears/gates), not just a gloss.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md194"></a>
+<h1><a class="anchor" id="autotoc_md205"></a>
 4. GE-120 official signal index (signal dictionary)</h1>
 <p>Transcribed from the official GE-120 signal index (NOME/NAME · CAPITOLO/CHAPTER · SCATOLA/BOX · descrizione IT/EN). <code>Ch</code> = schematic chapter, <code>Bx</code> = box on that sheet — the authoritative place to find the signal's logic. <code>gemu</code> marks what we model: ✅ implemented · ◑ partial/abstracted · ☐ not yet.</p>
 <p>This is the reference for the channel-transfer and reader work: the channel-2 read needs <code>RC021</code>→<code>RIA21</code>→<code>RES26</code> and terminates on <code>RUF26</code>/<code>RIG?</code>/<code>RIL?</code>.</p>
-<h2><a class="anchor" id="autotoc_md195"></a>
+<h2><a class="anchor" id="autotoc_md206"></a>
 4.1 Registers (bit groups)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -210,7 +210,7 @@
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>L3001</code>…   </td><td class="markdownTableBodyNone">041   </td><td class="markdownTableBodyNone">6   </td><td class="markdownTableBodyNone">Bits of <b>L3</b> length register, <b>channel 3</b>   </td><td class="markdownTableBodyNone">✅ <code>rL3</code>   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md196"></a>
+<h2><a class="anchor" id="autotoc_md207"></a>
 4.2 Channel / cycle-request machinery (the transfer core)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -266,7 +266,7 @@
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>RAV12</code>   </td><td class="markdownTableBodyNone">140   </td><td class="markdownTableBodyNone">14   </td><td class="markdownTableBodyNone"><b>Emission of signal VICU</b>   </td><td class="markdownTableBodyNone">◑ <code>CE08</code> sets <code>RAVI</code> under <code>TO19 &amp;&amp; RETO</code>; broader VICU consequences are still partial.   </td><td class="markdownTableBodyNone">RAV12: G12·01, G12·05, I14·11, M9·12, M10·12, M11·12   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md197"></a>
+<h2><a class="anchor" id="autotoc_md208"></a>
 4.3 Transfer end / length / status</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -318,7 +318,7 @@
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>RINO1</code>/<code>RIN11</code>   </td><td class="markdownTableBodyNone">144   </td><td class="markdownTableBodyNone">21,24   </td><td class="markdownTableBodyNone"><b>Information buffer for emission of TUO2</b>   </td><td class="markdownTableBodyNone">☐ (a 2-stage shift/buffer storing equality results from the memory-vs-photodisc compare so any <code>TUO2</code> hammer-enable is synchronized with its partner <code>TUO4</code>)   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md198"></a>
+<h2><a class="anchor" id="autotoc_md209"></a>
 4.4 RO-decode conditions (&lt;tt&gt;RG0x1&lt;/tt&gt;/&lt;tt&gt;RG1x1&lt;/tt&gt;, ch.122–123) and length decodes</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -377,7 +377,7 @@
 <blockquote class="doxtable">
 <p>&zwj;<b>Phase-5 note / open question.</b> A length-counted read "ends at L1+1 chars" (CPU[4] §5.8.4.3a). Counting L1 <em>down</em>, that terminal lands on L1 underflowing to all-ones (<code>LIUM6</code>/<code>RL1U1</code>) — which is what <code>RENIA = !(RL1U1·L204)</code> uses. The alternative the hardware might use is the <b>all-zeroes</b> decode <code>LIZE6</code> (<code>L1==0</code>). This only matters once the per-character L1 decrement is wired into the read datapath (currently L1 stays constant, so <code>RENIA</code> is inert). Resolve against the B9 count timing (CPU[7]) before enabling true length termination. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md199"></a>
+<h2><a class="anchor" id="autotoc_md210"></a>
 4.5 Peripheral / connector lines (FU/FI/FA/SE/SA "bocchettone" = connector)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -423,7 +423,7 @@
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>LIFUA</code>/<code>LIFUC</code>/<code>LIFUD</code>   </td><td class="markdownTableBodyNone">155   </td><td class="markdownTableBodyNone">23,19,6   </td><td class="markdownTableBodyNone">Information bit in <b>output</b>, connector 1/3/4   </td><td class="markdownTableBodyNone">☐   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md200"></a>
+<h3><a class="anchor" id="autotoc_md211"></a>
 Connector-2 integrated-reader lines (the COCA pins, official names)</h3>
 <p>These are the <code>B</code>-suffix (connector-2) reader lines from the L-family index; they are the official names behind the COCA model in §1. The data byte + strobe are collapsed in gemu (see §3); the four condition pins are wired in §1 (Phases 3/6). Each condition is decoded by an <code>RG0x1</code> (§4.4) — the path for the deferred error/interrupt reaction.</p>
 <table class="markdownTable">
@@ -444,7 +444,7 @@ Connector-2 integrated-reader lines (the COCA pins, official names)</h3>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>LESAB</code>   </td><td class="markdownTableBodyNone">006/3   </td><td class="markdownTableBodyNone"><b>Card-reader present</b> signal, connector 2   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">☐ (gemu: reader presence is implicit when registered)   </td><td class="markdownTableBodyNone">LESAB: H7·09, L1·15, N8·11; LESA2: H7·10, H9·10, H9·12; LESAA: H9·13, H10·14   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md201"></a>
+<h2><a class="anchor" id="autotoc_md212"></a>
 4.6 Configuration jumpers ("fiscelle") and misc</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -457,7 +457,7 @@ Connector-2 integrated-reader lines (the COCA pins, official names)</h3>
 <td class="markdownTableBodyNone"><code>FUL46</code>   </td><td class="markdownTableBodyNone">217   </td><td class="markdownTableBodyNone">1   </td><td class="markdownTableBodyNone">Connections to enable additional performances   </td><td class="markdownTableBodyNone">☐   </td><td class="markdownTableBodyNone">FUL4G: B8·16, D19·03, D19·04, F4·05; FUL4F: C19·14, E12·01; FUL46: E12·02, E30·09   </td></tr>
 </table>
 <p><b>Note on suffix digits:</b> the index names carry a trailing form/rev digit (e.g. <code>RES26</code>, <code>RIA21</code>, <code>RC021</code>); gemu uses the base mnemonic (<code>RES2</code>, <code>RIA2</code>, <code>RC02</code>). The <code>Ch/Bx</code> columns point at the GE schematic sheet to consult when wiring the exact logic equation for a signal we promote from ☐/◑ to ✅.</p>
-<h2><a class="anchor" id="autotoc_md202"></a>
+<h2><a class="anchor" id="autotoc_md213"></a>
 4.7 Connector/channel selection &amp; peripheral status (PC/PE/PU)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -497,7 +497,7 @@ Connector-2 integrated-reader lines (the COCA pins, official names)</h3>
 <p>&zwj;The page-36 flowchart's **<code>PC22</code>** ("reader, integrated controller, on channel
 2") is the reader-present decode that branches the channel-2 transfer: after the input state <code>0C</code>, <code>PC22</code>-YES (reader) returns to <code>B8</code> for the next request; <code>PC22</code>-NO (printer) goes to <code>04|06</code>. It corresponds to the <code>PELS1</code>/<code>PELM6</code> reader-on-connector-2 selection (vs the printer). <code>PELM</code> selects the addresser direction (<code>V4−1</code> magnetic vs <code>V4+1</code> card/photo). </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md203"></a>
+<h2><a class="anchor" id="autotoc_md214"></a>
 4.7b Program addresser + channel-select / NE-input-enable (PO/PIB/PIC/PIM/PB)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -536,7 +536,7 @@ Connector-2 integrated-reader lines (the COCA pins, official names)</h3>
 <blockquote class="doxtable">
 <p>&zwj;<b>Channel-2 reader-input chain (the Phase-4 target), decoded from the index + <a class="el" href="signals_8h.html" title="Signals.">signals.h</a>:</b> <code>PIB21</code> (NE input from conn 2) <code>= !(PB12A·PB22A·PB32A)</code>, with <code>PB12A=!(RESI1·PC121)</code> (ch-1), <code>PB22A=!(RET21·PC221)</code> (ch-2), <code>PB32A=!(RES31·PC321)</code> (ch-3). For channel 2: <code>PC221=!PC22A=PUC21·¬PB26</code> (conn-2 on ch-2: channel-2 unit <code>PUC2</code> selected and the connector-1/2 selector <code>PB26=0</code>) and <code>RET21</code> (ch-2 cycle-assignment memory). Both are implemented; audit round-2 verified them on the cp06 sheets: <code>PC22F = NAND(PUC26, PB26A)</code> (ch.135-24) with <code>PC221 = /PC22F</code> (ch.160-1) — gemu's equation exact — and <code>RET21</code> is a T010-clocked latch of RES2 (ch.132-6: <code>RET21 = /((RES2A·T0107)+(T010C·RET2A))</code>), now modeled as the <code>RET2</code> latch in <a class="el" href="pulse_8c.html">pulse.c</a> (was: raw <code>RIA2</code>, which missed the RES2 priority masking). </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md204"></a>
+<h2><a class="anchor" id="autotoc_md215"></a>
 4.8 Arithmetic unit (UA)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -553,11 +553,11 @@ Connector-2 integrated-reader lines (the COCA pins, official names)</h3>
 <td class="markdownTableBodyNone"><code>URPU2</code>   </td><td class="markdownTableBodyNone">094   </td><td class="markdownTableBodyNone">3   </td><td class="markdownTableBodyNone">Carry coming <b>out</b> of the A.U.   </td><td class="markdownTableBodyNone">◑   </td><td class="markdownTableBodyNone">URPU2: P26·12, P27·15   </td></tr>
 </table>
 <hr  />
-<h1><a class="anchor" id="autotoc_md206"></a>
+<h1><a class="anchor" id="autotoc_md217"></a>
 5. Channel-2 data-transfer microcode (CPU[7] sheet 36, dwg 14023130)</h1>
 <p>"Sequenza Esterna TPER — Fase trasferimento dati canale 2 (per lettore e stampante
 integrate)." States are obtained by unloading <code>S1 → SA1</code> (i.e. <code>rSA = rSI&amp;0x0f</code> on a <code>RES2</code> cycle — see <code>NA_knot</code>). <b>State <code>0C</code> runs on every request from the reader, and on the first request from the integrated printer.</b></p>
-<h2><a class="anchor" id="autotoc_md207"></a>
+<h2><a class="anchor" id="autotoc_md218"></a>
 State &lt;tt&gt;0C|0E&lt;/tt&gt; — channel-2 INPUT (reader → memory)</h2>
 <div class="fragment"><div class="line">V4 → VO                        (CO14: NO knot = V4 → memory address)</div>
 <div class="line">V4−1 → V4   [PELM]             (magnetic reader: decrement addresser)</div>
@@ -572,26 +572,26 @@ State &lt;tt&gt;0C|0E&lt;/tt&gt; — channel-2 INPUT (reader → memory)</h2>
 <li><code>¬PC22</code> (printer) → <code>04|06</code></li>
 <li><code>PC22</code> &amp; overlapping with a CAN1/CAN3 request → run that channel's status; with itself → back to <code>0C|0E</code>; CAN1 operating → <code>B8</code>; else continue the internal program (<code>SO→SA</code>), a CAN2 request preempts for an external cycle.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md208"></a>
+<h2><a class="anchor" id="autotoc_md219"></a>
 State &lt;tt&gt;04|06&lt;/tt&gt; — printer photodisc compare</h2>
 <div class="fragment"><div class="line">V4→VO (CO14); V4+1→V4 (CO41/CO04); RO→Mem [SA01] (CO31); Mem→RO [SA01] (CO30);</div>
 <div class="line">RI→RO [¬SA01] (CI21/CI32); RI→BO4,3 (CI21); RO⊕BO4,3→NI4,3 (C145/47/68);</div>
 <div class="line">Set S101 (CI71); Set S100 [(UAZO+ERAR+FINO+AITE)·SA01] (CI70)</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md209"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md220"></a>
 State &lt;tt&gt;02|03&lt;/tt&gt; — channel-2 OUTPUT (memory → printer) — implemented as &lt;tt&gt;state_02&lt;/tt&gt;</h2>
 <div class="fragment"><div class="line">V4→VO (CO14); V4+1→V4 (CO41/CO04); Mem→RO (CO30); RI→BO4,3 (CI21);</div>
 <div class="line">RO⊕BO4,3→NI4,3 (C145/47/68); Load Printer Buffer (CE16)</div>
 </div><!-- fragment --><p> Diamond after <code>02|03</code>: <code>SA00</code> or <code>RUF2</code> → <code>0A|0B</code> (end); else → back to <code>02|03</code>.</p>
-<h2><a class="anchor" id="autotoc_md210"></a>
+<h2><a class="anchor" id="autotoc_md221"></a>
 State &lt;tt&gt;0A|0B&lt;/tt&gt; — end of channel-2 transfer.</h2>
 <p>Signals referenced: <code>PELM</code> (magnetic reader on ch-2), <code>PC22</code> (reader+integrated controller on ch-2), <code>UAZO</code> (ALU=0, <code>UAZO6</code>), <code>ERAR</code> (printer photodisc parity error), <code>FINO</code> (printer out-of-service), <code>RUF2</code> (end of photodisc-code compare run-through ≈ <code>RUF26</code>).</p>
 <p><b>Implementation status:</b> <code>02|03</code> (output) is wired (<code>state_02</code>). <code>0C|0E</code> (input) is implemented as <code>state_0c</code> (commit 76d67fe) and <b>verified to route</b> (a <code>RES2</code> cycle with <code>rSI=0x0c</code> → <code>rSA=0c</code>) and <b>advance <code>V4</code></b>. The <code>NE→RO</code> read (<code>CI34</code>) is gated on the reader-input select **<code>PIB21</code>**, which on a channel-2 cycle needs <code>PB22A=0</code> ⇒ **<code>RET21 &amp;&amp; PC221</code>** (ch-2 cycle-assignment stored AND connector-2/channel-2 selected).</p>
 <p>(Resolved: <code>RET21</code> and <code>PC221</code> are implemented and schematic-verified — see § above. The historical blocker note is kept for context: finishing the channel-2 read needed <b>Phase 4</b>: implement <code>RET21</code> (ch.132) + <code>PC221</code> (ch.160) for the channel-2 reader selection and/or reconcile the integrated reader's channel (the <code>RA101→RC01</code> channel-1 wiring vs the documented <code>LU08→RC02</code> channel-2), without breaking the channel-1 bootstrap IPL (which the locked <code>bootstrap</code>/<code>initial-load</code> tests guard). Then the reader asserts <code>RC02</code>→<code>RES2</code>→<code>state_0c</code> per byte, looping via <code>B8</code>, terminating on the card-end (<code>FINI</code>→<code>RUF26</code>).</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md212"></a>
+<h1><a class="anchor" id="autotoc_md223"></a>
 6. Microcode command dictionary (CO / CI / CE / CU / CA), from the index</h1>
 <p>The per-clock commands the MSL states issue (<code><a class="el" href="msl-commands_8c.html">msl-commands.c</a></code>), transcribed from the official command index (name · chapter · box · EN). gemu uses the base mnemonic (<code>CO30</code>, <code>CI34</code>, <code>CE16</code>, …) for the indexed <code>COxx1</code>/<code>CIxx1</code>/<code>CExx1</code>.</p>
-<h2><a class="anchor" id="autotoc_md213"></a>
+<h2><a class="anchor" id="autotoc_md224"></a>
 6.1 CO — output-clock (TOxx) commands</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -637,7 +637,7 @@ State &lt;tt&gt;0A|0B&lt;/tt&gt; — end of channel-2 transfer.</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">CO90–CO97   </td><td class="markdownTableBodyNone">205–213   </td><td class="markdownTableBodyNone">force "1"/value into NO halves   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md214"></a>
+<h2><a class="anchor" id="autotoc_md225"></a>
 6.2 CI — input-clock (TIxx) commands</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -679,7 +679,7 @@ State &lt;tt&gt;0A|0B&lt;/tt&gt; — end of channel-2 transfer.</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">CI87/CI88/CI89   </td><td class="markdownTableBodyNone">224/203/182   </td><td class="markdownTableBodyNone">set ALAM / reset ALAM / set ALTO   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md215"></a>
+<h2><a class="anchor" id="autotoc_md226"></a>
 6.3 CE — external / channel commands (the reader-relevant ones)</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -722,7 +722,7 @@ State &lt;tt&gt;0A|0B&lt;/tt&gt; — end of channel-2 transfer.</h2>
 <blockquote class="doxtable">
 <p>&zwj;<b>Plan correction (CAN1):</b> the COCA <code>TU00N</code>/<code>TU03N</code> map onto these channel-1 timing strobes — gemu emits <b>TU10 at <code>CE09</code></b> and <b>TU20 at <code>CE10</code></b> (the gemu function names <code>reader_send_tu10</code>/<code>reader_send_tu00</code> are off-by-name vs the official TU10/TU20). The card-feed/advance is the <code>CE09</code> (TU10) hook; the read-strobe is the <code>CE10</code> (TU20) hook. Exact TU00N↔TU10 / TU03N↔TU30 pin correspondence needs the controller schematic. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md216"></a>
+<h2><a class="anchor" id="autotoc_md227"></a>
 6.4 CU — status-register (SO/S1) commands</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -734,7 +734,7 @@ State &lt;tt&gt;0A|0B&lt;/tt&gt; — end of channel-2 transfer.</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">CU20   </td><td class="markdownTableBodyNone">192   </td><td class="markdownTableBodyNone"><b>load future status into SO and S1</b>   </td><td class="markdownTableBodyNone">CU20A: B5·02, H38·03   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md217"></a>
+<h2><a class="anchor" id="autotoc_md228"></a>
 6.5 CA — timed commands; CAGU/CAPE</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -748,7 +748,7 @@ State &lt;tt&gt;0A|0B&lt;/tt&gt; — end of channel-2 transfer.</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">CAPEC/CAPED   </td><td class="markdownTableBodyNone">007/008   </td><td class="markdownTableBodyNone">command-rejection condition from UP connector 3/4   </td><td class="markdownTableBodyNone">CAPEC: G7·06, I2·09, M14·10, N7·05; CAPE7: G7·13, G8·07; CAPEB: I8·03; CAPED: L7·06, M14·09, N2·09, P8·05; CAPE8: L7·11   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md218"></a>
+<h2><a class="anchor" id="autotoc_md229"></a>
 6.6 Registers added by this index page</h2>
 <ul>
 <li><code>BO002</code>…<code>BO152</code> (ch.073–076): <b>BO</b> register bits; <code>BOCO1</code> (116) = permission to load BO. <code>BU001</code>…<code>BU151</code> (ch.096–099): <b>counting-network output</b> bits. <code>BASI1</code> (218) = enables loading the <b>SI</b> register. <code>BIFEC/BIFED/BIFUA/BIFUC/ BIFUD</code> (007/008/153) = info bit in/out, connectors 3/4/1. </li>

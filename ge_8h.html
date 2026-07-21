@@ -77,6 +77,8 @@ Data Structures</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__knot__ni.html">ge_knot_ni</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__options.html">ge_options</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html">ge</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The entire state of the emulated system, including registers, memory, peripherals and timings.  <a href="structge.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,6 +126,13 @@ Enumerations</h2></td></tr>
 <br />
  }</td></tr>
 <tr class="separator:a33a7ccd10ef5a117af1fffd533714c19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42d9a95ea7a05c05beaf9e392ebabf91" id="r_a42d9a95ea7a05c05beaf9e392ebabf91"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91">ge_pont</a> { <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91a4ec22b1116a1df0fc809f021fa489aa9">PONT_NONE</a> = 0
+, <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91ad97604ac4b970e40fdb4e76bf0f9482e">PONT_2N</a>
+, <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91ae92cb4ead881c422fe2ee7cf9b4433a6">PONT_2P</a>
+, <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91a65c9cbf37ad92473f27b91d4f8bc914e">PONT_2H</a>
+ }</td></tr>
+<tr class="memdesc:a42d9a95ea7a05c05beaf9e392ebabf91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backplane option connectors and the maintenance LAMPS switch.  <a href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91">More...</a><br /></td></tr>
+<tr class="separator:a42d9a95ea7a05c05beaf9e392ebabf91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -186,6 +195,9 @@ Functions</h2></td></tr>
 <tr class="separator:a542668c22fe3bb0caf1256a67daad3ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5a364432037f2f451640e45b3c006a3" id="r_ad5a364432037f2f451640e45b3c006a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#ad5a364432037f2f451640e45b3c006a3">ge_print_registers_verbose</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:ad5a364432037f2f451640e45b3c006a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bb441b1eda673427bf43cba96c02623" id="r_a3bb441b1eda673427bf43cba96c02623"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a3bb441b1eda673427bf43cba96c02623">ge_halted</a> (const struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="memdesc:a3bb441b1eda673427bf43cba96c02623"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is the CPU stopped?  <br /></td></tr>
+<tr class="separator:a3bb441b1eda673427bf43cba96c02623"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="acac8208fe9101dc6e4585600c95bf97f" name="acac8208fe9101dc6e4585600c95bf97f"></a>
@@ -292,7 +304,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00770">770</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00807">807</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -313,6 +325,31 @@ Functions</h2></td></tr>
 </table>
 
 <p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00038">38</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+
+</div>
+</div>
+<a id="a42d9a95ea7a05c05beaf9e392ebabf91" name="a42d9a95ea7a05c05beaf9e392ebabf91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42d9a95ea7a05c05beaf9e392ebabf91">&#9670;&#160;</a></span>ge_pont</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91">ge_pont</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Backplane option connectors and the maintenance LAMPS switch. </p>
+<p>cp06 chapter 002 "VARIANTI E OPZIONI / CHANGE AND OPTION" (dwg 140 130 65 6). The machine is configured at FOUR backplane connector positions &ndash; E03, E04, F03, F04 &ndash; and by one switch on the maintenance panel. The position names decode in the cp08 card-layout scheme as &lt;ROW&gt;&lt;CARD&gt;, so E04 is row E card 04, and cp08 pp11-12 independently confirm which signals land on each. See <a class="el" href="hardware-options_8md.html">docs/hardware-options.md</a> for the tables and for what to probe on a physical machine. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91a4ec22b1116a1df0fc809f021fa489aa9" name="a42d9a95ea7a05c05beaf9e392ebabf91a4ec22b1116a1df0fc809f021fa489aa9"></a>PONT_NONE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91ad97604ac4b970e40fdb4e76bf0f9482e" name="a42d9a95ea7a05c05beaf9e392ebabf91ad97604ac4b970e40fdb4e76bf0f9482e"></a>PONT_2N&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91ae92cb4ead881c422fe2ee7cf9b4433a6" name="a42d9a95ea7a05c05beaf9e392ebabf91ae92cb4ead881c422fe2ee7cf9b4433a6"></a>PONT_2P&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91a65c9cbf37ad92473f27b91d4f8bc914e" name="a42d9a95ea7a05c05beaf9e392ebabf91a65c9cbf37ad92473f27b91d4f8bc914e"></a>PONT_2H&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00134">134</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -483,6 +520,38 @@ Functions</h2></td></tr>
 <p>Enter execution at <code>entry</code>: seed PO and drop into the alpha (fetch) phase, bypassing the peripheral LOAD bootstrap (direct binary-load path). </p>
 
 <p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00155">155</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+
+</div>
+</div>
+<a id="a3bb441b1eda673427bf43cba96c02623" name="a3bb441b1eda673427bf43cba96c02623"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bb441b1eda673427bf43cba96c02623">&#9670;&#160;</a></span>ge_halted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static uint8_t ge_halted </td>
+          <td>(</td>
+          <td class="paramtype">const struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Is the CPU stopped? </p>
+<p>ALTO is the hardware stop flip-flop (cpu fo.97/98): it gates RIA0, so while it is set the CPU is attributed no work cycles. The delay line keeps turning and the channels keep running &ndash; a halted GE-120 still drives its panel &ndash; so a front end that models the whole machine (the wasm console) should keep cycling and simply watch this; a batch front end that only cares about the program uses it to end the run.</p>
+<p>There used to be a separate <code>halted</code> field alongside it. It was redundant and disagreed with ALTO in both directions: set at init while ALTO was clear, cleared by <a class="el" href="ge_8h.html#a1f6200d4aba7d2a22bd703cf46fa9570" title="Emulate the press of the &quot;clear&quot; button in the console.">ge_clear()</a> while ALTO was set, and &ndash; the actual bug &ndash; left clear by every operator stop (ACOV/ACON, PAPA, PATE), so the CLI run loop kept spinning against a frozen CPU. </p>
+
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00864">864</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
