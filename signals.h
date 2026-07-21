@@ -551,11 +551,29 @@ static inline uint16_t ge_cycle_period_ns(const struct ge *ge)
  * Note the UCE numbering runs on two independent axes: 460-464 is the memory
  * capacity, 466-468 the processor version on ch.002.  A machine is one of
  * each, which is why every title block reads "UCE 460" -- that is the drawing
- * set, not the machine. */
+ * set, not the machine.
+ *
+ * HOW THE CARDS WORK (derived 2026-07-21, over-determined by the ch.001 +
+ * ch.002 tables jointly and corroborated by the photographed boards): the
+ * PONT2 is a generic strap card and the type is which pins its staples
+ * short to the common --
+ *
+ *     PONT2N shorts pins {1, 4}        PONT2P shorts pins {1, 3}
+ *
+ * One assignment reproduces every printed row of TAB.1/TAB.2/TAB.3 and the
+ * ch.001 capacity table simultaneously (FEL06=1/FEL16=4 on E03, INES3=3/
+ * INES4=4 on F03, FUL26=3/FUL36=4 on E04, VAMC2=4/VAMA2=3 on E05,
+ * VEMB6=1/VAMA2=3 on F05, and on F04 it places FUL4G on pin 4 with the
+ * interrupt inhibit on pin 1 -- explaining why BOTH card types disable
+ * interrupts there).  The signal equations below are written from that
+ * mechanism, not fitted to the table rows: the difference shows only for
+ * strap combinations the tables never print, e.g. E05=N,F05=N, where the
+ * old fitted VAMA2 wrongly read 0. */
 SIG(VAMC2) { return ge->options.E05 != PONT_2N; }
 SIG(VEMB6) { return ge->options.F05 == PONT_NONE; }
 SIG(VAMA2) {
-    return !(ge->options.E05 != PONT_NONE && ge->options.F05 != PONT_NONE);
+    /* pin 3 is grounded only by a PONT2P, in either position */
+    return !(ge->options.E05 == PONT_2P || ge->options.F05 == PONT_2P);
 }
 
 /* The S42 "LAMPS" override again, exactly as on ch.002: VAMA1/VAMB1/VAMC1
@@ -575,13 +593,20 @@ SIG(VAMC1) { return ge->options.S42_diag ? 1 : VAMC2(ge); }
  */
 static inline uint16_t ge_memory_capacity_k(const struct ge *ge)
 {
-    uint8_t e = ge->options.E05 != PONT_NONE;
-    uint8_t f = ge->options.F05 != PONT_NONE;
+    /* Decode by the selection-signal triple, which is what the memory logic
+     * actually sees.  The five printed rows cover five of the eight level
+     * combinations; anything else -- e.g. the N+N straps found on the
+     * Electric Dreams machine's layout, which read (1,0,0) -- is off-table,
+     * and 0 is returned so the caller reports it instead of guessing. */
+    uint8_t a = VAMA2((struct ge *)ge), b = VEMB6((struct ge *)ge),
+            c = VAMC2((struct ge *)ge);
 
-    if (!e && !f) return 8;
-    if ( e && !f) return 12;
-    if (!e &&  f) return 16;
-    return ge->options.E05 == PONT_2P ? 24 : 32;
+    if ( a &&  b &&  c) return 8;
+    if ( a &&  b && !c) return 12;
+    if ( a && !b &&  c) return 16;
+    if (!a && !b &&  c) return 24;
+    if (!a && !b && !c) return 32;
+    return 0;                       /* off-table strap combination */
 }
 
 /* TAB.1 -- E03 and F04 strap the machine version, and FUL4G distinguishes the

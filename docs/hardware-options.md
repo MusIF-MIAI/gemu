@@ -187,16 +187,34 @@ F05 = 35V), so the machine's capacity straps are **E05 = N, F05 = N -- a
 combination the ch.001 table never defines**.  The five printed rows are
 `/ /` (8K), `N /` (12K), `/ N` (16K), `P N` (24K), `N P` (32K).
 
-gemu straps N+N as found.  Under its inferred selection equations the levels
-come out (VAMA2, VEMB6, VAMC2) = (0, 0, 0) -- identical to the printed 32K
-row -- so `ge_memory_capacity_k()` still reports 32K.  Flagged inference:
-that equivalence hangs on gemu's guessed VAMA2 equation
-(`!(E05 fitted && F05 fitted)`), which fits all five printed rows but is not
-gate-traced.  If instead each card type grounds a fixed pin set
-(E05-N: VAMC2, E05-P: VAMA2, F05-N: VEMB6, F05-P: VEMB6+VAMA2 -- the other
-assignment consistent with the table), N+N would give (1, 0, 0), which is no
-row at all.  Deciding between the two readings means tracing the PONT2N card
-itself (which pins it bridges) or metering VAMA2 on the machine.
+**RESOLVED (2026-07-21): the per-pin reading wins.**  Requiring one fixed
+shorted-pin set per card type to reproduce every printed row of TAB.1, TAB.2,
+TAB.3 and the ch.001 table simultaneously over-determines the answer:
+
+    PONT2N shorts pins {1, 4}          PONT2P shorts pins {1, 3}
+
+(and drops the F04 pin assignment out as a bonus: FUL4G on pin 4, the
+interrupt inhibit on pin 1, explaining why both card types disable interrupts
+in F04).  The trace-side photos of the machine's two cards show identical
+etch and identical solder patterns, corroborating that both are the same
+type.
+
+So the machine's N+N at card 05 reads **(VAMA2, VEMB6, VAMC2) = (1, 0, 0)**:
+VAMA2 is grounded only by a PONT2P, and there is none.  That is no printed
+row.  gemu now computes the selection signals from the pin mechanism
+(signals.h), straps N+N as found, and `ge_memory_capacity_k()` reports the
+combination as off-table (0) rather than guessing; the startup log says so
+explicitly.  What the memory bound logic actually does with (1, 0, 0) is the
+remaining open question -- the ch.001 fan-outs point at (077-x)/(309-x)/
+(318-x)/(321-x) for the consumers, and a memtest on the machine above 16K
+would answer it empirically.
+
+**Falsifiable check available**: two spare boards stamped `18036` exist, with
+a different connector style and a different staple pattern -- plausibly the
+pre-upgrade strap cards, i.e. PONT2P.  If so, buzzing (or photographing the
+trace side of) a 18036 against a 18034 must show the difference of exactly
+one short: pin 4 on the 2N vs pin 3 on the 2P, with pin 1 common.  Any other
+difference falsifies the {1,4}/{1,3} derivation.
 
 ### The physical card (photographed 2026-07-21)
 

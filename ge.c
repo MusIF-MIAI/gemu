@@ -29,17 +29,18 @@ void ge_init(struct ge *ge)
      *
      * Card 05 follows the same both-are-PONT2N identification, which lands
      * OFF the ch.001 table: the five printed rows stop at {N,P} = 32K and
-     * never define {N,N}.  Under gemu's inferred selection equations the
-     * N+N levels come out (VAMA2,VEMB6,VAMC2) = (0,0,0), identical to the
-     * 32K row, so 32K is still what gets reported -- but that equivalence
-     * hangs on the VAMA2 inference, not on a printed row.  See
-     * docs/hardware-options.md. */
+     * never define {N,N}.  Under the card-pin mechanism (PONT2N shorts pins
+     * {1,4}, PONT2P shorts {1,3} -- signals.h) the N+N levels come out
+     * (VAMA2,VEMB6,VAMC2) = (1,0,0): no printed row, and the capacity is
+     * reported as off-table rather than guessed.  What the memory bound
+     * logic does with (1,0,0) is an open question for the ch.077 consumers
+     * or for a memtest on the machine.  See docs/hardware-options.md. */
     ge->options.E03 = PONT_2N;   /* UCE 468: 2 usec, MAX                     */
     ge->options.F03 = PONT_2N;   /* interruption enabled on connector 3      */
     ge->options.F04 = PONT_NONE; /* empty = the interrupts-enabled variant   */
     ge->options.E04 = PONT_NONE; /* loading enabled on connectors 2 and 3    */
-    ge->options.E05 = PONT_2N;   /* both 05 cards PONT2N: off-table combo,   */
-    ge->options.F05 = PONT_2N;   /* reads as 32K under the inferred VAM eqs  */
+    ge->options.E05 = PONT_2N;   /* both 05 cards PONT2N: off-table combo    */
+    ge->options.F05 = PONT_2N;   /* -> (VAMA2,VEMB6,VAMC2) = (1,0,0)         */
 
     ge->ALTO = 1;      /* stopped until CLEAR + START */
     ge->powered = 1;
@@ -75,11 +76,17 @@ static const char *pont_name(enum ge_pont p)
 
 void ge_log_options(struct ge *ge)
 {
-    ge_log(LOG_DEBUG, "options: UCE %u processor, %u ns cycle, %s set; "
-                      "%uK core\n",
-           ge_cpu_version_uce(ge), ge_cycle_period_ns(ge),
-           ge_cpu_version_uce(ge) == 466 ? "MIN" : "MAX",
-           ge_memory_capacity_k(ge));
+    if (ge_memory_capacity_k(ge))
+        ge_log(LOG_DEBUG, "options: UCE %u processor, %u ns cycle, %s set; "
+                          "%uK core\n",
+               ge_cpu_version_uce(ge), ge_cycle_period_ns(ge),
+               ge_cpu_version_uce(ge) == 466 ? "MIN" : "MAX",
+               ge_memory_capacity_k(ge));
+    else
+        ge_log(LOG_DEBUG, "options: UCE %u processor, %u ns cycle, %s set; "
+                          "OFF-TABLE capacity straps (no ch.001 row)\n",
+               ge_cpu_version_uce(ge), ge_cycle_period_ns(ge),
+               ge_cpu_version_uce(ge) == 466 ? "MIN" : "MAX");
 
     ge_log(LOG_DEBUG, "options: straps E03=%s E04=%s E05=%s "
                       "F03=%s F04=%s F05=%s  S42=%s\n",

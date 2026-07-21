@@ -298,14 +298,22 @@ UTEST(signals, s42_diag_overrides_the_version_strap)
  * 0618035V is electrically the same strap under a different code.  (The F03
  * card is currently mislaid -- located in a 2018 photo -- and is modelled as
  * fitted, per the machine's intended configuration.) */
-UTEST(signals, default_straps_are_a_uce468_with_32k)
+UTEST(signals, default_straps_are_a_uce468_with_off_table_capacity)
 {
     struct ge g;
     ge_init(&g);
 
     ASSERT_EQ(ge_cpu_version_uce(&g), 468);
     ASSERT_EQ(ge_cycle_period_ns(&g), 2000);
-    ASSERT_EQ(ge_memory_capacity_k(&g), 32);
+
+    /* Card 05 carries PONT2N in BOTH positions on this machine -- a strap
+     * combination the ch.001 table never defines.  Under the pin mechanism
+     * (N shorts pins {1,4}, P shorts {1,3}) that reads (VAMA2, VEMB6,
+     * VAMC2) = (1, 0, 0): no printed row, so the capacity reports 0. */
+    ASSERT_TRUE(VAMA2(&g));
+    ASSERT_FALSE(VEMB6(&g));
+    ASSERT_FALSE(VAMC2(&g));
+    ASSERT_EQ(ge_memory_capacity_k(&g), 0);
 
     /* ch.002 TAB.1, the UCE 468 rows */
     ASSERT_FALSE(FEL06(&g));
@@ -319,9 +327,32 @@ UTEST(signals, default_straps_are_a_uce468_with_32k)
     /* ch.002 TAB.2: F04 empty lets F03 choose; PONT2N = connector 3 alone */
     ASSERT_TRUE(INES3(&g));
     ASSERT_FALSE(INES4(&g));
+}
 
-    /* ch.001, the UCE 464 row: all three selection signals low */
-    ASSERT_FALSE(VAMA2(&g));
-    ASSERT_FALSE(VEMB6(&g));
-    ASSERT_FALSE(VAMC2(&g));
+/* The five printed ch.001 rows, driven through the straps under the card-pin
+ * mechanism -- the fitted equations and the mechanism agree on every printed
+ * row, and diverge only off-table (covered in the default-straps test). */
+UTEST(signals, ch001_capacity_rows_reproduce_under_the_pin_mechanism)
+{
+    static const struct {
+        enum ge_pont e05, f05;
+        uint8_t a, b, c;
+        uint16_t k;
+    } rows[] = {
+        { PONT_NONE, PONT_NONE, 1, 1, 1,  8 },
+        { PONT_2N,   PONT_NONE, 1, 1, 0, 12 },
+        { PONT_NONE, PONT_2N,   1, 0, 1, 16 },
+        { PONT_2P,   PONT_2N,   0, 0, 1, 24 },
+        { PONT_2N,   PONT_2P,   0, 0, 0, 32 },
+    };
+    for (size_t i = 0; i < sizeof(rows)/sizeof(rows[0]); i++) {
+        struct ge g;
+        ge_init(&g);
+        g.options.E05 = rows[i].e05;
+        g.options.F05 = rows[i].f05;
+        ASSERT_EQ((uint8_t)VAMA2(&g), rows[i].a);
+        ASSERT_EQ((uint8_t)VEMB6(&g), rows[i].b);
+        ASSERT_EQ((uint8_t)VAMC2(&g), rows[i].c);
+        ASSERT_EQ(ge_memory_capacity_k(&g), rows[i].k);
+    }
 }
