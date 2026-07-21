@@ -1143,10 +1143,12 @@ static const struct msl_timing_chart exec_40[] = {
      * CU011 = NAND(CM01A, CM02A, DE53A, ED36A, ED10A, ED84A, ED66A, ED50A)
      * (ch.219 g1), CM021 = NAND(DI49A, DI36B, DI57B, DI94A, DI60A, DI13A,
      * DI50A) (ch.252 g8), and DI49A = NAND(DI481, SA066) (ch.222 g1, the
-     * 40|42 decode itself).  Six of CM021's seven leaves are verified state
-     * decodes; DI60A's generator (ch.239 g12) is in a chapter missing from
-     * the scan, but CM021 is an OR of active-low leaves, so no leaf can veto
-     * the firing DI49A alone guarantees in 40|42.  Full leaf audit in
+     * 40|42 decode itself).  All seven CM021 leaves are verified state
+     * decodes -- DI60A's chapter (ch.239) is missing from the scan, so its
+     * gate was reconstructed from the cp08 card layout instead (board
+     * A16+B16, a LOSE2M like ch.248's, template pin-matched 16/16):
+     * DI60A = NAND(DI121, SA028), confirmed by ch.252 g11 printing DI121's
+     * fan-out as (239-12).  Full leaf audit and board reconstruction in
      * docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md. */
     { TI06, CU01, 0 },
     { TI06, CU05, 0 },
