@@ -835,3 +835,62 @@ UTEST(dec, edt_tsz_ends_suppress)
     ASSERT_EQ(g.mem[0x0101], 0xF0);
     ASSERT_EQ(alu_get_cc(&g), ALU_CC_POS);   /* zero suppression ended */
 }
+
+/* -------------------------------------------------------------------------
+ * Arithmetic unit in decimal mode (CI45 low + CI46 high).
+ *
+ * The function code from cp06 ch.087 gives decimal ADD its own line (UCO01)
+ * but no line of its own for decimal subtract -- in BCD a subtraction is an
+ * addition of the complement, so it shares the SUBTRACT line with binary.
+ * CI50 restricts the unit to one digit.
+ * ------------------------------------------------------------------------- */
+
+static uint8_t ua_run(uint8_t bo, uint8_t ro, int sub, int one_digit,
+                      uint8_t carry_in, uint8_t *carry_out)
+{
+    *carry_out = carry_in;
+    return ge_ua_decimal(bo, ro, sub, one_digit, carry_out);
+}
+
+UTEST(alu_dec, ua_decimal_add)
+{
+    uint8_t c;
+
+    /* 12 + 34 = 46, no carry */
+    ASSERT_EQ(ua_run(0x12, 0x34, 0, 0, 0, &c), 0x46);
+    ASSERT_EQ(c, 0);
+
+    /* 08 + 04 = 12: the low digit needs the +6 correction */
+    ASSERT_EQ(ua_run(0x08, 0x04, 0, 0, 0, &c), 0x12);
+    ASSERT_EQ(c, 0);
+
+    /* 99 + 01 = 00 with carry out -- both digits correct */
+    ASSERT_EQ(ua_run(0x99, 0x01, 0, 0, 0, &c), 0x00);
+    ASSERT_EQ(c, 1);
+
+    /* carry in participates */
+    ASSERT_EQ(ua_run(0x12, 0x34, 0, 0, 1, &c), 0x47);
+}
+
+UTEST(alu_dec, ua_decimal_subtract_is_nines_complement_plus_carry)
+{
+    uint8_t c;
+
+    /* 34 - 12: complement + carry-in 1 is the ten's complement, giving 22 */
+    ASSERT_EQ(ua_run(0x12, 0x34, 1, 0, 1, &c), 0x22);
+    ASSERT_EQ(c, 1);                    /* no borrow */
+
+    /* 12 - 34 borrows: 78 with carry (borrow) clear */
+    ASSERT_EQ(ua_run(0x34, 0x12, 1, 0, 1, &c), 0x78);
+    ASSERT_EQ(c, 0);
+}
+
+/* CI50: only the low unit works, and the high quartet passes through. */
+UTEST(alu_dec, ci50_restricts_the_ua_to_one_digit)
+{
+    uint8_t c;
+
+    /* 8 + 4 = 12 -> digit 2, carry 1; RO's high nibble survives untouched */
+    ASSERT_EQ(ua_run(0x08, 0x74, 0, 1, 0, &c), 0x72);
+    ASSERT_EQ(c, 1);
+}

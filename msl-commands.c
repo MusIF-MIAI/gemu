@@ -445,6 +445,12 @@ static void CI68(struct ge *ge) {
             ge->rUA = bo ^ ro;
         else
             ge->rUA = ro;
+    } else if (ge->ua_controls.decimal_and) {
+        uint8_t carry = ge->URPE;
+
+        ge->rUA  = ge_ua_decimal(bo, ro, ge->ua_controls.subtract_xor,
+                                 ge->ua_controls.low_zone_only, &carry);
+        ge->URPE = carry;
     } else {
         unsigned sum = ge->ua_controls.subtract_xor
                      ? ro + (uint8_t)~bo + ge->URPE

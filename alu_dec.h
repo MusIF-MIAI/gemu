@@ -110,4 +110,12 @@ void alu_upks(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t s
  *  (manual §5.5.3.6 / §5.5.3.7 CC table; note "not possible" for 0/1.) */
 void alu_edt(struct ge *ge, uint16_t pattern, uint8_t plen, uint16_t src);
 
+/**
+ * Arithmetic unit in decimal mode -- one byte (two BCD digits), or one digit
+ * when CI50 restricts the unit to its low zone.  `carry` is URPE in and out.
+ * See the comment on the definition for why subtract shares the binary line.
+ */
+uint8_t ge_ua_decimal(uint8_t bo, uint8_t ro, int subtract, int one_digit,
+                      uint8_t *carry);
+
 #endif /* ALU_DEC_H */

@@ -917,3 +917,42 @@ void alu_edt(struct ge *ge, uint16_t pattern, uint8_t plen, uint16_t src)
     /* CC: 2 if still in zero suppression, 3 if zero suppression lifted */
     alu_set_cc(ge, zero_suppress ? ALU_CC_ZERO : ALU_CC_POS);
 }
+
+/*
+ * Arithmetic unit, decimal mode.
+ *
+ * With CI45 low (arithmetic) and CI46 high, the UA works in BCD -- the
+ * function code cp06 ch.087 gives as UCO01, decimal add.  Subtraction shares
+ * the SUBTRACT line with binary (UCO11): decimal subtract and binary subtract
+ * are indistinguishable in the function code, because in BCD a subtraction IS
+ * an addition of the complement.  So this mirrors the binary path exactly --
+ * complement the addend, carry in URPE -- but complements to NINE and carries
+ * per digit rather than per byte.
+ *
+ * CI50 ("opera solo UA1") inhibits UZE71/UZE81, the inter-zone enables, so
+ * only the low unit participates: one digit instead of two.  The high quartet
+ * is passed through from RO, which is the least-surprising reading of an
+ * inert upper zone -- the sheets do not say what it drives.
+ */
+uint8_t ge_ua_decimal(uint8_t bo, uint8_t ro, int subtract, int one_digit,
+                          uint8_t *carry)
+{
+    unsigned c = *carry ? 1 : 0;
+    unsigned out = 0;
+    int digits = one_digit ? 1 : 2;
+
+    for (int i = 0; i < digits; i++) {
+        unsigned a = (ro >> (4 * i)) & 0xf;
+        unsigned b = (bo >> (4 * i)) & 0xf;
+        unsigned d = a + (subtract ? 9 - b : b) + c;
+
+        if (d > 9) { d -= 10; c = 1; } else { c = 0; }
+        out |= (d & 0xf) << (4 * i);
+    }
+
+    if (one_digit)
+        out |= ro & 0xf0;
+
+    *carry = (uint8_t)c;
+    return (uint8_t)out;
+}
