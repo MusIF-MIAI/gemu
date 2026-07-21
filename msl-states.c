@@ -1120,11 +1120,40 @@ static const struct msl_timing_chart exec_60_common[] = {
  * only the UA MODE SELECTORS (CI45/CI46/CI47 and the CO48 carry-in preset),
  * which is why the variant arrays below are two to four rows long.  The
  * families that need no operate step never enter the state at all. */
-static const struct msl_timing_chart exec_50_common[] = {
+/* State 50|52, the OPERATE state, as a single chart.
+ *
+ * Notes that used to live on the per-family sheets, kept because they explain
+ * the mode rows below: {SMR+CMR} select subtract while {AMR} leaves the UA in
+ * its default add mode and so appears in no row at all; the register family's
+ * CO48 carries an extra /SA01 because its borrow-in preset belongs to pass 1
+ * only, pass 2 inheriting URPE so the 16-bit borrow chain works, whereas CMC
+ * compares byte by byte and reissues the preset every pass. */
+static const struct msl_timing_chart exec_50[] = {
+    /* Shared skeleton -- every family that enters 50|52 walks it identically:
+     * read the operand-1 byte at V1, put the byte 60|62 staged onto NO so it
+     * reaches BO, run the arithmetic unit, restage the result, hand on. */
     { TO10, CO11, 0 },               /* V1 -> NO: operand-1 address */
     { TO25, CO30, 0 },               /* MEM -> RO: operand-1 byte */
     { TO30, CI15, 0 },               /* L1 -> NO: staged byte reaches BO */
-    { TO70, CI68, 0 },               /* UA -> NI43, in the mode set below */
+
+    /* UA mode. This is the ONLY thing the decode multiplexes in this state,
+     * and each row carries the gate its own sheet prints -- no dispatch. */
+    { TO30, CI45, beta_immediate_logic },   /* fo.43  logic unit          */
+    { TO30, CI46, immediate_and_mode },     /* fo.43  {NI+CI+TM}          */
+    { TO30, CI47, immediate_xor_or_mode },  /* fo.43  {XI+CI}             */
+    { TO30, CI45, is_xoc_nc },              /* fo.146 logic unit          */
+    { TO30, CI46, is_oc_or_nc },            /* fo.146 {OC+NC}             */
+    { TO30, CI47, is_xc_or_oc },            /* fo.146 {XC+OC}             */
+    { TO30, CI47, is_cmi },                 /* fo.78  subtract            */
+    { TO30, CI47, is_cmc },                 /* fo.78  subtract            */
+    { TO50, CO48, immediate_xor_or_mode },  /* fo.43  carry-in            */
+    { TO50, CO48, is_xc_or_oc },            /* fo.146 as printed          */
+    { TO50, CO48, is_cmi },                 /* fo.78  complement add      */
+    { TO50, CO48, is_cmc },                 /* fo.78  borrow EVERY byte   */
+    { TO50, CO48, reg_arith50_pass1_sub },  /* fo.39  {(SMR+CMR)./SA01}   */
+    { TO50, CI47, is_smr_or_cmr },          /* fo.39  subtract            */
+
+    { TO70, CI68, 0 },               /* UA -> NI43, in the mode set above */
     { TI05, CI05, 0 },               /* restage result in L1 high byte */
     { TI06, CU14, 0 },               /* reset S004 -> 40|42 */
     { END_OF_STATUS, 0, 0 },
@@ -1182,17 +1211,6 @@ static const struct msl_timing_chart exec_60_register[] = {
     { END_OF_STATUS, 0, 0 },         /* common CU15 -> 50|52 or 40|42 */
 };
 
-/* UA mode delta only -- see exec_50_common for the six shared rows.
- * {SMR+CMR} select subtract; {AMR} leaves the UA in its default add mode and
- * so appears in neither row.  CO48 is additionally gated on /SA01 because the
- * borrow-in preset belongs to pass 1 only: pass 2 must inherit URPE from
- * pass 1, which is what makes the 16-bit borrow chain work. */
-static const struct msl_timing_chart exec_50_register[] = {
-    { TO50, CO48, reg_arith50_pass1_sub }, /* {(SMR+CMR)./SA01}: borrow in */
-    { TO50, CI47, is_smr_or_cmr },   /* subtract mode */
-    { END_OF_STATUS, 0, 0 },
-};
-
 static const struct msl_timing_chart exec_40_register[] = {
     { TO10, CO41, 0 },               /* V1 - 1 ... */
     { TO10, CO40, 0 },               /* ...DESCENDING: LSB-first, for carry */
@@ -1219,26 +1237,6 @@ static const struct msl_timing_chart exec_60_cmi[] = {
     { TI06, CI74, 0 },                       /* initial compare CC = equal */
     { TI06, CI85, 0 },
     { TI06, CU04, 0 },                       /* +common CU15: 60 -> 50 */
-    { END_OF_STATUS, 0, 0 },
-};
-
-/* UA mode delta only -- see exec_50_common. Four opcodes on one sheet,
- * separated purely by which mode lines they raise: CI45 is common to all
- * (select the logic unit), then {NI+CI+TM} add CI46 and {XI+CI} add CI47,
- * so NI=and, XI=xor, CI=or, TM=and. CI (the or) is the only one in both
- * groups, and TM raises the same pair as NI because a test IS an and -- the
- * two differ downstream in 40|42, at the write, not here. */
-static const struct msl_timing_chart exec_50_immediate[] = {
-    { TO30, CI45, 0 },                       /* logical operation */
-    { TO30, CI46, immediate_and_mode },      /* {NI+CI+TM} */
-    { TO30, CI47, immediate_xor_or_mode },   /* {XI+CI} */
-    { TO50, CO48, immediate_xor_or_mode },
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_chart exec_50_cmi[] = {
-    { TO30, CI47, 0 },                       /* subtract operation */
-    { TO50, CO48, 0 },                       /* carry-in for complement add */
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -1323,17 +1321,6 @@ static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
     { END_OF_STATUS, 0, 0 },
 };
 
-/* UA mode delta only -- see exec_50_common. Three opcodes, one sheet, the
- * mode picked by a two-bit code exactly as CI68's table reads it:
- * CI46{OC+NC} and CI47{XC+OC} give XC=xor(01), OC=or(11), NC=and(10). */
-static const struct msl_timing_chart exec_50_xoc[] = {   /* fo.146 */
-    { TO30, CI45, 0 },               /* logic mode */
-    { TO30, CI46, is_oc_or_nc },     /* {OC+NC} */
-    { TO30, CI47, is_xc_or_oc },     /* {XC+OC} */
-    { TO50, CO48, is_xc_or_oc },     /* {XC+OC} as printed */
-    { END_OF_STATUS, 0, 0 },
-};
-
 static const struct msl_timing_chart exec_40_xoc[] = {   /* fo.147 */
     { TO10, CO41, 0 },               /* V1 + 1: ascending */
     { TO25, CO31, 0 },               /* write result byte */
@@ -1360,15 +1347,6 @@ static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
     { END_OF_STATUS, 0, 0 },
 };
 
-/* UA mode delta only -- see exec_50_common. Unlike the register family's
- * 50|52, CO48 carries no /SA01 term: CMC compares byte by byte and each byte
- * starts from a fresh borrow, so the preset is reissued every pass. */
-static const struct msl_timing_chart exec_50_cmc[] = {   /* fo.78 */
-    { TO30, CI47, 0 },               /* subtract */
-    { TO50, CO48, 0 },               /* borrow preset EVERY byte */
-    { END_OF_STATUS, 0, 0 },
-};
-
 static const struct msl_timing_chart exec_40_cmc[] = {   /* fo.79 */
     { TO10, CO41, 0 },               /* V1 + 1: ascending */
                                      /* no CO31: a compare never writes */
@@ -1387,16 +1365,6 @@ static const struct msl_timing_variant exec_60_variants[] = {
     { is_mvc,        exec_60_mvc,      "exec-mvc-60|62",      "cp07 fo.74" },
     { is_cmc,        exec_60_cmc,      "exec-cmc-60|62",      "cp07 fo.77" },
     { is_xoc_nc,     exec_60_xoc,      "exec-xoc-60|62",      "cp07 fo.145" },
-    { 0, 0, 0, 0 },
-};
-
-static const struct msl_timing_variant exec_50_variants[] = {
-    { beta_register, exec_50_register, "exec-register-50|52", "CPU[7] fo.39" },
-    { beta_immediate_logic, exec_50_immediate,
-                                      "exec-immediate-50|52", "CPU[7] fo.43" },
-    { is_cmi,        exec_50_cmi,      "exec-cmi-50|52",      "CPU[7] fo.78" },
-    { is_cmc,        exec_50_cmc,      "exec-cmc-50|52",      "cp07 fo.78" },
-    { is_xoc_nc,     exec_50_xoc,      "exec-xoc-50|52",      "cp07 fo.146" },
     { 0, 0, 0, 0 },
 };
 
