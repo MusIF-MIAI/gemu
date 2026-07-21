@@ -22,10 +22,14 @@ void ge_init(struct ge *ge)
      * TAB.2 to "interruption enabled on connector 3" (it was modelled as
      * connector 4).  E04/F04 are believed empty, pending a physical check.
      *
-     * (The F03 card itself is currently mislaid -- last seen in a 2018
-     * photo -- so the physical machine momentarily runs the TAB.2 "/" row,
-     * interrupts on BOTH connectors.  gemu models the intended, restuffed
-     * configuration.)
+     * (2026-07-21, later: the F03 card was found and restuffed.  All four
+     * option sockets -- E03, F03, E05, F05 -- hold the same "4-bridge" card
+     * type, annotated PONT2N.  UNRESOLVED: whether those cards buzz {1,4}
+     * (pure PONT2N -- this strapping) or {1,3,4} (an old 1-bridge N with
+     * three bridges added, an N+P union "universal" card).  The union
+     * reading gives 32K with NO peripheral interrupts instead of 16K with
+     * interrupts on connector 3.  gemu models the pure-N reading until the
+     * cards are buzzed; see docs/hardware-options.md.)
      *
      * Card 05 follows the same both-are-PONT2N identification, which lands
      * OFF the ch.001 table: the five printed rows stop at {N,P} = 32K and

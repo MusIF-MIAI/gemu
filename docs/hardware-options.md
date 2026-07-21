@@ -305,12 +305,37 @@ CONNETTORE 01-17 -- date-stamped 19 APR 1971.  Three findings:
     between the (0,0,0) = 32K reading and the (1,0,0) = off-table reading
     above.  A photo of the trace side would serve equally.
 
-### F03 momentarily absent
+### F03 found and restuffed -- and the rival reading that now matters most
 
-The physical F03 card is mislaid (last seen in a 2018 photo).  While the
-socket is empty the real machine runs the TAB.2 `/` row -- interruptions
-enabled on BOTH connectors -- and will return to connector-3-only when the
-card is restuffed.  gemu models the intended, restuffed configuration.
+The F03 card was found and is back (2026-07-21).  All four option sockets --
+E03, F03, E05, F05 -- hold the same **4-bridge** card type, under two part
+stamps (18034/18035), all hand-annotated PONT2N.
+
+**The annotation may be stale.**  Bridges can only be ADDED to a board, and
+a pristine old-revision PONT2N with a single bridge exists in the spares --
+so a 4-bridge card could be that card plus three later bridges, i.e. NOT a
+pure N.  The concrete rival: **{1,3,4} = N+P union, a "universal" strap
+card**.  A uniform fleet of union cards fits every socket without tracking
+N-vs-P (which would explain why all four sockets hold the identical type),
+and reads:
+
+  * E03 {1,3,4}: UCE 468, same as pure N (pin 3 unused there);
+  * F03 {1,3,4}: INES3 AND INES4 grounded -- **no peripheral interrupts**;
+  * E05+F05 {1,3,4}: (VAMA2,VEMB6,VAMC2) = (0,0,0) -- **the printed 32K
+    row**.  Under this reading there was no F05 mistake at all: the upgrade
+    was completed by field-converting every card to the union type, trading
+    peripheral interrupts (unused on a deck-running machine) for full core.
+
+So the buzz-out decides between two different machines:
+
+    4-bridge buzzes {1,4}   -> 16K bound, interrupts on connector 3,
+                               the F05-blunder story stands
+    4-bridge buzzes {1,3,4} -> 32K (all of it addressable), no peripheral
+                               interrupts, no blunder -- and gemu's straps
+                               must be updated
+
+One measurement -- pin 3 to pin 1 on any in-machine card -- splits the tree.
+gemu models the pure-N reading until then.
 
 ### Not to be confused with the 44-tango
 
