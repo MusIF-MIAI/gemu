@@ -7,6 +7,12 @@ digit/quartet length-count decode (CI42 count-from-04 in the loop; CU01 gated
 OVERBAR(x) marks a printed negation bar. Family walks V2 DESCENDING (CO40 in
 60|62): arithmetic runs LSB-first for the carry chain.
 
+**2026-07-21 re-read, all four sheets at 600 dpi.** The UA prerequisite has
+since landed (`ge_ua_decimal`, fdc1afe) and the two common-row conflicts are
+gated (2f5680e), so the blockers below are the only ones left. See
+"Second read" at the end for what the page images settled and for the three
+contradictions that stopped the conversion.
+
 ## fo.140 — 64|65 beta (SA 0110 0101)
 Rows: TO50 NO->BO; TO65 CO49 = DI06A0 (RES URPE E URPU); TI06 CU10 = DI06A0;
 TI06 CU12 = DI06A0. No conditions. Exit: 60+62 (0110 00X0) unconditional.
@@ -109,3 +115,102 @@ while fo.43/fo.146 use the same command as part of the AND/OR code.
 Deriving the full table means tracing ~20 concentrator gates across two
 sheets. Before doing that by hand, check cp04 (the prose volume) for a
 printed UA function table -- it would give the same answer as data.
+
+## Second read (2026-07-21, 600 dpi page images)
+
+### Settled
+
+**Clock placement.** The rows with an empty Mastro-Clock cell are continuation
+rows and inherit the clock printed above them, so the commands the first read
+left unplaced are: **CI46 and CI47 at TO30** (they follow `TO30 CI15`) and
+**CI50 at TO50** (it follows the `TO50 NO->BO` row). No inference needed.
+
+**fo.142 prints no CI45.** The command cell whose glyph resembles CI45 carries
+equation `CI4611`, so it is CI46; there is no CI45 row on the sheet at all.
+The family therefore runs the UA in ARITHMETIC mode (logic low) with CI46
+selecting decimal — exactly the case `ge_ua_decimal` was written for.
+
+**CO48's bar covers SA01 only**, not the product: `{(SD+CMQ+SB)·/SA01}`.
+Confirmed at high zoom; the bar starts after the dot.
+
+**fo.141's CO30 bar is real**: `{/FA03}`, matching the `not_FA03` gemu already
+uses for XC-OC-NC.
+
+**Beta enters the executive band with X = 0.** fo.140's state cell is
+`0 1 1 0 0 1 0 1` = 0x65, so S001 = 0, and beta issues only CU10/CU12 (S000,
+S002), leaving S001 untouched. The first executive pass is 60, not 62.
+
+**CI75's decimal test is quartet-local.** fo.143 prints
+`{/(dRO=0i)(AB+SB) + /(dRO_1=0i)(AD+SD+CMQ+MVQ)}` — subscript 1 on the second
+term. The binary ops test the whole result byte; the decimal ops test only the
+DIGIT quartet, so the preserved zone nibble cannot make a zero result look
+nonzero.
+
+**CI60 supplies the zone.** fo.142's `TO70 CI60 = DA01A0 {(AD+SD+CMQ+MVQ)}`
+routes RO2 (the operand's high nibble) into NI4 while CI50 keeps the UA in its
+low zone. That corroborates, from the sheet, the pass-through that
+`ge_ua_decimal` had to assume when CI50 is asserted: the high quartet of the
+result is RO's, not the UA's.
+
+**L1_2 is the high quartet, L1_1 the low** — three independent confirmations:
+the MVQ/CMQ field length is already known to be the high nibble (funktionalcpu
+step 0x1B), fo.143 makes `{L1_2 = 1i}` the exit gate, and the SS2 layout the
+disassembler uses puts the operand-1 length in the high nibble.
+
+**fo.143's exit box**: `60+62 {/(L1_2 = 1i)}` (bar present) and
+`E2+E3 {(L1_2 = 1i)}`.
+
+### What the deck can and cannot arbitrate
+
+The 0x40 sweep's algebra cases (deck steps 0x14-0x1C) are:
+
+    AD  1, 1, 0x04F2, 0x04F3        AB  1, 2, 0x0513, 0x0515
+    AD  1, 2, 0x04F2, 0x04F5        AB  1, 2, 0x0513, 0x051B
+    AD  2, 1, 0x04FB, 0x04FC        SD  1, 2, 0x0521, 0x0523
+    MVQ 2,    0x0531, 0x0533        SB  1, 2, 0x0529, 0x052B
+    CMQ 2,    0x0534, 0x0536
+
+Working the quartet counters through those: the loop count is governed by the
+operand-1 quartet, so **every subtract in the sweep runs exactly one
+iteration**. `AD 2, 1` is the only multi-iteration case and it is an add.
+So the deck exercises the loop arc but **cannot** adjudicate anything about
+how the borrow behaves across iterations. Do not treat a green deck as
+evidence on that question.
+
+### Three contradictions that stopped the conversion
+
+**1. CO48 re-presets the borrow on every iteration.** `{(SD+CMQ+SB)·/SA01}`
+fires whenever the X bit is clear, and X is set by `CU01 {(L1_1 = 1i)}`, i.e.
+only once operand 2's quartet is exhausted. For equal-length operands (the
+common case, e.g. `SD 3,3` -> L1 = 0x22) the two quartets underflow on the
+SAME iteration, so X stays 0 for the whole loop and the carry-in is forced to
+1 before every digit — which destroys borrow propagation. Nothing else in the
+loop touches URPE, so the chain otherwise works by default (that is how
+`AD 2,1` propagates its carry). Read literally the sheet computes multi-digit
+SD/SB wrongly; the deck cannot tell us, because its SD/SB are single-digit.
+
+The suspicion is that `CO4811 = DE97A0` (schema 211-3) has a leaf the sheet
+does not print, the same shape as the DE00A/CM011 defect: gemu modelled one
+leaf of a four-leaf OR as the whole condition.
+
+**2. CI73 SET FI03 is unconditional, and FA03 inhibits the source fetch.**
+fo.143 sets FI03 at TI06 of every 40|42 (`CI73A0 = EG43A0`, no condition, no
+parenthesised term). ge.h has FI unloaded into FA at TO10, so FA03 is high by
+TO10 of the next 60|62 — before that state's `TO25 CO30 {/FA03}`. Taken at
+face value the source byte is read on the FIRST iteration only, and since
+40|42's CI32 overwrites RO with the result byte, later iterations would stage
+a stale result byte as their "source". That cannot be what the machine does,
+so either FA03 means something other than a plain latched FI03 here, or the
+FI->FA handoff clears FI and the timing works out differently, or CI73's set
+is gated by something not printed.
+
+**3. What FI03/FA03 actually is.** ge.h documents ffFA as fault bits
+("Faults, pp. 139-141"); docs/console.md only lists FA00-FA03 as the low four
+bits of FA. gemu models FI03 as a plain flip-flop (CI73 set / CI83 reset) and
+never sets it in an executive state. If FA03 is a fault line then `{/FA03}`
+on CO30 is just "read unless faulted" and is irrelevant to the loop — which
+would dissolve contradiction 2 but leaves CI73's unconditional set unexplained.
+
+(1) and (2) are independent of each other; either one alone blocks a faithful
+conversion, because guessing on either produces silently wrong arithmetic
+rather than a visible failure.
