@@ -100,11 +100,11 @@ Every one of these, every conversion:
 Order is roughly cheapest-first; each needs its own transcription + prerequisite
 check.
 
-- [ ] **AB/SB/AD/SD/MVQ/CMQ** (fo.140-143) — transcribed; UA decimal landed
-      (`fdc1afe`); CI68's common-row gate landed (`2f5680e`, `3f863cf`); both
-      loop contradictions resolved by gate tracing. One unknown left: what
-      `L1U16` (cp06 ch.068 pos.5) is, which decides CI73's predicate and hence
-      the zero-extension. Everything else is ready to write.
+- [x] **AB/SB/AD/SD/MVQ/CMQ** (fo.140-143) — CONVERTED (`510e7f2`). Three
+      condition cells corrected at the gates (CU01, CI73, CI85 — see the
+      transcription doc); deck +63 cycles, 141/141 transitions identical;
+      three unit tests cover the deck-blind cases (multi-digit borrow,
+      zero-extension, LT-compare with intermediate carry).
 - [ ] **SR/SL** (fo.132-134) — transcribed; needs the search datapath. EA/EB
       tail is ready.
 - [ ] MVP/CMP/AP/SP (fo.96-105) — AP/SP has the recomplement tail.

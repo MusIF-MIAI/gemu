@@ -58,7 +58,7 @@ entering from beta 64|65 (SS-conversion roadmap; * = converted to per-clock):
 | UPKS | 120-122 | 64>60-63>40-43 loop |
 | PK | 122-123 | 64>60-63>40-43 loop {+SA00} |
 | UPK | 124-126 | 64>60-63>{50-53}>40-43 loop {SA00} |
-| AB-SB-AD-SD-MVQ-CMQ (transcribed: docs/transcriptions/) | 126-128 | 64>60>50>40 loop |
+| AB-SB-AD-SD-MVQ-CMQ* | 126-128 | 64>60>50>40 loop (converted; fo.140-143, three condition cells corrected at the gates) |
 | XC-OC-NC* | 128-130 | 64>60>50>40 loop |
 | EDT | 130-132 | 64>50>60>40 loop (50 first) |
 | SR-SL (transcribed: docs/transcriptions/) | 132-134 | 64>60>50>40, exit to EA {(dRO=0)+(L1=1i)} (the EA/EB register write) |
