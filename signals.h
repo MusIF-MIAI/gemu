@@ -483,6 +483,43 @@ SIG(DO02A) { return !(BIT(ge->rFO, 3) && !BIT(ge->rFO, 7) && BIT(ge->rFO, 6)); }
 SIG(DO021) { return !(DO02A(ge) && DO02A(ge)); }
 SIG(DO04A) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
 SIG(DO041) { return !DO04A(ge); }
+/* Backplane option connectors, cp06 ch.002 "VARIANTI E OPZIONI".
+ *
+ * TAB.3 -- E04 selects which two connectors are enabled for the initial LOAD:
+ *
+ *   E04      || FUL26 | FUL36 || connectors enabled for loading
+ *   ---------++-------+-------++--------------------------------
+ *   (empty)  ||   1   |   1   || 2 and 3
+ *   PONT2N   ||   1   |   0   || 2 and 4
+ *   PONT2P   ||   0   |   1   || 4 and 3
+ *
+ * gemu defaults to empty, which is what the initial-load tests assume. */
+SIG(FUL26) { return ge->options.E04 != PONT_2P; }
+SIG(FUL36) { return ge->options.E04 != PONT_2N; }
+
+/* TAB.1 -- F04 straps the machine version, and FUL4G distinguishes the slow
+ * minimum-performance model from the two faster ones:
+ *
+ *   version  | cycle  | performances | E03    | F04    || FUL4G
+ *   ---------+--------+--------------+--------+--------++-------
+ *   UCE 466  | 6 usec | MIN          | /      | PONT2H ||   0
+ *   UCE 467  | 4 usec | MAX          | PONT2P | PONT2P ||   1
+ *   UCE 468  | 2 usec | MAX          | PONT2H | PONT2P ||   1
+ *
+ * So FUL4G reads "this machine has the MAX instruction set". */
+SIG(FUL4G) { return ge->options.F04 == PONT_2P; }
+
+/* The note on ch.002: FUL01/FUL11/FUL4F follow FEL06/FEL16/FUL4G unless the
+ * maintenance panel's S42 "LAMPS" switch is in position DIAG, in which case
+ * they become 0 / 0 / 1 regardless of the straps. FUL4F is the form the
+ * timing charts cite as {FUL4}. */
+SIG(FUL4F) { return ge->options.S42_diag ? 1 : FUL4G(ge); }
+
+/* Names the charts and the older transcriptions use. */
+SIG(FUL2) { return FUL26(ge); }
+SIG(FUL3) { return FUL36(ge); }
+SIG(FUL4) { return FUL4F(ge); }
+
 /**
  * @defgroup ua-decode Arithmetic-unit function decode
  *

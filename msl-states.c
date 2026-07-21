@@ -60,25 +60,6 @@ static uint8_t LI06(struct ge *ge) { return BIT(ge->rL1, 6); }
 static uint8_t AINI(struct ge *ge) { return ge->AINI; }
 static uint8_t not_AINI(struct ge *ge) { return !AINI(ge); }
 
-/* TODO: "jumpers" configuration.
- *
- * This is the configuration without any "configuration" jumper connector
- * in backplane position E04.
- * It is possible to change the configuration by plugging either a PONT2N
- * or PONT2P in that slot, for this available configurations:
- *
- *  E04   || FUL2 | FUL3 || Connectors for loading
- * -------++------+------++-------------------------
- * EMPTY  ||  1   |  1   || 2 and 3
- * PONT2N ||  1   |  0   || 2 and 4
- * PONT2P ||  0   |  1   || 4 and 3
- *
- * (detailed ch. 002)
- *
- * NOTE: test for the initial load assume FUL2 = FUL3 = 1.
- */
-SIG(FUL2) { return 1; }
-SIG(FUL3) { return 1; }
 
 static uint8_t state_80_TO30_CO96(struct ge *ge) {
     return (ge->ALOI && !FUL2(ge)) || (!ge->ALOI && !FUL3(ge));

@@ -237,3 +237,51 @@ UTEST(signals, a_single_injection_still_ripples)
     g.counting_network.cmds.decresing = 1;
     ASSERT_EQ(ge_counting_network_output(&g), 0x0020);   /* quartet 2 only */
 }
+
+/* Backplane option connectors, cp06 ch.002 "VARIANTI E OPZIONI". */
+
+UTEST(signals, e04_selects_the_loading_connectors)
+{
+    struct ge g;
+
+    ge_init(&g);                          /* E04 empty: connectors 2 and 3 */
+    ASSERT_TRUE(FUL26(&g));
+    ASSERT_TRUE(FUL36(&g));
+
+    g.options.E04 = PONT_2N;              /* connectors 2 and 4 */
+    ASSERT_TRUE(FUL26(&g));
+    ASSERT_FALSE(FUL36(&g));
+
+    g.options.E04 = PONT_2P;              /* connectors 4 and 3 */
+    ASSERT_FALSE(FUL26(&g));
+    ASSERT_TRUE(FUL36(&g));
+}
+
+/* FUL4G reads "this machine has the MAX instruction set": the 6us UCE 466
+ * straps F04 with PONT2H and gets 0, the 4us and 2us models use PONT2P. */
+UTEST(signals, f04_straps_the_machine_version)
+{
+    struct ge g;
+
+    ge_init(&g);
+    g.options.F04 = PONT_2H;              /* UCE 466, 6us, MIN */
+    ASSERT_FALSE(FUL4G(&g));
+
+    g.options.F04 = PONT_2P;              /* UCE 467/468, MAX */
+    ASSERT_TRUE(FUL4G(&g));
+}
+
+/* The ch.002 note: S42 "LAMPS" in position DIAG forces FUL4F high whatever
+ * the straps say, which is the {FUL4} the timing charts cite. */
+UTEST(signals, s42_diag_overrides_the_version_strap)
+{
+    struct ge g;
+
+    ge_init(&g);
+    g.options.F04 = PONT_2H;              /* MIN machine: FUL4G low ... */
+    ASSERT_FALSE(FUL4F(&g));
+
+    g.options.S42_diag = 1;               /* ... but DIAG forces it high */
+    ASSERT_TRUE(FUL4F(&g));
+    ASSERT_TRUE(FUL4(&g));
+}

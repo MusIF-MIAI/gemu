@@ -121,6 +121,36 @@ struct ge_knot_ni {
 };
 
 /**
+ * Backplane option connectors and the maintenance LAMPS switch.
+ *
+ * cp06 chapter 002 "VARIANTI E OPZIONI / CHANGE AND OPTION" (dwg 140 130 65 6).
+ * The machine is configured by plugging PONT2N or PONT2P jumper cards into
+ * three backplane connector positions, and by one switch on the maintenance
+ * panel.  See docs/hardware-options.md for the tables and where to find them
+ * on a physical machine.
+ */
+enum ge_pont { PONT_NONE = 0, PONT_2N, PONT_2P, PONT_2H };
+
+struct ge_options {
+    /** E04: which two connectors are enabled for the initial LOAD (TAB.3). */
+    enum ge_pont E04;
+
+    /** F03: which connectors may raise an interruption (TAB.2). */
+    enum ge_pont F03;
+
+    /** F04: machine version straps -- cycle period and performance (TAB.1). */
+    enum ge_pont F04;
+
+    /**
+     * S42 "LAMPS" on the maintenance panel, in position DIAG.
+     *
+     * Per the note on ch.002, FUL01/FUL11/FUL4F normally follow
+     * FEL06/FEL16/FUL4G; with S42 in DIAG they become 0 / 0 / 1 instead.
+     */
+    uint8_t S42_diag;
+};
+
+/**
  * The entire state of the emulated system, including registers, memory,
  * peripherals and timings.
  */
@@ -128,6 +158,9 @@ struct ge {
     /* Main clock */
     enum clock current_clock;
     uint8_t powered;
+
+    /** Backplane straps and maintenance-panel options (cp06 ch.002). */
+    struct ge_options options;
 
     /* Lists of events and operations for all
      * pulses
