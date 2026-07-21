@@ -71,7 +71,7 @@ if [ -f "$CAP" ]; then
             # deliberately, having checked the step trace is unchanged.
             case "$opt" in
                 0x00) want=175a; cyc=200000;  want_cyc=;        what="idle HLT (no test selected)" ;;
-                0x40) want=1427; cyc=3000000; want_cyc=1341310; what="CPU functional sweep" ;;
+                0x40) want=1427; cyc=3000000; want_cyc=1341373; what="CPU functional sweep" ;;
             esac
             run=$("$GE" "$TMP/fk.bin" --poke 0x0E00=$opt --trace err \
                         --max-cycles $cyc 2>&1)

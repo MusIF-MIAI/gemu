@@ -43,6 +43,12 @@
     X(CO49, "Reset URPE URPU") \
     X(CI40, "COUNT MINUS") \
     X(CI41, "COUNT 00") \
+    X(CI42, "COUNT 04") \
+    X(CI44, "STOP COUNT 07") \
+    X(CI45, "UA logic mode") \
+    X(CI46, "UA decimal/AND mode") \
+    X(CI47, "UA subtract/XOR-OR mode") \
+    X(CI50, "Work only UA1") \
     X(CI60, "NI4 <- RO2") \
     X(CI61, "NI3 <- RO2") \
     X(CI62, "NI2 <- RO2") \

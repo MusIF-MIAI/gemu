@@ -478,6 +478,59 @@ UTEST(exec, cmq_compares_quartets_high)
     ASSERT_EQ(g.mem[0x71], 0xF5);
 }
 
+/* The three cases the funktionalcpu deck cannot see: its algebra operands
+ * are all single-iteration, so multi-digit borrow propagation, the CI73/FA03
+ * zero-extension and the per-iteration FI04 re-arm are invisible to it.
+ * These run the full 64|65 -> 60|62 -> 50|52 -> 40|42 loop (cp07 fo.140-143). */
+
+/* SD 10 - 01 = 09: the borrow from digit 1 must reach digit 2 through URPE,
+ * preset once (CO48 {(SD+CMQ+SB)./SA01}) and propagated, never re-preset. */
+UTEST(exec, sd_multidigit_borrow_propagates)
+{
+    uint8_t prog[] = { SD_OPCODE, 0x11, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x6F] = 0xF1; g.mem[0x70] = 0xF0;    /* op1 = zoned "10", LSB at 0x70 */
+    g.mem[0x7F] = 0xF0; g.mem[0x80] = 0xF1;    /* op2 = zoned "01" */
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0xF9);              /* 0-1 -> 9, borrow out */
+    ASSERT_EQ(g.mem[0x6F], 0xF0);              /* 1-0-borrow -> 0 */
+    ASSERT_EQ(alu_get_cc(&g), 3);              /* no final borrow: result > 0 */
+}
+
+/* AD 15 + 7 = 22 with operand 2 one digit shorter: after its quartet
+ * underflows, CI73 {L1_1 = 1i} latches FI03, FA03 inhibits the next source
+ * fetch (fo.141 CO30 {/FA03}), and the exhausted operand reads as digit 0.
+ * The zone of every result byte is the DESTINATION byte's own zone, read in
+ * 50|52 (which has no FA03 gate) and routed RO2 -> NI4 by CI60. */
+UTEST(exec, ad_zero_extends_the_shorter_operand)
+{
+    uint8_t prog[] = { AD_OPCODE, 0x10, 0x00, 0x70, 0x00, 0x80 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x6F] = 0xF1; g.mem[0x70] = 0xF5;    /* op1 = zoned "15" */
+    g.mem[0x80] = 0xF7;                        /* op2 = zoned "7", 1 digit */
+    run_one_ss(&g);
+    ASSERT_EQ(g.mem[0x70], 0xF2);              /* 5+7 = 12: digit 2, carry */
+    ASSERT_EQ(g.mem[0x6F], 0xF2);              /* 1+0+carry = 2, zone kept */
+    ASSERT_EQ(alu_get_cc(&g), 1);              /* nonzero, no overflow */
+}
+
+/* CMQ 13 vs 31: the LSB comparison (3 vs 1) produces an intermediate CARRY,
+ * and if FI04 simply latched it the compare would report HIGH.  CI84 re-arms
+ * FI04 every iteration in 60|62 -- the fo.141 brace {/SA01} is printed one
+ * row off, it belongs to CI85 (leaf DE91A, ch.249 g3, carries SA01M) -- so
+ * FA04 ends as the FINAL borrow state and the compare reads LOW. */
+UTEST(exec, cmq_lt_with_intermediate_carry_reads_low)
+{
+    uint8_t prog[] = { CMQ_OPCODE, 0x11, 0x00, 0x71, 0x00, 0x81 };
+    struct ge g; setup(&g, prog, sizeof(prog));
+    g.mem[0x70] = 0xF1; g.mem[0x71] = 0xF3;    /* op1 digits "1 3" = 13 */
+    g.mem[0x80] = 0xF3; g.mem[0x81] = 0xF1;    /* op2 digits "3 1" = 31 */
+    run_one_ss(&g);
+    ASSERT_EQ(alu_get_cc(&g), ALU_CC_LOW);     /* 13 < 31 */
+    ASSERT_EQ(g.mem[0x70], 0xF1);              /* compare stores nothing */
+    ASSERT_EQ(g.mem[0x71], 0xF3);
+}
+
 /* JRT – Jump Return (op 0x41): branch-and-link. Deposits the return address
  * (the subsequent instruction) into index register 7 (mem 254/255) and jumps.
  * CPU[4] sec.5.5.6.2 / 5.6.5.1. This is the call mechanism for the C ABI. */

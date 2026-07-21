@@ -668,13 +668,60 @@ static uint8_t L1_21_ones(struct ge *ge) { return (ge->rL1 & 0xff) == 0xff; }
  * (operand 1 / destination length) and L1_1 the low (operand 2 / source),
  * which is also the SS2 instruction layout the disassembler already uses.
  *
- * The two quartet predicates land with the AB/SB/AD/SD/MVQ/CMQ conversion --
- * L1_2 gates that family's 40|42 exit (CU07) and L1_1 reaches CI73 through
- * EG43A's L1U16 input -- so only their meaning is recorded here for now. */
+ * L1_2 gates the algebra family's 40|42 exit (CU07, fo.143) and L1_1 reaches
+ * CI73 through EG43A's L1U16 input (cp06 ch.264 g5 + ch.068 g5, where both
+ * quartet terminals are built in the open: L1UI6 = low all-ones, L1UM6 =
+ * high all-ones). */
+static uint8_t L1_2_ones(struct ge *ge) { return (ge->rL1 & 0xf0) == 0xf0; }
+static uint8_t L1_1_ones(struct ge *ge) { return (ge->rL1 & 0x0f) == 0x0f; }
+
+/* The two-length algebra family, cp07 fo.140-143: one set of sheets for all
+ * six opcodes (docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md).  Both operands
+ * walk DESCENDING -- LSB first, for the URPE carry chain -- and the two L1
+ * quartets are two independent lengths: the low quartet counts operand 2 and
+ * its terminal drives the zero-extension (CI73 -> FA03 -> source-fetch
+ * inhibit), the high quartet counts operand 1 and drives the CU07 exit. */
+static uint8_t beta_algebra(struct ge *ge) {
+    switch (ge->rFO) {
+        case AB_OPCODE:  case SB_OPCODE:
+        case AD_OPCODE:  case SD_OPCODE:
+        case MVQ_OPCODE: case CMQ_OPCODE:
+            return 1;
+        default:
+            return 0;
+    }
+}
+/* The family terms fo.142/fo.143 print on the multiplexed rows. */
+static uint8_t is_ad_sd_cmq(struct ge *ge) {           /* {AD+SD+CMQ}      */
+    return ge->rFO == AD_OPCODE || ge->rFO == SD_OPCODE ||
+           ge->rFO == CMQ_OPCODE;
+}
+static uint8_t is_sd_sb_cmq(struct ge *ge) {           /* {SD+SB+CMQ}      */
+    return ge->rFO == SD_OPCODE || ge->rFO == SB_OPCODE ||
+           ge->rFO == CMQ_OPCODE;
+}
+static uint8_t is_ad_sd_cmq_mvq(struct ge *ge) {       /* {AD+SD+CMQ+MVQ}  */
+    return is_ad_sd_cmq(ge) || ge->rFO == MVQ_OPCODE;
+}
+static uint8_t is_ab_sb(struct ge *ge) {               /* {AB+SB}          */
+    return ge->rFO == AB_OPCODE || ge->rFO == SB_OPCODE;
+}
+static uint8_t not_cmq(struct ge *ge) { return ge->rFO != CMQ_OPCODE; }
 
 /* MVQ is the one family that walks 50|52 with nothing for the arithmetic
  * unit to do, which is why fo.142's CI68 is the one common row it excludes. */
 static uint8_t not_mvq(struct ge *ge) { return ge->rFO != MVQ_OPCODE; }
+
+/* fo.143's flag conditions.  {(URPE)} on CI74; the CI75 zero test is split
+ * by sub-family -- the binary ops test the whole result byte, the decimal/
+ * quartet ops only the DIGIT quartet ({/(dRO_1=0i)}, subscript printed), so
+ * the preserved zone nibble cannot make a zero result look nonzero.  At
+ * TI06 of 40|42 the result byte is in RO (CI32 latched it at TO50). */
+static uint8_t urpe_set(struct ge *ge) { return ge->URPE; }
+static uint8_t ro_byte_nonzero(struct ge *ge) { return ge->rRO != 0; }
+static uint8_t ro_digit_nonzero(struct ge *ge) {
+    return (ge->rRO & 0x0f) != 0;
+}
 
 static uint8_t not_str(struct ge *ge) { return ge->rFO != STR_OPCODE; }
 static uint8_t not_cmr(struct ge *ge) { return ge->rFO != CMR_OPCODE; }
@@ -766,13 +813,14 @@ static uint8_t ss_byte_loop(struct ge *ge);
 static uint8_t is_jrt_or_la(struct ge *ge);
 
 static uint8_t ss_hybrid_family(struct ge *ge) {
-    /* is_ss_data_op still lists MVC, XC, OC, NC and CMC, which now have real
-     * per-clock executive states.  The old variant matrix hid the overlap by
-     * checking those families first; with the dispatch gone the exclusion has
-     * to be explicit, or a converted opcode would run the one-shot AND the
-     * executive loop -- producing correct results in far too few cycles, the
-     * exact failure the deck's cycle count caught. */
-    return is_ss_data_op(ge) && !ss_byte_loop(ge);
+    /* is_ss_data_op still lists MVC, XC, OC, NC, CMC and the six algebra
+     * opcodes, which now have real per-clock executive states.  The old
+     * variant matrix hid the overlap by checking those families first; with
+     * the dispatch gone the exclusion has to be explicit, or a converted
+     * opcode would run the one-shot AND the executive loop -- producing
+     * correct results in far too few cycles, the exact failure the deck's
+     * cycle count caught. */
+    return is_ss_data_op(ge) && !ss_byte_loop(ge) && !beta_algebra(ge);
 }
 
 static uint8_t ss_hybrid_exit(struct ge *ge) {
@@ -1057,11 +1105,22 @@ static const struct msl_timing_chart exec_50[] = {
     { TO30, CI47, is_xc_or_oc },            /* fo.146 {XC+OC}             */
     { TO30, CI47, is_cmi },                 /* fo.78  subtract            */
     { TO30, CI47, is_cmc },                 /* fo.78  subtract            */
+    /* fo.142: no CI45 on the sheet -- the family runs the UA in ARITHMETIC
+     * mode, with CI46 selecting decimal and CI50 (below) narrowing it to
+     * the digit quartet.  AB/SB raise neither: plain binary add/subtract. */
+    { TO30, CI46, is_ad_sd_cmq },           /* fo.142 {AD+SD+CMQ} decimal */
+    { TO30, CI47, is_sd_sb_cmq },           /* fo.142 {SD+SB+CMQ} subtract*/
     { TO50, CO48, immediate_xor_or_mode },  /* fo.43  carry-in            */
     { TO50, CO48, is_xc_or_oc },            /* fo.146 as printed          */
     { TO50, CO48, is_cmi },                 /* fo.78  complement add      */
     { TO50, CO48, is_cmc },                 /* fo.78  borrow EVERY byte   */
     { TO50, CO48, reg_arith50_pass1_sub },  /* fo.39  {(SMR+CMR)./SA01}   */
+    /* fo.142 {(SD+CMQ+SB)./SA01}: the borrow is preset ONCE, on the first
+     * iteration -- the X bit is set by CU01 from iteration 2 on -- and then
+     * propagates digit to digit through URPE.  (The brace was verified at
+     * high zoom: the bar covers SA01 alone.) */
+    { TO50, CO48, is_sd_sb_cmq, SA01_pass1 },
+    { TO50, CI50, is_ad_sd_cmq },           /* fo.142 "WORK ONLY UA1"     */
     { TO50, CI47, is_smr_or_cmr },          /* fo.39  subtract            */
 
     /* UA -> NI43, in the mode set above.  Not quite a common row: fo.142
@@ -1071,6 +1130,13 @@ static const struct msl_timing_chart exec_50[] = {
      * sheet reaching this state prints CI68 with no family term, so the gate
      * is written as the single exclusion rather than as five family rows. */
     { TO70, CI68, not_mvq },
+    /* fo.142 {AD+SD+CMQ+MVQ}: RO2 -> NI4, the preserved ZONE nibble.  The
+     * row sits after CI68 because RO-in-NI has priority over UA-in-NI (cpu
+     * fo.125/126) and gemu's array order realises that priority.  For MVQ
+     * -- which issues no CI68 -- NI3 keeps its counting-network default,
+     * which at this point carries BO quartet 3 = the staged source DIGIT:
+     * the knot's idle path IS the quartet move. */
+    { TO70, CI60, is_ad_sd_cmq_mvq },
     { TI05, CI05, 0 },               /* restage result in L1 high byte */
     { TI06, CU14, 0 },               /* reset S004 -> 40|42 */
     { END_OF_STATUS, 0, 0 },
@@ -1110,6 +1176,8 @@ static const struct msl_timing_chart exec_40[] = {
     { TO10, CO41, beta_register },   /* V1 - 1 ... */
     { TO10, CO40, beta_register },   /* ...DESCENDING: LSB-first, for carry */
     { TO10, CO41, ss_byte_loop },    /* V1 + 1: ascending */
+    { TO10, CO41, beta_algebra },    /* V1 - 1 ... */
+    { TO10, CO40, beta_algebra },    /* ...DESCENDING: LSB-first (fo.143) */
 
     /* Whether the byte is written at all: the compares never store, and TM
      * tests without storing. */
@@ -1118,7 +1186,8 @@ static const struct msl_timing_chart exec_40[] = {
     { TO25, CO31, is_mvi },
     { TO25, CO31, is_mvc },
     { TO25, CO31, is_xoc_nc },
-                                     /* CMI and CMC issue no CO31 at all */
+    { TO25, CO31, beta_algebra, not_cmq },    /* fo.143 {AD+SD+MVQ+AB+SB} */
+                                     /* CMI, CMC and CMQ issue no CO31 */
 
     /* Condition-code flags. CI85 (reset FI05) is kept ahead of CI75 (set
      * FI05) because the immediate sheet prints them in that order and the
@@ -1131,6 +1200,20 @@ static const struct msl_timing_chart exec_40[] = {
     { TI06, CI75, is_cmi, cmi_result_nonzero },
     { TI06, CI75, is_cmc, cmc_byte_differs }, /* {/(dRO=0i)}              */
     { TI06, CI75, xc_byte_nonzero },          /* {XC./(dRO=0i)}           */
+    /* fo.143: the zero test is quartet-local for the decimal/quartet ops
+     * ({/(dRO_1=0i)}, subscript printed) and whole-byte for AB/SB. */
+    { TI06, CI75, is_ab_sb, ro_byte_nonzero },
+    { TI06, CI75, is_ad_sd_cmq_mvq, ro_digit_nonzero },
+    { TI06, CI74, beta_algebra, urpe_set },   /* fo.143 {(URPE)}          */
+    /* fo.143 prints CI73 with an EMPTY cell and CU01 with {(L1_1 = 1i)};
+     * both are wrong by one row.  CI73's leaf EG43A = NAND(DI493, DO211,
+     * L1U16, DO211) (cp06 ch.264 g5) carries the low quartet's all-ones
+     * terminal (L1U16, ch.068 g5), and CU01's chain has no counter term at
+     * all (ch.219 g1 -> ch.252 g8 -> ch.222 g1, all state decodes; ch.239
+     * verified against the found paper sheet).  So: FI03 latches "operand 2
+     * exhausted" here, and FA03 inhibits the source fetch from the next
+     * 60|62 on -- the zero-extension. */
+    { TI06, CI73, beta_algebra, L1_1_ones },
     { TI06, CI84, is_cmi, cmi_borrow },
     { TI06, CI84, is_cmc, cmc_borrow },       /* {/URPE}                  */
 
@@ -1156,6 +1239,7 @@ static const struct msl_timing_chart exec_40[] = {
     { TI06, CU07, is_mvc, L1_21_ones },          /* {L1_2,1=1i} terminal  */
     { TI06, CU07, is_xoc_nc, L1_21_ones },
     { TI06, CU07, is_cmc, cmc_done },            /* {(L1=1i)+/(dRO=0i)}   */
+    { TI06, CU07, beta_algebra, L1_2_ones },     /* fo.143 {(L1_2 = 1i)}  */
     { TI06, CU07, beta_immediate_shift },        /* single byte: always   */
     { TI06, CU10, beta_immediate_shift },
     { TI06, CU12, beta_immediate_shift },
@@ -1165,7 +1249,7 @@ static const struct msl_timing_chart exec_40[] = {
 /* Families that fetch a source byte in 60|62.  MVI, the immediate logicals
  * and CMI use the state purely for routing and touch no datapath at all. */
 static uint8_t exec60_fetches_source(struct ge *ge) {
-    return beta_register(ge) || ss_byte_loop(ge);
+    return beta_register(ge) || ss_byte_loop(ge) || beta_algebra(ge);
 }
 
 /* CU04 (set S004) is issued by everything except MVI, which has nothing for
@@ -1179,16 +1263,23 @@ static const struct msl_timing_chart exec_60[] = {
      * half while the CI-phase network counts the length down in the low. */
     { TO10, CO12, exec60_fetches_source },   /* V2 -> NO: source address */
     { TO10, CO41, exec60_fetches_source },   /* count from 00 */
-    { TO10, CO40, beta_register },           /* DESCENDING: register only */
+    { TO10, CO40, beta_register },           /* DESCENDING: register only... */
+    { TO10, CO40, beta_algebra },            /* ...and algebra: LSB-first    */
     { TO25, CO30, beta_register },           /* MEM -> RO: source byte */
     { TO25, CO30, is_mvc },
     { TO25, CO30, is_cmc },
     { TO25, CO30, is_xoc_nc, not_FA03 },     /* {/FA03} */
+    /* fo.141 {/FA03}: once operand 2's quartet ran out, CI73 set FI03 in
+     * 40|42 and the source fetch is inhibited -- the family's
+     * zero-extension.  RO reads 0 (TO20 clears it), so the remaining
+     * operand-1 digits are processed against nothing. */
+    { TO25, CO30, beta_algebra, not_FA03 },
     { TO30, CI15, exec60_fetches_source },   /* L1 -> NO (count path) */
     { TO30, CI40, exec60_fetches_source },   /* CI-phase: decreasing */
     { TO30, CI44, exec60_fetches_source },   /* ...stop 07, byte-local */
     { TO30, CI41, exec60_fetches_source },   /* ...count from 00 */
     { TO30, CI42, beta_register },           /* ...and from 04: register only */
+    { TO30, CI42, beta_algebra },            /* algebra: BOTH quartets count  */
     { TO40, CO02, exec60_fetches_source },   /* NI -> V2: stepped address */
     { TO70, CI65, exec60_fetches_source },   /* RO1 -> NI3 */
     { TO70, CI60, exec60_fetches_source },   /* RO2 -> NI4: stage the byte */
@@ -1203,7 +1294,17 @@ static const struct msl_timing_chart exec_60[] = {
     { TI06, CI85, is_cmc, SA01_pass1 },
     { TI06, CI85, xc_first_pass },
     { TI06, CI85, reg_arith_pass1 },         /* {/SA01.(AMR+SMR+CMR)} */
+    /* fo.141 prints CI85 with an EMPTY condition cell and CI84 with
+     * {/SA01}; the gates say the brace belongs one row up.  CI85's leaf
+     * DE91A = NAND(DI052, SA01M, DO381) (cp06 ch.249 g3) carries the
+     * negated X-bit rail, so FI05 is ARMED ONCE, first iteration, and then
+     * accumulates "digit nonzero" -- the only reading that yields the
+     * documented CC tables.  CI84 re-arms each iteration so FA04 ends as
+     * the FINAL carry/borrow, exactly as the deck-validated register
+     * family already does. */
+    { TI06, CI85, beta_algebra, SA01_pass1 },
     { TI06, CI84, beta_register_arithmetic },/* re-arm FI04 each pass */
+    { TI06, CI84, beta_algebra },            /* re-arm: FA04 = final carry */
 
     /* Exit.  CU15 always leaves the 6x band; CU04 then decides whether the
      * successor is the operate state, and the families with nothing for the
