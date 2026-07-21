@@ -126,13 +126,12 @@ That F04 reading corrected a bug here: FUL4G had been derived as
 `F04 == PONT2P`, which reads TAB.1 off the "no interrupts" rows only and gets
 an empty F04 backwards. It is low for exactly one strap, F04 = PONT2H.
 
-### Open question on that machine
+### Not to be confused with the 44-tango
 
 The 44-tango (`0610044T`) is the commonest logic card in the CPU -- rows E and
-F alone hold a dozen of them from card 18 upward -- so a 44-tango is not a
-PONT jumper. If the option positions are found stuffed with 44-tangos rather
-than with `061803xx` cards, that is a different configuration from the one
-this sheet records, and worth re-checking against the sheet.
+F alone hold about a dozen from card 18 upward, including E36 and E37 -- and
+it is a LOSE23/LOSE2S logic board, not a PONT jumper. The option positions are
+at the other end of the row, cards 03 to 05.
 
 ## In gemu
 
