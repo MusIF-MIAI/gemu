@@ -38,9 +38,12 @@ family. Companion to `flowchart-sheets.md` (what is left) and
    that the common chart fires unconditionally, the *common* row must gain a
    term. Known pending pair:
    - `exec_50` common `{TO70, CI68}` — fo.142 gates it `{AD+SD+AB+SB+CMQ}`,
-     **MVQ excluded**.
-   - `exec_40` common `{TI06, CU01}` — fo.143 gates it `{L1₁ = 1i}` for the
-     algebra family (selects 62 over 60 for the zero-extension pass).
+     **MVQ excluded**. Landed as `not_mvq` (`2f5680e`).
+   - `exec_40` common `{TI06, CU01}` — fo.143 *appears* to gate it
+     `{L1₁ = 1i}`. It does not; the gate trace showed no counter term and the
+     row stays unconditional (`3f863cf`). Kept here as the worked example of
+     the trap below: this one was gated on the strength of the printed brace,
+     and had to be reverted.
    These silently change *other* working families. One deck diff each.
 6. **Extend the fetch/exit predicates** the family needs (e.g.
    `exec60_fetches_source`).

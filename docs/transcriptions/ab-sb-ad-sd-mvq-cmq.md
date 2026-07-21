@@ -224,10 +224,40 @@ inhibit (zero-extend); the HIGH quartet counts operand 1 and drives CU07, the
 loop exit; the X bit is just "not the first iteration" and gates the one-shot
 borrow preset. Every piece of fo.140-143 has a job.
 
-**Still to confirm before the conversion:** what `L1U16` is exactly (cp06
-ch.068, position 5) -- whether it is literally the low quartet's all-ones
-terminal or something adjacent. That is the last unknown, and it decides the
-predicate CI73 gets.
+**`L1U16` CONFIRMED.** cp06 **ch.068** is titled "DECODING OF VO AND L1 /
+DECODIFICA DI VO E L1" and builds both quartet terminals explicitly:
+
+    g4  (NAND3 U08)  L1UIF = NAND(L1006, L1016, L1026, L1036)   bits 0..3
+    g5  (NAND1 U15)  L1UI6 = /L1UIF                             -> N22-13
+                             fans out to (240-6) (275-8) (264-5) (276-3)
+    g9  (NAND4 U10)  L1UMF = NAND(L1046, L1056, L1066, L1076)   bits 4..7
+    g10 (NAND1 U15)  L1UM6 = /L1UMF                             -> N22-11
+                             fans out to (275-6) (271-4) (258-6) (258-2) (128-3)
+
+`L1UI6` is high exactly when L1 bits 0-3 are ALL ONES, and `(264-5)` in its
+fan-out is precisely the EG43A input traced above. So:
+
+    L1UI6  =  "L1_1 = 1i"   the LOW quartet, I = inferiore
+    L1UM6  =  "L1_2 = 1i"   the HIGH quartet
+
+which independently confirms the quartet assignment (L1_1 low, L1_2 high) for
+the fourth time, and settles the family completely:
+
+    CI73  SET FI03  {L1_1 = 1i}     <- the brace fo.143 prints against CU01
+    CU01  SET S001  unconditional
+    CU07  SET S007  {L1_2 = 1i}
+
+**fo.143's `{(L1_1 = 1i)}` brace is printed one row too low.** It belongs to
+CI73, the row directly above it. With it in the right place every row of
+fo.140-143 has a job and the family is coherent:
+
+  * the LOW quartet counts operand 2; when it runs out CI73 sets FI03, FA03
+    inhibits `CO30` in 60|62, and the source stops being fetched -- the
+    zero-extension;
+  * the HIGH quartet counts operand 1 and CU07 ends the loop;
+  * the X bit is "not the first iteration", so CO48 presets the borrow once.
+
+Nothing is left unknown. The conversion can be written from this document.
 
 ### The contradictions as originally found (kept for the record)
 
