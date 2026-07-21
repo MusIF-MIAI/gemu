@@ -124,14 +124,19 @@ struct ge_knot_ni {
  * Backplane option connectors and the maintenance LAMPS switch.
  *
  * cp06 chapter 002 "VARIANTI E OPZIONI / CHANGE AND OPTION" (dwg 140 130 65 6).
- * The machine is configured by plugging PONT2N or PONT2P jumper cards into
- * three backplane connector positions, and by one switch on the maintenance
- * panel.  See docs/hardware-options.md for the tables and where to find them
- * on a physical machine.
+ * The machine is configured at FOUR backplane connector positions -- E03,
+ * E04, F03, F04 -- and by one switch on the maintenance panel.  The position
+ * names decode in the cp08 card-layout scheme as <ROW><CARD>, so E04 is row E
+ * card 04, and cp08 pp11-12 independently confirm which signals land on each.
+ * See docs/hardware-options.md for the tables and for what to probe on a
+ * physical machine.
  */
 enum ge_pont { PONT_NONE = 0, PONT_2N, PONT_2P, PONT_2H };
 
 struct ge_options {
+    /** E03: machine version, paired with F04 (TAB.1) -- FEL06 / FEL16. */
+    enum ge_pont E03;
+
     /** E04: which two connectors are enabled for the initial LOAD (TAB.3). */
     enum ge_pont E04;
 

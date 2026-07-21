@@ -267,7 +267,13 @@ UTEST(signals, f04_straps_the_machine_version)
     g.options.F04 = PONT_2H;              /* UCE 466, 6us, MIN */
     ASSERT_FALSE(FUL4G(&g));
 
-    g.options.F04 = PONT_2P;              /* UCE 467/468, MAX */
+    g.options.F04 = PONT_2P;              /* UCE 467/468, MAX, no interrupts */
+    ASSERT_TRUE(FUL4G(&g));
+
+    /* An EMPTY F04 is the interrupts-enabled variant of the same two fast
+     * models, so it is also MAX -- not the MIN machine. This is the case the
+     * real machine at Electric Dreams is in. */
+    g.options.F04 = PONT_NONE;
     ASSERT_TRUE(FUL4G(&g));
 }
 

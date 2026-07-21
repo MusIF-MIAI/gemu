@@ -91,6 +91,49 @@ one that *should* support these instructions. Two possibilities:
 Resolving it needs the LA/LPSR beta sheets re-read at the CI89 row for an
 overbar. Until then gemu carries the option model but not the row.
 
+## The machine at Electric Dreams
+
+Its card layout is public:
+<https://docs.google.com/spreadsheets/d/19S23bxF4Ik-H6zl61luwYC_t-KFmUUzMeeC4uNQSRVo/>
+sheet "Posizione schede su armadio CPU". Rows are listed in pairs (AB, CD,
+EF, ...), so the option positions are all on the **EF** line:
+
+    card 05:  0618034Z | 0618035V      <- row E | row F
+    card 04:  (empty)
+    card 03:  0618034Z | 0618035V
+    card 06 and up: 47F 47F 47F 47F 11T 32H ... 44T 44T ...
+
+Two things stand out. The sheet writes the FULL part number only at cards 03
+and 05 -- every other position is the 3-character suffix (44T "44-tango", 53F,
+40V, 47F...) -- which marks those two as the option cards rather than part of
+the ordinary logic population. And **card 04 is empty in both rows**.
+
+Reading that against the tables:
+
+  * **E04 empty** -> TAB.3 row 1: FUL26 = FUL36 = 1, loading enabled on
+    **connectors 2 and 3**. This is exactly the default gemu already assumed,
+    now confirmed against a real machine rather than assumed.
+  * **F04 empty** -> TAB.1: an empty F04 appears only on the
+    interrupts-ENABLED rows, which are UCE 467 and UCE 468 -- both MAX
+    performance, both **FUL4G = 1**.
+  * **E03 populated** -> TAB.1 distinguishes the two: PONT2P is the 4 usec
+    UCE 467, PONT2H the 2 usec UCE 468. So identifying whether `0618034Z` is
+    PONT2P or PONT2H tells you which model the machine is.
+  * **F03 populated** -> TAB.2: interruption enabled on ONE connector (3 with
+    PONT2N, 4 with PONT2P), not both.
+
+That F04 reading corrected a bug here: FUL4G had been derived as
+`F04 == PONT2P`, which reads TAB.1 off the "no interrupts" rows only and gets
+an empty F04 backwards. It is low for exactly one strap, F04 = PONT2H.
+
+### Open question on that machine
+
+The 44-tango (`0610044T`) is the commonest logic card in the CPU -- rows E and
+F alone hold a dozen of them from card 18 upward -- so a 44-tango is not a
+PONT jumper. If the option positions are found stuffed with 44-tangos rather
+than with `061803xx` cards, that is a different configuration from the one
+this sheet records, and worth re-checking against the sheet.
+
 ## In gemu
 
 `struct ge_options` in `ge.h` holds `E04`, `F03`, `F04` (as `enum ge_pont`)

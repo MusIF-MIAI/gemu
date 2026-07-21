@@ -497,17 +497,24 @@ SIG(DO041) { return !DO04A(ge); }
 SIG(FUL26) { return ge->options.E04 != PONT_2P; }
 SIG(FUL36) { return ge->options.E04 != PONT_2N; }
 
-/* TAB.1 -- F04 straps the machine version, and FUL4G distinguishes the slow
- * minimum-performance model from the two faster ones:
+/* TAB.1 -- E03 and F04 strap the machine version, and FUL4G distinguishes the
+ * slow minimum-performance model from the two faster ones:
  *
- *   version  | cycle  | performances | E03    | F04    || FUL4G
- *   ---------+--------+--------------+--------+--------++-------
- *   UCE 466  | 6 usec | MIN          | /      | PONT2H ||   0
- *   UCE 467  | 4 usec | MAX          | PONT2P | PONT2P ||   1
- *   UCE 468  | 2 usec | MAX          | PONT2H | PONT2P ||   1
+ *   version  | cycle  | perf | interrupts | E03    | F04    || FUL4G
+ *   ---------+--------+------+------------+--------+--------++-------
+ *   UCE 466  | 6 usec | MIN  | no         | /      | PONT2H ||   0
+ *   UCE 467  | 4 usec | MAX  | no         | PONT2P | PONT2P ||   1
+ *   UCE 467  | 4 usec | MAX  | YES        | PONT2P | /      ||   1
+ *   UCE 468  | 2 usec | MAX  | no         | PONT2H | PONT2P ||   1
+ *   UCE 468  | 2 usec | MAX  | YES        | PONT2H | /      ||   1
  *
- * So FUL4G reads "this machine has the MAX instruction set". */
-SIG(FUL4G) { return ge->options.F04 == PONT_2P; }
+ * FUL4G reads "this machine has the MAX instruction set", and it is low for
+ * exactly ONE strap: F04 = PONT2H, the 6 usec UCE 466.  An EMPTY F04 is the
+ * interrupts-enabled variant of the two fast models, so it gives FUL4G = 1 --
+ * which is why this tests for PONT2H rather than for PONT2P.  (It did test
+ * for PONT2P, which read the table off the "no interrupts" rows only and got
+ * an empty F04 backwards.) */
+SIG(FUL4G) { return ge->options.F04 != PONT_2H; }
 
 /* The note on ch.002: FUL01/FUL11/FUL4F follow FEL06/FEL16/FUL4G unless the
  * maintenance panel's S42 "LAMPS" switch is in position DIAG, in which case
