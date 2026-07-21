@@ -14,7 +14,11 @@
 GE=./ge
 GASM=assembler/gasm
 GDIS=disassembler/gdis
-CAP=../DUMP1/funktionalcpu.cap
+# The functional deck ships in the tree; ../DUMP1 is the raw-scan drop the
+# other decks below still come from, so prefer it only if the tracked copy
+# has been removed.
+CAP=Site_Acceptance_Test/funktionalcpu.cap
+[ -f "$CAP" ] || CAP=../DUMP1/funktionalcpu.cap
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
@@ -46,18 +50,34 @@ echo "== .cap depunch -> unified -> run =="
 
 if [ -f "$CAP" ]; then
     if "$GDIS" --image -o "$TMP/fk.bin" "$CAP" >/dev/null 2>&1; then
-        run=$("$GE" "$TMP/fk.bin" --trace err --max-cycles 200000 2>&1)
-        errs=$(echo "$run" | grep -c 'no timing charts\|implement command')
-        last=$(echo "$run" | tail -1)
-        # With no test option selected (mem[0x0E00]=0) the CPU functional test
-        # converges to the documented idle halt at PO=0x175a.
-        if [ "$errs" -ne 0 ]; then
-            echo "FAIL: funktionalcpu run produced $errs decode error(s)"; fail=1
-        elif echo "$last" | grep -q 'halted=1' && echo "$last" | grep -q 'PO=175a'; then
-            echo "  ok: funktionalcpu depunch -> binary -> halts at documented idle HLT 0x175a"
-        else
-            echo "FAIL: funktionalcpu did not reach the idle HLT 0x175a ($last)"; fail=1
-        fi
+        # The deck reads its test selection from mem[0x0E00], which the console
+        # operator sets before pressing START.  --poke applies between load and
+        # ge_start(), which is exactly where the operator's write lands.
+        #
+        # Option 0 exercises almost nothing -- the deck finds no test selected
+        # and converges straight to the documented idle halt.  Option 0x40 is
+        # the CPU functional sweep, ~1.3M cycles across the whole instruction
+        # set, and is what actually regressions the timing charts.
+        for opt in 0x00 0x40; do
+            case "$opt" in
+                0x00) want=175a; cyc=200000;   what="idle HLT (no test selected)" ;;
+                0x40) want=1427; cyc=3000000;  what="CPU functional sweep" ;;
+            esac
+            run=$("$GE" "$TMP/fk.bin" --poke 0x0E00=$opt --trace err \
+                        --max-cycles $cyc 2>&1)
+            errs=$(echo "$run" | grep -c 'no timing charts\|implement command')
+            last=$(echo "$run" | tail -1)
+            if [ "$errs" -ne 0 ]; then
+                echo "FAIL: funktionalcpu $opt produced $errs decode error(s)"
+                fail=1
+            elif echo "$last" | grep -q 'halted=1' &&
+                 echo "$last" | grep -q "PO=$want"; then
+                echo "  ok: funktionalcpu *0x0E00=$opt -> HLT 0x$want ($what)"
+            else
+                echo "FAIL: funktionalcpu $opt did not reach HLT 0x$want ($last)"
+                fail=1
+            fi
+        done
     else
         echo "FAIL: gdis could not depunch $CAP"; fail=1
     fi
