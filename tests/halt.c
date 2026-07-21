@@ -3,7 +3,7 @@
 #include "../opcodes.h"
 
 /*
- * Test that executing an HLT instruction sets ge->halted = 1.
+ * Test that executing an HLT instruction sets ge->ALTO = 1.
  *
  * The HLT opcode (0x0A) is fetched through the normal alpha-phase
  * sequence (states 00 -> 80 -> E2/E3).  In state E2_E3 at clock TO80,
@@ -20,13 +20,17 @@ UTEST(halt, hlt_sets_halted)
     ge_init(&g);
     ge_clear(&g);
 
-    /* halted is 0 after ge_clear */
-    ASSERT_EQ(g.halted, 0);
+    /* CLEAR stops the CPU: it is START (cpu fo. 97) that releases it.  This
+     * used to assert the opposite, because a separate `halted` field was
+     * cleared here while ALTO -- the hardware stop flip-flop the assertion
+     * now reads -- was being set a few lines later in ge_clear(). */
+    ASSERT_EQ(ge_halted(&g), 1);
 
     r = ge_load_program(&g, program, sizeof(program));
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
+    ASSERT_EQ(ge_halted(&g), 0);     /* START releases the CPU */
 
     /* Cycle 1: Display state (00) -> sets SO = 0x80 */
     ge_run_cycle(&g);
@@ -37,10 +41,10 @@ UTEST(halt, hlt_sets_halted)
     ASSERT_TRUE(g.rSO == 0xe2 || g.rSO == 0xe3);
 
     /* Cycle 3: Alpha state (E2/E3): HLT opcode is in RO, CI89 fires at TO80
-     * setting ALTO=1 and halted=1. */
+     * setting ALTO=1, which IS the halted condition. */
     ge_run_cycle(&g);
     ASSERT_EQ(g.ALTO, 1);
-    ASSERT_EQ(g.halted, 1);
+    ASSERT_EQ(ge_halted(&g), 1);
 }
 
 /*
@@ -64,10 +68,10 @@ UTEST(halt, unknown_opcode_0x00_reaches_hlt)
     ASSERT_EQ(ge_load_program(&g, program, sizeof(program)), 0);
     ge_start(&g);
 
-    for (int i = 0; i < 40 && !g.halted; i++)
+    for (int i = 0; i < 40 && !ge_halted(&g); i++)
         ge_run_cycle(&g);
 
-    ASSERT_EQ(g.halted, 1);
+    ASSERT_EQ(ge_halted(&g), 1);
     ASSERT_EQ(g.rPO, 2);   /* stopped at the HLT, not wandering */
 }
 
@@ -81,8 +85,8 @@ UTEST(halt, unknown_opcode_0x80_reaches_hlt)
     ASSERT_EQ(ge_load_program(&g, program, sizeof(program)), 0);
     ge_start(&g);
 
-    for (int i = 0; i < 40 && !g.halted; i++)
+    for (int i = 0; i < 40 && !ge_halted(&g); i++)
         ge_run_cycle(&g);
 
-    ASSERT_EQ(g.halted, 1);
+    ASSERT_EQ(ge_halted(&g), 1);
 }

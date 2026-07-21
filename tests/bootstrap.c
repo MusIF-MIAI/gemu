@@ -50,7 +50,7 @@ static int bootstrap_run_until(struct ge *g, uint8_t target, int max_cycles)
             return -1;
         if (g->rSO == target)
             return g->rSO;
-        if (g->halted)
+        if (ge_halted(g))
             return g->rSO;
     }
     return g->rSO;
@@ -279,7 +279,7 @@ UTEST(bootstrap, channel_state_sequence)
     ASSERT_NE((int)g.mem[0], 0x00);
 
     /* Machine must not have halted before reaching alpha */
-    ASSERT_EQ((int)g.halted, 0);
+    ASSERT_EQ((int)ge_halted(&g), 0);
 
     ge_deinit(&g);
 }

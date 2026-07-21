@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     ge_enter(&ge, entry);
 
     long max = 5000000, i;
-    for (i = 0; i < max && !ge.halted; i++) ge_run_cycle(&ge);
+    for (i = 0; i < max && !ge_halted(&ge); i++) ge_run_cycle(&ge);
 
     long val = 0;
     for (int b = 0; b < nbytes; b++) val = (val << 8) | ge.mem[(RV + b) & 0xffff];
@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
         printf("__prn = %s\n", printer_output(&ge));
     printf("__rv = %ld (0x%0*lX)%s cycles=%ld%s\n",
            sval, nbytes * 2, val,
-           ge.halted ? "" : " [DID NOT HALT]", i,
-           ge.halted ? "" : "");
+           ge_halted(&ge) ? "" : " [DID NOT HALT]", i,
+           ge_halted(&ge) ? "" : "");
     ge_deinit(&ge);
-    return ge.halted ? 0 : 1;
+    return ge_halted(&ge) ? 0 : 1;
 }

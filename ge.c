@@ -14,7 +14,7 @@
 void ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
-    ge->halted = 1;
+    ge->ALTO = 1;      /* stopped until CLEAR + START */
     ge->powered = 1;
     ge->register_selector = RS_NORM;
 
@@ -33,8 +33,8 @@ void ge_clear(struct ge *ge)
     ge->ACIC = 1;
 
     /* After the powering on of the machine the timing starts pressing the
-     * "CLEAR" switch (cpu fo. 99). */
-    ge->halted = 0;
+     * "CLEAR" switch (cpu fo. 99).  The delay line runs; the CPU does not --
+     * ALTO is set just below, and START (cpu fo. 97) is what releases it. */
 
     /* (One of) the possible set conditions (is): or with
      * "CLEAR" and.. (cpu fo. 98) */

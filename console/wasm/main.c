@@ -271,7 +271,7 @@ void EMSCRIPTEN_KEEPALIVE press_load()  {
         ge_load_image(ge, staged_img, staged_len, staged_origin);
         ge_seed_segment_bases(ge);
         ge_enter(ge, staged_entry);
-        ge->halted = 0;
+        ge->ALTO = 0;
         ge->AINI   = 0;   /* magic-loaded: no bootstrap IPL */
     } else {
         ge_load(ge);      /* authentic bootstrap: AINI drives the reader IPL */
@@ -332,7 +332,7 @@ void EMSCRIPTEN_KEEPALIVE press_start() {
      * entered by LOAD, so START just releases the CPU. Clearing `halted` lets a
      * START after a HLT resume — and because LOAD (not START) loads the image,
      * anything the operator forced into memory after LOAD survives the run. */
-    ge->halted   = 0;
+    ge->ALTO = 0;
     running_loop = 1;
     ge_start(ge);
     send_console();
@@ -462,7 +462,7 @@ void em_main_loop() {
 
     /* Powered off: don't run cycles and don't build a backlog of "owed" time,
      * so resuming starts fresh instead of fast-forwarding. We do NOT stop on
-     * ge->halted: a real GE-120's delay line keeps running through a HLT (the
+     * ge_halted(ge): a real GE-120's delay line keeps running through a HLT (the
      * CPU is frozen via ALTO, but the panel stays live), which is what lets
      * console forcing/display work after a halt. */
     if (!ge->powered || !running_loop) {

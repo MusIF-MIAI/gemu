@@ -8,7 +8,7 @@ UTEST(initialitiation, pressing_clear)
     struct ge g;
 
     ge_init(&g);
-    ASSERT_TRUE(g.halted);
+    ASSERT_TRUE(ge_halted(&g));
     ASSERT_TRUE(g.powered);
 
     ge_clear(&g);

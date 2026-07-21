@@ -127,7 +127,6 @@ struct ge_knot_ni {
 struct ge {
     /* Main clock */
     enum clock current_clock;
-    uint8_t halted;
     uint8_t powered;
 
     /* Lists of events and operations for all
@@ -807,5 +806,23 @@ void connectors_first_clock(struct ge *ge);
 const char *ge_clock_name(enum clock c);
 
 void ge_print_registers_verbose(struct ge *ge);
+
+/**
+ * Is the CPU stopped?
+ *
+ * ALTO is the hardware stop flip-flop (cpu fo.97/98): it gates RIA0, so while
+ * it is set the CPU is attributed no work cycles.  The delay line keeps
+ * turning and the channels keep running -- a halted GE-120 still drives its
+ * panel -- so a front end that models the whole machine (the wasm console)
+ * should keep cycling and simply watch this; a batch front end that only
+ * cares about the program uses it to end the run.
+ *
+ * There used to be a separate `halted` field alongside it.  It was redundant
+ * and disagreed with ALTO in both directions: set at init while ALTO was
+ * clear, cleared by ge_clear() while ALTO was set, and -- the actual bug --
+ * left clear by every operator stop (ACOV/ACON, PAPA, PATE), so the CLI run
+ * loop kept spinning against a frozen CPU.
+ */
+static inline uint8_t ge_halted(const struct ge *ge) { return ge->ALTO; }
 
 #endif /* GE_H */

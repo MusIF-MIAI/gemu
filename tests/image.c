@@ -103,7 +103,7 @@ UTEST(image, runs_to_hlt_at_nonzero_origin)
     int halted = 0;
     for (int i = 0; i < 200; i++) {
         ge_run_cycle(&g);
-        if (g.halted) { halted = 1; break; }
+        if (ge_halted(&g)) { halted = 1; break; }
     }
 
     ASSERT_EQ(halted, 1);

@@ -81,7 +81,7 @@ static int run_until_state(struct ge *g, uint8_t target, int max_cycles)
             return -1;
         if (g->rSO == target)
             return g->rSO;
-        if (g->halted)
+        if (ge_halted(g))
             return g->rSO;
     }
     return g->rSO;
@@ -95,7 +95,7 @@ static int run_until_mem_nonzero(struct ge *g, uint16_t addr, int max_cycles)
             return -1;
         if (g->mem[addr] != 0)
             return g->mem[addr];
-        if (g->halted)
+        if (ge_halted(g))
             return g->mem[addr];
     }
     return g->mem[addr];
@@ -111,7 +111,7 @@ static int run_until_mem_bytes(struct ge *g, uint16_t addr,
             return -1;
         if (memcmp(&g->mem[addr], bytes, len) == 0)
             return 1;
-        if (g->halted)
+        if (ge_halted(g))
             return 0;
     }
     return memcmp(&g->mem[addr], bytes, len) == 0;
@@ -314,7 +314,7 @@ UTEST(cardreader, lupor_ready_invariant)
         if (g.integrated_reader.lupor)
             saw_ready = 1;
         if (g.rSO == 0xe3) { reached_e3 = 1; break; }
-        if (g.halted) break;
+        if (ge_halted(&g)) break;
     }
 
     ASSERT_TRUE(reached_e3);             /* normal load still completes */
@@ -362,7 +362,7 @@ UTEST(cardreader, tu03_feeds_at_end_of_card)
             if (g.rSO == 0xb1 || g.rSO == 0xb8) feed_during_transfer = 1;
         }
         if (g.rSO == 0xe3) { reached_e3 = 1; break; }
-        if (g.halted) break;
+        if (ge_halted(&g)) break;
     }
 
     ASSERT_TRUE(reached_e3);             /* load completes */
@@ -412,7 +412,7 @@ UTEST(cardreader, renia_length_count_inert)
          * terminal cannot gate RENIA: the read stays FININ-bounded. */
         ASSERT_EQ((int)((g.rL2 >> 4) & 1), 0);   /* L204 stays clear */
         if (g.rSO == 0xe3) { reached_e3 = 1; break; }
-        if (g.halted) break;
+        if (ge_halted(&g)) break;
     }
     ASSERT_TRUE(reached_e3);
     ASSERT_EQ(g.mem[0], 0xBD);
@@ -496,7 +496,7 @@ UTEST(cardreader, feed_state_lines_pom_pico_bi20)
             if (g.integrated_reader.bi20)  saw_bi20 = 1;
         }
         if (g.rSO == 0xe3) break;
-        if (g.halted) break;
+        if (ge_halted(&g)) break;
     }
 
     ASSERT_TRUE(saw_pom_on_present);   /* binary-mode indicator asserted */

@@ -15,7 +15,7 @@
 
 static void run_to_halt(struct ge *g, int max)
 {
-    for (int i = 0; i < max && !g->halted; i++)
+    for (int i = 0; i < max && !ge_halted(g); i++)
         ge_run_cycle(g);
 }
 
@@ -48,7 +48,7 @@ UTEST(interrupt, save_and_vector)
 
     run_to_halt(&g, 80);
 
-    ASSERT_TRUE(g.halted);                /* reached the handler HLT */
+    ASSERT_TRUE(ge_halted(&g));                /* reached the handler HLT */
     ASSERT_EQ(g.rPO, 0x0100);             /* vectored to the new PSR's PO */
 
     /* Saved (old) PSR at 0x0300: status, 0, PO-hi, PO-lo (PO was 0x0050). */
@@ -78,7 +78,7 @@ UTEST(interrupt, masked_does_not_divert)
 
     run_to_halt(&g, 40);
 
-    ASSERT_TRUE(g.halted);
+    ASSERT_TRUE(ge_halted(&g));
     ASSERT_EQ(g.rPO, 0x0050);             /* halted at entry, no vector */
     ASSERT_EQ(g.mem[0x0300], 0x00);       /* no PSR was saved */
 }

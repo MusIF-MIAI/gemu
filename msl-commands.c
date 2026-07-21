@@ -507,7 +507,7 @@ static void CI88(struct ge* ge) {
     ge->PODI = 0; /* should PODI be set here? */
 }
 
-static void CI89(struct ge* ge) { ge->ALTO = 1; ge->halted = 1; }
+static void CI89(struct ge* ge) { ge->ALTO = 1; }
 
 /* Commands To Force In NO Knot */
 /* ---------------------------- */

@@ -504,17 +504,17 @@ int main(int argc, char *argv[])
                 g_toggle_js1 = 0; ge.JS1 = !ge.JS1;
                 printf("[cyc %ld] SWITCH 1 -> %d   PO=%04x step=0x%02x%s\n",
                        cycles, ge.JS1, ge.rPO, ge.mem[0x0010],
-                       ge.halted ? " (halted)" : "");
+                       ge_halted(&ge) ? " (halted)" : "");
                 fflush(stdout);
             }
             if (g_toggle_js2) {
                 g_toggle_js2 = 0; ge.JS2 = !ge.JS2;
                 printf("[cyc %ld] SWITCH 2 -> %d   PO=%04x step=0x%02x%s\n",
                        cycles, ge.JS2, ge.rPO, ge.mem[0x0010],
-                       ge.halted ? " (halted)" : "");
+                       ge_halted(&ge) ? " (halted)" : "");
                 fflush(stdout);
             }
-            if (ge.halted) {
+            if (ge_halted(&ge)) {
                 if (was_halted != 1) {
                     printf("[cyc %ld] HALT  PO=%04x step=0x%02x\n",
                            cycles, ge.rPO, ge.mem[0x0010]);
@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
             cycles++;
             if (ret != 0)
                 break;
-            if (ge.halted)
+            if (ge_halted(&ge))
                 usleep(2000);
         }
         /* The TUI restores the terminal (curses.endwin) on quit; make sure the
@@ -565,7 +565,7 @@ int main(int argc, char *argv[])
         kill(tui_pid, SIGTERM);
         waitpid(tui_pid, NULL, 0);
     } else {
-        while (!ge.halted && cycles < max_cycles) {
+        while (!ge_halted(&ge) && cycles < max_cycles) {
             if (printer_enabled) {
                 int olen = printer_output_len(&ge);
                 if (olen > printed) {
@@ -587,7 +587,7 @@ int main(int argc, char *argv[])
     }
 
     printf("exit: halted=%d cycles=%ld max=%ld error=%d state=%02x PO=%04x\n",
-           ge.halted, cycles, max_cycles, ret, ge.rSO, ge.rPO);
+           ge_halted(&ge), cycles, max_cycles, ret, ge.rSO, ge.rPO);
 
     ge_deinit(&ge);
     return ret;

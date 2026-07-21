@@ -87,7 +87,7 @@ static int run_option40(int with_printer, int *out_len)
         g.JS2 = 0;
         if (ge_run_cycle(&g) != 0)
             break;
-        if (g.halted)
+        if (ge_halted(&g))
             break;
         if (with_printer && printer_output_len(&g) > 0)
             break;   /* printer completed the PER and captured output */
@@ -296,7 +296,7 @@ UTEST(printer, output_per_prints)
     for (int i = 0; i < 80; i++) {
         if (ge_run_cycle(&g))
             break;
-        if (g.halted)
+        if (ge_halted(&g))
             break;
     }
 
@@ -338,11 +338,11 @@ UTEST(printer, output_per_prints_and_halts_when_polled)
     for (int i = 0; i < 80; i++) {
         if (ge_run_cycle(&g))
             break;
-        if (g.halted)
+        if (ge_halted(&g))
             break;
     }
 
-    ASSERT_TRUE(g.halted);
+    ASSERT_TRUE(ge_halted(&g));
     ASSERT_EQ((int)g.rPO, 0x000c);
     ASSERT_EQ(g.mem[0x30], 0x00);
     ASSERT_EQ(g.mem[0x31], 0x01);
