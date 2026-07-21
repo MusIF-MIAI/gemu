@@ -52,7 +52,13 @@ tools:
 .PHONY: native-reset
 native-reset:
 	@$(MAKE) native-sanitize
+	@# Objects too, not just the archive and binaries. Leaving the .o files
+	@# behind made `make check` only LOOK like a from-scratch build: a stale
+	@# object could survive it and be re-archived, so the suite tested one
+	@# thing and the sources said another.
 	@rm -f libge.a ge tests/tests
+	@rm -f $(OBJS) $(OBJS:%.o=%.d)
+	@rm -f $(TESTS) $(TESTS:%.o=%.d)
 
 check:
 	$(MAKE) native-reset
