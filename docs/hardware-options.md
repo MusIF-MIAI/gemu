@@ -209,6 +209,24 @@ remaining open question -- the ch.001 fan-outs point at (077-x)/(309-x)/
 (318-x)/(321-x) for the consumers, and a memtest on the machine above 16K
 would answer it empirically.
 
+**What the machine most plausibly IS, under 4x PONT2N** (E03/F03/E05/F05 all
+N, E04/F04 empty): processor fully defined -- **UCE 468, 2 us, MAX,
+interruptions on connector 3, load on 2+3**.  Memory formally undefined, but
+reading the ch.001 rows as a two-level decode (VAMA2 splits the table, then
+VEMB6, then VAMC2 only where a choice remains) puts (1,0,0) in the
+VAMA2=1/VEMB6=0 branch, whose only printed row is **16K** with VAMC2 as a
+don't-care.  Circumstantial support: the funktionalcpu memtest sweeps to
+exactly 0x4000 = 16K and the deck never touches above it.
+
+The strap set also tells a coherent upgrade story: pre-upgrade
+**UCE 467, 4 us, 24K** = E03=P, E05=P, F05=N.  Upgrading to 468/32K required
+E03 P->N (done), E05 P->N (done), and F05 N->P -- apparently never done.  The
+two pulled P cards would be exactly the two 18036 spares, and the machine
+would have been running 16K of its intended 32K ever since, invisibly to
+every deck that stops at 0x4000.  To settle: memtest above 0x4000 on the
+machine; or check whether F05 is actually populated (empty would make it a
+clean printed 12K row); or trace the VAM consumers (077/309/318/321).
+
 **Falsifiable check available**: two spare boards stamped `18036` exist, with
 a different connector style and a different staple pattern -- plausibly the
 pre-upgrade strap cards, i.e. PONT2P.  If so, buzzing (or photographing the
