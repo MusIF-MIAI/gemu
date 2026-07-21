@@ -189,9 +189,34 @@ loop touches URPE, so the chain otherwise works by default (that is how
 `AD 2,1` propagates its carry). Read literally the sheet computes multi-digit
 SD/SB wrongly; the deck cannot tell us, because its SD/SB are single-digit.
 
-The suspicion is that `CO4811 = DE97A0` (schema 211-3) has a leaf the sheet
-does not print, the same shape as the DE00A/CM011 defect: gemu modelled one
-leaf of a four-leaf OR as the whole condition.
+The first suspicion was that `CO4811 = DE97A0` (schema 211-3) hides a leaf,
+the same shape as the DE00A/CM011 defect. **Traced, and it does not.**
+
+cp06 **ch.211** ("COMMANDS CO48, 90, CI03, 38 GEN.", p271) gate 3 (NAND4 U08):
+
+    CO481 = NAND(EC71A, DA03A, DE56A, DE97A, DA17A, EG21A, EG22A)
+
+so CO48 is indeed a seven-leaf OR and DE97A is only this family's leaf — but
+that is the expected shape (one leaf per instruction family's sheet), not a
+defect. Following DE97A back, cp06 **ch.238** ("STATUS DECODING", p298) gate
+10 (NAND3 U06, pins 13/2/1):
+
+    DE97A = NAND(SA01L, DI042, DO451)
+            SA01L  <- (256-15) B30-04   the S001 state bit, low form
+            DI042  <- (235-11) B30-02   the 50|52 state decode
+            DO451  <- (202-6)  A30-02   the {SD+CMQ+SB} opcode decode
+
+Three terms, exactly the three the timing sheet prints. **fo.142's condition
+is complete and correctly transcribed.** So the puzzle is not a missing OR
+leaf; it is in what makes SA01 rise on the second iteration, which is not on
+any of these four sheets.
+
+Note the deck's own choice of cases is suggestive: `AD 2,1` (source shorter
+than destination) is the only multi-iteration algebra test in the sweep, and
+in exactly that shape the mechanism works — operand 2's quartet underflows at
+the end of iteration 1, CU01 sets X, and CO48 is blocked from iteration 2
+onward. It is the EQUAL-length case that has no mechanism to raise X early,
+and the deck never exercises one.
 
 **2. CI73 SET FI03 is unconditional, and FA03 inhibits the source fetch.**
 fo.143 sets FI03 at TI06 of every 40|42 (`CI73A0 = EG43A0`, no condition, no
