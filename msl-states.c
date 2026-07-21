@@ -1812,26 +1812,7 @@ static const struct msl_timing_chart state_b9[] = {
  */
 static uint8_t L207_output_writeback(struct ge *ge) { return BIT(ge->rL2, 7); }
 
-static const struct msl_timing_chart state_ea[] = {
-    { TO10, CO18, 0 },
-    { TO10, CO97, 0, DI11A0 },
-    { TO10, CO96, 0, DI11A0 },
-    { TO10, CO95, 0, DI11A0 },
-    { TO10, CO94, 0  },
-    { TO10, CO93, 0, DI11A0 },
-    { TO10, CO92, 0, DI11A0 },
-    { TO10, CO91, 0 },
-    { TO10, CO90, 0, DI11A0 },
-    { TO10, CO40, 0, DI11A0 },
-    { TO10, CO41, 0, DI11A0 },
-    { TO25, CO31, L207_output_writeback },
-    { TO30, CI11, 0 },
-    { TO40, CO02, 0, DI11A0 },
-    { TO50, CI33, 0, DI83A0 },
-    { TI06, CU00, 0 },
-    { END_OF_STATUS, 0, 0 },
-};
-
+static uint8_t is_jrt_or_la(struct ge *ge) { return is_jrt(ge) || is_la(ge); }
 
 static uint8_t state_eb_TI06_CI75(struct ge *ge) {
     return ((RIG3(ge) && BIT(ge->rL2, 7)) ||
@@ -1840,9 +1821,70 @@ static uint8_t state_eb_TI06_CI75(struct ge *ge) {
 
 static uint8_t state_eb_TI06_CE19(struct ge *ge) { return 0; }
 
-static const struct msl_timing_chart state_eb[] = {
-    { TO10, CO12, 0, DA25A0 },
+/* EA/EB carry two physically distinct sheets -- the instruction walk on cp07
+ * fo.34/35 and the peripheral one on fo.60/61 -- over the same two states.
+ * They are merged here with each row carrying its own gate rather than being
+ * selected by a dispatch table.  Note DI11A0 is a pure STATE decode (SA bits
+ * only, ch. DI11A), so the rows it gates fire on both paths; it is kept
+ * because it is the gate the sheet prints, not because it discriminates. */
+static uint8_t not_jrt_la(struct ge *ge) { return !is_jrt_or_la(ge); }
+
+/* CO18 raises the forced change-register address: unconditional on the
+ * peripheral sheet, {SR+SL+JRT} on fo.34.  LA is the one caller that must NOT
+ * get it -- its address arrives on V2, built by the LA beta sheet. */
+static uint8_t ea_co18(struct ge *ge) { return !is_la(ge); }
+
+/* The write-back is unconditional on the instruction sheet -- the register
+ * cell is always written -- but on the peripheral sheet only OUTPUT
+ * transfers restore the destructively-read byte. */
+static uint8_t ea_writes_back(struct ge *ge) {
+    return is_jrt_or_la(ge) || L207_output_writeback(ge);
+}
+
+/* Peripheral-only rows, held off the instruction path explicitly: rL2 keeps
+ * whatever the last channel operation left in it, so gating these on the
+ * channel state alone would let a stale L2 fire them during a JRT or LA. */
+static uint8_t eb_peri_ce06(struct ge *ge) {
+    return not_jrt_la(ge) && L207(ge);
+}
+static uint8_t eb_peri_ci75(struct ge *ge) {
+    return not_jrt_la(ge) && state_eb_TI06_CI75(ge);
+}
+static uint8_t eb_peri_ce19(struct ge *ge) {
+    return not_jrt_la(ge) && state_eb_TI06_CE19(ge);
+}
+
+static const struct msl_timing_chart state_ea[] = {
+    /* Forced address 1111 1111 = 0xFF, change register 7 {SR+SL+JRT}; the
+     * peripheral sheet raises CO18 unconditionally, fo.34 only for JRT --
+     * LA brings its address in on V2 instead, built by its beta sheet. */
+    { TO10, CO18, ea_co18 },
     { TO10, CO97, 0, DI11A0 },
+    { TO10, CO96, 0, DI11A0 },
+    { TO10, CO95, 0, DI11A0 },
+    { TO10, CO94, 0  },
+    { TO10, CO93, 0, DI11A0 },
+    { TO10, CO92, 0, DI11A0 },
+    { TO10, CO91, 0 },
+    { TO10, CO90, 0, DI11A0 },
+    { TO10, CO12, is_la },           /* {LA}: address from V2 */
+    { TO10, CO40, 0, DI11A0 },       /* decreasing... */
+    { TO10, CO41, 0, DI11A0 },       /* ...count: next byte address */
+    { TO25, CO31, ea_writes_back },  /* RO -> MEM (ED92A0) */
+    { TO30, CI11, 0 },               /* V1 -> NO: the datum */
+    { TO40, CO02, 0, DI11A0 },       /* NI -> V2: address-1 */
+    { TO50, CI33, is_jrt_or_la },    /* NO21 -> RO: datum low */
+    { TO50, CI33, not_jrt_la, DI83A0 },
+    { TI06, CU00, 0 },               /* -> EB */
+    { END_OF_STATUS, 0, 0 },
+};
+
+
+
+static const struct msl_timing_chart state_eb[] = {
+    { TO10, CO12, is_jrt_or_la },    /* V2 -> NO: the walked-down address */
+    { TO10, CO12, not_jrt_la, DA25A0 },
+    { TO10, CO97, 0, DI11A0 },       /* forcings as printed (no CO18: inert) */
     { TO10, CO96, 0, DI11A0 },
     { TO10, CO95, 0, DI11A0 },
     { TO10, CO94, 0 },
@@ -1850,17 +1892,20 @@ static const struct msl_timing_chart state_eb[] = {
     { TO10, CO92, 0, DI11A0 },
     { TO10, CO91, 0 },
     { TO10, CO90, 0, DI11A0 },
-    { TO10, CO04, 0, DI11A0 },
+    { TO10, CO04, not_jrt_la, DI11A0 },
+    { TO10, CO40, is_jrt_or_la },
     { TO10, CO41, 0, DI11A0 },
-    { TO25, CO31, L207_output_writeback },
+    { TO25, CO31, ea_writes_back },  /* RO -> MEM */
     { TO30, CI11, 0 },
     { TO40, CO02, 0, DI11A0 },
-    { TO50, CI32, 0, DI82A0 },
-    { TO50, CE06, L207 },
-    { TI06, CI75, state_eb_TI06_CI75, ED91A0 },
-    { TI06, CE19, state_eb_TI06_CE19 },
-    { TI06, CU00, 0 },
-    { TI06, CU13, 0, DI82A0 },
+    { TO50, CI32, is_jrt_or_la },    /* NO43 -> RO: datum high */
+    { TO50, CI32, not_jrt_la, DI82A0 },
+    { TO50, CE06, eb_peri_ce06 },
+    { TI06, CI75, eb_peri_ci75, ED91A0 },
+    { TI06, CE19, eb_peri_ce19 },
+    { TI06, CU00, 0 },               /* sets first */
+    { TI06, CU13, is_jrt_or_la },    /* -> E2/E3 */
+    { TI06, CU13, not_jrt_la, DI82A0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -1873,58 +1918,4 @@ static const struct msl_timing_chart state_eb[] = {
  * executive states (cp07 fo.152-155) are transcribed. NOTE: the write goes
  * through the ordinary memory path, so cr_cache (a debug aid) is not synced
  * by JRT/LA anymore -- live addressing reads memory, as on the machine. */
-static uint8_t is_jrt_or_la(struct ge *ge) { return is_jrt(ge) || is_la(ge); }
 
-static const struct msl_timing_chart state_ea_instr[] = {
-    { TO10, CO18, is_jrt },          /* {SR+SL+JRT}: forced address... */
-    { TO10, CO97, 0 },               /* ...1111 1111 = 0xFF = cr7 low byte */
-    { TO10, CO96, 0 },
-    { TO10, CO95, 0 },
-    { TO10, CO94, 0 },
-    { TO10, CO93, 0 },
-    { TO10, CO92, 0 },
-    { TO10, CO91, 0 },
-    { TO10, CO90, 0 },
-    { TO10, CO12, is_la },           /* {LA}: address from V2 (beta build) */
-    { TO10, CO40, 0 },               /* decreasing... */
-    { TO10, CO41, 0 },               /* ...count: next byte address */
-    { TO25, CO31, 0 },               /* RO -> MEM (ED92A0) */
-    { TO30, CI11, 0 },               /* V1 -> NO: the datum */
-    { TO40, CO02, 0 },               /* NI -> V2: address-1 */
-    { TO50, CI33, 0 },               /* NO21 -> RO: datum low */
-    { TI06, CU00, 0 },               /* -> EB */
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_chart state_eb_instr[] = {
-    { TO10, CO12, 0 },               /* V2 -> NO: the walked-down address */
-    { TO10, CO97, 0 },               /* forcings as printed (no CO18: inert) */
-    { TO10, CO96, 0 },
-    { TO10, CO95, 0 },
-    { TO10, CO94, 0 },
-    { TO10, CO93, 0 },
-    { TO10, CO92, 0 },
-    { TO10, CO91, 0 },
-    { TO10, CO90, 0 },
-    { TO10, CO40, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO31, 0 },               /* RO -> MEM */
-    { TO30, CI11, 0 },
-    { TO40, CO02, 0 },
-    { TO50, CI32, 0 },               /* NO43 -> RO: datum high */
-    { TI06, CU00, 0 },               /* sets first */
-    { TI06, CU13, 0 },               /* -> E2/E3 */
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_variant ea_variants[] = {
-    { is_jrt_or_la, state_ea_instr, "ea-jrt-la",     "cp07 fo.34" },
-    { beta_always,  state_ea,       "ea-peripheral", "cp07 fo.60" },
-    { 0, 0, 0, 0 },
-};
-
-static const struct msl_timing_variant eb_variants[] = {
-    { is_jrt_or_la, state_eb_instr, "eb-jrt-la",     "cp07 fo.35" },
-    { beta_always,  state_eb,       "eb-peripheral", "cp07 fo.61" },
-    { 0, 0, 0, 0 },
-};
