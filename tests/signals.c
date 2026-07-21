@@ -291,3 +291,36 @@ UTEST(signals, s42_diag_overrides_the_version_strap)
     ASSERT_TRUE(FUL4F(&g));
     ASSERT_TRUE(FUL4(&g));
 }
+
+/* gemu is strapped as the machine at Electric Dreams: UCE 468 processor
+ * (2 usec, MAX, interruptions enabled) with 32K of core, i.e. a UCE 464
+ * memory. Both readings follow from one assignment of the two option part
+ * numbers -- 0618034Z = PONT2H in row E, 0618035V = PONT2P in row F -- which
+ * is what makes the configuration consistent across ch.001 and ch.002. */
+UTEST(signals, default_straps_are_a_uce468_with_32k)
+{
+    struct ge g;
+    ge_init(&g);
+
+    ASSERT_EQ(ge_cpu_version_uce(&g), 468);
+    ASSERT_EQ(ge_cycle_period_ns(&g), 2000);
+    ASSERT_EQ(ge_memory_capacity_k(&g), 32);
+
+    /* ch.002 TAB.1, the UCE 468 rows */
+    ASSERT_FALSE(FEL06(&g));
+    ASSERT_FALSE(FEL16(&g));
+    ASSERT_TRUE(FUL4G(&g));
+
+    /* ch.002 TAB.3: E04 empty -> loading on connectors 2 and 3 */
+    ASSERT_TRUE(FUL26(&g));
+    ASSERT_TRUE(FUL36(&g));
+
+    /* ch.002 TAB.2: F04 empty lets F03 choose; PONT2P = connector 4 alone */
+    ASSERT_FALSE(INES3(&g));
+    ASSERT_TRUE(INES4(&g));
+
+    /* ch.001, the UCE 464 row: all three selection signals low */
+    ASSERT_FALSE(VAMA2(&g));
+    ASSERT_FALSE(VEMB6(&g));
+    ASSERT_FALSE(VAMC2(&g));
+}

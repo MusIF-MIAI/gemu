@@ -146,6 +146,11 @@ struct ge_options {
     /** F04: machine version straps -- cycle period and performance (TAB.1). */
     enum ge_pont F04;
 
+    /** E05 / F05: memory capacity (cp06 ch.001, "SELEZIONE CAPACITA
+     *  MEMORIA") -- 8K through 32K.  See ge_memory_capacity_k(). */
+    enum ge_pont E05;
+    enum ge_pont F05;
+
     /**
      * S42 "LAMPS" on the maintenance panel, in position DIAG.
      *
@@ -862,5 +867,8 @@ void ge_print_registers_verbose(struct ge *ge);
  * loop kept spinning against a frozen CPU.
  */
 static inline uint8_t ge_halted(const struct ge *ge) { return ge->ALTO; }
+
+/** Report the strapped configuration and every level it produces (LOG_DEBUG). */
+void ge_log_options(struct ge *ge);
 
 #endif /* GE_H */

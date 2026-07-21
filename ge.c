@@ -14,6 +14,19 @@
 void ge_init(struct ge *ge)
 {
     memset(ge, 0, sizeof(*ge));
+    /* Strapped as the machine at Electric Dreams: a UCE 468 processor (2 usec,
+     * MAX instruction set, interruptions enabled) with 32K of core, i.e. a
+     * UCE 464 memory.  Both readings come from the same assignment of the two
+     * option part numbers -- 0618034Z = PONT2H in row E, 0618035V = PONT2P in
+     * row F -- which is what makes the configuration self-consistent across
+     * ch.001 and ch.002.  See docs/hardware-options.md. */
+    ge->options.E03 = PONT_2H;   /* UCE 468: 2 usec, MAX                     */
+    ge->options.F03 = PONT_2P;   /* interruption enabled on connector 4      */
+    ge->options.F04 = PONT_NONE; /* empty = the interrupts-enabled variant   */
+    ge->options.E04 = PONT_NONE; /* loading enabled on connectors 2 and 3    */
+    ge->options.E05 = PONT_2H;   /* 32K ...                                  */
+    ge->options.F05 = PONT_2P;   /* ... = UCE 464                            */
+
     ge->ALTO = 1;      /* stopped until CLEAR + START */
     ge->powered = 1;
     ge->register_selector = RS_NORM;
@@ -22,6 +35,65 @@ void ge_init(struct ge *ge)
     ge->ST4.name = "ST4";
 
     ge->channel2.name = "CAN2";
+}
+
+/*
+ * Resolve every strapped option and report it once, at CLEAR.
+ *
+ * The FUL / FEL / VAM / INES signals are not free-standing settings: each is
+ * a level produced by a jumper card in a backplane connector, so the only
+ * thing that is really configured is which cards are fitted where.  This maps
+ * that to the signals the logic actually reads, which is what you want when
+ * comparing gemu against a physical machine -- the levels here should match
+ * what a meter reads on the corresponding connector pins.
+ *
+ * cp06 ch.001 (memory capacity) and ch.002 (version, loading, interruptions);
+ * see docs/hardware-options.md.
+ */
+static const char *pont_name(enum ge_pont p)
+{
+    switch (p) {
+        case PONT_2N: return "PONT2N";
+        case PONT_2P: return "PONT2P";
+        case PONT_2H: return "PONT2H";
+        default:      return "(empty)";
+    }
+}
+
+void ge_log_options(struct ge *ge)
+{
+    ge_log(LOG_DEBUG, "options: UCE %u processor, %u ns cycle, %s set; "
+                      "%uK core\n",
+           ge_cpu_version_uce(ge), ge_cycle_period_ns(ge),
+           ge_cpu_version_uce(ge) == 466 ? "MIN" : "MAX",
+           ge_memory_capacity_k(ge));
+
+    ge_log(LOG_DEBUG, "options: straps E03=%s E04=%s E05=%s "
+                      "F03=%s F04=%s F05=%s  S42=%s\n",
+           pont_name(ge->options.E03), pont_name(ge->options.E04),
+           pont_name(ge->options.E05), pont_name(ge->options.F03),
+           pont_name(ge->options.F04), pont_name(ge->options.F05),
+           ge->options.S42_diag ? "DIAG" : "normal");
+
+    /* ch.002: loading, version and the FUL4 pair. */
+    ge_log(LOG_DEBUG, "options: FUL26=%u FUL36=%u -> load on connectors %s; "
+                      "FEL06=%u FEL16=%u FUL4G=%u FUL4F=%u\n",
+           FUL26(ge), FUL36(ge),
+           FUL26(ge) ? (FUL36(ge) ? "2 and 3" : "2 and 4") : "4 and 3",
+           FEL06(ge), FEL16(ge), FUL4G(ge), FUL4F(ge));
+
+    /* ch.002 TAB.2: interruption-enabled connectors. */
+    ge_log(LOG_DEBUG, "options: INES3=%u INES4=%u -> interruptions %s\n",
+           INES3(ge), INES4(ge),
+           (INES3(ge) && INES4(ge)) ? "on connectors 3 and 4" :
+           INES3(ge) ? "on connector 3" :
+           INES4(ge) ? "on connector 4" : "disabled");
+
+    /* ch.001: memory capacity selection. */
+    ge_log(LOG_DEBUG, "options: VAMA2=%u VEMB6=%u VAMC2=%u "
+                      "(VAMA1=%u VAMB1=%u VAMC1=%u)\n",
+           VAMA2(ge), VEMB6(ge), VAMC2(ge),
+           VAMA1(ge), VAMB1(ge), VAMC1(ge));
 }
 
 void ge_clear(struct ge *ge)
@@ -67,6 +139,8 @@ void ge_clear(struct ge *ge)
     ge->PEC1_pending = 0;
 
     ge_seed_segment_bases(ge);
+
+    ge_log_options(ge);
 }
 
 /* Seed the eight change / segment-base registers to their identity defaults

@@ -497,6 +497,93 @@ SIG(DO041) { return !DO04A(ge); }
 SIG(FUL26) { return ge->options.E04 != PONT_2P; }
 SIG(FUL36) { return ge->options.E04 != PONT_2N; }
 
+/* TAB.1 selection signals for the processor version.  FEL06 is high only on
+ * the 6 usec UCE 466; FEL16 separates the 4 usec 467 from the 2 usec 468. */
+SIG(FEL06) { return ge->options.E03 == PONT_NONE; }
+SIG(FEL16) { return ge->options.E03 != PONT_2H; }
+
+/* TAB.1 + TAB.2 -- which connectors may raise an interruption.  A strapped
+ * F04 is one of the "interruptions NO" versions and holds both low; only an
+ * empty F04 lets F03 choose, per TAB.2: empty enables both connectors,
+ * PONT2N enables 3 alone, PONT2P enables 4 alone. */
+SIG(INES3) {
+    return ge->options.F04 == PONT_NONE && ge->options.F03 != PONT_2P;
+}
+SIG(INES4) {
+    return ge->options.F04 == PONT_NONE && ge->options.F03 != PONT_2N;
+}
+
+/**
+ * Processor version: 466, 467 or 468 (cp06 ch.002 TAB.1).
+ *
+ * Independent of the memory capacity, which is ge_memory_capacity_k() from
+ * ch.001 -- a machine is one of 466-468 AND one of 460-464.
+ */
+static inline uint16_t ge_cpu_version_uce(const struct ge *ge)
+{
+    if (ge->options.E03 == PONT_NONE) return 466;   /* 6 usec, MIN */
+    if (ge->options.E03 == PONT_2P)   return 467;   /* 4 usec, MAX */
+    return 468;                                     /* 2 usec, MAX */
+}
+
+/** Cycle period in nanoseconds for the strapped version. */
+static inline uint16_t ge_cycle_period_ns(const struct ge *ge)
+{
+    switch (ge_cpu_version_uce(ge)) {
+        case 466: return 6000;
+        case 467: return 4000;
+        default:  return 2000;
+    }
+}
+
+/* Memory capacity, cp06 ch.001 "SELEZIONE CAPACITA' MEMORIA / MEMORY
+ * CAPABILITY SELECTION" (dwg 14013 065 6).  E05 and F05 between them pick one
+ * of five sizes, and the three selection signals fall out as:
+ *
+ *   version  | memory | E05    | F05    || VAMA2 | VEMB6 | VAMC2
+ *   ---------+--------+--------+--------++-------+-------+-------
+ *   UCE 460  |   8K   | /      | /      ||   1   |   1   |   1
+ *   UCE 461  |  12K   | PONT2H | /      ||   1   |   1   |   0
+ *   UCE 462  |  16K   | /      | PONT2H ||   1   |   0   |   1
+ *   UCE 463  |  24K   | PONT2P | PONT2H ||   0   |   0   |   1
+ *   UCE 464  |  32K   | PONT2H | PONT2P ||   0   |   0   |   0
+ *
+ * Note the UCE numbering runs on two independent axes: 460-464 is the memory
+ * capacity, 466-468 the processor version on ch.002.  A machine is one of
+ * each, which is why every title block reads "UCE 460" -- that is the drawing
+ * set, not the machine. */
+SIG(VAMC2) { return ge->options.E05 != PONT_2H; }
+SIG(VEMB6) { return ge->options.F05 == PONT_NONE; }
+SIG(VAMA2) {
+    return !(ge->options.E05 != PONT_NONE && ge->options.F05 != PONT_NONE);
+}
+
+/* The S42 "LAMPS" override again, exactly as on ch.002: VAMA1/VAMB1/VAMC1
+ * follow VAMA2/VEMB6/VAMC2 unless the switch is in DIAG, when they become
+ * 1 / 0 / 1 regardless of the straps. */
+SIG(VAMA1) { return ge->options.S42_diag ? 1 : VAMA2(ge); }
+SIG(VAMB1) { return ge->options.S42_diag ? 0 : VEMB6(ge); }
+SIG(VAMC1) { return ge->options.S42_diag ? 1 : VAMC2(ge); }
+
+/**
+ * Installed memory, in K.
+ *
+ * NOT ENFORCED: gemu allocates a flat MEM_SIZE (64K) and never bounds an
+ * access against this.  A real machine would behave differently above its
+ * installed capacity, so anything relying on that is not modelled -- this
+ * reports the strapped configuration only.
+ */
+static inline uint16_t ge_memory_capacity_k(const struct ge *ge)
+{
+    uint8_t e = ge->options.E05 != PONT_NONE;
+    uint8_t f = ge->options.F05 != PONT_NONE;
+
+    if (!e && !f) return 8;
+    if ( e && !f) return 12;
+    if (!e &&  f) return 16;
+    return ge->options.E05 == PONT_2P ? 24 : 32;
+}
+
 /* TAB.1 -- E03 and F04 strap the machine version, and FUL4G distinguishes the
  * slow minimum-performance model from the two faster ones:
  *
