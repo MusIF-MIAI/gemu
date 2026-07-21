@@ -354,3 +354,51 @@ would dissolve contradiction 2 but leaves CI73's unconditional set unexplained.
 (1) and (2) are independent of each other; either one alone blocks a faithful
 conversion, because guessing on either produces silently wrong arithmetic
 rather than a visible failure.
+
+## ch.239 reconstructed from the physical card layout (2026-07-21)
+
+The one unverifiable CM021 leaf (DI60A, generated in the scan-missing ch.239)
+has been reconstructed from cp08 (card layout, dwg 14026136) without the
+schematic page, by Marco's method: find the chapter's physical board, then
+rebuild the logic from a same-type board whose chapter we do have.
+
+**Board lookup.** cp08 p7 (RIGA A) / p8 (RIGA B) list one card per line with
+its 17 connector-pin net names. Card A16+B16 = `0610047F LOSE2M`, and its
+pins carry exactly the twelve ch.239 outputs. The same part number sits at
+A17+B17 — which is ch.248, a chapter we can read. Cross-validation: ch.248's
+printed pin labels match the cp08 A17/B17 rows pin-for-pin (16 of 16 nets),
+so the LOSE2M pin->gate template is trusted:
+
+    side A: g1 out 01 (in 02,03)   g3 out 05 (in 04,03)   g2 out 07 (in 09,10)
+            g4 out 12 (in 11,10)   g10 out 15 (in 14,13)  g8 out 16 (in 06,13)
+    side B: g11 out 02 (in 01,03)  g9 out 04 (in 05,03)   g5 out 07 (in 06,12)
+            g12 out 11 (in 09,10)  g6 out 14 (in 13,12)   g7 out 15 (in 16,12)
+
+**ch.239 = A16+B16, all twelve gates** (output pin = index gate number, 12/12
+match, which is itself a strong check):
+
+    g1  DI70A = NAND(SA006, D1391)     g7  DI66A = NAND(SA016, D1131)
+    g2  DI72A = NAND(SA006, D1621)     g8  DI89A = NAND(SA01L, D1501)
+    g3  DI71A = NAND(D1391, SA00F)     g9  DI82A = NAND(SA006, D1111)
+    g4  DI73A = NAND(D1621, SA00F)     g10 DI90A = NAND(SA016, D1501)
+    g5  DI65A = NAND(SA01M, D1131)     g11 DI83A = NAND(SA00F, D1111)
+    g6  DI67A = NAND(D1031, D1131)     g12 DI60A = NAND(DI121, SA028)
+
+Every input is an SAxxx state-register bit or a status-band DIxxx buffer:
+the whole board is state decoding, like its DESA2x neighbours.
+
+**DI60A specifically:** `NAND(DI121, SA028)` at B16 pins 09/10 -> 11.
+Independent confirmation from a page that was never missing: ch.252 g11
+prints its DI121 output fanning to **(239-12)** -- the exact gate. Unwinding
+DI121 = /DI12A, DI12A = NAND(SA03F, D1101) (ch.225 g25), D1101 = SA076·SA056:
+
+    DI60A asserted  <=>  SA07 · SA05 · /SA03 · SA02    (bits 6,4,1,0 free)
+
+**Pure state decode. All seven CM021 leaves are now verified; the CU01
+conclusion stands with no unverified links.**
+
+Residual uncertainties, stated: cp08 cells were read from 300-dpi renders
+(not OCR); `SA028`'s last glyph could be read as B (`SA02B`) -- either way it
+is an SA02 rail form and the conclusion is unaffected. The gate template
+assumes A16's backplane follows the same LOSE2M internal wiring as A17,
+which the 12/12 output-pin/gate-number match makes near-certain.
