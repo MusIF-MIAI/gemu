@@ -666,25 +666,14 @@ static uint8_t L1_21_ones(struct ge *ge) { return (ge->rL1 & 0xff) == 0xff; }
  * step 0x1B (MVQ 2,0x0531,0x0533 with L1=0x01 moves exactly one byte), and
  * fo.143 makes {L1_2 = 1i} the MVQ exit gate.  So L1_2 is the high quartet
  * (operand 1 / destination length) and L1_1 the low (operand 2 / source),
- * which is also the SS2 instruction layout the disassembler already uses. */
-static uint8_t L1_2_ones(struct ge *ge) { return (ge->rL1 & 0xf0) == 0xf0; }
-static uint8_t L1_1_ones(struct ge *ge) { return (ge->rL1 & 0x0f) == 0x0f; }
-/* The two-length algebra family: cp07 fo.140-143, one set of sheets for all
- * six opcodes (docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md).  They walk both
- * operands DESCENDING -- LSB-first, for the carry chain -- and use the two L1
- * quartets as two separate lengths, which is what makes them the first family
- * to need the split counters above. */
-static uint8_t beta_algebra(struct ge *ge) {
-    switch (ge->rFO) {
-        case AB_OPCODE:  case SB_OPCODE:
-        case AD_OPCODE:  case SD_OPCODE:
-        case MVQ_OPCODE: case CMQ_OPCODE:
-            return 1;
-        default:
-            return 0;
-    }
-}
-static uint8_t not_beta_algebra(struct ge *ge) { return !beta_algebra(ge); }
+ * which is also the SS2 instruction layout the disassembler already uses.
+ *
+ * The two quartet predicates land with the AB/SB/AD/SD/MVQ/CMQ conversion --
+ * L1_2 gates that family's 40|42 exit (CU07) and L1_1 reaches CI73 through
+ * EG43A's L1U16 input -- so only their meaning is recorded here for now. */
+
+/* MVQ is the one family that walks 50|52 with nothing for the arithmetic
+ * unit to do, which is why fo.142's CI68 is the one common row it excludes. */
 static uint8_t not_mvq(struct ge *ge) { return ge->rFO != MVQ_OPCODE; }
 
 static uint8_t not_str(struct ge *ge) { return ge->rFO != STR_OPCODE; }
@@ -1148,13 +1137,15 @@ static const struct msl_timing_chart exec_40[] = {
     /* The loop arc: CU01+CU05 turn 40|42 back into 60|62, so a family LEAVES
      * by ADDING CU07 under its own terminal condition, never by withholding
      * these. Every terminal gate below is a different one. */
-    /* CU01 is unconditional on every sheet but fo.143, where the algebra
-     * family gates it {(L1_1 = 1i)}: the X bit is not a pass counter there
-     * but the "source exhausted" latch, so the loop re-enters 60 while the
-     * operand-2 quartet still counts and 62 once it has run out.  The two
-     * rows are the same physical gate read through the decode. */
-    { TI06, CU01, not_beta_algebra },
-    { TI06, CU01, beta_algebra, L1_1_ones },
+    /* CU01 is unconditional, including on fo.143, which prints a
+     * {(L1_1 = 1i)} brace against it.  That brace is a sheet error: the gate
+     * chain was traced end to end in cp06 and contains no counter term at
+     * all -- CU011 = NAND(CM01A, CM02A, DE53A, ED36A, ED10A, ED84A, ED66A,
+     * ED50A) (ch.219 g1), CM021 = NAND(DI49A, DI36B, DI57B, DI94A, DI60A,
+     * DI13A, DI50A) (ch.252 g8, every leaf a state decode), and
+     * DI49A = NAND(DI481, SA066) (ch.222 g1, the 40|42 decode itself).
+     * See docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md. */
+    { TI06, CU01, 0 },
     { TI06, CU05, 0 },
     { TI06, CU07, beta_register, SA01_pass2 },   /* pass 2 done           */
     { TI06, CU07, is_mvc, L1_21_ones },          /* {L1_2,1=1i} terminal  */

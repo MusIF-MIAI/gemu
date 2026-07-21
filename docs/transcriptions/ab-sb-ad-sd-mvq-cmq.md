@@ -177,7 +177,56 @@ So the deck exercises the loop arc but **cannot** adjudicate anything about
 how the borrow behaves across iterations. Do not treat a green deck as
 evidence on that question.
 
-### Three contradictions that stopped the conversion
+### RESOLVED by tracing the gates (2026-07-21)
+
+Both blockers dissolved the same way, and both dissolve into the same lesson:
+**a timing sheet's condition cell is not the gate.** The condition lives in
+the family's leaf of a multi-leaf command OR, and the sheet sometimes prints
+it in the wrong cell or not at all.
+
+**CU01 has no counter term.** fo.143 prints `{(L1_1 = 1i)}` against CU01.
+Traced end to end in cp06 and there is no L1 signal anywhere in the chain:
+
+    ch.219 g1   CU011 = NAND(CM01A, CM02A, DE53A, ED36A,
+                             ED10A, ED84A, ED66A, ED50A)      8 leaves
+    ch.252 g8   CM021 = NAND(DI49A, DI36B, DI57B, DI94A,
+                             DI60A, DI13A, DI50A)             all state decodes
+    ch.222 g1   DI49A = NAND(DI481, SA066)                    the 40|42 decode
+
+So **CU01 fires unconditionally in 40|42**, exactly as gemu's common row
+already had it, and the X bit means "not the first iteration" -- the same
+pass encoding the register family uses. Which makes `CO48
+{(SD+CMQ+SB)·/SA01}` fire on the first iteration ONLY, so the borrow is
+preset once and propagates correctly through URPE for the rest of the loop.
+Contradiction 1 was an artifact of believing the brace.
+
+**CI73 is conditional, on an L1 signal the sheet does not print.** fo.143
+shows an empty condition cell for `CI73A0 = EG43A0`. But CI73 is another
+multi-leaf OR (ch.203 g8, seven leaves) and this family's leaf is built as
+
+    ch.264 g5   EG43A = NAND(DI493, DO211, L1U16, DO211)
+                DI493 <- (236-3)  the 40|42 state decode
+                DO211 <- (229-7)  the opcode-group decode (tied to two pins)
+                L1U16 <- (068-5)  an L1 REGISTER signal, from the ch.068 band
+
+So FI03 is set in 40|42 only when that L1 condition holds, and `CO30 {/FA03}`
+in 60|62 then stops fetching the source. **That is the zero-extension**, and
+it is where it should be: once operand 2's quartet is exhausted the source
+read is inhibited and the remaining destination digits are processed against
+nothing. Contradiction 2 was an artifact of believing an empty cell.
+
+Reading the two together, the family's mechanism is coherent and complete:
+the LOW quartet counts operand 2 and drives CI73 -> FA03 -> source-fetch
+inhibit (zero-extend); the HIGH quartet counts operand 1 and drives CU07, the
+loop exit; the X bit is just "not the first iteration" and gates the one-shot
+borrow preset. Every piece of fo.140-143 has a job.
+
+**Still to confirm before the conversion:** what `L1U16` is exactly (cp06
+ch.068, position 5) -- whether it is literally the low quartet's all-ones
+terminal or something adjacent. That is the last unknown, and it decides the
+predicate CI73 gets.
+
+### The contradictions as originally found (kept for the record)
 
 **1. CO48 re-presets the borrow on every iteration.** `{(SD+CMQ+SB)·/SA01}`
 fires whenever the X bit is clear, and X is set by `CU01 {(L1_1 = 1i)}`, i.e.
