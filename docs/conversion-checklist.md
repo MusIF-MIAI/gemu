@@ -60,14 +60,19 @@ Every one of these, every conversion:
   1.83M → 2.05M across prior conversions). Update `want_cyc` in
   `tests/roundtrip.sh` *deliberately*, only after confirming the step trace is
   unchanged.
-- Step-trace diff against the previous commit:
+- Step-trace diff against the previous commit — `ge -i` prints a step line on
+  every `mem[0x0010]` change plus the HALT, no external harness needed:
   ```sh
-  git archive HEAD | tar -x -C "$T" && make -C "$T" libge.a
-  # link funkharness against both, then filter -- raw stdout is ~7 GB
-  ... | grep -E "^\[[0-9]+\] (step|mstep|HALT)"
+  git archive HEAD | tar -x -C "$T/oldge" && make -C "$T/oldge" -j8 ge
+  timeout 150 $T/oldge/ge -i fk.bin --poke 0x0E00=0x40 --max-cycles 3000000 > old.txt
+  timeout 150 ./ge        -i fk.bin --poke 0x0E00=0x40 --max-cycles 3000000 > new.txt
+  # -i idles after HALT; the timeout kill is expected. Compare step+PO pairs,
+  # then look at where the cycle numbers start to drift and check the drift
+  # begins at the converted family's first deck step.
   ```
-  All 159 step/mstep/HALT lines must match, cycle numbers included, unless the
-  conversion is expected to change them — in which case say which and why.
+  All step/PO transitions must match; cycle numbers may drift only from the
+  converted family's first test onward, and the total drift must be explained
+  (iterations x states x instructions).
 
 ## Traps, learned the expensive way
 
