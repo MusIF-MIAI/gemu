@@ -731,8 +731,6 @@ static uint8_t immediate_nonzero_cc(struct ge *ge) {
 static uint8_t cmi_result_nonzero(struct ge *ge) { return (ge->rRO & 0xff) != 0; }
 static uint8_t cmi_borrow(struct ge *ge) { return !ge->URPE; }
 
-static uint8_t beta_always(struct ge *ge) { (void)ge; return 1; }
-
 static uint8_t jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(struct ge *ge) {
     return jc_js1_js2_jie(ge) || lon_loll(ge) || loff(ge) || ins(ge) || ens(ge) || nop(ge)
            || pm_imm_exec(ge) || pm_reg_exec(ge) || is_ss_data_op(ge);
@@ -748,31 +746,6 @@ static uint8_t per_peri(struct ge *ge) {
 
 static uint8_t per_peri_TO25_CO30(struct ge *ge) {
     return per_peri(ge) && !BIT(ge->rFO, 1);
-}
-
-/* Beta exit, return-to-alpha gate (the CU01 "Set S001" row): every operation
- * except PER/PERI/RDC leaves 64|65 for E2 (CU01+CU07+CU10+CU12 -> 1110 0010);
- * the external instructions instead route to CC via CU15/CU03 and must NOT
- * get bit 1.
- *
- * This was previously gated on the explicit list of implemented op groups
- * (jc/js/lon/ins/nop/pm/ss), which wedged the sequencer on any OTHER function
- * code: with no CU01, beta exited to E0 (1110 0000), whose decode sent a
- * 0-address-class FO straight back to beta -- an infinite e0<->64 ping-pong no
- * real MSL can produce (the decode gates always yield a defined route, and the
- * GE-120 has no invalid-operation trap: an unknown code performs no datapath
- * commands and falls through to the next fetch). Observed in the field with
- * the funktionalcpu deck, whose continuous-restart path jumps into swept core
- * and executes FO=0x00.
- *
- * The real row condition is now transcribed and lives in signals.h as CM01A0
- * (cp06 ch.252-7), so the documented opcodes no longer need this gate: it
- * survives only on the two sheets that are not real MSL transcriptions --
- * beta_64_undocumented, whose whole purpose is to keep swept core from
- * wedging the emulator, and beta_64_ss below.  Both go away with the last
- * hybrid; nothing else should acquire a use of it. */
-static uint8_t not_per_peri(struct ge *ge) {
-    return !per_peri(ge);
 }
 
 /* Artificial beta exit for the SS one-shot.
