@@ -194,15 +194,47 @@ Traced end to end in cp06 and there is no L1 signal anywhere in the chain:
     ch.219 g1   CU011 = NAND(CM01A, CM02A, DE53A, ED36A,
                              ED10A, ED84A, ED66A, ED50A)      8 leaves
     ch.252 g8   CM021 = NAND(DI49A, DI36B, DI57B, DI94A,
-                             DI60A, DI13A, DI50A)             all state decodes
+                             DI60A, DI13A, DI50A)             7 leaves, audit below
     ch.222 g1   DI49A = NAND(DI481, SA066)                    the 40|42 decode
+    ch.241 g3   DI48A = NAND(SA04F, SA05F, SA07F)             bits 4,5,7 zero
+    ch.241 g5   DI481 = /DI48A                                -> (222-1)
 
-So **CU01 fires unconditionally in 40|42**, exactly as gemu's common row
-already had it, and the X bit means "not the first iteration" -- the same
+ch.252 g8 pin detail (user-corrected): DI50A drives BOTH pins 5 and 13;
+pins 6 and 10 are floating -- open TTL inputs read high, so a floating NAND
+input is transparent, the dual of the tied-input inverter idiom.
+
+**CM021 leaf audit** (2026-07-21, via the cp06 signal index at
+`marco-kb-architecture/_signals_index.tsv`, each generator read at the gate):
+
+    DI49A  ch.222 g1    pure 40-4F decode (chain above, complete)
+    DI13A  ch.225 g18   NAND(D1101, SA036, SA026), D1101 = SA076.SA056 - state
+    DI36B  ch.231 g8    buffer of NAND(D1591, SA066, D1341) - state
+    DI50A  ch.233 g3    NAND(DI521, DI481, SA026) = states 04-07
+    DI57B  ch.236 g13   buffer of ch.232 g23 (SA01F + bus); every input
+                        reaching ch.232 is SAxxx or status-band D1xxx - state
+    DI94A  ch.248 g1    NAND(SA006, DI931), DI931 = ch.241 g7 from status
+                        decodes.  NB ch.248 is titled "FUNCTION AND STATUS
+                        CODES ANDS" and other gates there DO take F0xx inputs;
+                        this one happens not to.
+    DI60A  ch.239 g12   UNVERIFIABLE: ch.239 is missing from the scan
+                        (p298 = ch.238 jumps to p299 = ch.240)
+
+So six of seven leaves are verified state decodes and one cannot be checked.
+The conclusion does not depend on the seventh: CM021 is a NAND of active-low
+leaves, i.e. an OR -- a leaf can only ADD states where CU01 fires, never veto
+one.  DI49A alone guarantees the firing in 40|42.
+
+**CU01 therefore fires unconditionally in 40|42**, exactly as gemu's common
+row already had it, and the X bit means "not the first iteration" -- the same
 pass encoding the register family uses. Which makes `CO48
 {(SD+CMQ+SB)·/SA01}` fire on the first iteration ONLY, so the borrow is
 preset once and propagates correctly through URPE for the rest of the loop.
 Contradiction 1 was an artifact of believing the brace.
+
+(Corroboration picked up on the way: ch.236 g3 prints `D1493 = /D149A`, so
+the `DI493` input of CI73's leaf gate EG43A (ch.264 g5) is the active-high
+form of the same 40-band decode -- CI73's leaf and CU01's leaf hang off the
+same state decode, differing only in the L1U16 term.)
 
 **CI73 is conditional, on an L1 signal the sheet does not print.** fo.143
 shows an empty condition cell for `CI73A0 = EG43A0`. But CI73 is another

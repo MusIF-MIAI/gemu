@@ -1139,12 +1139,15 @@ static const struct msl_timing_chart exec_40[] = {
      * these. Every terminal gate below is a different one. */
     /* CU01 is unconditional, including on fo.143, which prints a
      * {(L1_1 = 1i)} brace against it.  That brace is a sheet error: the gate
-     * chain was traced end to end in cp06 and contains no counter term at
-     * all -- CU011 = NAND(CM01A, CM02A, DE53A, ED36A, ED10A, ED84A, ED66A,
-     * ED50A) (ch.219 g1), CM021 = NAND(DI49A, DI36B, DI57B, DI94A, DI60A,
-     * DI13A, DI50A) (ch.252 g8, every leaf a state decode), and
-     * DI49A = NAND(DI481, SA066) (ch.222 g1, the 40|42 decode itself).
-     * See docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md. */
+     * chain was traced end to end in cp06 and contains no counter term --
+     * CU011 = NAND(CM01A, CM02A, DE53A, ED36A, ED10A, ED84A, ED66A, ED50A)
+     * (ch.219 g1), CM021 = NAND(DI49A, DI36B, DI57B, DI94A, DI60A, DI13A,
+     * DI50A) (ch.252 g8), and DI49A = NAND(DI481, SA066) (ch.222 g1, the
+     * 40|42 decode itself).  Six of CM021's seven leaves are verified state
+     * decodes; DI60A's generator (ch.239 g12) is in a chapter missing from
+     * the scan, but CM021 is an OR of active-low leaves, so no leaf can veto
+     * the firing DI49A alone guarantees in 40|42.  Full leaf audit in
+     * docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md. */
     { TI06, CU01, 0 },
     { TI06, CU05, 0 },
     { TI06, CU07, beta_register, SA01_pass2 },   /* pass 2 done           */
