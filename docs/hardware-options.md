@@ -227,12 +227,38 @@ every deck that stops at 0x4000.  To settle: memtest above 0x4000 on the
 machine; or check whether F05 is actually populated (empty would make it a
 clean printed 12K row); or trace the VAM consumers (077/309/318/321).
 
-**Falsifiable check available**: two spare boards stamped `18036` exist, with
-a different connector style and a different staple pattern -- plausibly the
-pre-upgrade strap cards, i.e. PONT2P.  If so, buzzing (or photographing the
-trace side of) a 18036 against a 18034 must show the difference of exactly
-one short: pin 4 on the 2N vs pin 3 on the 2P, with pin 1 common.  Any other
-difference falsifies the {1,4}/{1,3} derivation.
+**The memory bound is now gate-derived, not inferred**: cp06 ch.080 "MEMORY
+STARTING LOGIC / LOGICA PARTENZA MEMORIA" (p156) is the functional consumer
+of the VAM signals -- the (309/318/321-x) fan-outs are only termination
+divider networks, and (077-x) is the diagnostic option.  Four NANDs watch
+address bits 12-14 against VAMA1/VAMB1/VAMC1 and inhibit VAMEA, the memory
+START, so an out-of-bounds address never begins a cycle.  The terms
+reproduce all five printed rows and define every off-table combination;
+for this machine's (1,0,0) only the bit14 term is armed: **the machine
+bounds at exactly 16K**.  DIAG forces (1,0,1) = the same 16K bound
+regardless of straps -- the diagnostic option's ceiling comes from these
+same gates.  Transcribed as `ge_mem_in_bounds()` / `ge_memory_capacity_k()`.
+
+**The three spare cards complete the upgrade story.**  Photographed spares:
+two boards stamped `18036` with 5 staples each, one `18034` with a single
+staple.  A pre-upgrade machine of E03=P, F03=P, F05=N, E05=empty
+(= UCE 467, 4 usec, interrupts on connector 4, 16K) upgraded toward
+468 / connector 3 / 32K pulls exactly two P cards (E03, F03) and one N card
+(F05) -- matching the spares two-and-one -- and requires fitting a P in F05,
+where a new-style N went in instead: the single wrong card that leaves the
+machine at 16K of its intended 32K.  Under this story the staple counts are
+revision differences only (old N = 1 staple, old P = 5, new N = 4).
+
+**Buzz-out predictions** (connector pins; ch.309 notes pin 1 of the high
+connector is ground, the straps' common):
+
+    18034 spare  (1 staple)  -> pins 1-4 short  (old-revision PONT2N)
+    18036 spare  (5 staples) -> pins 1-3 short  (PONT2P), maybe extra commons
+    in-machine   (4 staples) -> pins 1-4 short  (new-revision PONT2N)
+
+Identical groups for the two N predictions and a 4->3 difference on the P
+confirms both the {1,4}/{1,3} derivation and the upgrade history; anything
+else falsifies them.
 
 ### The physical card (photographed 2026-07-21)
 
