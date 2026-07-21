@@ -1175,13 +1175,60 @@ static const struct msl_timing_chart exec_50[] = {
  *   TI06 CU07       -- the terminal condition, different for every family
  *     (state X bit for the register pair, L1 all-ones for MVC/XC, either
  *     that or first-difference for CMC). */
-static const struct msl_timing_chart exec_40_common[] = {
+/* The three SS byte loops step their destination pointer upward; the register
+ * family walks 16-bit quantities downward, LSB first, for the carry chain. */
+static uint8_t ss_byte_loop(struct ge *ge) {
+    return is_mvc(ge) || is_cmc(ge) || is_xoc_nc(ge);
+}
+
+static const struct msl_timing_chart exec_40[] = {
+    /* Shared skeleton: address operand 1, put the staged byte back on NO,
+     * step V1 through the counting network, latch the byte into RO. */
     { TO10, CO11, 0 },               /* V1 -> NO: operand-1 address */
     { TO30, CI15, 0 },               /* L1 -> NO: the staged result byte */
     { TO40, CO01, 0 },               /* NI -> V1: stepped address */
     { TO50, CI32, 0 },               /* NO43 -> RO: byte to write */
-    { TI06, CU01, 0 },               /* set S001... */
-    { TI06, CU05, 0 },               /* ...+S005: loop arc back to 60|62 */
+
+    /* Direction of the step. */
+    { TO10, CO41, beta_register },   /* V1 - 1 ... */
+    { TO10, CO40, beta_register },   /* ...DESCENDING: LSB-first, for carry */
+    { TO10, CO41, ss_byte_loop },    /* V1 + 1: ascending */
+
+    /* Whether the byte is written at all: the compares never store, and TM
+     * tests without storing. */
+    { TO25, CO31, beta_register, not_cmr },   /* {LR+AMR+SMR+STR}        */
+    { TO25, CO31, beta_immediate_logic, immediate_writes_memory }, /* {/TM} */
+    { TO25, CO31, is_mvi },
+    { TO25, CO31, is_mvc },
+    { TO25, CO31, is_xoc_nc },
+                                     /* CMI and CMC issue no CO31 at all */
+
+    /* Condition-code flags. CI85 (reset FI05) is kept ahead of CI75 (set
+     * FI05) because the immediate sheet prints them in that order and the
+     * pair shares a flip-flop. */
+    { TI06, CI85, immediate_sets_cc },        /* {CI+XI+TM}: NI sets no CC */
+    { TI06, CI74, reg_carry },                /* {URPE.(A/S/CMR)}         */
+    { TI06, CI74, immediate_sets_cc },
+    { TI06, CI75, reg_result_nonzero },       /* {/(dRO=0)}               */
+    { TI06, CI75, immediate_nonzero_cc },
+    { TI06, CI75, is_cmi, cmi_result_nonzero },
+    { TI06, CI75, is_cmc, cmc_byte_differs }, /* {/(dRO=0i)}              */
+    { TI06, CI75, xc_byte_nonzero },          /* {XC./(dRO=0i)}           */
+    { TI06, CI84, is_cmi, cmi_borrow },
+    { TI06, CI84, is_cmc, cmc_borrow },       /* {/URPE}                  */
+
+    /* The loop arc: CU01+CU05 turn 40|42 back into 60|62, so a family LEAVES
+     * by ADDING CU07 under its own terminal condition, never by withholding
+     * these. Every terminal gate below is a different one. */
+    { TI06, CU01, 0 },
+    { TI06, CU05, 0 },
+    { TI06, CU07, beta_register, SA01_pass2 },   /* pass 2 done           */
+    { TI06, CU07, is_mvc, L1_21_ones },          /* {L1_2,1=1i} terminal  */
+    { TI06, CU07, is_xoc_nc, L1_21_ones },
+    { TI06, CU07, is_cmc, cmc_done },            /* {(L1=1i)+/(dRO=0i)}   */
+    { TI06, CU07, beta_immediate_shift },        /* single byte: always   */
+    { TI06, CU10, beta_immediate_shift },
+    { TI06, CU12, beta_immediate_shift },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -1211,16 +1258,6 @@ static const struct msl_timing_chart exec_60_register[] = {
     { END_OF_STATUS, 0, 0 },         /* common CU15 -> 50|52 or 40|42 */
 };
 
-static const struct msl_timing_chart exec_40_register[] = {
-    { TO10, CO41, 0 },               /* V1 - 1 ... */
-    { TO10, CO40, 0 },               /* ...DESCENDING: LSB-first, for carry */
-    { TO25, CO31, not_cmr },         /* {LR+AMR+SMR+STR}: CMR compares only */
-    { TI06, CI75, reg_result_nonzero }, /* FI05: pass byte nonzero {/(dRO=0)} */
-    { TI06, CI74, reg_carry },       /* FI04: pass carry {URPE.(A/S/CMR)} */
-    { TI06, CU07, SA01_pass2 },      /* {SA01} pass 2 done -> E2/E3 */
-    { END_OF_STATUS, 0, 0 },
-};
-
 static const struct msl_timing_chart exec_60_immediate[] = {
     { TI06, CU04, 0 },                       /* +common CU15: 60 -> 50 */
     { END_OF_STATUS, 0, 0 },
@@ -1240,39 +1277,6 @@ static const struct msl_timing_chart exec_60_cmi[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-static const struct msl_timing_chart exec_40_immediate[] = {
-    /* {/TM} on the write: NI/XI/CI store the result, TM only tests it. That
-     * one gate is the whole difference between a logical operation and a
-     * mask test -- both compute the same and in 50|52. */
-    { TO25, CO31, immediate_writes_memory }, /* {/TM}: result -> memory */
-    { TI06, CI85, immediate_sets_cc },       /* {CI+XI+TM}: NI sets no CC */
-    { TI06, CI74, immediate_sets_cc },
-    { TI06, CI75, immediate_nonzero_cc },
-    { TI06, CU07, 0 },                       /* single byte: always exit */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
-    { END_OF_STATUS, 0, 0 },
-};
-
-
-static const struct msl_timing_chart exec_40_mvi[] = {
-    { TO25, CO31, 0 },                       /* immediate -> memory */
-    { TI06, CU07, 0 },                       /* single byte: always exit */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_chart exec_40_cmi[] = {
-    /* No CO31: a compare never writes. The common CI32 still latches the
-     * result byte into RO, because the CC rows below test it there. */
-    { TI06, CI75, cmi_result_nonzero },      /* unequal */
-    { TI06, CI84, cmi_borrow },              /* memory < immediate */
-    { TI06, CU07, 0 },                       /* single byte: always exit */
-    { TI06, CU10, 0 },
-    { TI06, CU12, 0 },
-    { END_OF_STATUS, 0, 0 },
-};
 
 
 
@@ -1291,13 +1295,6 @@ static const struct msl_timing_chart exec_60_mvc[] = {
     { TI06, CU04, 0 },               /* set S004... */
     { TI06, CU14, 0 },               /* ...reset: -> 40|42 (no 50|52) */
     { END_OF_STATUS, 0, 0 },         /* common CU15 leaves the 6x band */
-};
-
-static const struct msl_timing_chart exec_40_mvc[] = {
-    { TO10, CO41, 0 },               /* V1 + 1: ASCENDING, unlike register */
-    { TO25, CO31, 0 },               /* RO -> MEM: write staged byte */
-    { TI06, CU07, L1_21_ones },      /* {L1_2,1=1i}: terminal -> E2/E3 */
-    { END_OF_STATUS, 0, 0 },         /* else common CU01+CU05 loop -> 60|62 */
 };
 
 static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
@@ -1321,14 +1318,6 @@ static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
     { END_OF_STATUS, 0, 0 },
 };
 
-static const struct msl_timing_chart exec_40_xoc[] = {   /* fo.147 */
-    { TO10, CO41, 0 },               /* V1 + 1: ascending */
-    { TO25, CO31, 0 },               /* write result byte */
-    { TI06, CI75, xc_byte_nonzero }, /* SET FI05 {XC./(dRO=0i)} */
-    { TI06, CU07, L1_21_ones },      /* terminal -> E2/E3 */
-    { END_OF_STATUS, 0, 0 },         /* else common CU01+CU05 loop -> 60|62 */
-};
-
 static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
     { TO10, CO12, 0 },
     { TO10, CO41, 0 },
@@ -1347,15 +1336,6 @@ static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
     { END_OF_STATUS, 0, 0 },
 };
 
-static const struct msl_timing_chart exec_40_cmc[] = {   /* fo.79 */
-    { TO10, CO41, 0 },               /* V1 + 1: ascending */
-                                     /* no CO31: a compare never writes */
-    { TI06, CI75, cmc_byte_differs },/* SET FI05 {/(dRO=0i)} */
-    { TI06, CI84, cmc_borrow },      /* RESET FI04 {/URPE} */
-    { TI06, CU07, cmc_done },        /* {(L1=1i) + /(dRO=0i)} per exit box */
-    { END_OF_STATUS, 0, 0 },         /* else common CU01+CU05 loop -> 60|62 */
-};
-
 static const struct msl_timing_variant exec_60_variants[] = {
     { beta_register, exec_60_register, "exec-register-60|62", "CPU[7] fo.38" },
     { is_mvi,        exec_60_mvi,      "exec-mvi-60|62",      "CPU[7] fo.74" },
@@ -1365,18 +1345,6 @@ static const struct msl_timing_variant exec_60_variants[] = {
     { is_mvc,        exec_60_mvc,      "exec-mvc-60|62",      "cp07 fo.74" },
     { is_cmc,        exec_60_cmc,      "exec-cmc-60|62",      "cp07 fo.77" },
     { is_xoc_nc,     exec_60_xoc,      "exec-xoc-60|62",      "cp07 fo.145" },
-    { 0, 0, 0, 0 },
-};
-
-static const struct msl_timing_variant exec_40_variants[] = {
-    { beta_register, exec_40_register, "exec-register-40|42", "CPU[7] fo.40" },
-    { is_mvi,        exec_40_mvi,      "exec-mvi-40|42",      "CPU[7] fo.75" },
-    { beta_immediate_logic, exec_40_immediate,
-                                      "exec-immediate-40|42", "CPU[7] fo.44" },
-    { is_cmi,        exec_40_cmi,      "exec-cmi-40|42",      "CPU[7] fo.79" },
-    { is_mvc,        exec_40_mvc,      "exec-mvc-40|42",      "cp07 fo.75" },
-    { is_cmc,        exec_40_cmc,      "exec-cmc-40|42",      "cp07 fo.79" },
-    { is_xoc_nc,     exec_40_xoc,      "exec-xoc-40|42",      "cp07 fo.147" },
     { 0, 0, 0, 0 },
 };
 
