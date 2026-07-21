@@ -61,7 +61,7 @@ as `/`.
 One **maintenance panel switch**: **`S42`, labelled "LAMPS"**, whose `DIAG`
 position overrides part of the strapping (see the note below).
 
-## TAB. 1 — machine version (F03 / F04)
+## TAB. 1 — machine version (E03 / F04)
 
 | version | cycle period | performances | interruptions | E03 | F04 | FEL06 | FEL16 | FUL4G |
 |---|---|---|---|---|---|---|---|---|
@@ -125,6 +125,13 @@ one that *should* support these instructions. Two possibilities:
 
 Resolving it needs the LA/LPSR beta sheets re-read at the CI89 row for an
 overbar. Until then gemu carries the option model but not the row.
+
+Sharpened by the 2026-07-21 identification: on a UCE 468 the strap levels are
+FEL06/FEL16/FUL4G = 0/0/1 and the DIAG override forces 0/0/1 -- **identical**,
+so S42 is a no-op for these signals on this machine and `FUL4` is asserted
+unconditionally. There is no switch position in which a verbatim
+`CI89 SET ALTO {FUL4}` would NOT halt this machine, which leans further
+toward the overbar reading.
 
 ## The machine at Electric Dreams
 
