@@ -13,8 +13,9 @@ runs LSB-first for the carry chain.
 > drawn from the first of those and is WRONG -- X is a pass counter here,
 > exactly as in the register family.
 >
-> Prerequisites now met: the UA decimal mode landed in fdc1afe
-> (`ge_ua_decimal`). One unknown is left, named at the end: what `L1U16` is.
+> Both were traced to their gates and corrected; nothing is unknown any more.
+> Prerequisites are met (the UA decimal mode landed in fdc1afe), so the
+> conversion can be written straight from the end of this document.
 
 ## fo.140 — 64|65 beta (SA 0110 0101)
 Rows: TO50 NO->BO; TO65 CO49 = DI06A0 (RES URPE E URPU); TI06 CU10 = DI06A0;
