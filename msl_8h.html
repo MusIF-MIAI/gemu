@@ -59,22 +59,25 @@
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5514d984e870c2238ad50440005adbdf" id="r_a5514d984e870c2238ad50440005adbdf"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8h.html#a5514d984e870c2238ad50440005adbdf">msl_get_state</a> (uint8_t state)</td></tr>
-<tr class="memdesc:a5514d984e870c2238ad50440005adbdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets timing state&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;.  <br /></td></tr>
-<tr class="separator:a5514d984e870c2238ad50440005adbdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a416fb23759d8949b94cc93c084f82c7a" id="r_a416fb23759d8949b94cc93c084f82c7a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8h.html#a416fb23759d8949b94cc93c084f82c7a">msl_run_state</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *state)</td></tr>
-<tr class="memdesc:a416fb23759d8949b94cc93c084f82c7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs a machine state.  <br /></td></tr>
-<tr class="separator:a416fb23759d8949b94cc93c084f82c7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa718ebc693e7eca4d3ea967b43aaa326" id="r_aa718ebc693e7eca4d3ea967b43aaa326"><td class="memItemLeft" align="right" valign="top">const struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8h.html#aa718ebc693e7eca4d3ea967b43aaa326">msl_get_state</a> (uint8_t state)</td></tr>
+<tr class="memdesc:aa718ebc693e7eca4d3ea967b43aaa326"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets timing state&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;&#x2410;.  <br /></td></tr>
+<tr class="separator:aa718ebc693e7eca4d3ea967b43aaa326"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af64694f2d2b385ec455e58ea4a7923d1" id="r_af64694f2d2b385ec455e58ea4a7923d1"><td class="memItemLeft" align="right" valign="top">const struct <a class="el" href="structmsl__timing__variant.html">msl_timing_variant</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8h.html#af64694f2d2b385ec455e58ea4a7923d1">msl_select_variant</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, const struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *state)</td></tr>
+<tr class="memdesc:af64694f2d2b385ec455e58ea4a7923d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the first matching manual-sheet variant for an instruction state.  <br /></td></tr>
+<tr class="separator:af64694f2d2b385ec455e58ea4a7923d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a520107274b11964d8b3256945e498292" id="r_a520107274b11964d8b3256945e498292"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="msl_8h.html#a520107274b11964d8b3256945e498292">msl_run_state</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, const struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *state)</td></tr>
+<tr class="memdesc:a520107274b11964d8b3256945e498292"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs a machine state.  <br /></td></tr>
+<tr class="separator:a520107274b11964d8b3256945e498292"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a5514d984e870c2238ad50440005adbdf" name="a5514d984e870c2238ad50440005adbdf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5514d984e870c2238ad50440005adbdf">&#9670;&#160;</a></span>msl_get_state()</h2>
+<a id="aa718ebc693e7eca4d3ea967b43aaa326" name="aa718ebc693e7eca4d3ea967b43aaa326"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa718ebc693e7eca4d3ea967b43aaa326">&#9670;&#160;</a></span>msl_get_state()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> * msl_get_state </td>
+          <td class="memname">const struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> * msl_get_state </td>
           <td>(</td>
           <td class="paramtype">uint8_t&#160;</td>
           <td class="paramname"><em>state</em></td><td>)</td>
@@ -97,8 +100,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a416fb23759d8949b94cc93c084f82c7a" name="a416fb23759d8949b94cc93c084f82c7a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a416fb23759d8949b94cc93c084f82c7a">&#9670;&#160;</a></span>msl_run_state()</h2>
+<a id="a520107274b11964d8b3256945e498292" name="a520107274b11964d8b3256945e498292"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a520107274b11964d8b3256945e498292">&#9670;&#160;</a></span>msl_run_state()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -112,7 +115,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *&#160;</td>
+          <td class="paramtype">const struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *&#160;</td>
           <td class="paramname"><em>state</em>&#160;</td>
         </tr>
         <tr>
@@ -132,6 +135,38 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+<p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00055">55</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
+
+</div>
+</div>
+<a id="af64694f2d2b385ec455e58ea4a7923d1" name="af64694f2d2b385ec455e58ea4a7923d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af64694f2d2b385ec455e58ea4a7923d1">&#9670;&#160;</a></span>msl_select_variant()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const struct <a class="el" href="structmsl__timing__variant.html">msl_timing_variant</a> * msl_select_variant </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const struct <a class="el" href="structmsl__timing__state.html">msl_timing_state</a> *&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Select the first matching manual-sheet variant for an instruction state. </p>
 
 <p class="definition">Definition at line <a class="el" href="msl_8c_source.html#l00018">18</a> of file <a class="el" href="msl_8c_source.html">msl.c</a>.</p>
 

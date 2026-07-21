@@ -71,6 +71,8 @@ Data Structures</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__counting__network_1_1cmds.html">ge_counting_network::cmds</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__ua__controls.html">ge_ua_controls</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__knot__no.html">ge_knot_no</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge__knot__ni.html">ge_knot_ni</a></td></tr>
@@ -108,15 +110,17 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="separator:af761a67e9d7ce9e23381088b6f2ae893"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33a7ccd10ef5a117af1fffd533714c19" id="r_a33a7ccd10ef5a117af1fffd533714c19"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19">knot_ni_source</a> { <br />
-&#160;&#160;<a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a72fc48eee3d2ccb523fd6cbe142a5024">NS_CN1</a>
+&#160;&#160;<a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a0d1a88de4912c7df3adaa8ebb0c0c91e">NS_ZERO</a>
+, <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a72fc48eee3d2ccb523fd6cbe142a5024">NS_CN1</a>
 , <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19aadec3ce2b57e7c6032e08bd677b824f7">NS_CN2</a>
 , <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19abe28439ad79a3e7d78e0e63bde025815">NS_CN3</a>
-, <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19aaf643866301926bba5c9b95e201895a6">NS_CN4</a>
 , <br />
-&#160;&#160;<a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a15ff8475ee980bfec8de64c276e2161b">NS_RO1</a>
+&#160;&#160;<a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19aaf643866301926bba5c9b95e201895a6">NS_CN4</a>
+, <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a15ff8475ee980bfec8de64c276e2161b">NS_RO1</a>
 , <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19adfe39763e38018d3d9220b3b23ec1737">NS_RO2</a>
 , <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a4942b79a6fa55de5c1b4be88ba969fe0">NS_UA2</a>
-, <a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a3d4c1733c39b57ab9a072d570a7711d9">NS_UA1</a>
+, <br />
+&#160;&#160;<a class="el" href="ge_8h.html#a33a7ccd10ef5a117af1fffd533714c19a3d4c1733c39b57ab9a072d570a7711d9">NS_UA1</a>
 <br />
  }</td></tr>
 <tr class="separator:a33a7ccd10ef5a117af1fffd533714c19"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -288,7 +292,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00728">728</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00763">763</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -324,7 +328,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19a72fc48eee3d2ccb523fd6cbe142a5024" name="a33a7ccd10ef5a117af1fffd533714c19a72fc48eee3d2ccb523fd6cbe142a5024"></a>NS_CN1&#160;</td><td class="fielddoc"></td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19a0d1a88de4912c7df3adaa8ebb0c0c91e" name="a33a7ccd10ef5a117af1fffd533714c19a0d1a88de4912c7df3adaa8ebb0c0c91e"></a>NS_ZERO&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19a72fc48eee3d2ccb523fd6cbe142a5024" name="a33a7ccd10ef5a117af1fffd533714c19a72fc48eee3d2ccb523fd6cbe142a5024"></a>NS_CN1&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19aadec3ce2b57e7c6032e08bd677b824f7" name="a33a7ccd10ef5a117af1fffd533714c19aadec3ce2b57e7c6032e08bd677b824f7"></a>NS_CN2&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19abe28439ad79a3e7d78e0e63bde025815" name="a33a7ccd10ef5a117af1fffd533714c19abe28439ad79a3e7d78e0e63bde025815"></a>NS_CN3&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19aaf643866301926bba5c9b95e201895a6" name="a33a7ccd10ef5a117af1fffd533714c19aaf643866301926bba5c9b95e201895a6"></a>NS_CN4&#160;</td><td class="fielddoc"></td></tr>
@@ -334,7 +339,7 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="a33a7ccd10ef5a117af1fffd533714c19a3d4c1733c39b57ab9a072d570a7711d9" name="a33a7ccd10ef5a117af1fffd533714c19a3d4c1733c39b57ab9a072d570a7711d9"></a>NS_UA1&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00074">74</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00097">97</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -866,7 +871,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00248">248</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00253">253</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
