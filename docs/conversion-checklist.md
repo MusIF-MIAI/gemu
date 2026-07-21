@@ -76,6 +76,16 @@ Every one of these, every conversion:
   The pinned `want_cyc` is the only thing that catches it.
 - **Forward declarations.** `msl-states.c` is order-sensitive; predicates used
   by the beta chart must be declared above it.
+- **The condition cell is not the gate.** This is the big one. A timing sheet
+  prints one family's view of a command that is physically a multi-leaf OR,
+  and the condition it shows can be misplaced or missing entirely. Both
+  blockers on the algebra family were of this kind: fo.143 prints
+  `{(L1_1 = 1i)}` against CU01, whose gate chain provably contains no counter
+  term, and prints an EMPTY cell against CI73, whose leaf is gated on an L1
+  signal. **Before encoding any condition that changes arithmetic, trace the
+  command to its leaf in cp06** — `<command>` generation chapter, then the
+  partial-command chapter, then the leaf. It took four page renders and
+  resolved two contradictions that had looked like hardware bugs.
 - **Read the whole gate.** Two corrections came from mis-read arity/inputs
   (gate 27's third input `CI461` flipped `UCO01` from binary to decimal add).
   When a signal's meaning hinges on a gate, have the trace confirmed.
@@ -87,8 +97,11 @@ Every one of these, every conversion:
 Order is roughly cheapest-first; each needs its own transcription + prerequisite
 check.
 
-- [ ] **AB/SB/AD/SD/MVQ/CMQ** (fo.126-128) — transcribed; UA decimal landed
-      (`fdc1afe`). Blocked only on the two common-row conflicts above.
+- [ ] **AB/SB/AD/SD/MVQ/CMQ** (fo.140-143) — transcribed; UA decimal landed
+      (`fdc1afe`); CI68's common-row gate landed (`2f5680e`, `3f863cf`); both
+      loop contradictions resolved by gate tracing. One unknown left: what
+      `L1U16` (cp06 ch.068 pos.5) is, which decides CI73's predicate and hence
+      the zero-extension. Everything else is ready to write.
 - [ ] **SR/SL** (fo.132-134) — transcribed; needs the search datapath. EA/EB
       tail is ready.
 - [ ] MVP/CMP/AP/SP (fo.96-105) — AP/SP has the recomplement tail.
