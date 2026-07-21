@@ -260,6 +260,16 @@ Identical groups for the two N predictions and a 4->3 difference on the P
 confirms both the {1,4}/{1,3} derivation and the upgrade history; anything
 else falsifies them.
 
+**The machine has 2x MEM470 mounted**, and cp04 s.8.3's build table puts two
+boxes only on the 24K and 32K builds (one MEM470 = one 128x128 matrix =
+16K positions; 8/12/16K ship with a single box).  So the machine is
+physically a 24K-or-32K build whose ch.080 straps bound it to 16K: the
+second MEM470 -- added in the upgrade -- has never been addressable.  To pin
+24K vs 32K: backplane row Q, read-amplifier option positions -- Q28/Q29 are
+populated on 24K and 32K builds, **Q30/Q31 only on 32K**.  The strap fix is
+F05 -> PONT2P for a 32K build (giving the printed N,P row) or E05 -> PONT2P,
+F05 -> PONT2N for 24K (P,N row).
+
 ### The physical card (photographed 2026-07-21)
 
 One of the machine's strap cards, in hand: an orange single-sided board in a
