@@ -8,6 +8,32 @@ The GE-120 is configured by plugging small jumper cards into three backplane
 connector positions, plus one switch on the maintenance panel. Everything
 below is on that one sheet.
 
+## Memory capacity is a separate sheet
+
+cp06 **CHAPTER 001, "SELEZIONE CAPACITA' MEMORIA / MEMORY CAPABILITY
+SELECTION"**, dwg 14013 065 6, PDF page 78 -- the sheet immediately before
+ch.002. Same mechanism, two more connector positions, **E05** and **F05**:
+
+| version | memory | E05 | F05 | VAMA2 | VEMB6 | VAMC2 |
+|---|---|---|---|---|---|---|
+| UCE 460 | 8K  | / | / | 1 | 1 | 1 |
+| UCE 461 | 12K | PONT2H | / | 1 | 1 | 0 |
+| UCE 462 | 16K | / | PONT2H | 1 | 0 | 1 |
+| UCE 463 | 24K | PONT2P | PONT2H | 0 | 0 | 1 |
+| UCE 464 | 32K | PONT2H | PONT2P | 0 | 0 | 0 |
+
+The connector blocks: E05 carries `VAMC2` on pin 4 and `VAMA2` on pin 3; F05
+carries `VAMA2` on pin 3 and `VEMB6` on pin 1. The same S42 "LAMPS" note
+applies -- `VAMA1`/`VAMB1`/`VAMC1` follow `VAMA2`/`VEMB6`/`VAMC2` unless S42
+is in DIAG, when they become 1 / 0 / 1.
+
+So the UCE numbering runs on two independent axes: **460-464 is the memory
+capacity** (ch.001) and **466-468 is the processor version** (ch.002). A
+machine is one of each.
+
+gemu currently allocates a flat 64K (`MEM_SIZE` in ge.h), above every
+documented capacity, and does not model the selection.
+
 ## Where to look on the machine
 
 Three **option connector positions** in the backplane, drawn on ch.002 as the
