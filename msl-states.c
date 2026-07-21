@@ -654,6 +654,39 @@ static uint8_t not_FA03(struct ge *ge) { return !BIT(ge->ffFA, 3); }
 /* SS byte-loop terminal count: L1 low byte underflowed to all ones — the
  * same convention as the channel length (RL1U1): the loop runs L1+1 times. */
 static uint8_t L1_21_ones(struct ge *ge) { return (ge->rL1 & 0xff) == 0xff; }
+
+/* L1's count byte is TWO independent quartet counters, not one 8-bit one.
+ * The user's wire trace of cp06 ch.096 settled it: the CI42 "count from 04"
+ * path drives the two L1 quartets from separate carry chains, so a sheet that
+ * names {L1_2 = 1i} or {L1_1 = 1i} is naming one quartet, and {L1_2,1 = 1i}
+ * (the single-length byte loops above) is naming both.
+ *
+ * Which quartet is which is not a guess: msl-commands.c records that the
+ * MVQ/CMQ field length is the HIGH nibble (alen), pinned by funktionalcpu
+ * step 0x1B (MVQ 2,0x0531,0x0533 with L1=0x01 moves exactly one byte), and
+ * fo.143 makes {L1_2 = 1i} the MVQ exit gate.  So L1_2 is the high quartet
+ * (operand 1 / destination length) and L1_1 the low (operand 2 / source),
+ * which is also the SS2 instruction layout the disassembler already uses. */
+static uint8_t L1_2_ones(struct ge *ge) { return (ge->rL1 & 0xf0) == 0xf0; }
+static uint8_t L1_1_ones(struct ge *ge) { return (ge->rL1 & 0x0f) == 0x0f; }
+/* The two-length algebra family: cp07 fo.140-143, one set of sheets for all
+ * six opcodes (docs/transcriptions/ab-sb-ad-sd-mvq-cmq.md).  They walk both
+ * operands DESCENDING -- LSB-first, for the carry chain -- and use the two L1
+ * quartets as two separate lengths, which is what makes them the first family
+ * to need the split counters above. */
+static uint8_t beta_algebra(struct ge *ge) {
+    switch (ge->rFO) {
+        case AB_OPCODE:  case SB_OPCODE:
+        case AD_OPCODE:  case SD_OPCODE:
+        case MVQ_OPCODE: case CMQ_OPCODE:
+            return 1;
+        default:
+            return 0;
+    }
+}
+static uint8_t not_beta_algebra(struct ge *ge) { return !beta_algebra(ge); }
+static uint8_t not_mvq(struct ge *ge) { return ge->rFO != MVQ_OPCODE; }
+
 static uint8_t not_str(struct ge *ge) { return ge->rFO != STR_OPCODE; }
 static uint8_t not_cmr(struct ge *ge) { return ge->rFO != CMR_OPCODE; }
 static uint8_t is_smr_or_cmr(struct ge *ge) {
@@ -1042,7 +1075,13 @@ static const struct msl_timing_chart exec_50[] = {
     { TO50, CO48, reg_arith50_pass1_sub },  /* fo.39  {(SMR+CMR)./SA01}   */
     { TO50, CI47, is_smr_or_cmr },          /* fo.39  subtract            */
 
-    { TO70, CI68, 0 },               /* UA -> NI43, in the mode set above */
+    /* UA -> NI43, in the mode set above.  Not quite a common row: fo.142
+     * prints CI68 gated {(AD+SD+AB+SB+CMQ)} and MVQ is the one family that
+     * enters 50|52 with nothing for the arithmetic unit to do -- it walks the
+     * operate state purely to reach 40|42 with the byte staged.  Every other
+     * sheet reaching this state prints CI68 with no family term, so the gate
+     * is written as the single exclusion rather than as five family rows. */
+    { TO70, CI68, not_mvq },
     { TI05, CI05, 0 },               /* restage result in L1 high byte */
     { TI06, CU14, 0 },               /* reset S004 -> 40|42 */
     { END_OF_STATUS, 0, 0 },
@@ -1109,7 +1148,13 @@ static const struct msl_timing_chart exec_40[] = {
     /* The loop arc: CU01+CU05 turn 40|42 back into 60|62, so a family LEAVES
      * by ADDING CU07 under its own terminal condition, never by withholding
      * these. Every terminal gate below is a different one. */
-    { TI06, CU01, 0 },
+    /* CU01 is unconditional on every sheet but fo.143, where the algebra
+     * family gates it {(L1_1 = 1i)}: the X bit is not a pass counter there
+     * but the "source exhausted" latch, so the loop re-enters 60 while the
+     * operand-2 quartet still counts and 62 once it has run out.  The two
+     * rows are the same physical gate read through the decode. */
+    { TI06, CU01, not_beta_algebra },
+    { TI06, CU01, beta_algebra, L1_1_ones },
     { TI06, CU05, 0 },
     { TI06, CU07, beta_register, SA01_pass2 },   /* pass 2 done           */
     { TI06, CU07, is_mvc, L1_21_ones },          /* {L1_2,1=1i} terminal  */
