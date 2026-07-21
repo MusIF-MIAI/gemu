@@ -210,7 +210,12 @@ CONNETTORE 01-17 -- date-stamped 19 APR 1971.  Three findings:
     the PONT2N assembly's catalogue number being annotated onto whichever
     bare board carries it.  The stamped numbers are the boards' own part
     markings, which is where the layout sheet's 0618034Z / 0618035V split
-    comes from.
+    comes from.  The two cards were pulled from **E03 and E05** -- both row-E
+    option positions physically confirmed PONT2N -- and one of them is the
+    `18035`-stamped board, so the layout sheet's per-row stamp assignment is
+    itself approximate.  F05 remains unverified (strapped PONT2N on the
+    both-codes-are-2N instruction); the buzz-out is deferred, so the N+N
+    capacity reading stays flagged as open.
   * **The strap type is set at jumpering time, not in the etch**: the board
     is a generic PONT2 with three full-width rows of plated holes, and the
     type is selected by where bare-wire staples are soldered ("PONT 2N" is
