@@ -3,6 +3,15 @@ CFLAGS+=-MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%.o,$(wildcard tests/*.c))
 
+# `make` with no target must BUILD something. Until this existed, the first
+# target in the file was native-sanitize -- a phony wasm-artifact check that
+# compiles nothing -- so a bare `make` was a silent no-op that exited 0, and
+# an edit could sit unbuilt while every command reported success.
+.PHONY: all
+all:
+	$(MAKE) native-sanitize
+	$(MAKE) ge tools
+
 .PHONY: native-sanitize
 native-sanitize:
 	@if [ "$(CC)" != "emcc" ]; then \
