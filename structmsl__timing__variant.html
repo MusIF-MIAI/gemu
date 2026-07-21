@@ -74,9 +74,10 @@ Data Fields</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>One instruction-family variant of a sequencer state. </p>
-<p>The GE-120 manual prints several timing charts for the same numerical state (notably 64|65 and the executive-state pairs), selected by the instruction decode matrix. Keeping each sheet in a separate chart makes the transcribed rows directly comparable with the corresponding manual page. </p>
+<p>The GE-120 manual prints several timing charts for the same numerical state (notably 64|65 and the executive-state pairs), selected by the instruction decode matrix. Keeping each sheet in a separate chart makes the transcribed rows directly comparable with the corresponding manual page.</p>
+<p>A variant now holds only the rows that CARRY A FAMILY TERM. Rows the sheets print identically for every family live in the state's common chart &ndash; see <code><a class="el" href="structmsl__timing__state.html#a4f270f8a26ef456ba0f241606996dfec" title="Rows the state performs unconditionally, whatever the decode.">msl_timing_state::chart</a></code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00056">56</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00060">60</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="a4f270f8a26ef456ba0f241606996dfec" name="a4f270f8a26ef456ba0f241606996dfec"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4f270f8a26ef456ba0f241606996dfec">&#9670;&#160;</a></span>chart</h2>
@@ -92,7 +93,7 @@ Data Fields</h2></td></tr>
 
 <p>Timing rows currently transcribed for this family and state. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00061">61</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00065">65</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 
 </div>
 </div>
@@ -108,7 +109,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00065">65</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00069">69</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 
 </div>
 </div>
@@ -127,7 +128,7 @@ Data Fields</h2></td></tr>
 <p>Instruction-family decode. </p>
 <p>A NULL match terminates the variant list. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00058">58</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00062">62</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 
 </div>
 </div>
@@ -145,7 +146,7 @@ Data Fields</h2></td></tr>
 
 <p>Stable names used in diagnostics and timing-trace tests. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00064">64</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00068">68</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 
 </div>
 </div>

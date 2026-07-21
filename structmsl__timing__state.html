@@ -61,17 +61,22 @@
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Data Fields</h2></td></tr>
 <tr class="memitem:a4f270f8a26ef456ba0f241606996dfec" id="r_a4f270f8a26ef456ba0f241606996dfec"><td class="memItemLeft" align="right" valign="top">const struct <a class="el" href="structmsl__timing__chart.html">msl_timing_chart</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmsl__timing__state.html#a4f270f8a26ef456ba0f241606996dfec">chart</a></td></tr>
-<tr class="memdesc:a4f270f8a26ef456ba0f241606996dfec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ordinary single-chart state, mutually exclusive with variants.  <br /></td></tr>
+<tr class="memdesc:a4f270f8a26ef456ba0f241606996dfec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rows the state performs unconditionally, whatever the decode.  <br /></td></tr>
 <tr class="separator:a4f270f8a26ef456ba0f241606996dfec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec6bcc02f7355cd8725f00a6d11403fd" id="r_aec6bcc02f7355cd8725f00a6d11403fd"><td class="memItemLeft" align="right" valign="top">const struct <a class="el" href="structmsl__timing__variant.html">msl_timing_variant</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmsl__timing__state.html#aec6bcc02f7355cd8725f00a6d11403fd">variants</a></td></tr>
 <tr class="memdesc:aec6bcc02f7355cd8725f00a6d11403fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sparse instruction-family matrix for states with multiple sheets.  <br /></td></tr>
 <tr class="separator:aec6bcc02f7355cd8725f00a6d11403fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbf1b66bdcfbe46d9b59fb28571fa8d0" id="r_adbf1b66bdcfbe46d9b59fb28571fa8d0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmsl__timing__state.html#adbf1b66bdcfbe46d9b59fb28571fa8d0">chart_ref</a></td></tr>
+<tr class="memdesc:adbf1b66bdcfbe46d9b59fb28571fa8d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sheets that print the rows in <code>chart</code>.  <br /></td></tr>
+<tr class="separator:adbf1b66bdcfbe46d9b59fb28571fa8d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Timing chart. </p>
-<p>The timing chart for an entire state of the MSL. </p>
+<p>The timing chart for an entire state of the MSL.</p>
+<p>The GE-120 has ONE micro-sequence logic per sequencer state. The several per-family sheets the manual prints for 64|65 and for the executive states are not separate hardware: they are the same gate network read through a decode filter, printed once per instruction family because the manual is organised by family. A row that carries no family term is therefore a property of the STATE, and the CPU performs it for every instruction that enters the state.</p>
+<p>gemu models that directly: <code>chart</code> holds the rows common to every family, <code>variants</code> holds only what the decode actually multiplexes. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00073">73</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00088">88</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="a4f270f8a26ef456ba0f241606996dfec" name="a4f270f8a26ef456ba0f241606996dfec"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4f270f8a26ef456ba0f241606996dfec">&#9670;&#160;</a></span>chart</h2>
@@ -85,9 +90,30 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Ordinary single-chart state, mutually exclusive with variants. </p>
+<p>Rows the state performs unconditionally, whatever the decode. </p>
+<p>Run BEFORE the selected variant's rows at each clock, so that a variant row may still refine state set up by a common row within the same clock (the printed sheets order them the same way).</p>
+<p>For a state with no <code>variants</code> this is simply the whole chart, which is the ordinary case. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00075">75</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00099">99</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+
+</div>
+</div>
+<a id="adbf1b66bdcfbe46d9b59fb28571fa8d0" name="adbf1b66bdcfbe46d9b59fb28571fa8d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbf1b66bdcfbe46d9b59fb28571fa8d0">&#9670;&#160;</a></span>chart_ref</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char* chart_ref</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sheets that print the rows in <code>chart</code>. </p>
+<p>Only meaningful when <code>chart</code> and <code>variants</code> are both present: the common rows were factored out of several per-family sheets, so no single <code><a class="el" href="structmsl__timing__variant.html#ae84435fd99de382e645de5a0ef7b647a">msl_timing_variant::manual_ref</a></code> covers them and every contributing sheet is listed here instead. This keeps every flow affected by the state traceable back to a physical page. </p>
+
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00113">113</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 
 </div>
 </div>
@@ -105,7 +131,7 @@ Data Fields</h2></td></tr>
 
 <p>Sparse instruction-family matrix for states with multiple sheets. </p>
 
-<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00078">78</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="msl-timings_8h_source.html#l00102">102</a> of file <a class="el" href="msl-timings_8h_source.html">msl-timings.h</a>.</p>
 
 </div>
 </div>
