@@ -306,14 +306,18 @@ UTEST(signals, default_straps_are_a_uce468_with_off_table_capacity)
     ASSERT_EQ(ge_cpu_version_uce(&g), 468);
     ASSERT_EQ(ge_cycle_period_ns(&g), 2000);
 
-    /* Card 05 carries PONT2N in BOTH positions on this machine -- a strap
+    /* Card 05 carries PONT2N in BOTH positions on this machine (confirmed
+     * physically: every in-machine strap card is the same 2N) -- a strap
      * combination the ch.001 table never defines.  Under the pin mechanism
      * (N shorts pins {1,4}, P shorts {1,3}) that reads (VAMA2, VEMB6,
-     * VAMC2) = (1, 0, 0): no printed row, so the capacity reports 0. */
+     * VAMC2) = (1, 0, 0), and the ch.080 MEMORY STARTING LOGIC arms only
+     * its bit14 term for it: the machine bounds at 16K. */
     ASSERT_TRUE(VAMA2(&g));
     ASSERT_FALSE(VEMB6(&g));
     ASSERT_FALSE(VAMC2(&g));
-    ASSERT_EQ(ge_memory_capacity_k(&g), 0);
+    ASSERT_EQ(ge_memory_capacity_k(&g), 16);
+    ASSERT_TRUE(ge_mem_in_bounds(&g, 0x3fff));
+    ASSERT_FALSE(ge_mem_in_bounds(&g, 0x4000));
 
     /* ch.002 TAB.1, the UCE 468 rows */
     ASSERT_FALSE(FEL06(&g));
@@ -355,4 +359,19 @@ UTEST(signals, ch001_capacity_rows_reproduce_under_the_pin_mechanism)
         ASSERT_EQ((uint8_t)VAMC2(&g), rows[i].c);
         ASSERT_EQ(ge_memory_capacity_k(&g), rows[i].k);
     }
+}
+
+/* ch.080 reads the S42-switched VAMA1/VAMB1/VAMC1 forms, so DIAG forces the
+ * (1,0,1) levels -- a 16K bound -- regardless of the straps.  The diagnostic
+ * option's address ceiling falls out of the same gates. */
+UTEST(signals, diag_forces_a_16k_bound_regardless_of_straps)
+{
+    struct ge g;
+    ge_init(&g);
+    g.options.E05 = PONT_2N;    /* the 32K row... */
+    g.options.F05 = PONT_2P;
+    ASSERT_EQ(ge_memory_capacity_k(&g), 32);
+    g.options.S42_diag = 1;     /* ...bounds at 16K in DIAG */
+    ASSERT_EQ(ge_memory_capacity_k(&g), 16);
+    ASSERT_FALSE(ge_mem_in_bounds(&g, 0x4000));
 }

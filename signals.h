@@ -591,22 +591,53 @@ SIG(VAMC1) { return ge->options.S42_diag ? 1 : VAMC2(ge); }
  * installed capacity, so anything relying on that is not modelled -- this
  * reports the strapped configuration only.
  */
-static inline uint16_t ge_memory_capacity_k(const struct ge *ge)
+/**
+ * Is a memory address within the strapped capacity?
+ *
+ * cp06 ch.080 "MEMORY STARTING LOGIC / LOGICA PARTENZA MEMORIA" (p156),
+ * transcribed gate for gate.  Four NANDs watch the address knot's bits
+ * 12-14 (NO121/NO131/NO141) against the selection signals, and VAMEA --
+ * the memory START -- is a NAND that fires only when none of them
+ * objects.  An out-of-bounds address does not read garbage: the memory
+ * cycle never starts.
+ *
+ *     g3  VAM51 = NAND(VAMA1, VAMB1, VAMC1)     g2  VAM5A = /VAM51
+ *     g6  VAM11 = NAND(VAM5A, NO131)            bit13 . (A.B.C)
+ *     g7  VAM21 = NAND(NO141, VAMA1)            bit14 . A
+ *     g5  VAM31 = NAND(VAMB1, NO121, NO131)     bit13 . bit12 . B
+ *     g4  VAM41 = NAND(NO141, NO131, VAMC1)     bit14 . bit13 . C
+ *     g1  VAMEA = NAND(TO252, VAM11, VAM21, VAM31, VAM41, COME1)
+ *
+ * This reproduces every printed ch.001 row (8/12/16/24/32K), defines the
+ * bound for every OFF-table strap combination as well, and -- because it
+ * reads the S42-switched VAMA1/VAMB1/VAMC1 forms -- makes DIAG force a
+ * 16K bound regardless of the straps, which is the diagnostic option's
+ * documented address ceiling. */
+static inline uint8_t ge_mem_in_bounds(struct ge *ge, uint16_t addr)
 {
-    /* Decode by the selection-signal triple, which is what the memory logic
-     * actually sees.  The five printed rows cover five of the eight level
-     * combinations; anything else -- e.g. the N+N straps found on the
-     * Electric Dreams machine's layout, which read (1,0,0) -- is off-table,
-     * and 0 is returned so the caller reports it instead of guessing. */
-    uint8_t a = VAMA2((struct ge *)ge), b = VEMB6((struct ge *)ge),
-            c = VAMC2((struct ge *)ge);
+    uint8_t b12 = !!(addr & 0x1000), b13 = !!(addr & 0x2000),
+            b14 = !!(addr & 0x4000);
+    uint8_t A = VAMA1(ge), B = VAMB1(ge), C = VAMC1(ge);
 
-    if ( a &&  b &&  c) return 8;
-    if ( a &&  b && !c) return 12;
-    if ( a && !b &&  c) return 16;
-    if (!a && !b &&  c) return 24;
-    if (!a && !b && !c) return 32;
-    return 0;                       /* off-table strap combination */
+    if (b13 && A && B && C)  return 0;   /* VAM11: past  8K */
+    if (b14 && A)            return 0;   /* VAM21: past 16K */
+    if (b13 && b12 && B)     return 0;   /* VAM31: past 12K */
+    if (b14 && b13 && C)     return 0;   /* VAM41: past 24K */
+    return 1;
+}
+
+static inline uint16_t ge_memory_capacity_k(struct ge *ge)
+{
+    /* The effective bound the ch.080 gates enforce: the first 4K frame
+     * whose start address the memory refuses to cycle for.  For the five
+     * printed ch.001 rows this lands on the table's own 8/12/16/24/32K;
+     * for off-table strap combinations (e.g. the N+N found at Electric
+     * Dreams, which reads (1,0,0) -> 16K) it is the machine's real,
+     * gate-derived behaviour rather than a guess. */
+    for (uint32_t a = 0x1000; a < 0x8000; a += 0x1000)
+        if (!ge_mem_in_bounds(ge, (uint16_t)a))
+            return (uint16_t)(a >> 10);
+    return 32;
 }
 
 /* TAB.1 -- E03 and F04 strap the machine version, and FUL4G distinguishes the

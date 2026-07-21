@@ -76,17 +76,19 @@ static const char *pont_name(enum ge_pont p)
 
 void ge_log_options(struct ge *ge)
 {
-    if (ge_memory_capacity_k(ge))
+    {
+        /* Capacity is the gate-derived ch.080 bound, which is defined for
+         * every strap combination; flag the ones the ch.001 table does not
+         * print, since they are configurations the factory never shipped. */
+        uint8_t a = VAMA2(ge), b = VEMB6(ge), c = VAMC2(ge);
+        uint8_t printed = (a && b) || (!a && !b) || (a && !b && c);
         ge_log(LOG_DEBUG, "options: UCE %u processor, %u ns cycle, %s set; "
-                          "%uK core\n",
+                          "%uK core%s\n",
                ge_cpu_version_uce(ge), ge_cycle_period_ns(ge),
                ge_cpu_version_uce(ge) == 466 ? "MIN" : "MAX",
-               ge_memory_capacity_k(ge));
-    else
-        ge_log(LOG_DEBUG, "options: UCE %u processor, %u ns cycle, %s set; "
-                          "OFF-TABLE capacity straps (no ch.001 row)\n",
-               ge_cpu_version_uce(ge), ge_cycle_period_ns(ge),
-               ge_cpu_version_uce(ge) == 466 ? "MIN" : "MAX");
+               ge_memory_capacity_k(ge),
+               printed ? "" : " (off-table straps, bound per ch.080)");
+    }
 
     ge_log(LOG_DEBUG, "options: straps E03=%s E04=%s E05=%s "
                       "F03=%s F04=%s F05=%s  S42=%s\n",
