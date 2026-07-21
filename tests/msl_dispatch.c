@@ -41,7 +41,7 @@ UTEST(msl_dispatch, undocumented_codes_use_explicit_compatibility_sheet)
  * exec_50 in msl-states.c. */
 UTEST(msl_dispatch, merged_states_have_no_variant_matrix)
 {
-    static const uint8_t merged[] = { 0x40, 0x42, 0x50, 0x52 };
+    static const uint8_t merged[] = { 0x40, 0x42, 0x50, 0x52, 0x60, 0x62 };
     for (size_t i = 0; i < sizeof(merged); i++) {
         uint8_t code = merged[i];
         const struct msl_timing_state *st = msl_get_state(code);
@@ -51,17 +51,11 @@ UTEST(msl_dispatch, merged_states_have_no_variant_matrix)
     }
 }
 
-UTEST(msl_dispatch, downstream_pairs_keep_instruction_family)
-{
-    ASSERT_STREQ(variant_for(0x60, LR_OPCODE, 0xc0), "exec-register-60|62");
-    ASSERT_STREQ(variant_for(0x62, MVI_OPCODE, 0xab), "exec-mvi-60|62");
-}
-
 /* The multi-sheet states are one MSL: the rows carrying no family term live
  * in the state's common chart, and every sheet they were factored out of is
  * named in chart_ref so the provenance survives the factoring. */
 static const uint8_t MULTI_SHEET_STATES[] = {
-    0x60, 0x62, 0x64, 0x65, 0x66,
+    0x64, 0x65, 0x66,
 };
 
 UTEST(msl_dispatch, multi_sheet_states_carry_common_rows_and_provenance)

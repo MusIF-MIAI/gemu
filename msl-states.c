@@ -1092,42 +1092,19 @@ static uint8_t reg_carry(struct ge *ge) {
     return beta_register_arithmetic(ge) && ge->URPE;
 }
 
-/* Executive-state common rows.
- * ---------------------------
- * The three executive states are a fetch/operate/store pipeline that every
- * family walks the same way, and the sheets show it: the rows below are
- * printed with no family term on any of the sheets listed in chart_ref, so
- * they belong to the state rather than to the instruction.  What the decode
- * multiplexes is only WHERE the byte comes from, WHAT the arithmetic unit
- * does to it, and WHEN the loop stops -- which is exactly what is left in
- * each variant array.
+/* The executive states.
+ * -------------------
+ * A fetch/operate/store pipeline that every family walks the same way, and
+ * the sheets show it: the shared rows are printed with no family term on any
+ * of the sheets listed in chart_ref, so they belong to the state rather than
+ * to the instruction.  What the decode multiplexes is only WHERE the byte
+ * comes from, WHAT the arithmetic unit does to it, and WHEN the loop stops.
  *
- * 60|62 is the source-fetch state.  Only the exit is universal: CU15 (reset
- * S005) drops the 0x20 that holds the sequencer in the 6x band, and whether
- * the successor is 50|52 or 40|42 is then decided by the CU04/CU14 pair the
- * variants issue -- LR/STR and MVC/MVI have nothing for the UA to do and
- * reset S004 straight back out, skipping the operate state entirely. */
-static const struct msl_timing_chart exec_60_common[] = {
-    { TI06, CU15, 0 },               /* reset S005: leave the 6x band */
-    { END_OF_STATUS, 0, 0 },
-};
+ * Each state is ONE chart.  The GE-120 has one micro-sequence logic per
+ * state; the per-family sheets are that same gate network read through a
+ * decode filter, printed once per family because the manual is organised by
+ * family.  So every row carries its own gate and there is no dispatch. */
 
-/* 50|52 is the OPERATE state, and it is the same six rows for every family
- * that enters it: read the operand-1 byte at V1 (CO11 + CO30), put the byte
- * staged by 60|62 on NO so it reaches BO (CI15), run the arithmetic unit
- * (CI68), restage the result in L1's high byte (CI05), and hand on to 40|42
- * (CU14).  No family alters that skeleton -- what each one contributes is
- * only the UA MODE SELECTORS (CI45/CI46/CI47 and the CO48 carry-in preset),
- * which is why the variant arrays below are two to four rows long.  The
- * families that need no operate step never enter the state at all. */
-/* State 50|52, the OPERATE state, as a single chart.
- *
- * Notes that used to live on the per-family sheets, kept because they explain
- * the mode rows below: {SMR+CMR} select subtract while {AMR} leaves the UA in
- * its default add mode and so appears in no row at all; the register family's
- * CO48 carries an extra /SA01 because its borrow-in preset belongs to pass 1
- * only, pass 2 inheriting URPE so the 16-bit borrow chain works, whereas CMC
- * compares byte by byte and reissues the preset every pass. */
 static const struct msl_timing_chart exec_50[] = {
     /* Shared skeleton -- every family that enters 50|52 walks it identically:
      * read the operand-1 byte at V1, put the byte 60|62 staged onto NO so it
@@ -1232,121 +1209,61 @@ static const struct msl_timing_chart exec_40[] = {
     { END_OF_STATUS, 0, 0 },
 };
 
-static const struct msl_timing_chart exec_60_register[] = {
-    { TO10, CO12, 0 },               /* V2 -> NO: source address */
-    { TO10, CO41, 0 },               /* V2 - 1 ... */
-    { TO10, CO40, 0 },
-    { TO25, CO30, 0 },               /* MEM -> RO: source byte */
-    { TO30, CI15, 0 },               /* L1 -> NO (counter path) */
-    { TO30, CI41, 0 },               /* CI-phase count rows as printed */
-    { TO30, CI42, 0 },
-    { TO30, CI40, 0 },
-    { TO30, CI44, 0 },               /* byte-local */
-    { TO40, CO02, 0 },               /* V2 = V2 - 1 */
-    { TO70, CI65, 0 },               /* RO1 -> NI3 */
-    { TO70, CI60, 0 },               /* RO2 -> NI4: stage source byte */
-    { TI05, CI05, 0 },               /* L1 = [source byte][counted low] */
-    { TI06, CI85, reg_arith_pass1 }, /* arm FI05 {/SA01.(AMR+SMR+CMR)} */
-    { TI06, CI84, beta_register_arithmetic }, /* re-arm FI04 each pass */
-    /* {LR+STR} vs {AMR+SMR+CMR}: the same FO bit-3 split as the beta sheet,
-     * read here as "is there anything for the UA to do". CU04 sets S004 and
-     * the two pure MOVE opcodes immediately reset it, routing 60|62 -> 40|42
-     * and skipping the operate state; the three arithmetic opcodes leave it
-     * set and go through 50|52. */
-    { TI06, CU04, 0 },               /* set S004... */
-    { TI06, CU14, beta_register_lr_str },     /* ...{LR+STR}: skip 50|52 */
-    { END_OF_STATUS, 0, 0 },         /* common CU15 -> 50|52 or 40|42 */
-};
+/* Families that fetch a source byte in 60|62.  MVI, the immediate logicals
+ * and CMI use the state purely for routing and touch no datapath at all. */
+static uint8_t exec60_fetches_source(struct ge *ge) {
+    return beta_register(ge) || ss_byte_loop(ge);
+}
 
-static const struct msl_timing_chart exec_60_immediate[] = {
-    { TI06, CU04, 0 },                       /* +common CU15: 60 -> 50 */
+/* CU04 (set S004) is issued by everything except MVI, which has nothing for
+ * the UA to do and lets the bare CU15 route 60 straight through to 40. */
+static uint8_t exec60_sets_S004(struct ge *ge) {
+    return exec60_fetches_source(ge) || beta_immediate_logic(ge) || is_cmi(ge);
+}
+
+static const struct msl_timing_chart exec_60[] = {
+    /* Source fetch: address operand 2, read the byte, stage it in L1's high
+     * half while the CI-phase network counts the length down in the low. */
+    { TO10, CO12, exec60_fetches_source },   /* V2 -> NO: source address */
+    { TO10, CO41, exec60_fetches_source },   /* count from 00 */
+    { TO10, CO40, beta_register },           /* DESCENDING: register only */
+    { TO25, CO30, beta_register },           /* MEM -> RO: source byte */
+    { TO25, CO30, is_mvc },
+    { TO25, CO30, is_cmc },
+    { TO25, CO30, is_xoc_nc, not_FA03 },     /* {/FA03} */
+    { TO30, CI15, exec60_fetches_source },   /* L1 -> NO (count path) */
+    { TO30, CI40, exec60_fetches_source },   /* CI-phase: decreasing */
+    { TO30, CI44, exec60_fetches_source },   /* ...stop 07, byte-local */
+    { TO30, CI41, exec60_fetches_source },   /* ...count from 00 */
+    { TO30, CI42, beta_register },           /* ...and from 04: register only */
+    { TO40, CO02, exec60_fetches_source },   /* NI -> V2: stepped address */
+    { TO70, CI65, exec60_fetches_source },   /* RO1 -> NI3 */
+    { TO70, CI60, exec60_fetches_source },   /* RO2 -> NI4: stage the byte */
+    { TI05, CI05, exec60_fetches_source },   /* L1 = [byte][counted low] */
+
+    /* Condition-code arming.  Done here, once per pass, because 40|42 is
+     * where the flags are written and it must find them primed. */
+    { TI06, CI74, is_cmi },
+    { TI06, CI74, is_cmc, SA01_pass1 },      /* {/SA01} */
+    { TI06, CI74, xc_first_pass },           /* {/SA01.XC} */
+    { TI06, CI85, is_cmi },
+    { TI06, CI85, is_cmc, SA01_pass1 },
+    { TI06, CI85, xc_first_pass },
+    { TI06, CI85, reg_arith_pass1 },         /* {/SA01.(AMR+SMR+CMR)} */
+    { TI06, CI84, beta_register_arithmetic },/* re-arm FI04 each pass */
+
+    /* Exit.  CU15 always leaves the 6x band; CU04 then decides whether the
+     * successor is the operate state, and the families with nothing for the
+     * UA to do reset it straight back out. */
+    { TI06, CU15, 0 },                       /* reset S005: leave 6x */
+    { TI06, CU04, exec60_sets_S004 },
+    { TI06, CU14, beta_register_lr_str },    /* {LR+STR}: skip 50|52 */
+    { TI06, CU14, is_mvc },                  /* MVC likewise: nothing to do */
     { END_OF_STATUS, 0, 0 },
 };
 
-static const struct msl_timing_chart exec_60_mvi[] = {
-    /* MVI has no operate step -- the byte to store is already in L1 from
-     * beta -- so it withholds CU04 and the common CU15 alone routes 60 -> 40
-     * (fo.74). It is the only immediate that skips 50|52. */
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_chart exec_60_cmi[] = {
-    { TI06, CI74, 0 },                       /* initial compare CC = equal */
-    { TI06, CI85, 0 },
-    { TI06, CU04, 0 },                       /* +common CU15: 60 -> 50 */
-    { END_OF_STATUS, 0, 0 },
-};
 
 
-
-
-static const struct msl_timing_chart exec_60_mvc[] = {
-    { TO10, CO12, 0 },               /* V2 -> NO: source address */
-    { TO10, CO41, 0 },               /* V2 + 1 */
-    { TO25, CO30, 0 },               /* {MVC} MEM -> RO: source byte */
-    { TO30, CI15, 0 },               /* L1 -> NO (count path) */
-    { TO30, CI40, 0 },               /* CI-phase: L1 low byte - 1 ... */
-    { TO30, CI44, 0 },               /* ...byte-local */
-    { TO30, CI41, 0 },
-    { TO40, CO02, 0 },               /* V2 = V2 + 1 */
-    { TO70, CI60, 0 },               /* {MVC} RO2 -> NI4 */
-    { TO70, CI65, 0 },               /* {MVC} RO1 -> NI3: stage byte */
-    { TI05, CI05, 0 },               /* L1 = [byte][count-1] */
-    { TI06, CU04, 0 },               /* set S004... */
-    { TI06, CU14, 0 },               /* ...reset: -> 40|42 (no 50|52) */
-    { END_OF_STATUS, 0, 0 },         /* common CU15 leaves the 6x band */
-};
-
-static const struct msl_timing_chart exec_60_xoc[] = {   /* fo.145 */
-    { TO10, CO12, 0 },               /* V2 -> NO */
-    { TO10, CO41, 0 },               /* V2 + 1 */
-    { TO25, CO30, not_FA03 },        /* {/FA03} MEM -> RO */
-    { TO30, CI15, 0 },               /* L1 -> NO */
-    { TO30, CI40, 0 },
-    { TO30, CI44, 0 },
-    { TO30, CI41, 0 },               /* CI-phase: length - 1 */
-    { TO40, CO02, 0 },               /* V2 = V2 + 1 */
-    { TO70, CI60, 0 },
-    { TO70, CI65, 0 },               /* stage source byte */
-    { TI05, CI05, 0 },
-    /* {/SA01.XC}: only XC reports a condition code, and only on the first
-     * byte does it arm the accumulating flags -- OC and NC leave FA alone
-     * entirely, which is the sole flag difference between the three. */
-    { TI06, CI74, xc_first_pass },   /* SET FI04 {/SA01.XC} */
-    { TI06, CI85, xc_first_pass },   /* RESET FI05 {/SA01.XC} */
-    { TI06, CU04, 0 },               /* +common CU15 -> 50|52 */
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_chart exec_60_cmc[] = {   /* fo.77 */
-    { TO10, CO12, 0 },
-    { TO10, CO41, 0 },
-    { TO25, CO30, 0 },               /* MEM -> RO: operand-2 byte */
-    { TO30, CI15, 0 },
-    { TO30, CI40, 0 },
-    { TO30, CI44, 0 },
-    { TO30, CI41, 0 },
-    { TO40, CO02, 0 },
-    { TO70, CI60, 0 },               /* {CMC} */
-    { TO70, CI65, 0 },
-    { TI05, CI05, 0 },
-    { TI06, CI74, SA01_pass1 },      /* SET FI04 {/SA01} */
-    { TI06, CI85, SA01_pass1 },      /* RESET FI05 {/SA01} */
-    { TI06, CU04, 0 },               /* +common CU15 -> 50|52 */
-    { END_OF_STATUS, 0, 0 },
-};
-
-static const struct msl_timing_variant exec_60_variants[] = {
-    { beta_register, exec_60_register, "exec-register-60|62", "CPU[7] fo.38" },
-    { is_mvi,        exec_60_mvi,      "exec-mvi-60|62",      "CPU[7] fo.74" },
-    { beta_immediate_logic, exec_60_immediate,
-                                      "exec-immediate-60|62", "CPU[7] fo.42" },
-    { is_cmi,        exec_60_cmi,      "exec-cmi-60|62",      "CPU[7] fo.77" },
-    { is_mvc,        exec_60_mvc,      "exec-mvc-60|62",      "cp07 fo.74" },
-    { is_cmc,        exec_60_cmc,      "exec-cmc-60|62",      "cp07 fo.77" },
-    { is_xoc_nc,     exec_60_xoc,      "exec-xoc-60|62",      "cp07 fo.145" },
-    { 0, 0, 0, 0 },
-};
 
 /* Display */
 /* ------- */
