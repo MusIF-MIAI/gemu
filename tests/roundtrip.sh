@@ -59,9 +59,19 @@ if [ -f "$CAP" ]; then
         # the CPU functional sweep, ~1.3M cycles across the whole instruction
         # set, and is what actually regressions the timing charts.
         for opt in 0x00 0x40; do
+            # want_cyc pins the exact cycle count of the sweep. It is not
+            # cosmetic: merging the per-family timing sheets into one chart
+            # per state removed the exclusivity the old first-match variant
+            # matrix gave for free, and the failure mode is invisible in
+            # results -- an opcode that runs both a hybrid one-shot AND its
+            # real executive states still produces the right bytes, just in
+            # far fewer cycles. Nothing else in the suite notices that.
+            #
+            # A genuine fidelity change SHOULD move this number. Update it
+            # deliberately, having checked the step trace is unchanged.
             case "$opt" in
-                0x00) want=175a; cyc=200000;   what="idle HLT (no test selected)" ;;
-                0x40) want=1427; cyc=3000000;  what="CPU functional sweep" ;;
+                0x00) want=175a; cyc=200000;  want_cyc=;        what="idle HLT (no test selected)" ;;
+                0x40) want=1427; cyc=3000000; want_cyc=1341310; what="CPU functional sweep" ;;
             esac
             run=$("$GE" "$TMP/fk.bin" --poke 0x0E00=$opt --trace err \
                         --max-cycles $cyc 2>&1)
@@ -70,12 +80,17 @@ if [ -f "$CAP" ]; then
             if [ "$errs" -ne 0 ]; then
                 echo "FAIL: funktionalcpu $opt produced $errs decode error(s)"
                 fail=1
-            elif echo "$last" | grep -q 'halted=1' &&
-                 echo "$last" | grep -q "PO=$want"; then
-                echo "  ok: funktionalcpu *0x0E00=$opt -> HLT 0x$want ($what)"
-            else
+            elif ! echo "$last" | grep -q 'halted=1' ||
+                 ! echo "$last" | grep -q "PO=$want"; then
                 echo "FAIL: funktionalcpu $opt did not reach HLT 0x$want ($last)"
                 fail=1
+            elif [ -n "$want_cyc" ] &&
+                 ! echo "$last" | grep -q "cycles=$want_cyc "; then
+                echo "FAIL: funktionalcpu $opt reached HLT 0x$want but in the"
+                echo "      wrong cycle count (expected $want_cyc): $last"
+                fail=1
+            else
+                echo "  ok: funktionalcpu *0x0E00=$opt -> HLT 0x$want ($what)"
             fi
         done
     else

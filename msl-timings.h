@@ -46,30 +46,6 @@ struct msl_timing_chart {
 };
 
 /**
- * One instruction-family variant of a sequencer state.
- *
- * The GE-120 manual prints several timing charts for the same numerical
- * state (notably 64|65 and the executive-state pairs), selected by the
- * instruction decode matrix.  Keeping each sheet in a separate chart makes
- * the transcribed rows directly comparable with the corresponding manual page.
- *
- * A variant now holds only the rows that CARRY A FAMILY TERM.  Rows the
- * sheets print identically for every family live in the state's common
- * chart -- see `msl_timing_state::chart`.
- */
-struct msl_timing_variant {
-    /** Instruction-family decode.  A NULL match terminates the variant list. */
-    msl_condition_cb match;
-
-    /** Timing rows currently transcribed for this family and state. */
-    const struct msl_timing_chart *chart;
-
-    /** Stable names used in diagnostics and timing-trace tests. */
-    const char *name;
-    const char *manual_ref;
-};
-
-/**
  * Timing chart
  *
  * The timing chart for an entire state of the MSL.
@@ -82,37 +58,24 @@ struct msl_timing_variant {
  * property of the STATE, and the CPU performs it for every instruction that
  * enters the state.
  *
- * gemu models that directly: `chart` holds the rows common to every family,
- * `variants` holds only what the decode actually multiplexes.
+ * gemu models that directly: one chart per state, every row carrying its own
+ * gate.  There is no dispatch -- nothing selects a sheet, the gates select
+ * themselves, exactly as the hardware does.
  */
 struct msl_timing_state {
-    /**
-     * Rows the state performs unconditionally, whatever the decode.
-     *
-     * Run BEFORE the selected variant's rows at each clock, so that a
-     * variant row may still refine state set up by a common row within the
-     * same clock (the printed sheets order them the same way).
-     *
-     * For a state with no `variants` this is simply the whole chart, which
-     * is the ordinary case.
-     */
+    /** The state's timing chart.  NULL for an unimplemented state. */
     const struct msl_timing_chart *chart;
 
-    /** Sparse instruction-family matrix for states with multiple sheets. */
-    const struct msl_timing_variant *variants;
-
     /**
-     * Sheets that print the rows in `chart`.
+     * Sheets this chart was transcribed from.
      *
-     * Only meaningful when `chart` and `variants` are both present: the
-     * common rows were factored out of several per-family sheets, so no
-     * single `msl_timing_variant::manual_ref` covers them and every
-     * contributing sheet is listed here instead.  This keeps every flow
-     * affected by the state traceable back to a physical page.
+     * Several states are printed as more than one sheet -- the manual repeats
+     * a state once per instruction family because it is organised by family --
+     * so a single reference is not always enough and every contributing sheet
+     * is listed.  Emitted once per state entry under LOG_CONDS.
      */
     const char *chart_ref;
 };
-
 /**
  * Timing chart definitions
  *

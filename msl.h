@@ -5,7 +5,6 @@
 #include "ge.h"
 
 struct msl_timing_state;
-struct msl_timing_variant;
 
 /**
  * Gets timing state
@@ -18,8 +17,6 @@ struct msl_timing_variant;
 const struct msl_timing_state* msl_get_state(uint8_t state);
 
 /** Select the first matching manual-sheet variant for an instruction state. */
-const struct msl_timing_variant *msl_select_variant(
-    struct ge *ge, const struct msl_timing_state *state);
 
 /**
  * Runs a machine state

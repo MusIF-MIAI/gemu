@@ -10,55 +10,7 @@ const struct msl_timing_state* msl_get_state(uint8_t SO)
 {
     const struct msl_timing_state *state = &msl_timings[SO];
 
-    return (!state->chart && !state->variants)
-        ? NULL
-        : state;
-}
-
-const struct msl_timing_variant *msl_select_variant(
-    struct ge *ge, const struct msl_timing_state *state)
-{
-    const struct msl_timing_variant *variant;
-
-    if (!state || !state->variants)
-        return NULL;
-
-    for (variant = state->variants; variant && variant->match; variant++) {
-        if (variant->match(ge))
-            return variant;
-    }
-
-    return NULL;
-}
-
-/**
- * Rows the decode multiplexes for the instruction currently in FO.
- *
- * NULL when the state has no variant matrix, or -- the tripwire -- when it
- * has one and nothing matched, which means a family reached an executive
- * state whose sheet has not been transcribed yet.  The state's common rows
- * still run in that case: they carry no family term, so the real MSL would
- * perform them regardless of what the decode matrix says.
- */
-static const struct msl_timing_chart *select_variant_chart(
-    struct ge *ge, const struct msl_timing_state *state)
-{
-    const struct msl_timing_variant *variant;
-
-    if (!state->variants)
-        return NULL;
-
-    variant = msl_select_variant(ge, state);
-    if (variant) {
-        if (ge->current_clock == TO00)
-            ge_log(LOG_CONDS, "  chart %s (%s)\n", variant->name,
-                   variant->manual_ref);
-        return variant->chart;
-    }
-
-    ge_log(LOG_ERR, "no instruction timing chart for state %02x FO=%02x L1=%02x\n",
-           ge->rSA, ge->rFO, ge->rL1 & 0xff);
-    return NULL;
+    return state->chart ? state : NULL;
 }
 
 static void run_rows(struct ge *ge, const struct msl_timing_chart *rows)
@@ -99,20 +51,11 @@ static void run_rows(struct ge *ge, const struct msl_timing_chart *rows)
 
 void msl_run_state(struct ge* ge, const struct msl_timing_state *state)
 {
-    const struct msl_timing_chart *variant_rows;
+    if (!state->chart)
+        return;
 
-    /* Resolve the decode first so the "chart <name>" trace line is emitted
-     * before the rows it explains, but run the common rows first: they are
-     * the state's own, and the sheets print them ahead of the family rows
-     * they share a clock with. */
-    variant_rows = select_variant_chart(ge, state);
+    if (state->chart_ref && ge->current_clock == TO00)
+        ge_log(LOG_CONDS, "  chart (%s)\n", state->chart_ref);
 
-    if (state->chart) {
-        if (state->variants && state->chart_ref && ge->current_clock == TO00)
-            ge_log(LOG_CONDS, "  chart common (%s)\n", state->chart_ref);
-        run_rows(ge, state->chart);
-    }
-
-    if (variant_rows)
-        run_rows(ge, variant_rows);
+    run_rows(ge, state->chart);
 }

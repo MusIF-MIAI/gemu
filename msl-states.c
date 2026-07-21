@@ -784,8 +784,23 @@ static uint8_t not_per_peri(struct ge *ge) {
  * instruction inside 64|65, so it has to synthesise the return that the
  * executive states would otherwise have made.  Delete this the moment the
  * family is converted -- it is the marker for where the hybrid still is. */
+/* Defined with the executive and EA/EB charts further down; the beta chart
+ * needs them here. */
+static uint8_t ss_byte_loop(struct ge *ge);
+static uint8_t is_jrt_or_la(struct ge *ge);
+
+static uint8_t ss_hybrid_family(struct ge *ge) {
+    /* is_ss_data_op still lists MVC, XC, OC, NC and CMC, which now have real
+     * per-clock executive states.  The old variant matrix hid the overlap by
+     * checking those families first; with the dispatch gone the exclusion has
+     * to be explicit, or a converted opcode would run the one-shot AND the
+     * executive loop -- producing correct results in far too few cycles, the
+     * exact failure the deck's cycle count caught. */
+    return is_ss_data_op(ge) && !ss_byte_loop(ge);
+}
+
 static uint8_t ss_hybrid_exit(struct ge *ge) {
-    return is_ss_data_op(ge) && !per_peri(ge);
+    return ss_hybrid_family(ge) && !per_peri(ge);
 }
 
 /* EPER "examine" operation: Z character (in L2) = 0xC0 (bits 7,6 set).
@@ -818,56 +833,121 @@ static uint8_t is_eper_examine(struct ge *ge) {
  *
  * Safe to hoist ahead of the variant rows: no 64|65 sheet issues CU00 or CU02,
  * so no variant row contends with these two bits. */
-static const struct msl_timing_chart beta_64_common[] = {
+/* Every function class the beta sheets cover.  Used only by the compatibility
+ * guard below -- with the dispatch table gone there is no "last variant", so
+ * "no sheet claimed this code" has to be said explicitly. */
+static uint8_t beta_known_family(struct ge *ge) {
+    return beta_jump_control(ge) || is_jrt(ge) || is_la(ge) || is_lpsr(ge) ||
+           beta_register(ge) || beta_immediate_shift(ge) || per_peri(ge) ||
+           ss_byte_loop(ge) || is_ss_data_op(ge);
+}
+static uint8_t beta_unclaimed(struct ge *ge) { return !beta_known_family(ge); }
+
+/* CO49 (reset URPE/URPU) is printed on every beta sheet except the external
+ * one, and on the control sheet is withheld from HLT -- which is why the
+ * jump-control term is an intersection rather than the bare family. */
+static uint8_t beta_co49(struct ge *ge) {
+    return (beta_jump_control(ge) &&
+            jc_js1_js2_jie_lon_loll_loff_ins_ens_nop(ge)) ||
+           is_jrt(ge) || is_la(ge) || is_lpsr(ge) || beta_register(ge) ||
+           beta_immediate_shift(ge) || ss_byte_loop(ge) || is_ss_data_op(ge);
+}
+
+static const struct msl_timing_chart beta_64[] = {
+    /* Branch-address path.  jc_js1_js2_jie covers JRT as well, so the control
+     * sheet's rows and the JRT sheet's are literally the same three rows --
+     * the dispatch table was keeping two copies of them. */
+    { TO10, CO10, jc_js1_js2_jie },  /* PO -> NO (return / branch address) */
+    { TO30, CI12, jc_js1_js2_jie },  /* V2 -> NO (jump target) */
+    { TO40, CO01, jc_js1_js2_jie },  /* NI -> V1 */
+
+    /* Change-register address build, 1111 nnn 1 = 241+2N.  Shared verbatim by
+     * LA and the register family, which together are exactly pm_reg_exec.
+     * The gated forcings are an OPERAND-FIELD multiplex, not an opcode one:
+     * {LI06}/{LI05}/{LI04} are L1 bits 6-4, the register number, read one bit
+     * per NO position.  CO90 is ungated -- a cell's LOW byte is always odd. */
+    { TO10, CO18, pm_reg_exec },     /* forcing in NO21 */
+    { TO10, CO97, pm_reg_exec },
+    { TO10, CO96, pm_reg_exec },
+    { TO10, CO95, pm_reg_exec },
+    { TO10, CO94, pm_reg_exec },
+    { TO10, CO93, pm_reg_exec, LI06 },   /* N2 -> NO03 */
+    { TO10, CO92, pm_reg_exec, LI05 },   /* N1 -> NO02 */
+    { TO10, CO91, pm_reg_exec, LI04 },   /* N0 -> NO01 */
+    { TO10, CO90, pm_reg_exec },         /* 1 -> NO00: odd (low) byte */
+
+    /* External operations build their own address; FO bit 1 (inside
+     * per_peri_TO25_CO30) separates PERI, which fetches its order byte from
+     * memory, from the form that takes it off the channel. */
+    { TO10, CO18, per_peri },
+    { TO10, CO95, per_peri, DE07A0 },
+    { TO10, CO96, per_peri, DE07A0 },
+    { TO10, CO97, per_peri, DE07A0 },
+    { TO25, CO30, per_peri_TO25_CO30, DE08A0 },
+
+    /* Console and interrupt flip-flops: one opcode each, no address path. */
+    { TO20, CI87, lon_loll },
+    { TO20, CI77, ins },
+    { TO60, CO35, jie },
+    { TO70, CI78, ens },
+    { TO89, CI88, loff },
+
+    /* Immediate operand staging. */
+    { TO30, CI15, beta_immediate_shift },   /* L1 -> NO */
+    { TO50, CI33, beta_immediate_shift },   /* NO21 -> RO */
+    { TO70, CI60, beta_immediate_shift },   /* RO2 -> NI4 */
+    { TO70, CI65, beta_immediate_shift },   /* RO1 -> NI3 */
+
+    /* Where the built address lands.  FO bit 3 alone splits STR (0xb4) from
+     * LR/AMR/SMR/CMR (0xbd-0xbf): same address, opposite direction. */
+    { TO40, CO02, is_la },                  /* V2, for the EA/EB write walk */
+    { TO40, CO01, beta_register, not_str }, /* {/STR}: V1 = cell address */
+    { TO40, CO02, beta_register, is_str },  /* {STR}:  V2 = cell address */
+
+    { TO65, CO49, beta_co49 },              /* reset URPE/URPU */
+    { TO65, EXEC_SS, ss_hybrid_family },    /* hybrid one-shot, see below */
+
+    { TO70, CI62, per_peri, DE07A0 },
+    { TO70, CI67, per_peri, DE07A0 },
+
+    /* {AVER.JC+JS1+JS2+JIE+JRT}: an unmatched jump falls through with V1 and
+     * PO untouched. */
+    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
+    { TI05, CI05, is_la },                  /* NI -> L1 */
+    { TI05, CI05, beta_immediate_shift },   /* immediate byte -> L1 high */
+    { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
+
+    /* Exit.  CU10+CU12 are the state's own -- every beta clears the X bit and
+     * leaves the beta band -- and the CU SETS below name the successor:
+     * +CU01+CU07 -> E2, +CU03 -> EA, +CU15+CU03 -> CC, none -> 60|62. */
     { TI06, CU10, 0 },               /* reset S000: retire the state X bit */
     { TI06, CU12, 0 },               /* reset S002: leave the beta band */
+    { TI06, CU01, CM01A0 },          /* cp06 ch.252-7, four-leaf partial cmd */
+    { TI06, CU07, CM01A0 },
+    { TI06, CU03, is_jrt_or_la },    /* -> EA: link / register-cell write */
+    { TI06, CU15, is_lpsr },         /* -> C2 */
+    { TI06, CU07, per_peri, DE07A0 },
+    { TI06, CU15, per_peri },        /* -> CC */
+    { TI06, CU03, per_peri },
+
+    /* The two rows that are NOT transcriptions.  ss_hybrid_exit synthesises
+     * the return the executive loop would make -- CM01A0 rightly withholds
+     * CU01 from every SS opcode -- and beta_unclaimed is the aa7ed63
+     * swept-core guard.  Both go when the SS families are converted and the
+     * CU10/CU12 partial commands are transcribed. */
+    { TI06, CU01, ss_hybrid_exit },
+    { TI06, CU07, ss_hybrid_exit },
+    { TI06, CU01, beta_unclaimed },
+    { TI06, CU07, beta_unclaimed },
     { END_OF_STATUS, 0, 0 },
 };
 
 /* CPU[7] fo.9 + fo.10: JS1/JS2/JIE/JC/NOP2/HLT/INS/ENS/LON/LOFF/LOLL. */
-static const struct msl_timing_chart beta_64_control[] = {
-    /* One sheet, ten opcodes: every datapath row here is gated on the
-     * sub-group that actually uses it, and the groups are disjoint.
-     *   {JC+JS1+JS2+JIE} take the address path (CO10 PO->NO, CI12 V2->NO,
-     *     CO01 NI->V1) -- only these opcodes compute a branch target;
-     *   {JIE} alone adds CO35 (TO60), the interrupt-enable side effect;
-     *   {LON+LOLL} / {INS} / {ENS} / {LOFF} each drive exactly one console
-     *     or interrupt flip-flop and touch no address register at all. */
-    { TO10, CO10, jc_js1_js2_jie },
-    { TO20, CI87, lon_loll },
-    { TO20, CI77, ins },
-    { TO30, CI12, jc_js1_js2_jie },
-    { TO40, CO01, jc_js1_js2_jie },
-    { TO60, CO35, jie },
-    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
-    { TO70, CI78, ens },
-    { TO89, CI88, loff },
-    /* {AVER.JC+JS1+JS2+JIE}: the branch is taken only when the condition
-     * mask in the operand matches the current FA -- an unmatched jump falls
-     * through with V1/PO untouched. */
-    { TI05, CI00s, jc_js1_js2_jie_condition_verified },
-    { TI06, CU01, CM01A0 },          /* CM01 = DE00A+DE06A+DE11A+DE13A */
-    { TI06, CU07, CM01A0 },
-    { END_OF_STATUS, 0, 0 },
-};
-
 /* cp07 fo.33: JRT beta sheet, verified row-by-row. V1 ends up holding the
  * RETURN address (CO10 PO->NO at TO10 -> BO at TO20 -> CO01 at TO40) and PO
  * the jump target (CI12 V2->NO at TO30 -> BO relatch at TO50 -> CI00 {AVER
  * JRT} at TI05). The link write itself happens in EA/EB (fo.34/35), reached
  * via CU03: the forced address 0xFF/0xFE = change register 7. */
-static const struct msl_timing_chart beta_64_jrt[] = {
-    { TO10, CO10, 0 },               /* PO -> NO (return address) */
-    { TO30, CI12, 0 },               /* V2 -> NO (jump target) */
-    { TO40, CO01, 0 },               /* NI -> V1: V1 = return address */
-    { TO65, CO49, 0 },
-    { TI05, CI00s, jc_js1_js2_jie_condition_verified },  /* {AVER.JRT} */
-    { TI06, CU01, CM01A0 },          /* {DO01 class}: JRT is 0x41 */
-    { TI06, CU07, CM01A0 },
-    { TI06, CU03, 0 },               /* {JRT}: -> EA */
-    { END_OF_STATUS, 0, 0 },
-};
-
 /* cp07 fo.36: LA beta sheet. The forcings build the change-register LOW-byte
  * address 1111 nnn 1 (= 241+2N, N = L1 bits 6-4 via {LI06}/{LI05}/{LI04})
  * onto NO21; CO02 stores it to V2 for the EA/EB write walk. V1 keeps the
@@ -877,41 +957,8 @@ static const struct msl_timing_chart beta_64_jrt[] = {
  * network gemu does not model yet, and routing them through the single CN
  * would corrupt the forced address; the net V2 result — the register-cell
  * low-byte address — is produced by the passthrough.) */
-static const struct msl_timing_chart beta_64_la[] = {
-    /* CO90-97 are not an opcode multiplex but an OPERAND-FIELD one: the three
-     * gated forcings select change register N from the instruction's register
-     * field, L1 bits 6-4, one bit per NO position. {LI06}/{LI05}/{LI04} are
-     * that field read bit-by-bit, so the eight registers share one row set
-     * instead of eight sheets. CO90 is ungated: bit 0 of the address is always
-     * 1 because a change register's LOW byte lives at the odd address. */
-    { TO10, CO18, 0 },               /* forcing in NO21 */
-    { TO10, CO97, 0 },
-    { TO10, CO96, 0 },
-    { TO10, CO95, 0 },
-    { TO10, CO94, 0 },
-    { TO10, CO93, LI06 },            /* N2 -> NO03 */
-    { TO10, CO92, LI05 },            /* N1 -> NO02 */
-    { TO10, CO91, LI04 },            /* N0 -> NO01 */
-    { TO10, CO90, 0 },               /* 1 -> NO00: odd (low) byte */
-    { TO40, CO02, 0 },               /* NI -> V2: register-cell address */
-    { TO65, CO49, 0 },
-    { TI05, CI05, 0 },               /* NI -> L1 */
-    { TI06, CU01, CM01A0 },          /* {DO02 class}: LA is 0x68 */
-    { TI06, CU07, CM01A0 },
-    { TI06, CU03, 0 },               /* -> EA */
-    { END_OF_STATUS, 0, 0 },
-};
-
 /* cp07 fo.27: LPSR beta sheet (CI89 SET ALTO {FUL4} not modeled: FUL4
  * strapping unimplemented). */
-static const struct msl_timing_chart beta_64_lpsr[] = {
-    { TO65, CO49, 0 },               /* reset URPE/URPU */
-    { TI06, CU01, CM01A0 },          /* {DO06 class}: LPSR is 0x9d */
-    { TI06, CU07, CM01A0 },          /* 64|65 -> C2 with the CU15 below */
-    { TI06, CU15, 0 },
-    { END_OF_STATUS, 0, 0 },
-};
-
 /* cp07 fo.37: LR-AMR-SMR-CMR-STR beta sheet. The forcings build the
  * change-register low-byte address 1111 nnn 1 (N = L1 bits 6-4); CO01
  * {/STR} = DE04A0 (family & FO03: STR is 0xb4, the others 0xbd-0xbf, so
@@ -923,78 +970,12 @@ static const struct msl_timing_chart beta_64_lpsr[] = {
  * 50/52, 40/42 -- pass 1 vs pass 2), which the 40|42 exit rows drive
  * (CU01 sets it looping back, CU07 {pass 2} leaves). CI89 {FUL4} not
  * modeled. */
-static const struct msl_timing_chart beta_64_register[] = {
-    { TO10, CO18, 0 },               /* forcing in NO21 */
-    { TO10, CO97, 0 },
-    { TO10, CO96, 0 },
-    { TO10, CO95, 0 },
-    { TO10, CO94, 0 },
-    { TO10, CO93, LI06 },            /* N2 -> NO03 */
-    { TO10, CO92, LI05 },            /* N1 -> NO02 */
-    { TO10, CO91, LI04 },            /* N0 -> NO01 */
-    { TO10, CO90, 0 },               /* 1 -> NO00: odd (low) byte */
-    /* The one place this family's five opcodes diverge in beta, and it is a
-     * single FO bit that does it: STR is 0xb4, LR/AMR/SMR/CMR are 0xbd-0xbf,
-     * so FO bit 3 alone separates "store to memory" from "load/operate into
-     * the register". Same forcings, same address on NI -- only its DESTINATION
-     * register swaps, which is what makes V1 the write side for four opcodes
-     * and the read side for the fifth. */
-    { TO40, CO01, not_str },         /* {/STR}: V1 = register-cell address */
-    { TO40, CO02, is_str },          /* {STR}:  V2 = register-cell address */
-    { TO65, CO49, 0 },               /* reset URPE/URPU */
-    { END_OF_STATUS, 0, 0 },         /* common CU10+CU12 -> 60|62 (pass 1) */
-};
-
 /* CPU[7] fo.12 plus CMI/CHI sheet: immediate logical operations. */
-static const struct msl_timing_chart beta_64_immediate_shift[] = {
-    { TO30, CI15, 0 },             /* L1 -> NO */
-    { TO50, CI33, 0 },             /* NO21 -> RO */
-    { TO65, CO49, 0 },             /* reset URPE/URPU */
-    { TO70, CI60, 0 },             /* RO2 -> NI4 */
-    { TO70, CI65, 0 },             /* RO1 -> NI3 */
-    { TI05, CI05, 0 },             /* immediate byte -> L1 high byte */
-    { END_OF_STATUS, 0, 0 },       /* common CU10+CU12 -> 60|62 */
-};
-
 /* CPU[7] fo.44-45: currently implemented executive data operations. */
-static const struct msl_timing_chart beta_64_ss[] = {
-    { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
-    { TO65, EXEC_SS, is_ss_data_op },
-    { TI06, CU01, ss_hybrid_exit },
-    { TI06, CU07, ss_hybrid_exit },
-    { END_OF_STATUS, 0, 0 },
-};
-
 /* CPU[7] fo.13: PER/PERI preliminary beta sheet. */
-static const struct msl_timing_chart beta_64_per[] = {
-    { TO10, CO18, per_peri },
-    { TO10, CO95, per_peri, DE07A0 },
-    { TO10, CO96, per_peri, DE07A0 },
-    { TO10, CO97, per_peri, DE07A0 },
-    /* PER vs PERI vs RDC: FO bit 1 is the discriminator (per_peri_TO25_CO30).
-     * The two rows it gates are the ones that FETCH a control byte from
-     * memory -- PERI carries its order inline and needs the read; the other
-     * form takes it from the channel and must not disturb RO/L1. Every other
-     * row here is common to all three external opcodes. */
-    { TO25, CO30, per_peri_TO25_CO30, DE08A0 },
-    { TO70, CI62, per_peri, DE07A0 },
-    { TO70, CI67, per_peri, DE07A0 },
-    { TI05, CI05, per_peri_TO25_CO30, DE08A0 },
-    { TI06, CU07, per_peri, DE07A0 },
-    { TI06, CU15, per_peri },
-    { TI06, CU03, per_peri },        /* +common CU10+CU12 -> CC, not E2 */
-    { END_OF_STATUS, 0, 0 },
-};
-
 /* Compatibility route for undocumented function codes.  This is intentionally
  * explicit: the cp06 DE00A transcription is incomplete and aa7ed63 established
  * that swept-core bytes must not wedge the emulator. */
-static const struct msl_timing_chart beta_64_undocumented[] = {
-    { TI06, CU01, not_per_peri },
-    { TI06, CU07, not_per_peri },
-    { END_OF_STATUS, 0, 0 },
-};
-
 static uint8_t xc_first_pass(struct ge *ge) {
     return is_xc(ge) && SA01_pass1(ge);
 }
@@ -1027,29 +1008,6 @@ static uint8_t cmc_done(struct ge *ge) {
  * the staged byte at V1++ and loops {/(L1_2,1=1i)} back to 60+62 or exits
  * to E2/E3 on the terminal count {L1_2,1=1i} (overbar placement verified
  * at high zoom: the loop condition carries the full-expression overbar). */
-static const struct msl_timing_chart beta_64_mvc[] = {
-    { TO65, CO49, 0 },
-    { END_OF_STATUS, 0, 0 },         /* common CU10+CU12 -> 60|62 */
-};
-
-static const struct msl_timing_variant beta_64_variants[] = {
-    { beta_jump_control, beta_64_control,  "beta-control",  "CPU[7] fo.9" },
-    { is_jrt,            beta_64_jrt,     "beta-jrt",      "CPU[7] fo.10" },
-    { is_la,             beta_64_la,      "beta-la",       "CPU[7] fo.10" },
-    { is_lpsr,           beta_64_lpsr,    "beta-lpsr",     "CPU[7] fo.8" },
-    { beta_register,     beta_64_register,"beta-register", "CPU[7] fo.11" },
-    { beta_immediate_shift, beta_64_immediate_shift,
-                                      "beta-immediate", "CPU[7] fo.41/73/76" },
-    { per_peri,          beta_64_per,     "beta-per",      "CPU[7] fo.13" },
-    { is_mvc,            beta_64_mvc,     "beta-mvc",      "cp07 fo.73" },
-    { is_cmc,            beta_64_mvc,     "beta-cmc",      "cp07 fo.76" },
-    { is_xoc_nc,         beta_64_mvc,     "beta-xoc-nc",   "cp07 fo.144" },
-    { is_ss_data_op,     beta_64_ss,      "beta-ss",       "CPU[7] fo.44-45" },
-    { beta_always,       beta_64_undocumented,
-                                           "beta-undocumented", "compat aa7ed63" },
-    { 0, 0, 0, 0 },
-};
-
 /* Register-family executive states, cp07 fo.38/39/40, verified row-by-row.
  * Two passes over the 16-bit quantities, low byte then high byte, encoded in
  * the state X bit: 60 -> (50) -> 40 -> 62 -> (52) -> 42 -> E2/E3, with
