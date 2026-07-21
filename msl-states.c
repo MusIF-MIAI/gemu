@@ -763,11 +763,29 @@ static uint8_t per_peri_TO25_CO30(struct ge *ge) {
  * GE-120 has no invalid-operation trap: an unknown code performs no datapath
  * commands and falls through to the next fetch). Observed in the field with
  * the funktionalcpu deck, whose continuous-restart path jumps into swept core
- * and executes FO=0x00. The printed row condition is the DExx decode behind
- * DE00A (stubbed -- see signals.h); this complement-of-PER gate reproduces its
- * effect for every code class. */
+ * and executes FO=0x00.
+ *
+ * The real row condition is now transcribed and lives in signals.h as CM01A0
+ * (cp06 ch.252-7), so the documented opcodes no longer need this gate: it
+ * survives only on the two sheets that are not real MSL transcriptions --
+ * beta_64_undocumented, whose whole purpose is to keep swept core from
+ * wedging the emulator, and beta_64_ss below.  Both go away with the last
+ * hybrid; nothing else should acquire a use of it. */
 static uint8_t not_per_peri(struct ge *ge) {
     return !per_peri(ge);
+}
+
+/* Artificial beta exit for the SS one-shot.
+ *
+ * The real machine runs the SS data operations through the executive band
+ * (64 -> 60|62 -> 50|52 -> 40|42 -> E2), and CM01A0 correctly withholds CU01
+ * from every SS opcode in beta because the loop, not the beta phase, is what
+ * eventually returns to alpha.  gemu's EXEC_SS one-shot performs the whole
+ * instruction inside 64|65, so it has to synthesise the return that the
+ * executive states would otherwise have made.  Delete this the moment the
+ * family is converted -- it is the marker for where the hybrid still is. */
+static uint8_t ss_hybrid_exit(struct ge *ge) {
+    return is_ss_data_op(ge) && !per_peri(ge);
 }
 
 /* EPER "examine" operation: Z character (in L2) = 0xC0 (bits 7,6 set).
@@ -828,8 +846,8 @@ static const struct msl_timing_chart beta_64_control[] = {
      * mask in the operand matches the current FA -- an unmatched jump falls
      * through with V1/PO untouched. */
     { TI05, CI00s, jc_js1_js2_jie_condition_verified },
-    { TI06, CU01, not_per_peri, DE00A0 },
-    { TI06, CU07, DE00A0 },
+    { TI06, CU01, CM01A0 },          /* CM01 = DE00A+DE06A+DE11A+DE13A */
+    { TI06, CU07, CM01A0 },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -844,8 +862,8 @@ static const struct msl_timing_chart beta_64_jrt[] = {
     { TO40, CO01, 0 },               /* NI -> V1: V1 = return address */
     { TO65, CO49, 0 },
     { TI05, CI00s, jc_js1_js2_jie_condition_verified },  /* {AVER.JRT} */
-    { TI06, CU01, 0 },
-    { TI06, CU07, 0 },
+    { TI06, CU01, CM01A0 },          /* {DO01 class}: JRT is 0x41 */
+    { TI06, CU07, CM01A0 },
     { TI06, CU03, 0 },               /* {JRT}: -> EA */
     { END_OF_STATUS, 0, 0 },
 };
@@ -878,8 +896,8 @@ static const struct msl_timing_chart beta_64_la[] = {
     { TO40, CO02, 0 },               /* NI -> V2: register-cell address */
     { TO65, CO49, 0 },
     { TI05, CI05, 0 },               /* NI -> L1 */
-    { TI06, CU01, 0 },
-    { TI06, CU07, 0 },
+    { TI06, CU01, CM01A0 },          /* {DO02 class}: LA is 0x68 */
+    { TI06, CU07, CM01A0 },
     { TI06, CU03, 0 },               /* -> EA */
     { END_OF_STATUS, 0, 0 },
 };
@@ -888,8 +906,8 @@ static const struct msl_timing_chart beta_64_la[] = {
  * strapping unimplemented). */
 static const struct msl_timing_chart beta_64_lpsr[] = {
     { TO65, CO49, 0 },               /* reset URPE/URPU */
-    { TI06, CU01, 0 },               /* 64|65 -> C2 */
-    { TI06, CU07, 0 },
+    { TI06, CU01, CM01A0 },          /* {DO06 class}: LPSR is 0x9d */
+    { TI06, CU07, CM01A0 },          /* 64|65 -> C2 with the CU15 below */
     { TI06, CU15, 0 },
     { END_OF_STATUS, 0, 0 },
 };
@@ -942,8 +960,8 @@ static const struct msl_timing_chart beta_64_immediate_shift[] = {
 static const struct msl_timing_chart beta_64_ss[] = {
     { TO65, CO49, jc_js1_js2_jie_lon_loll_loff_ins_ens_nop },
     { TO65, EXEC_SS, is_ss_data_op },
-    { TI06, CU01, not_per_peri, DE00A0 },
-    { TI06, CU07, DE00A0 },
+    { TI06, CU01, ss_hybrid_exit },
+    { TI06, CU07, ss_hybrid_exit },
     { END_OF_STATUS, 0, 0 },
 };
 
@@ -972,8 +990,8 @@ static const struct msl_timing_chart beta_64_per[] = {
  * explicit: the cp06 DE00A transcription is incomplete and aa7ed63 established
  * that swept-core bytes must not wedge the emulator. */
 static const struct msl_timing_chart beta_64_undocumented[] = {
-    { TI06, CU01, not_per_peri, DE00A0 },
-    { TI06, CU07, DE00A0 },
+    { TI06, CU01, not_per_peri },
+    { TI06, CU07, not_per_peri },
     { END_OF_STATUS, 0, 0 },
 };
 

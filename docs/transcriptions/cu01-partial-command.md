@@ -45,35 +45,36 @@ function class ANDed with a state decode:
   "function class AND beta band", differing only in the class: DO00, DO01,
   DO02, DO06.
 
-## The one thing still unread
+## The two gates that needed human eyes
 
-Two of the four class decodes are only partly legible on ch.229, because
-their inputs arrive on unlabelled bus lines rather than at labelled stubs:
+`DO00A` and `DO06A` take their inputs on unlabelled bus lines rather than at
+labelled stubs, so they could not be read from crops. Traced on the sheet by
+the maintainer, 2026-07-21:
 
-- gate 10, `DO00A = NAND(FO07F, <pin 1>)` — pin 1 unlabelled.
-- gate 4, `DO06A = NAND(<pin 1>, <pin 4>, FO006, <pin 5>)` — a four-input
-  gate with only pin 2 labelled.
+- **U09 pin 1** (gate 10, `DO00A`) wires to margin stub **(105-8) C38-12 =
+  `FO06F`** — the same net that feeds U08 pin 10 and U14 pin 1, both of which
+  ARE labelled `FO06F`, which corroborates the trace.
+- **U11 pin 1** (gate 4, `DO06A`) — the same `FO06F` net.
+- **U11 pin 4** = **`FO036`**, from (104-16) D38-03.
+- **U11 pin 5** = **`DO041`**, from U07 pin 6 — not an `FO` bit at all, but
+  the DO04 class decode fed back in. This is the one that could not have been
+  guessed from the opcode partition.
+- **U14 pin 10** (gate 8, `DO01A`) = **`FO066`**, confirming the earlier
+  inference.
 
-These are exactly the two leaves that matter: `DO00`/`DO06` are what cover the
-console group and LPSR, i.e. every opcode `DO011` structurally cannot reach.
-**Un-stubbing `DE00A` is therefore blocked on them** — with `DE00A` live but
-`DE11A`/`DE13A` absent, the console opcodes lose `CU01` and wedge.
+Giving:
 
-Constraints available without further reading, for whoever traces the buses:
+    DO001 = /FO7 . /FO6
+    DO011 = FO6 . /FO3 . /FO7
+    DO021 = FO3 . FO6 . /FO7
+    DO061 = /FO6 . FO3 . FO0 . DO041      (DO041 = /FO5 . FO7)
 
-- `FO006` on gate 4 means `DO06` requires FO bit 0 SET, so it can cover
-  NOP2 (0x07) and LPSR (0x9d) but NOT INS/ENS/LON/LOFF/LOLL (0x02) or
-  HLT (0x0A). Those must therefore come from `DO00`.
-- `FO07F` on gate 10 means `DO00` requires FO bit 7 CLEAR, which is
-  consistent: 0x02 and 0x0A have it clear, and LPSR 0x9d has it set, so
-  LPSR falls to `DO06` as expected.
-- Naming convention on this sheet, confirmed against gate 8: `FOnn6` = bit
-  nn true, `FOnnF` = bit nn false. The labels present are FO006, FO00F,
-  FO026, FO02F, FO036, FO03F, FO046, FO04F, FO056, FO05F, FO066, FO06F,
-  FO076, FO07F — so each candidate pin is one of these.
-- The residual freedom is real: several assignments (e.g. `FO06F`) reproduce
-  the required opcode partition equally well, so the gate must be READ, not
-  inferred from behaviour. Do not guess it.
+The partition over the ISA is exact, with no exceptions across 49 opcodes:
+DO00 takes 0x02/0x07/0x0A, DO01 the jumps and JRT, DO02 takes LA, DO06 takes
+LPSR alone, and every family that continues into the executive band plus all
+of PER/PERI/RDC falls outside all four. That the four independently-read
+gates reproduce exactly the required set is the strongest available check
+that the trace is right.
 
 ## Why the stub existed, and what it papered over
 
@@ -99,8 +100,17 @@ gates narrow it themselves. `beta_64_undocumented` then disappears — an
 unknown FO fails every leaf, performs no datapath rows and falls through,
 which is what the `aa7ed63` comment already claims the real machine does.
 
-Signals still to add: `DO00A`, `DO001`, `DO06A`, `DO061`, `DI061`, `DE06A`,
-`DE11A`, `DE13A`, `CM011`/`CM01A`. Only `DO021` exists today.
+All of it is now in `signals.h`: `DO00A`/`DO001`, `DO06A`/`DO061`, `DI061`,
+`DE06A`, `DE11A`, `DE13A`, `CM011`/`CM01A`/`CM01A0`, and `DE00A` un-stubbed.
+The beta charts for the control, JRT, LA and LPSR sheets now gate `CU01` and
+`CU07` on `CM01A0` instead of on the invented `not_per_peri` complement.
+
+`not_per_peri` survives on exactly two sheets, both of which are hybrids
+rather than transcriptions: `beta_64_undocumented` (the swept-core guard from
+aa7ed63) and `beta_64_ss`, whose one-shot has to synthesise the return that
+the executive loop would otherwise make — `CM01A0` correctly withholds `CU01`
+from every SS opcode, because in the real machine beta is not what returns
+them to alpha. Both uses disappear with the last hybrid.
 
 ## Scan notes
 

@@ -358,6 +358,11 @@ SIG(DI03A) { return !(BIT(ge->rSA, 0) && BIT(ge->rSA, 1)); }
 SIG(DI031) { return !DI03A(ge); }
 SIG(DI06A) { return !(!BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 2)); }
 SIG(DI062) { return !DI06A(ge); }
+/* cp06 ch.241-11: a second inverter off the same DI06A net, carrying the
+ * identical value to DI062.  The two exist only to split fan-out -- the
+ * function/status AND sheets draw some of their beta-band terms from one and
+ * some from the other.  Kept distinct so each gate reads like its sheet. */
+SIG(DI061) { return !DI06A(ge); }
 SIG(DI10A) { return !(BIT(ge->rSA, 7) && BIT(ge->rSA, 6) && BIT(ge->rSA, 5) && !BIT(ge->rSA, 4)); }
 SIG(DI101) { return !DI10A(ge); }
 SIG(DI11A) { return !(BIT(ge->rSA, 3) && DI101(ge) && !BIT(ge->rSA, 2)); }
@@ -453,9 +458,50 @@ SIG(DO041) { return !DO04A(ge); }
 SIG(DO07A) { return !(!BIT(ge->rFO, 0) && !BIT(ge->rFO, 6) && DO041(ge)); }
 SIG(DO071) { return !DO07A(ge); }
 
-// TODO: doesn't work for nop/lon/loff ecc
-SIG(DE00A) { return 0;  !(DO011(ge) && DI062(ge)); }
+/* Function classes DO00 and DO06, cp06 ch.229 "FUNCTION DECODING" (dwg
+ * 14013 0650).  Both gates take their inputs on unlabelled bus lines, read
+ * off the sheet rather than inferred: gate 10 pin 1 and gate 4 pin 1 both
+ * come from margin stub (105-8) C38-12 = FO06F, gate 4 pin 4 from (104-16)
+ * D38-03 = FO036, and gate 4 pin 5 from U07 pin 6 = DO041.
+ *
+ * Together with DO01 (jumps) and DO02 (LA) these are the four classes whose
+ * beta-band ANDs feed CU01 -- see docs/transcriptions/cu01-partial-command.md.
+ * The partition they produce is exact over the whole ISA: DO00 takes the
+ * console/control codes at 0x02/0x07/0x0A, DO06 takes LPSR alone, and every
+ * family that continues into the executive band falls outside all four. */
+SIG(DO00A) { return !(!BIT(ge->rFO, 7) && !BIT(ge->rFO, 6)); }
+SIG(DO001) { return !DO00A(ge); }
+SIG(DO06A) {
+    return !(!BIT(ge->rFO, 6) && BIT(ge->rFO, 3) && BIT(ge->rFO, 0) &&
+             DO041(ge));
+}
+SIG(DO061) { return !DO06A(ge); }
+
+/* Function-class AND beta-band terms, cp06 ch.248 "FUNCTION AND STATUS CODES
+ * ANDS" (gates 9, 8, 4) and ch.243 gate 5.  All four have the same shape --
+ * one function class ANDed with the beta-state decode -- and all four are
+ * leaves of the CU01 partial command, CM011 below.
+ *
+ * DE00A used to be stubbed to a constant with the note "doesn't work for
+ * nop/lon/loff ecc".  It was transcribed correctly all along; what was
+ * missing were its three siblings, so the one leaf was being asked to carry
+ * the whole condition and could only do it by being forced true. */
+SIG(DE00A) { return !(DO011(ge) && DI062(ge)); }   /* jumps + JRT   ch.248-9 */
+SIG(DE06A) { return !(DO021(ge) && DI062(ge)); }   /* LA            ch.248-8 */
+SIG(DE11A) { return !(DI061(ge) && DO001(ge)); }   /* console group ch.248-4 */
+SIG(DE13A) { return !(DO061(ge) && DI061(ge)); }   /* LPSR          ch.243-5 */
 SIG(DE001) { return !DE00A(ge); }
+
+/* CU01's partial command, cp06 ch.252-7 "PARTIAL COMMANDS GENERATION": a
+ * four-input NAND over the active-low leaves above, i.e. the command asserts
+ * when ANY class claims the opcode.  CM01A (ch.252-10) is its inverse; the
+ * timing charts cite the active-high call CM01A0. */
+SIG(CM011) {
+    return !(DE00A(ge) && DE06A(ge) && DE11A(ge) && DE13A(ge));
+}
+SIG(CM01A) { return !CM011(ge); }
+SIG(CM01A0) { return !CM01A(ge); }
+
 SIG(DE07A) { return !(DO071(ge) && DI062(ge)); }
 SIG(DE23A) { return !(DE001(ge) && BIT(ge->rFO, 4) && BIT(ge->rL1, 5)); }
 SIG(DE231) { return !(DE23A(ge) && DE23A(ge)); }
