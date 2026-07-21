@@ -30,6 +30,7 @@
  */
 
 #include "utest.h"
+#include "decks.h"
 #include "../ge.h"
 #include "../cardreader.h"
 #include "../bit.h"
@@ -64,7 +65,7 @@ static int bootstrap_run_until(struct ge *g, uint8_t target, int max_cycles)
  * -------------------------------------------------------------------------- */
 UTEST(bootstrap, card0_loads_to_alpha)
 {
-    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    const char *cap_path = deck_funktionalcpu_cap();
     static const char bin_path[] = "../DUMP1/funktionalcpu.bin";
 
     /* Skip gracefully if oracle files are not available */
@@ -233,7 +234,7 @@ UTEST(bootstrap, card0_loads_to_alpha)
  * -------------------------------------------------------------------------- */
 UTEST(bootstrap, channel_state_sequence)
 {
-    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    const char *cap_path = deck_funktionalcpu_cap();
 
     FILE *p = fopen(cap_path, "r");
     if (!p) {

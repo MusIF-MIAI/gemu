@@ -33,6 +33,7 @@
  */
 
 #include "utest.h"
+#include "decks.h"
 #include "../ge.h"
 #include "../cardreader.h"
 #include "../cap.h"
@@ -526,7 +527,7 @@ UTEST(cardreader, feed_state_lines_pom_pico_bi20)
 UTEST(cardreader, funktionalcpu_first_card)
 {
     /* The test runner cwd is the gemu/ source dir */
-    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    const char *cap_path = deck_funktionalcpu_cap();
     static const char bin_path[] = "../DUMP1/funktionalcpu.bin";
 
     /* Check existence of both files */
@@ -627,7 +628,7 @@ UTEST(cardreader, funktionalcpu_first_card)
  * -------------------------------------------------------------------------- */
 UTEST(cardreader, funktionalcpu_loader_autodetect)
 {
-    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    const char *cap_path = deck_funktionalcpu_cap();
 
     FILE *probe = fopen(cap_path, "r");
     if (!probe) {
@@ -680,7 +681,7 @@ UTEST(cardreader, funktionalcpu_loader_autodetect)
  * -------------------------------------------------------------------------- */
 UTEST(cardreader, funktionalcpu_authentic_load_reaches_payload)
 {
-    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    const char *cap_path = deck_funktionalcpu_cap();
     static const uint8_t expected[] = { 0x43, 0xF0, 0x17, 0x2A };
 
     FILE *probe = fopen(cap_path, "r");
@@ -815,7 +816,7 @@ UTEST(cardreader, sequential_two_cards)
  * -------------------------------------------------------------------------- */
 UTEST(cardreader, scatter_load_funktionalcpu)
 {
-    static const char cap_path[] = "../DUMP1/funktionalcpu.cap";
+    const char *cap_path = deck_funktionalcpu_cap();
 
     FILE *probe = fopen(cap_path, "r");
     if (!probe) {

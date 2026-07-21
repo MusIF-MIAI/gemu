@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "utest.h"
+#include "decks.h"
 #include "../cap.h"
 #include "../binimage.h"
 #include "../transcode.h"
@@ -52,7 +53,7 @@ UTEST(cap, parse_funktional)
     /* The DUMP1 decks live outside this git repo, so they are absent in a CI
      * checkout. Skip gracefully when the deck is not present (mirrors the skip
      * pattern in tests/bootstrap.c); run the real assertions otherwise. */
-    static const char path[] = "../DUMP1/funktionalcpu.cap";
+    const char *path = deck_funktionalcpu_cap();
     FILE *probe = fopen(path, "r");
     if (!probe) {
         printf("  [SKIP] %s not found\n", path);
