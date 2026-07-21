@@ -78,15 +78,49 @@ terms.
 **No count-from-04 command line appears on this sheet.** There is no CA42x
 anywhere on ch.096, which is where the injection at bit 04 would be expected.
 
-## Open questions for the print
+## RESOLVED
 
-1. Where does the count-from-04 command (CI42/CO42, presumably CA421/CA42A)
-   enter the counting network? Not on ch.096 -- try ch.097 (p173), which
-   feeds ch.096 its BUDO1/BUDI1/BUDE1 terms.
-2. On ch.096, which term is the carry/borrow INTO bit 04, i.e. the one
-   crossing the quartet boundary? BUCA1 (gate 1, from CA401/BO042/CA40A/
-   BO04B) and BUDA1 (gate 19, from BO072/CA401/CA40A/BO07B) are the
-   candidates by position.
-3. Is that term gated by anything that can block it -- the count-from-04
-   command, or a "stop 03" analogue of CA44B? Gate 17 turning CA441 into
-   CA44B is the shape to look for; a structural twin would settle it.
+`CA421` is generated at **ch.038 gate 19 (U24.3)** and fans out to L34-12,
+**097-23** and 325-7. Chapter 097 (PDF p173, dwg 14013 0652) is the bits
+00-03 slice, the twin of ch.096:
+
+    gate 23  U23     CA421 from (038-19) 020-03  ->  CA42B
+                     an inverter -- the exact twin of ch.096's
+                     gate 17 turning CA441 into CA44B
+    gate 24  U13     "NAOR 1", one pin floating
+                     U13.5 = CA41A   from (038-20)
+                     U13.4 = U13.3 = CA42B  (tied across both pairs)
+                     U13.2 = CA431   from (038-6)
+                     ->  BUD01  ->  (096-2) (096-7) (096-13) (096-18)
+
+`BUD01` is the term that drives quartet 2's carry chain over on ch.096, and
+it is built from **command lines only** -- no carry or propagate term out of
+the bits 00-03 chain appears in it. So quartet 2 counts because it was told
+to, not because quartet 1 borrowed into it, and a borrow crossing bit 03 must
+not disturb it. The quartets are structurally independent.
+
+(The block is therefore not a "stop 03" gate as guessed. It is the absence of
+a path: quartet 2's chain is simply not fed from quartet 1's.)
+
+### What the exits actually do
+
+Re-reading fo.143 with this in hand corrects an earlier misreading. From
+state 40, CU05 alone gives 0x60 and CU05+CU01 gives 0x62, so
+
+    CU01 {(L1_1 = 1i)}    does NOT terminate -- it selects 62 over 60
+    CU07 {(L1_2 = 1i)}    is the only exit, to E2/E3
+
+L1's low byte holds one length per SS operand: quartet 1 for operand 1,
+quartet 2 for the destination. When operand 1 is exhausted the loop keeps
+running in the X variant, zero-extending the shorter operand, until the
+destination is full. Which is exactly why the counters must not interfere:
+if quartet 1's borrow reached quartet 2, every unequal-length operand pair
+would finish short.
+
+## Implemented
+
+`ge_counting_network_output` now treats from_zero + from_04 as two
+independent nibble counters. Verified: suite 303/303, and the funktionalcpu
+0x40 deck is identical to baseline on all 159 transitions including cycle
+numbers -- the register family raises CI41+CI42 as well, but its two-pass
+loop never wraps quartet 1, so nothing observable changes there.

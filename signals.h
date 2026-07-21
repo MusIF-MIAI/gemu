@@ -145,13 +145,41 @@ SIG(AF53) { return ge->register_selector == RS_FO;      }
 static inline uint16_t ge_counting_network_output(struct ge *ge) {
     /* The flow charts spell an increment as CO41 (from_zero) alone and a
      * decrement as CO40+CO41 (decreasing+from_zero): V1+1->V1 is "...41...",
-     * V1-1->V1 and L1-1->L1 are "...40-41...". `decreasing` selects -1;
-     * without it, +1. CI42 injects the count at bit 04 instead, and CI44
-     * blocks the carry/borrow past bit 07 (byte-local count). The active
-     * flags are the CO-phase ones until TO65 swaps in the CI-phase staging
-     * (pulse.c). (CPU[7] p33 external charts; fo.38/62 CI rows.) */
+     * V1-1->V1 and L1-1->L1 are "...40-41...". CI42 injects the count at bit
+     * 04 instead, and CI44 blocks the carry/borrow past bit 07 (byte-local
+     * count). The active flags are the CO-phase ones until TO65 swaps in the
+     * CI-phase staging (pulse.c). (CPU[7] p33 external charts; fo.38/62 CI
+     * rows.)
+     *
+     * from_zero AND from_04 together are TWO INDEPENDENT QUARTET COUNTERS,
+     * not one subtraction of 0x11. cp06 ch.097 gate 24 (U13) builds BUD01 --
+     * the term that drives quartet 2's carry chain over on ch.096 -- from
+     * CA41A, CA42B and CA431 alone, all command lines, with no carry term
+     * from the bits 00-03 chain in it. So quartet 2 counts because it was
+     * TOLD to, not because quartet 1 borrowed into it, and a borrow out of
+     * bit 03 must not disturb it.
+     *
+     * That is what the decimal families need: cp07 fo.141 raises CI41 and
+     * CI42 from one gate, and fo.143 reads the two quartets separately --
+     * {L1_1 = 1i} switches the loop into its X variant (60 -> 62) while only
+     * {L1_2 = 1i} leaves for E2/E3. L1's low byte carries one length per SS
+     * operand, and the shorter one running out must not shorten the other. */
     struct cmds *c = &ge->counting_network.cmds;
     uint16_t delta = 0;
+
+    if (c->from_zero && c->from_04) {
+        uint8_t lo = ge->rBO & 0x0f;
+        uint8_t hi = (ge->rBO >> 4) & 0x0f;
+
+        if (c->decresing) {
+            lo = (lo - 1) & 0x0f;
+            hi = (hi - 1) & 0x0f;
+        } else {
+            lo = (lo + 1) & 0x0f;
+            hi = (hi + 1) & 0x0f;
+        }
+        return (ge->rBO & 0xff00) | (uint16_t)(hi << 4) | lo;
+    }
 
     if (c->from_zero)
         delta += 1;

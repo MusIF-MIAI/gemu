@@ -175,3 +175,65 @@ UTEST(signals, ci50_inhibits_the_upper_zone_enables)
     ASSERT_FALSE(UZE71_enabled(&g));
     ASSERT_FALSE(UZE81_enabled(&g));
 }
+
+/* Counting network: CI41 + CI42 together are TWO INDEPENDENT QUARTET
+ * COUNTERS, not one subtraction of 0x11.  cp06 ch.097 gate 24 builds BUD01 --
+ * the term driving quartet 2's carry chain on ch.096 -- from the command
+ * lines CA41A/CA42B/CA431 alone, with no carry term out of the bits 00-03
+ * chain, so a borrow across bit 03 must not disturb quartet 2.
+ *
+ * It matters because cp07 fo.141 raises both commands from one gate and
+ * fo.143 reads the quartets separately: L1's low byte holds one length per SS
+ * operand, and the shorter operand running out must not shorten the other. */
+
+static uint16_t count_both_quartets(uint16_t bo, int decreasing)
+{
+    struct ge g;
+
+    ge_init(&g);
+    g.rBO = bo;
+    g.counting_network.cmds.from_zero = 1;
+    g.counting_network.cmds.from_04   = 1;
+    g.counting_network.cmds.stop_07   = 1;
+    g.counting_network.cmds.decresing = decreasing;
+    return ge_counting_network_output(&g);
+}
+
+UTEST(signals, quartet_counters_do_not_borrow_across_bit_03)
+{
+    /* No wrap: indistinguishable from a 0x11 subtraction. */
+    ASSERT_EQ(count_both_quartets(0x0035, 1), 0x0024);
+
+    /* Quartet 1 wraps. A single 0x11 subtract would give 0x1F, taking
+     * quartet 2 down by TWO; independent counters give 0x2F. */
+    ASSERT_EQ(count_both_quartets(0x0030, 1), 0x002f);
+
+    /* Both wrap. */
+    ASSERT_EQ(count_both_quartets(0x0000, 1), 0x00ff);
+
+    /* Ascending, quartet 1 wrapping the other way. */
+    ASSERT_EQ(count_both_quartets(0x000f, 0), 0x0010);
+
+    /* The high byte is never touched -- this is a byte-local count. */
+    ASSERT_EQ(count_both_quartets(0xab30, 1), 0xab2f);
+}
+
+/* Either command alone keeps the ordinary rippling behaviour. */
+UTEST(signals, a_single_injection_still_ripples)
+{
+    struct ge g;
+
+    ge_init(&g);
+    g.rBO = 0x0030;
+    g.counting_network.cmds.from_zero = 1;
+    g.counting_network.cmds.stop_07   = 1;
+    g.counting_network.cmds.decresing = 1;
+    ASSERT_EQ(ge_counting_network_output(&g), 0x002f);   /* borrow crosses */
+
+    ge_init(&g);
+    g.rBO = 0x0030;
+    g.counting_network.cmds.from_04   = 1;
+    g.counting_network.cmds.stop_07   = 1;
+    g.counting_network.cmds.decresing = 1;
+    ASSERT_EQ(ge_counting_network_output(&g), 0x0020);   /* quartet 2 only */
+}
