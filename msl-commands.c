@@ -377,12 +377,22 @@ static void CI44(struct ge *ge) { ge->counting_network.ci_cmds.stop_07 = 1; }
  *   CI45+CI46       AND
  *   CI45+CI47       XOR
  *   CI45+CI46+CI47  OR
+ *   CI46            decimal add        (no CI45: arithmetic branch)
+ *   CI46+CI47       decimal subtract
+ *   CI47            binary subtract
+ *   (none)          binary add
  *
- * Other combinations belong to decimal/subtract families not yet transcribed.
+ * The gates that turn these three lines into the concentrator's function code
+ * are transcribed in signals.h (UCO01/UCO11/UCO21/UCO41/UCOA1) from cp06
+ * ch.087 -- see docs/transcriptions/ua-function-decode.md.
  */
 static void CI45(struct ge *ge) { ge->ua_controls.logic = 1; }
 static void CI46(struct ge *ge) { ge->ua_controls.decimal_and = 1; }
 static void CI47(struct ge *ge) { ge->ua_controls.subtract_xor = 1; }
+
+/* cp07 fo.142 issues CI50 from the same gate DE99A0 {(AD+SD+CMQ)} that
+ * issues CI46, so the decimal family always raises the pair together. */
+static void CI50(struct ge *ge) { ge->ua_controls.low_zone_only = 1; }
 
 
 /* NI Knot Selection Commands */

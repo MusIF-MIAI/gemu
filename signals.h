@@ -455,6 +455,53 @@ SIG(DO02A) { return !(BIT(ge->rFO, 3) && !BIT(ge->rFO, 7) && BIT(ge->rFO, 6)); }
 SIG(DO021) { return !(DO02A(ge) && DO02A(ge)); }
 SIG(DO04A) { return !(!BIT(ge->rFO, 5) && BIT(ge->rFO, 7)); }
 SIG(DO041) { return !DO04A(ge); }
+/**
+ * @defgroup ua-decode Arithmetic-unit function decode
+ *
+ * cp06 ch.087 "ARITHMETICAL UNIT, CONCENTRATOR" (dwg 14013 0651): the mode
+ * block in the sheet's bottom-left corner, nine gates turning the three
+ * command lines CI45/CI46/CI47 into the function code the concentrator
+ * consumes.  Transcribed gate by gate; see
+ * docs/transcriptions/ua-function-decode.md for the wire-level reading and
+ * the resulting table.
+ *
+ * Two entries of that table are DEGENERATE, and provably so rather than for
+ * want of tracing: CI46 reaches only gates 32 and 27, and enters the code as
+ * `CI46 + CI47`, which saturates whenever CI47 is set.  So XOR and OR share a
+ * code, and so do decimal and binary subtract.  The latter is the expected
+ * shape for BCD -- subtraction is addition of the ten's complement, so only
+ * decimal ADD needs a line of its own (UCO01), and the decimal correction
+ * rides on CI50 gating carry propagation to a single quartet.
+ * @{
+ */
+
+/* Entry inverters, gates 22/26/31.  Each is a NAND with both inputs tied to
+ * one net, which is how this drawing draws an inverter. */
+SIG(CI451) { return ge->ua_controls.logic; }
+SIG(CI461) { return ge->ua_controls.decimal_and; }
+SIG(CI471) { return ge->ua_controls.subtract_xor; }
+SIG(CI45D) { return !CI451(ge); }
+SIG(CI46B) { return !CI461(ge); }
+SIG(CI47B) { return !CI471(ge); }
+
+SIG(UCOA1) { return !(CI46B(ge) && CI47B(ge)); }              /* gate 32 */
+SIG(UCO21) { return !(CI45D(ge) && UCOA1(ge)); }              /* gate 33 */
+SIG(UCO2A) { return !UCO21(ge); }                             /* gate 34 */
+SIG(UCO4A) { return !(CI451(ge) && CI471(ge)); }              /* gate 23 */
+SIG(UCO41) { return !UCO4A(ge); }                             /* gate 24 */
+SIG(UCO0A) { return !(CI45D(ge) && CI461(ge) && CI47B(ge)); } /* gate 27 */
+SIG(UCO01) { return !UCO0A(ge); }                       /* gates 25 + 28 */
+SIG(UCO1A) { return !(CI45D(ge) && CI471(ge)); }              /* gate 29 */
+SIG(UCO11) { return !UCO1A(ge); }                             /* gate 30 */
+
+/* CI50's effect, cp06 ch.094 gates 8/9/12: CI50B = /CI501 is an input of the
+ * UZE71 and UZE81 NANDs, so raising CI50 forces both zone enables inactive. */
+SIG(CI50B) { return !ge->ua_controls.low_zone_only; }
+SIG(UZE71_enabled) { return CI50B(ge); }
+SIG(UZE81_enabled) { return CI50B(ge); }
+
+/** @} */
+
 SIG(DO07A) { return !(!BIT(ge->rFO, 0) && !BIT(ge->rFO, 6) && DO041(ge)); }
 SIG(DO071) { return !DO07A(ge); }
 

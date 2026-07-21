@@ -64,6 +64,13 @@ struct ge_ua_controls {
     uint8_t logic:1;          /* CI45: logical-operation group */
     uint8_t decimal_and:1;    /* CI46: decimal / AND group */
     uint8_t subtract_xor:1;   /* CI47: subtract / XOR group */
+
+    /* CI50, "OPERA SOLO UA1 / WORK ONLY UA1" (cp07 fo.142).  Not a function
+     * select: cp06 ch.094 shows CI50B = /CI501 feeding the UZE71 and UZE81
+     * NANDs, so asserting CI50 INHIBITS the inter-zone enables and leaves
+     * only the low unit participating.  It gates the arithmetic unit's
+     * WIDTH, which is what a digit-at-a-time decimal operation needs. */
+    uint8_t low_zone_only:1;  /* CI50: inhibit UZE71/UZE81 */
 };
 
 struct ge_knot_no {

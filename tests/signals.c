@@ -96,3 +96,82 @@ UTEST(signals, cm01_is_gated_on_the_beta_band)
     g.rSA = 0x60;                      /* executive */
     ASSERT_FALSE(CM01A0(&g));
 }
+
+/* Arithmetic-unit function decode, cp06 ch.087 mode block (gates 22-34).
+ * Pins the code the concentrator receives for each operation the timing
+ * sheets pin down -- see docs/transcriptions/ua-function-decode.md. */
+
+struct ua_case {
+    const char *name;
+    uint8_t ci45, ci46, ci47;
+    uint8_t uco01, uco11, uco21, uco41, ucoa1;
+};
+
+static const struct ua_case UA_CASES[] = {
+    /*  name              45 46 47   01 11 21 41 A1 */
+    { "binary add",        0, 0, 0,   0, 0, 1, 0, 0 },
+    { "binary subtract",   0, 0, 1,   0, 1, 0, 0, 1 },
+    { "decimal add",       0, 1, 0,   1, 0, 0, 0, 1 },
+    { "decimal subtract",  0, 1, 1,   0, 1, 0, 0, 1 },
+    { "AND",               1, 1, 0,   0, 0, 1, 0, 1 },
+    { "XOR",               1, 0, 1,   0, 0, 1, 1, 1 },
+    { "OR",                1, 1, 1,   0, 0, 1, 1, 1 },
+};
+
+UTEST(signals, ua_function_decode_matches_the_sheet)
+{
+    for (size_t i = 0; i < sizeof(UA_CASES) / sizeof(UA_CASES[0]); i++) {
+        const struct ua_case *c = &UA_CASES[i];
+        struct ge g;
+
+        ge_init(&g);
+        g.ua_controls.logic        = c->ci45;
+        g.ua_controls.decimal_and  = c->ci46;
+        g.ua_controls.subtract_xor = c->ci47;
+
+        ASSERT_EQ((uint8_t)UCO01(&g), c->uco01);
+        ASSERT_EQ((uint8_t)UCO11(&g), c->uco11);
+        ASSERT_EQ((uint8_t)UCO21(&g), c->uco21);
+        ASSERT_EQ((uint8_t)UCO41(&g), c->uco41);
+        ASSERT_EQ((uint8_t)UCOA1(&g), c->ucoa1);
+        /* the /A forms are the printed complements */
+        ASSERT_EQ((uint8_t)UCO2A(&g), (uint8_t)!c->uco21);
+        ASSERT_EQ((uint8_t)UCO4A(&g), (uint8_t)!c->uco41);
+        ASSERT_EQ((uint8_t)UCO0A(&g), (uint8_t)!c->uco01);
+        ASSERT_EQ((uint8_t)UCO1A(&g), (uint8_t)!c->uco11);
+    }
+}
+
+/* UCO01 is the ONLY line that isolates the decimal family, and it does so for
+ * addition alone. Decimal and binary subtract share a code because CI46 enters
+ * as CI46+CI47 and saturates -- in BCD a subtraction is an addition of the
+ * ten's complement, so only decimal ADD needs its own line. */
+UTEST(signals, uco01_is_the_decimal_add_line)
+{
+    struct ge g;
+
+    ge_init(&g);
+    g.ua_controls.decimal_and = 1;          /* CI46 alone: decimal add */
+    ASSERT_TRUE(UCO01(&g));
+
+    g.ua_controls.subtract_xor = 1;         /* +CI47: decimal subtract */
+    ASSERT_FALSE(UCO01(&g));
+
+    g.ua_controls.logic = 1;                /* +CI45: a logic op */
+    ASSERT_FALSE(UCO01(&g));
+}
+
+/* CI50 gates the UA's WIDTH, not its function: cp06 ch.094 has CI50B = /CI501
+ * feeding the UZE71/UZE81 NANDs, so raising it inhibits both zone enables. */
+UTEST(signals, ci50_inhibits_the_upper_zone_enables)
+{
+    struct ge g;
+
+    ge_init(&g);
+    ASSERT_TRUE(UZE71_enabled(&g));
+    ASSERT_TRUE(UZE81_enabled(&g));
+
+    g.ua_controls.low_zone_only = 1;
+    ASSERT_FALSE(UZE71_enabled(&g));
+    ASSERT_FALSE(UZE81_enabled(&g));
+}

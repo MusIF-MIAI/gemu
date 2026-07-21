@@ -28,36 +28,40 @@ net is how the sheets draw an inverter).
              UCO4A = NAND(CI45, CI47) = /(CI45 . CI47)
     gate 24  U20, inverter of UCO4A, out pin 11
              UCO41 = CI45 . CI47      -> (025-13) (091-26) (094-26)
-    gate 27  U15.1=CI45D U15.13=CI47B
-             UCO0A = NAND(/CI45, /CI47) = CI45 + CI47
+    gate 27  U15.1=CI45D  U15.2=CI461  U15.13=CI47B     THREE inputs
+             UCO0A = NAND(/CI45, CI46, /CI47)
     gate 29  U19.2=CI45D U19.1=CI471 -> U19.3
              UCO1A = NAND(/CI45, CI47) = CI45 + /CI47
     gate 30  U19, inverter of UCO1A (U19.13 + U19.14 tied), out pin 11
              UCO11 = /CI45 . CI47     -> (087-5) (087-8) (087-19)
                                          (088-5) (088-14) (088-15)
 
-## Still unread
-
-    gates 25 + 28   U13, outputs pins 6 AND 8 wired onto one net -> UCO01
-                    a two-term wired OR, inputs unknown
+    gates 25 + 28   U13, both with ALL inputs on UCO0A, outputs pins 6 and 8
+                    wired onto one net -- two inverters in parallel for
+                    fan-out drive, not a two-term OR
+                    UCO01 = /UCO0A = /CI45 . CI46 . /CI47
                     -> (087-3) (088-21) (088-3) (088-10) (088-11)
                        (088-16) (088-17)
                     destinations U15.4, U15.11, U09.5, U12.2, U12.3
                     (= gates 20, 15, 9, 14, 13 on this sheet)
-    gate 34         U20 -> UCO2A, inputs unknown
-                    -> (087-16) (088-8).  Probably /UCO21.
+    gate 34         U20, inverter of UCO21
+                    UCO2A = /UCO21   -> (087-16) (088-8)
+
+All nine mode-block gates are accounted for; the decode below is complete.
 
 ## The code, evaluated
 
 | operation        | CI45 CI46 CI47 | UCOA1 | UCO21 | UCO41 | UCO0A | UCO11 |
 |------------------|----------------|-------|-------|-------|-------|-------|
-| binary add       | 0 0 0          | 0     | 1     | 0     | 0     | 0     |
-| binary subtract  | 0 0 1          | 1     | 0     | 0     | 1     | 1     |
-| decimal add      | 0 1 0          | 1     | 0     | 0     | 0     | 0     |
-| decimal subtract | 0 1 1          | 1     | 0     | 0     | 1     | 1     |
-| AND              | 1 1 0          | 1     | 1     | 0     | 1     | 0     |
-| XOR              | 1 0 1          | 1     | 1     | 1     | 1     | 0     |
-| OR               | 1 1 1          | 1     | 1     | 1     | 1     | 0     |
+| binary add       | 0 0 0          | 0     | 0     | 1     | 0     | 0     |
+| binary subtract  | 0 0 1          | 0     | 1     | 0     | 0     | 1     |
+| decimal add      | 0 1 0          | 1     | 0     | 0     | 0     | 1     |
+| decimal subtract | 0 1 1          | 0     | 1     | 0     | 0     | 1     |
+| AND              | 1 1 0          | 0     | 0     | 1     | 0     | 1     |
+| XOR              | 1 0 1          | 0     | 0     | 1     | 1     | 1     |
+| OR               | 1 1 1          | 0     | 0     | 1     | 1     | 1     |
+
+(columns UCO01 UCO11 UCO21 UCO41 UCOA1)
 
 The CI45/CI46/CI47 combinations come from the timing sheets: fo.43 (NI/XI/
 CI/TM), fo.146 (XC/OC/NC), fo.39 (register), fo.78 (CMI/CMC), fo.142
@@ -85,9 +89,24 @@ inhibiting `UZE71`/`UZE81`, the inter-zone enables. That suggests decimal
 behaviour is carried by the zone/carry gating rather than wholly by the
 function code -- which would explain the SD/SB degeneracy directly.
 
-`UCO01` is the last place in the code where a binary/decimal distinction
-could hide. If it does not carry one either, the conclusion is that the UA
-computes the same FUNCTION for SD and SB and the decimal correction comes
-from CI50 restricting propagation to a single quartet. In that case gemu
-should implement CI50 as a width gate and drive the existing alu_dec.c from
-CI46 and CI50 together, exactly as fo.142 pairs them.
+### The finished picture
+
+`UCO01` DOES isolate the decimal family -- gate 27 turned out to have three
+inputs, the third being CI461 -- but only for ADDITION:
+
+    UCO01 = /CI45 . CI46 . /CI47      decimal add, and nothing else
+
+Two degeneracies survive, and are now provably structural rather than
+untraced: CI46 reaches only gates 32 and 27 (CI46B to 32, CI461 to 27), and
+enters the code through `UCOA1 = CI46 + CI47`, which saturates the moment
+CI47 is set. Hence
+
+  * XOR and OR share a code, and
+  * decimal and binary subtract share a code.
+
+For the decimal family that is the expected shape rather than a problem: in
+BCD a subtraction IS an addition of the ten's complement, so only decimal
+add needs a function line of its own, and the correction rides on CI50
+gating carry propagation to one quartet. XOR vs OR must be resolved past
+this sheet (ch.088 or the NI routing); it does not block gemu, which already
+drives the logic operations from CI45/CI46/CI47 directly.
