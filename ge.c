@@ -22,14 +22,15 @@ void ge_init(struct ge *ge)
      * TAB.2 to "interruption enabled on connector 3" (it was modelled as
      * connector 4).  E04/F04 are believed empty, pending a physical check.
      *
-     * (2026-07-21, later: the F03 card was found and restuffed.  All four
-     * option sockets -- E03, F03, E05, F05 -- hold the same "4-bridge" card
-     * type, annotated PONT2N.  UNRESOLVED: whether those cards buzz {1,4}
-     * (pure PONT2N -- this strapping) or {1,3,4} (an old 1-bridge N with
-     * three bridges added, an N+P union "universal" card).  The union
-     * reading gives 32K with NO peripheral interrupts instead of 16K with
-     * interrupts on connector 3.  gemu models the pure-N reading until the
-     * cards are buzzed; see docs/hardware-options.md.)
+     * (2026-07-21: the F03 card was found and restuffed; all four option
+     * sockets hold the same 4-bridge card type, annotated PONT2N.
+     * 2026-07-22: the cards' own catalog drawing was found -- cp10F dwg
+     * 015 433 91 -- and settles the type: PONT 2N is a FOUR-bridge recipe
+     * (holes 3/20/21/25) shorting pins {1,2,4,7} to 17, PONT 2P likewise
+     * four bridges differing in one (pin 3 for pin 4).  The in-machine
+     * cards match the 2N recipe, which retires the {1,3,4}-union reading;
+     * the pure-N strapping below stands.  Final electrical seal: pin 1<->4
+     * beeps (2N) and pin 1<->3 does not.  docs/hardware-options.md.)
      *
      * Card 05 follows the same both-are-PONT2N identification, which lands
      * OFF the ch.001 table: the five printed rows stop at {N,P} = 32K and
