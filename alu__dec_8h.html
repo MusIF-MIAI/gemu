@@ -96,6 +96,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aba98f1ada51d22429e29c00d06099513" id="r_aba98f1ada51d22429e29c00d06099513"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8h.html#aba98f1ada51d22429e29c00d06099513">alu_edt</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t pattern, uint8_t plen, uint16_t src)</td></tr>
 <tr class="memdesc:aba98f1ada51d22429e29c00d06099513"><td class="mdescLeft">&#160;</td><td class="mdescRight">EDT 0xDE Edit packed source into pattern at op1.  <br /></td></tr>
 <tr class="separator:aba98f1ada51d22429e29c00d06099513"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00ff8e43fb51118521be6b3ec3294a58" id="r_a00ff8e43fb51118521be6b3ec3294a58"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8h.html#a00ff8e43fb51118521be6b3ec3294a58">ge_ua_decimal</a> (uint8_t bo, uint8_t ro, int subtract, int one_digit, uint8_t *carry)</td></tr>
+<tr class="memdesc:a00ff8e43fb51118521be6b3ec3294a58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Arithmetic unit in decimal mode &ndash; one byte (two BCD digits), or one digit when CI50 restricts the unit to its low zone.  <br /></td></tr>
+<tr class="separator:a00ff8e43fb51118521be6b3ec3294a58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>GE-130 packed/signed decimal ALU helpers. </p>
@@ -655,6 +658,57 @@ Functions</h2></td></tr>
 <p>CC set (reflects sign/value of packed source). </p>
 
 <p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00804">804</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+
+</div>
+</div>
+<a id="a00ff8e43fb51118521be6b3ec3294a58" name="a00ff8e43fb51118521be6b3ec3294a58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00ff8e43fb51118521be6b3ec3294a58">&#9670;&#160;</a></span>ge_ua_decimal()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t ge_ua_decimal </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>bo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>ro</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>subtract</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>one_digit</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *&#160;</td>
+          <td class="paramname"><em>carry</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Arithmetic unit in decimal mode &ndash; one byte (two BCD digits), or one digit when CI50 restricts the unit to its low zone. </p>
+<p><code>carry</code> is URPE in and out. See the comment on the definition for why subtract shares the binary line. </p>
+
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00937">937</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>

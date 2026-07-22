@@ -129,7 +129,6 @@ Enumerations</h2></td></tr>
 <tr class="memitem:a42d9a95ea7a05c05beaf9e392ebabf91" id="r_a42d9a95ea7a05c05beaf9e392ebabf91"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91">ge_pont</a> { <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91a4ec22b1116a1df0fc809f021fa489aa9">PONT_NONE</a> = 0
 , <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91ad97604ac4b970e40fdb4e76bf0f9482e">PONT_2N</a>
 , <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91ae92cb4ead881c422fe2ee7cf9b4433a6">PONT_2P</a>
-, <a class="el" href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91a65c9cbf37ad92473f27b91d4f8bc914e">PONT_2H</a>
  }</td></tr>
 <tr class="memdesc:a42d9a95ea7a05c05beaf9e392ebabf91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backplane option connectors and the maintenance LAMPS switch.  <a href="ge_8h.html#a42d9a95ea7a05c05beaf9e392ebabf91">More...</a><br /></td></tr>
 <tr class="separator:a42d9a95ea7a05c05beaf9e392ebabf91"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -198,6 +197,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a3bb441b1eda673427bf43cba96c02623" id="r_a3bb441b1eda673427bf43cba96c02623"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#a3bb441b1eda673427bf43cba96c02623">ge_halted</a> (const struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="memdesc:a3bb441b1eda673427bf43cba96c02623"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is the CPU stopped?  <br /></td></tr>
 <tr class="separator:a3bb441b1eda673427bf43cba96c02623"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae611bf2d54fd4a479cac4d1563a0adce" id="r_ae611bf2d54fd4a479cac4d1563a0adce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ge_8h.html#ae611bf2d54fd4a479cac4d1563a0adce">ge_log_options</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="memdesc:ae611bf2d54fd4a479cac4d1563a0adce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report the strapped configuration and every level it produces (LOG_DEBUG).  <br /></td></tr>
+<tr class="separator:ae611bf2d54fd4a479cac4d1563a0adce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="acac8208fe9101dc6e4585600c95bf97f" name="acac8208fe9101dc6e4585600c95bf97f"></a>
@@ -304,7 +306,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00807">807</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00817">817</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -346,10 +348,9 @@ Functions</h2></td></tr>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91a4ec22b1116a1df0fc809f021fa489aa9" name="a42d9a95ea7a05c05beaf9e392ebabf91a4ec22b1116a1df0fc809f021fa489aa9"></a>PONT_NONE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91ad97604ac4b970e40fdb4e76bf0f9482e" name="a42d9a95ea7a05c05beaf9e392ebabf91ad97604ac4b970e40fdb4e76bf0f9482e"></a>PONT_2N&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91ae92cb4ead881c422fe2ee7cf9b4433a6" name="a42d9a95ea7a05c05beaf9e392ebabf91ae92cb4ead881c422fe2ee7cf9b4433a6"></a>PONT_2P&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a42d9a95ea7a05c05beaf9e392ebabf91a65c9cbf37ad92473f27b91d4f8bc914e" name="a42d9a95ea7a05c05beaf9e392ebabf91a65c9cbf37ad92473f27b91d4f8bc914e"></a>PONT_2H&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00134">134</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00139">139</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -397,7 +398,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00366">366</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00467">467</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -420,7 +421,7 @@ Functions</h2></td></tr>
 <p>Commit the future state. </p>
 <p>Transfers the results of the future state network in the various selectors. For now it's an ad hoc behaviour, not described in detail in the currently available docs. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00374">374</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00475">475</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -442,7 +443,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "clear" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00027">27</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00126">126</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -465,7 +466,7 @@ Functions</h2></td></tr>
 <p>The clock period name name. </p>
 <p>Returns the string destribing the clock period </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00233">233</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00334">334</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -487,7 +488,7 @@ Functions</h2></td></tr>
 
 <p>Deinitialize the emulator. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00360">360</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00461">461</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -519,7 +520,7 @@ Functions</h2></td></tr>
 
 <p>Enter execution at <code>entry</code>: seed PO and drop into the alpha (fetch) phase, bypassing the peripheral LOAD bootstrap (direct binary-load path). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00155">155</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00256">256</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -551,7 +552,7 @@ Functions</h2></td></tr>
 <p>ALTO is the hardware stop flip-flop (cpu fo.97/98): it gates RIA0, so while it is set the CPU is attributed no work cycles. The delay line keeps turning and the channels keep running &ndash; a halted GE-120 still drives its panel &ndash; so a front end that models the whole machine (the wasm console) should keep cycling and simply watch this; a batch front end that only cares about the program uses it to end the run.</p>
 <p>There used to be a separate <code>halted</code> field alongside it. It was redundant and disagreed with ALTO in both directions: set at init while ALTO was clear, cleared by <a class="el" href="ge_8h.html#a1f6200d4aba7d2a22bd703cf46fa9570" title="Emulate the press of the &quot;clear&quot; button in the console.">ge_clear()</a> while ALTO was set, and &ndash; the actual bug &ndash; left clear by every operator stop (ACOV/ACON, PAPA, PATE), so the CLI run loop kept spinning against a frozen CPU. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00864">864</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00874">874</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -595,7 +596,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00162">162</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00263">263</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -617,7 +618,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load 1" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00172">172</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00273">273</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -639,7 +640,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "load 2" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00189">189</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00290">290</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -684,7 +685,7 @@ Functions</h2></td></tr>
 <p>Load a flat image at <code>origin</code> (unified-format payload); origin-aware, not size-capped, primes the parity store. </p>
 <p>Returns 0 on success, -1 on range error. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00131">131</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00232">232</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -722,7 +723,29 @@ Functions</h2></td></tr>
 
 <p>Copy a program at the start of memory. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00093">93</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00194">194</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+
+</div>
+</div>
+<a id="ae611bf2d54fd4a479cac4d1563a0adce" name="ae611bf2d54fd4a479cac4d1563a0adce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae611bf2d54fd4a479cac4d1563a0adce">&#9670;&#160;</a></span>ge_log_options()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ge_log_options </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Report the strapped configuration and every level it produces (LOG_DEBUG). </p>
+
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00082">82</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -761,7 +784,7 @@ Functions</h2></td></tr>
 <p>Store a byte with generated odd parity + mark-written (for the hybrid ALU/SS write paths that write ge-&gt;mem[] directly). </p>
 <p>Keeps parity coherent so a later read doesn't trip a false MEM CHECK. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00119">119</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00220">220</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -781,7 +804,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00259">259</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00360">360</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -853,7 +876,7 @@ Functions</h2></td></tr>
 
 <p>Run all GE "mastri" clock periods until next clock cycle. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00349">349</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00450">450</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -875,7 +898,7 @@ Functions</h2></td></tr>
 
 <p>Run a single pulse (i.e. a single GE "mastri" clock periods) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00293">293</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00394">394</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -898,7 +921,7 @@ Functions</h2></td></tr>
 <p>Seed the eight change/segment-base registers (mem[240+2N]) to identity bases N&lt;&lt;12. </p>
 <p>Called by ge_clear; re-apply after a direct image load that may have overwritten the 0x00F0-0x00FF window. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00083">83</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00184">184</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>
@@ -920,7 +943,7 @@ Functions</h2></td></tr>
 
 <p>Emulate the press of the "start" button in the console. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00194">194</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8c_source.html#l00295">295</a> of file <a class="el" href="ge_8c_source.html">ge.c</a>.</p>
 
 </div>
 </div>

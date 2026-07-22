@@ -44,9 +44,9 @@
   <div class="headertitle"><div class="title">GE-120 micro-sequencer flow charts → gemu state map &amp; fidelity audit</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md62"></a> The CPU micro-sequences are documented as the <b>flow-chart foldout set drawing 14023130</b> (and the parallel <b>timing charts 14024137</b>) in <code>CPU/GE 120 CENTRAL PROCESSOR [7].pdf</code> — Volume 7, the schematics binder (its index, render-page 2, lists item 2 = Flow charts 14023130, item 3 = Timing charts 14024137). Each foldout is one "sequence" sheet; the boxes are CPU states (top-left label = the SO/SA state code in hex, e.g. <code>64 65</code>, <code>C8</code>, <code>80</code>), the right column is the command code(s) issued (<code>COxx</code>/<code>CIxx</code>/<code>CExx</code>/<code>CUxx</code>), and the bracketed text is the firing condition. gemu's <code><a class="el" href="msl-states_8c.html">msl-states.c</a></code> charts are a direct transcription of these (<code>struct <a class="el" href="structmsl__timing__chart.html" title="Timing chart row.">msl_timing_chart</a></code> = {clock, command, condition, additional}).</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md69"></a> The CPU micro-sequences are documented as the <b>flow-chart foldout set drawing 14023130</b> (and the parallel <b>timing charts 14024137</b>) in <code>CPU/GE 120 CENTRAL PROCESSOR [7].pdf</code> — Volume 7, the schematics binder (its index, render-page 2, lists item 2 = Flow charts 14023130, item 3 = Timing charts 14024137). Each foldout is one "sequence" sheet; the boxes are CPU states (top-left label = the SO/SA state code in hex, e.g. <code>64 65</code>, <code>C8</code>, <code>80</code>), the right column is the command code(s) issued (<code>COxx</code>/<code>CIxx</code>/<code>CExx</code>/<code>CUxx</code>), and the bracketed text is the firing condition. gemu's <code><a class="el" href="msl-states_8c.html">msl-states.c</a></code> charts are a direct transcription of these (<code>struct <a class="el" href="structmsl__timing__chart.html" title="Timing chart row.">msl_timing_chart</a></code> = {clock, command, condition, additional}).</p>
 <p>This file maps each flow-chart sheet to the gemu state(s) that implement it and records the verification status. It was built by rendering CPU[7] with <code>pdftoppm</code> (the OCR text layer does not contain the foldouts) and reading the title blocks + box labels. Render-page numbers are 1-based pages of CPU[7].</p>
-<h1><a class="anchor" id="autotoc_md63"></a>
+<h1><a class="anchor" id="autotoc_md70"></a>
 Sheet → state map</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -84,7 +84,7 @@ Sheet → state map</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">44‑45   </td><td class="markdownTableBodyNone">14023130…   </td><td class="markdownTableBodyNone">EXECUTIVE PHASE OP (data ops)   </td><td class="markdownTableBodyNone"><code>64/65</code> (<code>EXEC_SS</code> + <code>alu_*</code>)   </td><td class="markdownTableBodyNone">◑ hybrid (SS executes in beta at TO65 like every other <code>EXEC_*</code> one-shot; per-clock executive states p93-p120 not transcribed)   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md64"></a>
+<h1><a class="anchor" id="autotoc_md71"></a>
 Executive-phase timing-chart map (cp07 p80-136, dwg 14024137) — audit round 3</h1>
 <p>Complete sheet index, read from source (headers + exit boxes; fo. = pdf-page*2 -113/-112 for L/R, chained with no gaps fo.47-159). Peripheral chains p80-92: PER-PERI C8&gt;D8&gt;D9&gt;DA&gt;DB(&gt;D8 loop)&gt;DC&gt;CC, TPER-CPER CA&gt;A8&gt;A9&gt;AA&gt;AB&gt;B8&gt;EA&gt;EB, TPER data B9/B1/01/0C-0E/04-06/02-03/0A-0B. Instruction families p93-136, each entering from beta 64|65 (SS-conversion roadmap; * = converted to per-clock):</p>
 <table class="markdownTable">
@@ -111,7 +111,7 @@ Executive-phase timing-chart map (cp07 p80-136, dwg 14024137) — audit round 3<
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">UPK   </td><td class="markdownTableBodyNone">124-126   </td><td class="markdownTableBodyNone">64&gt;60-63&gt;{50-53}&gt;40-43 loop {SA00}    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">AB-SB-AD-SD-MVQ-CMQ (transcribed: docs/transcriptions/)   </td><td class="markdownTableBodyNone">126-128   </td><td class="markdownTableBodyNone">64&gt;60&gt;50&gt;40 loop    </td></tr>
+<td class="markdownTableBodyNone">AB-SB-AD-SD-MVQ-CMQ*   </td><td class="markdownTableBodyNone">126-128   </td><td class="markdownTableBodyNone">64&gt;60&gt;50&gt;40 loop (converted; fo.140-143, three condition cells corrected at the gates)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">XC-OC-NC*   </td><td class="markdownTableBodyNone">128-130   </td><td class="markdownTableBodyNone">64&gt;60&gt;50&gt;40 loop    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -129,27 +129,27 @@ Executive-phase timing-chart map (cp07 p80-136, dwg 14024137) — audit round 3<
 </table>
 <p>Exit-loop conditions on the 40-group sheets are the {(L1_2,1=1i)} terminal count (with overbar ambiguities noted in the round-3 survey); the X-bit pass encoding used for the register family generalizes only to 2-pass ops — the byte-loop families (MVC etc.) need the L1 terminal count, i.e. the CI41/CI42 counter-init decode, before conversion.</p>
 <p>(Render-pages 28/30 drawing-suffix letters were not legible at 300 DPI; the render-page is authoritative. Beyond render-45 the set continues with the remaining data-op sequences — PKS at render-46, etc.)</p>
-<h1><a class="anchor" id="autotoc_md65"></a>
+<h1><a class="anchor" id="autotoc_md72"></a>
 Fidelity audit (per state, evidence-based)</h1>
 <p><b>Legend:</b> ✅ verified match · ◑ functionally correct but not a per-clock transcription, or partially transcribed · ⚠️ flagged for recheck · ✗ absent.</p>
-<h2><a class="anchor" id="autotoc_md66"></a>
+<h2><a class="anchor" id="autotoc_md73"></a>
 Alpha family — ✅ faithful</h2>
 <ul>
 <li>**<code>e2/e3</code>, <code>e0</code>, <code>e4</code>, <code>e6</code>, <code>e5</code>, <code>e7</code>** (sheet 23): direct transcription; corroborated by the operand-fetch analysis and <code>tests/alpha.c</code>. The E4/E5 symmetry (<code>not_RO07</code> gating CI60) is the key fix that makes the modifier reach V1; verified.</li>
 <li>**<code>ec/ed</code> + <code>ee/ef</code>** (modified-address indexing): per-clock transcription of the timing tables CPU[7] <b>p64</b> (<code>ED-EC</code> fo.15, <code>EF-EE</code> fo.16): CO18 + CO97..CO90 force the change-register byte address <code>1111 nnn b</code> (= 240/241+2N) onto NO, MEM→RO reads it from the shadow RAM, and the UA byte-adder (CI69 low + CI68 high, carry through URPE, reset by CO49) accumulates <code>V2 + cr[N]</code> into V2 (CI02), with CI01 <code>{SA00}</code> copying to V1 for the first operand. The <code>&lt;SA00&gt;</code> diamond is SA <b>bit 0</b> itself: E6 routes operand 1 to <code>ED</code> (bit 0 set via its unconditional CU00), E7 routes operand 2 to <code>EC</code> (bit 0 cleared by CU10 = DI64A0). Every row is a documented CXXX command; 4 unit tests in <code>tests/exec.c</code> + the deck + <code>cc</code> stay green. Residuals: the DI13/DI64/DI65/DI66/DI67 gate equations are derived from the state codes (names confirmed in the CPU[6] signal index, printed equations not located), and CI68 masks BO bits 15-12 from the high-byte add (fetch residue in the operand register's top quartet; hardware exclusion mechanism not yet found — recheck the UA pages).</li>
 <li>**<code>00</code> DISPLAY** (sheet 24): verified row-by-row — every CO/CI command and console-selector (<code>AFxx</code>) condition matches. One scan artifact: the chart's <code>V3 → BO</code> row reads <code>[AF36]</code>, which is <code>[AF30]</code> (= <code>RS_V3</code>); gemu uses <code>AF30</code>.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md67"></a>
+<h2><a class="anchor" id="autotoc_md74"></a>
 Forcing — ◑/⚠️</h2>
 <ul>
 <li>**<code>08</code> FORCING** (sheet 25): the command set (<code>CO11/CO41/CO01</code>, <code>CO30/CO31</code>, <code>CI20/CI33</code>, <code>CI04/02/05/01/00/08/07/03/06/09</code>, <code>CI70..CI76</code> set-FIxx, <code>CU00..CU17</code> from <code>RO</code>) matches the chart structure and <code>tests/forcing.c</code> passes. ⚠️ The exact firing brackets on three rows (the <code>Mem→RO</code>/<code>AM→RO</code> forcing reads: <code>CO30</code>, <code>CO31</code>, <code>CI20</code>/<code>CI33</code>) could not be aligned with confidence at 240–300 DPI — <code>CO30 [AF51]</code>/<code>CO31 [AF41]</code> in gemu vs. what looks like <code>CO30 [—]</code>/<code>CO31 [AF51]</code> on the foldout. <b>Recheck against the physical foldout or a higher-quality scan before changing</b> — <code>forcing.c</code> currently passes, so the live behaviour is constrained.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md68"></a>
+<h2><a class="anchor" id="autotoc_md75"></a>
 Beta execution — ◑ manual-sheet dispatcher; datapath transcription ongoing</h2>
 <p>The old interleaved <code>state_64_65[]</code> has been replaced by a sparse timing-chart matrix. Each instruction family selects a separate chart bearing its CPU[7] sheet reference (<code>beta-control</code>, <code>beta-jrt</code>, <code>beta-la</code>, <code>beta-lpsr</code>, <code>beta-register</code>, <code>beta-immediate</code>, <code>beta-per</code>, or <code>beta-ss</code>). Repeated rows are deliberately kept in each array so the source can be reviewed directly beside the printed sheet. <code>tests/msl_dispatch.c</code> locks the decode mapping and gives undocumented codes a visible compatibility chart rather than an accidental fall-through through unrelated rows.</p>
 <p>Register and logical-immediate operations traverse the documented executive state pairs. NI/XI/OI/TM use <code>64|65 → 60|62 → 50|52 → 40|42 → E2|E3</code>; LR/STR and MVI take their documented <code>50|52</code> bypasses. State-path tests lock these routes.</p>
 <p>The logical UA combinations are now implemented from sheets 41–44: <code>CI45+CI46</code> selects AND, <code>CI45+CI47</code> XOR, and all three select OR; <code>CI68</code> admits the result through NI before the ordinary memory-write cycle. MVI uses the same knots and memory cycle without a UA operation. The remaining executive fidelity gap is register-address generation plus the word-arithmetic gates for AMR/SMR/CMR. Their terminal commits remain explicit. SS/decimal sheets still commit in beta pending their multi-cycle transcription.</p>
-<h2><a class="anchor" id="autotoc_md69"></a>
+<h2><a class="anchor" id="autotoc_md76"></a>
 PER‑PERI preliminary phase — ✅ routing / ◑ status decode</h2>
 <ul>
 <li>**<code>64/65</code>→<code>c8</code>→<code>d8</code>→<code>d9</code>→<code>da</code>→<code>db</code>→⟨!FA05·!FA04⟩→<code>dc</code>→<code>cc</code>** and **<code>80</code>→⟨AINI⟩→<code>c8</code> | <code>e2/e3</code>** (sheet 32): the full state graph and its diamonds are verified by tracing the <code>CUxx</code> future-state bit arithmetic (e.g. <code>0x80</code>+CU06+CU03→<code>0xC8</code>; <code>0x64</code>+CU07+CU15+CU03+CU12+CU10→<code>0xC8</code>; <code>0xC8</code>+CU04→<code>0xD8</code>; <code>0xDC</code>+CU14→<code>0xCC</code>). <code>tests/initial-load.c</code> locks the per-state register values along this path.</li>
@@ -162,22 +162,22 @@ PER‑PERI preliminary phase — ✅ routing / ◑ status decode</h2>
 <li>◑ The CC exit fork ⟨FA05⟩/⟨FA00⟩/⟨DU96⟩/⟨DU95⟩ → alpha / <code>CA</code> (TPER-CPER) / <code>EA</code> (SPER) is implemented via <code>CUxx</code> logic on the same signals, but the destinations depend on <code>DU95</code>/<code>DU96</code>/<code>PCOV</code>, and **<code>PCOV</code> is stubbed to 1** (<code><a class="el" href="signals_8h.html" title="Signals.">signals.h</a></code>) — so the EPER/SPER branch is only as faithful as the (unmodelled) channel peripheral status. <b>This is the one real residual gap in the cluster.</b></li>
 <li>Two earlier flagged "discrepancies" were checked and are <b>not</b> bugs: <code>state_80</code> <code>CO96</code> uses <code>!FUL3</code> (matches the observed LOAD-2 → connector-3 name <code>0x00</code>, locked by <code>tests/initial-load.c load_2_button</code>); <code>c8</code> <code>Mem→RO</code> uses <code>not_AINI</code> (the PER path reads the descriptor; the chart bracket <code>[AINI]</code> is read as <code>[‾AINI]</code> with the overbar lost in the scan); and the <code>db</code> diamond proceeds to <code>DC</code> on <code>!FA05·!FA04</code> TRUE (the operationally-correct busy-wait-exit polarity).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md70"></a>
+<h2><a class="anchor" id="autotoc_md77"></a>
 TPER‑CPER &amp; data transfer — ◑ partial (peripheral)</h2>
 <ul>
 <li>**<code>ca</code>, <code>a8</code>, <code>a9</code>, <code>aa</code>, <code>ab</code>** (sheet 33) and **<code>b8</code>, <code>b9</code>, <code>ea</code>, <code>eb</code>** (sheet 34): state coverage confirmed against the box labels. These carry in-code <code>TODO</code>/"missing manual page" notes and load-bearing stubs (<code>DI82A</code>/<code>DI83A</code> return constants; <code>RENIA</code>/<code>RILIA</code>/<code>PCOV</code> hardcoded), so they are the least cycle-faithful. They are constrained by <code>tests/initial-load.c</code> and the deck bootstrap, so changes are risky — recheck against the physical foldouts before editing.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md71"></a>
+<h2><a class="anchor" id="autotoc_md78"></a>
 Interruption + LPSR — ✅ implemented this session</h2>
 <ul>
 <li>Sheets 26/27. The <code>INTE = RINT·/MASC</code> branch in <code>e2/e3</code> already routed to <code>0xF0</code> (<code>CU04</code>), but <code>F0</code> and the chain were empty slots. Added states <code>F0→D2→D3→D0→D1→C2→C3→C0→C1→alpha</code> (hybrid <code>INT_*</code> commands): F0–D1 <b>save</b> the PSR (status byte <code>b5←FA04,b4←FA05,b0←FA06</code>; then <code>0</code>; then PO hi/lo) to the fixed store <b>0x0300</b>; C2–C1 are the <b>LPSR</b> load of the new PSR from <b>0x0304</b>, vectoring to its PO (the handler) and restoring <code>FI04/05/06</code>. <code>RINT</code> is acknowledged (cleared) in F0. Validated by <code>tests/interrupt.c</code> (<code>save_and_vector</code>, <code>masked_does_not_divert</code>). The path is dormant for the deck/other tests (<code>RINT</code> is never asserted there).</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md72"></a>
+<h1><a class="anchor" id="autotoc_md79"></a>
 Still not implemented</h1>
 <ul>
 <li><b>LPSR as an instruction</b> (<code>0x9d</code>): the interrupt <em>uses</em> the LPSR load states (C2–C1), but the <code>LPSR 0x9d</code> opcode is recognized and not decoded to enter them from beta.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md73"></a>
+<h1><a class="anchor" id="autotoc_md80"></a>
 Authoritative per-clock timing tables — CPU[7] pages 61+</h1>
 <p>The flow-chart <b>foldouts</b> (sheets above, render-pg ~23-46) give the state graph and register transfers but are low-contrast and hard to read precisely. CPU[7] <b>pages 61 onward</b> carry the per-state <b>timing tables</b> — one (or two) per page, <b>rotated 90°</b> but with <b>clean OCR</b> — and these are the authoritative per-clock source that <code>struct <a class="el" href="structmsl__timing__chart.html" title="Timing chart row.">msl_timing_chart</a></code> mirrors directly. Columns:</p>
 <p>| Clock | Comando (command) | Equazione (firing equation) | Pin (board/loc) | Evento–Comment (register transfer) |</p>
@@ -194,7 +194,7 @@ Authoritative per-clock timing tables — CPU[7] pages 61+</h1>
 <li>**<code>CO18</code>** ("forcing in NO21"): assigned the enum constant to the forcings <em>value</em> instead of setting <code>force_mode</code>, so every CO18+CO9x NO-address build in the machine was inert. Fixed; the full suite (deck bootstrap, PER/PERI, channel transfers) stays green with the forcing active.</li>
 <li><b>Beta phase structure</b> (audit round-2, cp07 p70-p79 read from source): the 64|65 state is SEVEN per-instruction-family timing sheets with different exits — jump/control family (JS1-JS2-JIE-JC-NOP2-HLT-INS-ENS-LON-LOFF-LOLL) -&gt; <code>E2</code> via <code>CU01/CU07 = CM01A0 (DE00A0)</code>; LPSR -&gt; <code>C2</code>; JRT and LA -&gt; <code>EA</code>; LR-AMR-SMR-CMR-STR and NI-XI-OI-TM -&gt; <code>60+62</code> (the per-clock executive states, still untranscribed); PER-PERI -&gt; <code>C8</code>. <code>CU10/CU12 = DI06A0</code> are unconditional in beta on every sheet. The CU01 combiner (cp06 ch.219-1) is an 8-input wired-OR (CM01A, CM02A, DE53A, ED35A, ED10A, ED84A, ED66A, ED50A). gemu's one-shot hybrid returns every non-PER op to <code>E2</code> directly (the <code>not_per_peri</code> CU01 gate) — the correct abstraction while 60/62/EA/C2 executive recipes are not modeled. <code>DE00A = NAND(DO011, DI062)</code> verified on cp06 ch.248-9; <code>CI38</code>'s real home is E6/E7 TO80 with gate <code>DE51A = NAND(DO011, DI201)</code> (ch.261-8) — no CI38 row exists on any beta sheet. <b>Caveat:</b> the OCR renders <code>CO1x</code> as <code>CO1O</code> (letter O), so plain token-diffs miss CO-family commands — cross-check the rendered image when auditing E5/E6/E7 and the beta/peripheral tables. <b>Next:</b> walk pages 61+ row-by-row for the remaining states (E5/E6/E7, beta jumps/data, forcing 08, the peripheral cluster), image-confirming each like CI81.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md74"></a>
+<h1><a class="anchor" id="autotoc_md81"></a>
 How to re-verify a sheet</h1>
 <div class="fragment"><div class="line">P=&quot;CPU/GE 120 CENTRAL PROCESSOR [7].pdf&quot;</div>
 <div class="line">pdftoppm -png -r 300 -f &lt;render-pg&gt; -l &lt;render-pg&gt; &quot;$P&quot; sheet</div>
