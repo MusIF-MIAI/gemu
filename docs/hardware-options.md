@@ -305,13 +305,17 @@ Identify the spares by laying their bridges over the p254 hole diagram.
 
 **The machine has 2x MEM470 mounted**, and cp04 s.8.3's build table puts two
 boxes only on the 24K and 32K builds (one MEM470 = one 128x128 matrix =
-16K positions; 8/12/16K ship with a single box).  So the machine is
-physically a 24K-or-32K build whose ch.080 straps bound it to 16K: the
-second MEM470 -- added in the upgrade -- has never been addressable.  To pin
-24K vs 32K: backplane row Q, read-amplifier option positions -- Q28/Q29 are
-populated on 24K and 32K builds, **Q30/Q31 only on 32K**.  The strap fix is
-F05 -> PONT2P for a 32K build (giving the printed N,P row) or E05 -> PONT2P,
-F05 -> PONT2N for 24K (P,N row).
+16K positions; 8/12/16K ship with a single box).  The 24K-vs-32K fork is
+closed by the read-amplifier population rule (cp01 PDF p308: Q28/Q29 on 24K
+and 32K, **Q30/Q31 only on 32K**) read against the machine's own layout
+sheet: row QR carries EIGHT identical `02J` AMPL2A boards at positions
+24-31 -- Q30 and Q31 included -- with the column calibration verified by
+TEME2A `70Y` at 20 and GEMA2A `27D` at 13 matching cp08's factory row Q
+exactly.  **The machine is a 32K physical build**, bounded to 16K by the
+strap: one PONT2P in F05 (bridge at hole 2 instead of hole 20, dwg
+015 433 91 p254) restores the printed {N,P} = 32K row.  The INIB2A inhibit
+boards are the `29W` cards in row ST (cod 0610029); cp01 p323 s.2.3.17.3
+discriminates them from AMPL2A at sight.
 
 ### The physical card (photographed 2026-07-21)
 
