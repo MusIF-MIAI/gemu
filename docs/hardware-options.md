@@ -249,16 +249,38 @@ where a new-style N went in instead: the single wrong card that leaves the
 machine at 16K of its intended 32K.  Under this story the staple counts are
 revision differences only (old N = 1 staple, old P = 5, new N = 4).
 
-**Buzz-out predictions** (connector pins; ch.309 notes pin 1 of the high
-connector is ground, the straps' common):
+### THE CATALOG SHEET (found 2026-07-22) -- dwg 015 433 91, cp10F
 
-    18034 spare  (1 staple)  -> pins 1-4 short  (old-revision PONT2N)
-    18036 spare  (5 staples) -> pins 1-3 short  (PONT2P), maybe extra commons
-    in-machine   (4 staples) -> pins 1-4 short  (new-revision PONT2N)
+The strap cards are documented in `GE 120 CENTRAL PROCESSOR [10F].pdf`,
+drawing **015 433 91 "PIASTRINE ST S.C.L.1 / PONT A,B,C,D,E,0F,0G,0H,0L,
+2,4,8,0M,2N,2P,2Q"**:
 
-Identical groups for the two N predictions and a 4->3 difference on the P
-confirms both the {1,4}/{1,3} derivation and the upgrade history; anything
-else falsifies them.
+  * **PDF p254 (drawing pag.1): TABELLA PONTICELLI** -- bridges by hole
+    number, with the hole-numbering diagram (holes 1-24 / 25-46 in two
+    columns).  PONT 2N = holes {3, 20, 21, 25}; PONT 2P = holes
+    {2, 3, 21, 25}.  Four bridges each; the difference is ONE bridge,
+    hole 20 (N) vs hole 2 (P).  PONT B = hole {25} alone; PONT 0F and
+    PONT 2Q have five; 2Q additionally carries a RED PAINT DOT on its
+    cover per the sheet's note.
+  * **PDF p253 (drawing pag.2): Rete equivalente** -- the connector-pin
+    networks: **PONT 2N shorts pins {1,2,4,7} to 17; PONT 2P shorts
+    {1,2,3,7} to 17.**  This is the catalog confirmation of the derived
+    mechanism: the N-vs-P difference is exactly pin 4 vs pin 3; pins 2, 7
+    and the bus 17 are common to both, invisible to the option tables
+    because nothing in E03..F05 hangs on them.
+
+Consequences: the in-machine 4-bridge cards match the catalog 2N recipe in
+COUNT and in pattern (holes 20-21 = the adjacent pair, 3 and 25 the two
+singles), which retires the {1,3,4}-union hypothesis -- a doctored card
+would not match the 4-bridge recipe.  The 5-bridge 18036 spares are NOT
+PONT2P (a 2P has four): at five bridges they are PONT 0F or PONT 2Q
+candidates (check for the red dot), and the 1-bridge 18034 spare matches
+PONT B, not an old-revision N.  The pre-upgrade-was-467 story loses its
+card evidence accordingly.
+
+**Buzz-out, now catalog-grounded** (one beep decides): pin 1 <-> 4 = PONT2N,
+pin 1 <-> 3 = PONT2P; the full beep groups are {1,2,4,7,17} vs {1,2,3,7,17}.
+Identify the spares by laying their bridges over the p254 hole diagram.
 
 **The machine has 2x MEM470 mounted**, and cp04 s.8.3's build table puts two
 boxes only on the 24K and 32K builds (one MEM470 = one 128x128 matrix =
