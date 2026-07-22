@@ -272,11 +272,32 @@ drawing **015 433 91 "PIASTRINE ST S.C.L.1 / PONT A,B,C,D,E,0F,0G,0H,0L,
 Consequences: the in-machine 4-bridge cards match the catalog 2N recipe in
 COUNT and in pattern (holes 20-21 = the adjacent pair, 3 and 25 the two
 singles), which retires the {1,3,4}-union hypothesis -- a doctored card
-would not match the 4-bridge recipe.  The 5-bridge 18036 spares are NOT
-PONT2P (a 2P has four): at five bridges they are PONT 0F or PONT 2Q
-candidates (check for the red dot), and the 1-bridge 18034 spare matches
-PONT B, not an old-revision N.  The pre-upgrade-was-467 story loses its
-card evidence accordingly.
+would not match the 4-bridge recipe.
+
+### The old configuration decoded (2026-07-22): 2x PONT 2 + 2x PONT B
+
+Field-confirmed: before the 4x PONT2N, the four option sockets held two
+PONT 2 and two PONT B.  Their catalog networks (dwg 015 433 91 p253):
+
+    PONT B:  7-17 only                    PONT 2:  {1,2}-8  3-7  9-16  {4,15}-17
+
+Neither connects pin 1 (ground) to pin 3 or pin 4, the option sockets'
+signal pins -- so IN THESE SOCKETS both cards are electrically EMPTY:
+placeholder/dust-cover cards that tie commons.  The old configuration was
+therefore, placement-independently, the all-empty decode: FEL06=FEL16=1
+(6 usec timing), FUL4G=1 (F04 empty: MAX ops enabled -- an off-table CPU
+row), INES3=INES4=1 (interrupts on both connectors), (VAMA2,VEMB6,VAMC2) =
+(1,1,1) = the 8K row.  The machine ran in base mode: 6 usec, 8K,
+interrupts everywhere.
+
+And the spares accounting closes exactly: the two 5-staple 18036 spares
+match PONT 2 (5 normali {1,8,20,33,46}; the "speciale 4B-5A" is the sixth
+entry, evidently not a staple), the two 1-staple 18034 spares match PONT B
+(hole 25 alone).  Four spares = the four pulled placeholders.  No PONT2P
+ever existed on this machine, and the upgrade was ONE event: fitting the
+four PONT2Ns -- 2 usec/MAX/connector-3 achieved, 32K intended but landed
+on the off-table N+N = 16K.  Sight check: a 18036's staples should sit at
+holes 1/8/20/33/46 of the p254 diagram; the 18034's single staple at 25.
 
 **Buzz-out, now catalog-grounded** (one beep decides): pin 1 <-> 4 = PONT2N,
 pin 1 <-> 3 = PONT2P; the full beep groups are {1,2,4,7,17} vs {1,2,3,7,17}.
