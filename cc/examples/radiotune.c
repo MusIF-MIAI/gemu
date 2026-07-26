@@ -1,22 +1,22 @@
 /*
- * radiotune.c — OPER. CALL lamp radio music, evolved from the bench
- * favourite (the accelerating sleep(t) chirp).
+ * radiotune.c — OPER. CALL lamp radio music: the frequency sweep is the
+ * lead voice.
  *
- * The lamp drive is the transmitter: every LON/LOFF edge is what the
- * nearby AM radio picks up, so pitch = toggle rate and timbre = duty.
+ * The lamp drive is the transmitter (pitch = toggle rate, timbre =
+ * duty), and every "note" is a full accelerating glissando -- the bench
+ * favourite sleep(t) chirp, promoted and mirrored:
  *
- * Two detuned chirp oscillators share the lamp:
- *   voice A sweeps the ON  time  (the melody chirp),
- *   voice B sweeps the OFF time  (duty colour + sub-octave beating —
- *   as A and B drift against each other the duty cycle sweeps through
- *   every ratio, and their different ceilings make wide harmonics).
+ *   falling sweep: period 0 -> d, step growing 1,2,3...   (pitch dives)
+ *   rising  sweep: period d -> 0, same acceleration       (pitch climbs)
+ *   trill:         rapid alternation of two periods       (ornament)
  *
- * Add-only LFOs on top (no mul/div in the hot path — gec compiles
- * those to slow helper loops that would blunt the fast chirp start):
- *   d1: register LFO, re-tunes voice A's ceiling every beat (5-cycle)
- *   d2: phrase LFO, every 8th beat fires an accent — a burst of
- *       maximum-rate toggles (high stab) — then a 400 ms breath.
- *   voice B's ceiling drifts 55..120 on its own wrap: slow beating.
+ * Sweep-rate LFOs (all add-only; gec's mul/div/shift helpers would
+ * blunt the fast end of the glide) reshape every sweep:
+ *   m: mode pattern, 5-cycle  (fall, rise, fall, trill, rise)
+ *   d: depth  60..240 by 30, 7-cycle -- sweeps get deeper, then reset
+ *   c: duty colour 0..48 by 6, 9-cycle -- off-time offset (timbre)
+ * 5 x 7 x 9 = 315 sweeps (~10+ minutes) before the piece repeats.
+ * Every 8th sweep: a max-rate stab and a 500 ms breath (phrasing).
  *
  * Build:  gec radiotune.c --bootge -o radiotune.cap
  * Feed:   arm radiotune.cap ; CLEAR -> LOAD1 -> LOAD -> START
@@ -24,74 +24,67 @@
 
 int main()
 {
-    int a;          /* voice A phase: lamp ON  ms */
-    int astep;
-    int areg;       /* A ceiling = melodic register */
-    int b;          /* voice B phase: lamp OFF ms */
-    int bstep;
-    int breg;
-    int d1;         /* LFO 1: register selector, wraps at 5  */
-    int d2;         /* LFO 2: phrase counter,   wraps at 8  */
-    int k;
+    int p;          /* current period (ms)                  */
+    int s;          /* sweep step, accelerating             */
+    int d;          /* LFO: sweep depth (deepest period)    */
+    int c;          /* LFO: duty colour (extra OFF ms)      */
+    int m;          /* LFO: sweep-mode pattern              */
+    int ph;         /* phrase counter                       */
     int i;
 
-    a = 0; astep = 1; areg = 100;
-    b = 0; bstep = 1; breg = 73;
-    d1 = 0; d2 = 0;
+    d = 60; c = 0; m = 0; ph = 0;
 
     while (1) {
-        lon();
-        sleep(a);
-        loff();
-        sleep(b);
-
-        /* voice A: the accelerating chirp (pitch) */
-        a = a + astep;
-        if (a >= areg) {
-            a = 0;
-            astep = 0;
-
-            /* end of beat: run the LFOs (adds only) */
-            d1 = d1 + 1;
-            if (d1 >= 5) {
-                d1 = 0;
+        if (m == 3) {
+            /* ornament: trill between a high and a low period */
+            i = 0;
+            while (i < 20) {
+                lon(); sleep(8);  loff(); sleep(8 + c);
+                lon(); sleep(24); loff(); sleep(24 + c);
+                i = i + 1;
             }
-            /* register LFO: areg = 40 + 30*d1, by repeated add */
-            areg = 40;
-            k = 0;
-            while (k < d1) {
-                areg = areg + 30;
-                k = k + 1;
-            }
-
-            d2 = d2 + 1;
-            if (d2 >= 8) {
-                d2 = 0;
-                /* phrase accent: max-rate stab, then a breath */
-                i = 0;
-                while (i < 60) {
-                    lon();
-                    loff();
-                    i = i + 1;
-                }
-                loff();
-                sleep(400);
+        } else if (m == 1 || m == 4) {
+            /* rising sweep: period d -> 0, accelerating climb */
+            p = d; s = 1;
+            while (p > 0) {
+                lon(); sleep(p); loff(); sleep(p + c);
+                p = p - s;
+                s = s + 1;
             }
         } else {
-            astep = astep + 1;
+            /* falling sweep: period 0 -> d (the classic dive) */
+            p = 0; s = 1;
+            while (p < d) {
+                lon(); sleep(p); loff(); sleep(p + c);
+                p = p + s;
+                s = s + 1;
+            }
         }
 
-        /* voice B: detuned chirp on the OFF time (duty + beating) */
-        b = b + bstep;
-        if (b >= breg) {
-            b = 0;
-            bstep = 0;
-            breg = breg + 18;      /* slow drift against voice A */
-            if (breg >= 120) {
-                breg = 55;
+        /* sweep done: the LFOs reshape the next one */
+        m = m + 1;
+        if (m >= 5) {
+            m = 0;
+        }
+        d = d + 30;
+        if (d > 240) {
+            d = 60;
+        }
+        c = c + 6;
+        if (c > 48) {
+            c = 0;
+        }
+        ph = ph + 1;
+        if (ph >= 8) {
+            ph = 0;
+            i = 0;
+            while (i < 60) {   /* accent: max-rate stab */
+                lon();
+                loff();
+                i = i + 1;
             }
-        } else {
-            bstep = bstep + 1;
+            loff();
+            sleep(500);        /* breath */
         }
     }
     return 0;
