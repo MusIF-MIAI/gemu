@@ -139,3 +139,21 @@ gasm: wrote 74 bytes to hello.bin (origin 0x0000)
 `PER`, `PERI`, `RDC` take a generic `aux, addr` pair; `LPSR` and `JRT` have
 assigned opcodes but **no decode path** in the current emulator (they assemble
 but will not execute end-to-end). These are flagged in ISA.md Appendix A.
+
+## Boot cards and boot decks (the real machine's card reader)
+
+Two output modes target the GE-120's IPL via the rpi-pico-card-reader
+emulator:
+
+- `gasm --card -o prog.bin prog.s` — ONE IPL boot card: the program must
+  ORG at 0x0000 and fit 40 bytes (80 hex columns); the IPL nibble-packs
+  it to 0x0000 and executes it there. Feed with `arm prog.bin@0`.
+
+- `gasm --boot -o prog.cap prog.s` — a complete boot DECK: gasm assembles
+  the program, then links `boot.s` (the boot-card template in this
+  directory) with DEST/DONE patched to the program's origin and size, and
+  emits a ready `.cap`: the boot card first (hex columns), the program as
+  raw 80-byte COLBIN body cards after it. The boot card pulls the body
+  back-to-back to the origin and jumps there. Feed with `arm prog.cap`.
+  The program should ORG at 0x0100 or above (the boot card runs below
+  0x0026).

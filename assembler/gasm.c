@@ -616,45 +616,17 @@ static int parse_line(char *s, char **label, char **op, char **args)
     return 1;
 }
 
-int main(int argc, char **argv)
+/* ------------------------------------------------------------------ */
+/* Assembly driver: slurp / pass 1 / pass 2, reusable across units     */
+/* (--boot assembles the program, then the boot.s template).           */
+/* ------------------------------------------------------------------ */
+
+static int asm_slurp(const char *path)
 {
-    const char *inpath = NULL, *outpath = "a.bin", *listpath = NULL;
-    long org = 0x0000;
-    int raw_out = 0;   /* --raw: emit a headerless flat image (old behaviour) */
-    int card_out = 0;  /* --card: one IPL boot card (raw, ORG 0, <=40 bytes) */
-
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) outpath = argv[++i];
-        else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) listpath = argv[++i];
-        else if (strcmp(argv[i], "--org") == 0 && i + 1 < argc) org = strtol(argv[++i], NULL, 0);
-        else if (strcmp(argv[i], "--raw") == 0) raw_out = 1;
-        else if (strcmp(argv[i], "--card") == 0) card_out = raw_out = 1;
-        else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-            printf("Usage: gasm [-o out.bin] [-l listing.txt] [--org 0xNNNN] "
-                   "[--raw|--card] input.s\n"
-                   "  Default output: unified format (GE12 header + image).\n"
-                   "  --raw          : headerless flat image.\n"
-                   "  --card         : IPL boot-card image (implies --raw):\n"
-                   "                   must ORG at 0x0000, 40 bytes max (one\n"
-                   "                   80-column hex card -- the IPL packs it\n"
-                   "                   to 0x0000 and executes it there). Feed\n"
-                   "                   with  arm <file>.bin@0  on the reader\n"
-                   "                   emulator.\n"
-                   "  ENTRY <expr>   : source directive sets the entry point\n"
-                   "                   (default = load origin).\n");
-            return 0;
-        } else if (argv[i][0] == '-') {
-            fprintf(stderr, "gasm: unknown option '%s'\n", argv[i]);
-            return 2;
-        } else inpath = argv[i];
-    }
-    if (!inpath) { fprintf(stderr, "gasm: no input file\n"); return 2; }
-
-    FILE *fp = fopen(inpath, "r");
-    if (!fp) { fprintf(stderr, "gasm: cannot open '%s'\n", inpath); return 2; }
-    g_file = inpath;
-
-    /* slurp lines */
+    FILE *fp = fopen(path, "r");
+    if (!fp)
+        return -1;
+    g_file = path;
     char raw[1024];
     int ln = 0;
     while (fgets(raw, sizeof(raw), fp)) {
@@ -666,8 +638,278 @@ int main(int argc, char **argv)
         nlines++;
     }
     fclose(fp);
+    return 0;
+}
 
-    /* ---- Pass 1: build symbol table, compute addresses ---- */
+static void asm_reset(void)
+{
+    for (int i = 0; i < nlines; i++)
+        free(lines[i].text);
+    nlines  = 0;
+    nsyms   = 0;
+    g_errors = 0;
+    g_entry = -1;
+    img_min = -1;
+    img_max = 0;
+    memset(image, 0, sizeof(image));
+}
+
+static void sym_override(const char *name, long v)
+{
+    struct sym *s = sym_find(name);
+    if (!s) {
+        s = &syms[nsyms++];
+        strncpy(s->name, name, 63);
+        s->name[63] = 0;
+    }
+    s->value = v;
+    s->defined = 1;
+}
+
+static void asm_pass1(long org);
+static void asm_pass2(long org);
+
+/* ------------------------------------------------------------------ */
+/* .cap deck writer (--boot): boot card hex-encoded + body in COLBIN.  */
+/* Column encodings are the exact inverses of the reader transcoder    */
+/* (gemu transcode.c / rpi-pico-card-reader transcode.c).              */
+/* ------------------------------------------------------------------ */
+
+static uint16_t cap_hexcol(unsigned n)   /* IPL hex: nibble = row sum */
+{
+    if (!n)
+        return 0;
+    if (n <= 9)
+        return (uint16_t)(1u << n);
+    return (uint16_t)((1u << 9) | (1u << (n - 9)));
+}
+
+static uint16_t cap_colbin(uint8_t b)    /* by-pass: byte bit i -> row B2R[i] */
+{
+    static const int b2r[8] = {9, 8, 7, 6, 3, 2, 1, 0};
+    uint16_t col = 0;
+    for (int i = 0; i < 8; i++)
+        if (b & (1u << i))
+            col |= (uint16_t)(1u << b2r[i]);
+    return col;
+}
+
+static void cap_write_card(FILE *f, int num, const uint16_t *cols)
+{
+    fprintf(f, "Card n. %d\n", num);
+    for (int j = 0; j < 80; j++)
+        fprintf(f, "%04x%c", cols[j], j == 79 ? '\n' : ' ');
+}
+
+int main(int argc, char **argv)
+{
+    const char *inpath = NULL, *outpath = "a.bin", *listpath = NULL;
+    long org = 0x0000;
+    int raw_out = 0;   /* --raw: emit a headerless flat image (old behaviour) */
+    int card_out = 0;  /* --card: one IPL boot card (raw, ORG 0, <=40 bytes) */
+    int boot_out = 0;  /* --boot: link with boot.s, emit a .cap deck         */
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) outpath = argv[++i];
+        else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) listpath = argv[++i];
+        else if (strcmp(argv[i], "--org") == 0 && i + 1 < argc) org = strtol(argv[++i], NULL, 0);
+        else if (strcmp(argv[i], "--raw") == 0) raw_out = 1;
+        else if (strcmp(argv[i], "--card") == 0) card_out = raw_out = 1;
+        else if (strcmp(argv[i], "--boot") == 0) boot_out = 1;
+        else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            printf("Usage: gasm [-o out.bin] [-l listing.txt] [--org 0xNNNN] "
+                   "[--raw|--card|--boot] input.s\n"
+                   "  Default output: unified format (GE12 header + image).\n"
+                   "  --raw          : headerless flat image.\n"
+                   "  --card         : IPL boot-card image (implies --raw):\n"
+                   "                   must ORG at 0x0000, 40 bytes max (one\n"
+                   "                   80-column hex card -- the IPL packs it\n"
+                   "                   to 0x0000 and executes it there). Feed\n"
+                   "                   with  arm <file>.bin@0  on the reader\n"
+                   "                   emulator.\n"
+                   "  --boot         : link with the boot.s template: emit a\n"
+                   "                   ready .cap deck -- the boot card (with\n"
+                   "                   DEST/DONE patched to the program) plus\n"
+                   "                   the program as raw 80-byte body cards.\n"
+                   "                   Feed with  arm <file>.cap .\n"
+                   "  ENTRY <expr>   : source directive sets the entry point\n"
+                   "                   (default = load origin).\n");
+            return 0;
+        } else if (argv[i][0] == '-') {
+            fprintf(stderr, "gasm: unknown option '%s'\n", argv[i]);
+            return 2;
+        } else inpath = argv[i];
+    }
+    if (!inpath) { fprintf(stderr, "gasm: no input file\n"); return 2; }
+    if (boot_out && (card_out || raw_out)) {
+        fprintf(stderr, "gasm: --boot conflicts with --raw/--card\n");
+        return 2;
+    }
+
+    if (asm_slurp(inpath)) {
+        fprintf(stderr, "gasm: cannot open '%s'\n", inpath);
+        return 2;
+    }
+    asm_pass1(org);
+    asm_pass2(org);
+
+    if (g_errors) {
+        fprintf(stderr, "gasm: %d error(s); no output written\n", g_errors);
+        return 1;
+    }
+
+    if (img_min < 0) { fprintf(stderr, "gasm: empty program\n"); return 1; }
+
+    /* Warn if the image overlaps the change-register window 0x00F0-0x00FF. */
+    if (img_min < 0x100 && img_max > 0xF0)
+        fprintf(stderr, "gasm: warning: image spans 0x00F0-0x00FF "
+                        "(change-register area); it may clobber segment bases\n");
+
+    if (boot_out) {
+        /* ---- Stage 2: link with the boot.s template ------------------ */
+        static uint8_t prog_img[65536];
+        long porg = img_min, plen = img_max - img_min;
+        memcpy(prog_img, image + img_min, (size_t)plen);
+        if (g_entry >= 0 && g_entry != porg)
+            fprintf(stderr, "gasm: warning: --boot ignores ENTRY 0x%04lX "
+                            "(the boot card enters at the origin 0x%04lX)\n",
+                    g_entry, porg);
+        long ncards = (plen + 79) / 80;
+        long done   = porg + ncards * 80;
+        if (porg < 0x26)
+            fprintf(stderr, "gasm: warning: origin 0x%04lX overlaps the "
+                            "running boot card (0x0000-0x0025)\n", porg);
+        if (done > 0x10000) {
+            fprintf(stderr, "gasm: --boot: image runs past the address "
+                            "space (done = 0x%lX)\n", done);
+            return 1;
+        }
+
+        /* boot.s lives next to the gasm binary (assembler/boot.s). */
+        char bootpath[1024];
+        const char *slash = strrchr(argv[0], '/');
+        if (slash)
+            snprintf(bootpath, sizeof(bootpath), "%.*s/boot.s",
+                     (int)(slash - argv[0]), argv[0]);
+        else
+            snprintf(bootpath, sizeof(bootpath), "boot.s");
+
+        asm_reset();
+        if (asm_slurp(bootpath) && asm_slurp("boot.s")) {
+            fprintf(stderr, "gasm: cannot open boot template '%s'\n", bootpath);
+            return 2;
+        }
+        asm_pass1(0);
+        /* The link: inject the program's geometry over the template's
+         * standalone defaults (pass 2 skips EQU lines, so these win). */
+        sym_override("DEST",   porg);
+        sym_override("DONE",   done);
+        sym_override("NCARDS", ncards);
+        asm_pass2(0);
+        if (g_errors) {
+            fprintf(stderr, "gasm: %d error(s) in boot template\n", g_errors);
+            return 1;
+        }
+        if (img_min != 0 || img_max > 40) {
+            fprintf(stderr, "gasm: boot template must ORG at 0 and fit 40 "
+                            "bytes (got 0x%04lX..0x%04lX)\n", img_min, img_max);
+            return 1;
+        }
+        uint8_t boot[40];
+        memset(boot, 0, sizeof(boot));
+        memcpy(boot, image, (size_t)img_max);
+
+        FILE *out = fopen(outpath, "w");
+        if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
+        uint16_t cols[80];
+        for (int i = 0; i < 40; i++) {
+            cols[2 * i]     = cap_hexcol((unsigned)(boot[i] >> 4));
+            cols[2 * i + 1] = cap_hexcol((unsigned)(boot[i] & 0x0F));
+        }
+        cap_write_card(out, 1, cols);
+        for (long c = 0; c < ncards; c++) {
+            for (int j = 0; j < 80; j++) {
+                long off = c * 80 + j;
+                cols[j] = off < plen ? cap_colbin(prog_img[off]) : 0;
+            }
+            cap_write_card(out, (int)c + 2, cols);
+        }
+        fclose(out);
+        printf("gasm: boot deck %s: boot card + %ld body cards, "
+               "load+entry 0x%04lX (arm %s)\n",
+               outpath, ncards, porg, outpath);
+        return 0;
+    }
+
+    /* --card: the IPL nibble-packs ONE 80-column hex card to 0x0000 and
+     * jumps to 0x0000 -- so the image must start there and fit the card. */
+    if (card_out) {
+        uint16_t origin_c = (uint16_t)img_min;
+        uint16_t length_c = (uint16_t)(img_max - img_min);
+        if (origin_c != 0) {
+            fprintf(stderr, "gasm: --card: image must ORG at 0x0000 (the "
+                            "IPL executes the card there); origin is "
+                            "0x%04X\n", origin_c);
+            return 1;
+        }
+        if (length_c > 40) {
+            fprintf(stderr, "gasm: --card: %u bytes exceed the 40-byte "
+                            "card (80 hex columns); use the loader-deck "
+                            "path (arm <file>@0x100) for larger programs\n",
+                            length_c);
+            return 1;
+        }
+        if (g_entry > 0)
+            fprintf(stderr, "gasm: warning: --card ignores ENTRY 0x%04lX "
+                            "(the IPL always enters at 0x0000)\n", g_entry);
+    }
+
+    uint16_t origin = (uint16_t)img_min;
+    uint16_t length = (uint16_t)(img_max - img_min);
+    uint16_t entry  = (g_entry >= 0) ? (uint16_t)g_entry : origin;
+
+    FILE *out = fopen(outpath, "wb");
+    if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
+    if (raw_out) {
+        fwrite(image + img_min, 1, (size_t)length, out);
+    } else {
+        int rc = binimage_write(out, origin, entry, image + img_min, length);
+        if (rc != BINIMAGE_OK) {
+            fprintf(stderr, "gasm: cannot write image: %s\n", binimage_strerror(rc));
+            fclose(out);
+            return 2;
+        }
+    }
+    fclose(out);
+
+    /* optional listing */
+    if (listpath) {
+        FILE *lf = fopen(listpath, "w");
+        if (lf) {
+            fprintf(lf, "; gasm listing for %s  (origin 0x%04lX, %ld bytes)\n",
+                    inpath, img_min, img_max - img_min);
+            for (long a = img_min; a < img_max; a += 16) {
+                fprintf(lf, "%04lX: ", a);
+                for (long b = a; b < a + 16 && b < img_max; b++)
+                    fprintf(lf, "%02X ", image[b]);
+                fputc('\n', lf);
+            }
+            fclose(lf);
+        }
+    }
+
+    if (card_out)
+        printf("gasm: boot card %s: %u/40 bytes used (arm %s@0)\n",
+               outpath, length, outpath);
+    else
+        printf("gasm: wrote %ld bytes to %s (origin 0x%04lX)\n",
+               img_max - img_min, outpath, img_min);
+    return 0;
+}
+
+/* ---- Pass 1: build symbol table, compute addresses ---- */
+static void asm_pass1(long org)
+{
     long lc = org;
     for (int i = 0; i < nlines; i++) {
         char work[1024];
@@ -710,9 +952,12 @@ int main(int argc, char **argv)
         if (!m) { err("unknown mnemonic '%s'", op); continue; }
         lc += m->len;
     }
+}
 
-    /* ---- Pass 2: emit bytes ---- */
-    lc = org;
+/* ---- Pass 2: emit bytes ---- */
+static void asm_pass2(long org)
+{
+    long lc = org;
     for (int i = 0; i < nlines; i++) {
         char work[1024];
         strncpy(work, lines[i].text, sizeof(work) - 1);
@@ -745,83 +990,4 @@ int main(int argc, char **argv)
         emit_instr(m, args, lc);
         lc += m->len;
     }
-
-    if (g_errors) {
-        fprintf(stderr, "gasm: %d error(s); no output written\n", g_errors);
-        return 1;
-    }
-
-    if (img_min < 0) { fprintf(stderr, "gasm: empty program\n"); return 1; }
-
-    /* Warn if the image overlaps the change-register window 0x00F0-0x00FF. */
-    if (img_min < 0x100 && img_max > 0xF0)
-        fprintf(stderr, "gasm: warning: image spans 0x00F0-0x00FF "
-                        "(change-register area); it may clobber segment bases\n");
-
-    /* Output. Default: unified format (GE12 header + image). The header
-     * carries origin (lowest address written) and entry (ENTRY directive, or
-     * the origin by default) so gemu / the real bootstrap know where to place
-     * the image and where to start. --raw keeps the old headerless flat image. */
-    uint16_t origin = (uint16_t)img_min;
-    uint16_t length = (uint16_t)(img_max - img_min);
-    uint16_t entry  = (g_entry >= 0) ? (uint16_t)g_entry : origin;
-
-    /* --card: the IPL nibble-packs ONE 80-column hex card to 0x0000 and
-     * jumps to 0x0000 -- so the image must start there and fit the card. */
-    if (card_out) {
-        if (origin != 0) {
-            fprintf(stderr, "gasm: --card: image must ORG at 0x0000 (the "
-                            "IPL executes the card there); origin is "
-                            "0x%04X\n", origin);
-            return 1;
-        }
-        if (length > 40) {
-            fprintf(stderr, "gasm: --card: %u bytes exceed the 40-byte "
-                            "card (80 hex columns); use the loader-deck "
-                            "path (arm <file>@0x100) for larger programs\n",
-                            length);
-            return 1;
-        }
-        if (entry != 0)
-            fprintf(stderr, "gasm: warning: --card ignores ENTRY 0x%04X "
-                            "(the IPL always enters at 0x0000)\n", entry);
-    }
-
-    FILE *out = fopen(outpath, "wb");
-    if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
-    if (raw_out) {
-        fwrite(image + img_min, 1, (size_t)length, out);
-    } else {
-        int rc = binimage_write(out, origin, entry, image + img_min, length);
-        if (rc != BINIMAGE_OK) {
-            fprintf(stderr, "gasm: cannot write image: %s\n", binimage_strerror(rc));
-            fclose(out);
-            return 2;
-        }
-    }
-    fclose(out);
-
-    /* optional listing */
-    if (listpath) {
-        FILE *lf = fopen(listpath, "w");
-        if (lf) {
-            fprintf(lf, "; gasm listing for %s  (origin 0x%04lX, %ld bytes)\n",
-                    inpath, img_min, img_max - img_min);
-            for (long a = img_min; a < img_max; a += 16) {
-                fprintf(lf, "%04lX: ", a);
-                for (long b = a; b < a + 16 && b < img_max; b++)
-                    fprintf(lf, "%02X ", image[b]);
-                fputc('\n', lf);
-            }
-            fclose(lf);
-        }
-    }
-
-    if (card_out)
-        printf("gasm: boot card %s: %u/40 bytes used (arm %s@0)\n",
-               outpath, length, outpath);
-    else
-        printf("gasm: wrote %ld bytes to %s (origin 0x%04lX)\n",
-               img_max - img_min, outpath, img_min);
-    return 0;
 }

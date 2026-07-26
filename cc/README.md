@@ -56,3 +56,19 @@ absolute/modified flag (the operand-fetch indexing micro-cycle is implemented),
 so absolute code/globals are used verbatim and `gec` places them above `0x1000`
 without aliasing the reprogrammed base registers; frame/stack use `disp(5)`/
 `disp(6)` (modified). No floats, no separate compilation yet.
+
+## Driver mode (gcc-style)
+
+`gec` now drives `gasm` itself (found next to the binary at
+`../assembler/gasm`, else in PATH):
+
+    gec prog.c -o prog.bin        # compile + assemble (unified image)
+    gec prog.c --boot -o prog.cap # ready boot DECK for the real machine:
+                                  #   boot card + program as body cards;
+                                  #   feed with 'arm prog.cap'
+    gec prog.c -S -o prog.s       # stop at gasm assembly
+    gec prog.c -o prog.s          # same (back-compat: .s output implies -S)
+
+`--boot` works because crt0 (`__start`) is emitted first at the origin
+(0x1100), so image entry == origin -- the boot card's exact contract. The
+boot card leaves change-register 0 dirty; gec-generated code never uses R0.
