@@ -1077,7 +1077,13 @@ static void emit_runtime(FILE *o) {
          * low memory. Frame/stack live at 0x6000 via disp(5)/disp(6) (modified). */
         "       ORG 0x1100\n"
         "__start:\n"
-        "\tLA 5, 0x000(6)\n"            /* FP = SP (R6 = 0x6000 by reset identity) */
+        /* Do NOT trust the R6 = 0x6000 "reset identity": that is a gemu
+         * model convention (ge_clear). On the real machine the change
+         * registers are core cells (0xF0-0xFE) and core RETAINS -- CLEAR
+         * initializes nothing, so R6 holds whatever the machine last left
+         * there (bench: a stack at 0x0600). Load it explicitly. */
+        "\tLA 6, 0x6000\n"              /* SP base */
+        "\tLA 5, 0x000(6)\n"            /* FP = SP */
         "\tMVI 0, __one\n\tMVI 1, __one+1\n"
         "\tMVI 0, __zero\n\tMVI 0, __zero+1\n"
         "\tMVI 0xAC, __rseed\n\tMVI 0xE1, __rseed+1\n");  /* nonzero rand() seed */
