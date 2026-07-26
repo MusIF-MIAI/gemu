@@ -621,17 +621,25 @@ int main(int argc, char **argv)
     const char *inpath = NULL, *outpath = "a.bin", *listpath = NULL;
     long org = 0x0000;
     int raw_out = 0;   /* --raw: emit a headerless flat image (old behaviour) */
+    int card_out = 0;  /* --card: one IPL boot card (raw, ORG 0, <=40 bytes) */
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) outpath = argv[++i];
         else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) listpath = argv[++i];
         else if (strcmp(argv[i], "--org") == 0 && i + 1 < argc) org = strtol(argv[++i], NULL, 0);
         else if (strcmp(argv[i], "--raw") == 0) raw_out = 1;
+        else if (strcmp(argv[i], "--card") == 0) card_out = raw_out = 1;
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             printf("Usage: gasm [-o out.bin] [-l listing.txt] [--org 0xNNNN] "
-                   "[--raw] input.s\n"
+                   "[--raw|--card] input.s\n"
                    "  Default output: unified format (GE12 header + image).\n"
                    "  --raw          : headerless flat image.\n"
+                   "  --card         : IPL boot-card image (implies --raw):\n"
+                   "                   must ORG at 0x0000, 40 bytes max (one\n"
+                   "                   80-column hex card -- the IPL packs it\n"
+                   "                   to 0x0000 and executes it there). Feed\n"
+                   "                   with  arm <file>.bin@0  on the reader\n"
+                   "                   emulator.\n"
                    "  ENTRY <expr>   : source directive sets the entry point\n"
                    "                   (default = load origin).\n");
             return 0;
@@ -758,6 +766,27 @@ int main(int argc, char **argv)
     uint16_t length = (uint16_t)(img_max - img_min);
     uint16_t entry  = (g_entry >= 0) ? (uint16_t)g_entry : origin;
 
+    /* --card: the IPL nibble-packs ONE 80-column hex card to 0x0000 and
+     * jumps to 0x0000 -- so the image must start there and fit the card. */
+    if (card_out) {
+        if (origin != 0) {
+            fprintf(stderr, "gasm: --card: image must ORG at 0x0000 (the "
+                            "IPL executes the card there); origin is "
+                            "0x%04X\n", origin);
+            return 1;
+        }
+        if (length > 40) {
+            fprintf(stderr, "gasm: --card: %u bytes exceed the 40-byte "
+                            "card (80 hex columns); use the loader-deck "
+                            "path (arm <file>@0x100) for larger programs\n",
+                            length);
+            return 1;
+        }
+        if (entry != 0)
+            fprintf(stderr, "gasm: warning: --card ignores ENTRY 0x%04X "
+                            "(the IPL always enters at 0x0000)\n", entry);
+    }
+
     FILE *out = fopen(outpath, "wb");
     if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
     if (raw_out) {
@@ -788,7 +817,11 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("gasm: wrote %ld bytes to %s (origin 0x%04lX)\n",
-           img_max - img_min, outpath, img_min);
+    if (card_out)
+        printf("gasm: boot card %s: %u/40 bytes used (arm %s@0)\n",
+               outpath, length, outpath);
+    else
+        printf("gasm: wrote %ld bytes to %s (origin 0x%04lX)\n",
+               img_max - img_min, outpath, img_min);
     return 0;
 }
