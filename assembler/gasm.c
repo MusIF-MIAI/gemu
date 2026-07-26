@@ -701,6 +701,35 @@ static void cap_write_card(FILE *f, int num, const uint16_t *cols)
         fprintf(f, "%04x%c", cols[j], j == 79 ? '\n' : ' ');
 }
 
+/* --bootge: the ORIGINAL one-card IPL scatter loader (unit 0x80), verbatim
+ * from the funktionalcpu SAT deck (bench-proven on the real machine). It
+ * reads each following card to 0x0036 and relocates LL+1 bytes (byte 8 =
+ * LL = len-1, bytes 9-10 = load address BE, payload from byte 11). */
+static const uint16_t ge_loader_cols[80] = {
+    0x0200, 0x0140, 0x0100, 0x0001, 0x0001, 0x0001, 0x0004, 0x0004,
+    0x0200, 0x0140, 0x0100, 0x0001, 0x0001, 0x0001, 0x0004, 0x0001,
+    0x0200, 0x0140, 0x0100, 0x0001, 0x0001, 0x0001, 0x0004, 0x0040,
+    0x0010, 0x1008, 0x0002, 0x0001, 0x0001, 0x0001, 0x0002, 0x0020,
+    0x0120, 0x0004, 0x0001, 0x0004, 0x0001, 0x0001, 0x0002, 0x0080,
+    0x0001, 0x0001, 0x0008, 0x0140, 0x0120, 0x0004, 0x0001, 0x0001,
+    0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0010, 0x0002,
+    0x0010, 0x0008, 0x0180, 0x0001, 0x0001, 0x0001, 0x0001, 0x0010,
+    0x0001, 0x0001, 0x0010, 0x0001, 0x0100, 0x0001, 0x0104, 0x0001,
+    0x0001, 0x0001, 0x0008, 0x0040, 0x0110, 0x0001, 0x0010, 0x0104,
+};
+
+/* One scatter card for the original loader: LL/II header + payload. */
+static void cap_scatter_card(uint16_t *cols, uint16_t addr,
+                             const uint8_t *p, unsigned len)
+{
+    memset(cols, 0, 80 * sizeof(uint16_t));
+    cols[8]  = cap_colbin((uint8_t)(len - 1));
+    cols[9]  = cap_colbin((uint8_t)(addr >> 8));
+    cols[10] = cap_colbin((uint8_t)addr);
+    for (unsigned i = 0; i < len; i++)
+        cols[11 + i] = cap_colbin(p[i]);
+}
+
 int main(int argc, char **argv)
 {
     const char *inpath = NULL, *outpath = "a.bin", *listpath = NULL;
@@ -708,6 +737,7 @@ int main(int argc, char **argv)
     int raw_out = 0;   /* --raw: emit a headerless flat image (old behaviour) */
     int card_out = 0;  /* --card: one IPL boot card (raw, ORG 0, <=40 bytes) */
     int boot_out = 0;  /* --boot: link with boot.s, emit a .cap deck         */
+    int bootge_out = 0;/* --bootge: .cap deck with the ORIGINAL IPL loader   */
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) outpath = argv[++i];
@@ -716,6 +746,7 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "--raw") == 0) raw_out = 1;
         else if (strcmp(argv[i], "--card") == 0) card_out = raw_out = 1;
         else if (strcmp(argv[i], "--boot") == 0) boot_out = 1;
+        else if (strcmp(argv[i], "--bootge") == 0) bootge_out = 1;
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             printf("Usage: gasm [-o out.bin] [-l listing.txt] [--org 0xNNNN] "
                    "[--raw|--card|--boot] input.s\n"
@@ -732,6 +763,10 @@ int main(int argc, char **argv)
                    "                   DEST/DONE patched to the program) plus\n"
                    "                   the program as raw 80-byte body cards.\n"
                    "                   Feed with  arm <file>.cap .\n"
+                   "  --bootge       : .cap deck with the ORIGINAL IPL scatter\n"
+                   "                   loader (bench-proven, from the SAT\n"
+                   "                   decks) instead of boot.s: 66-byte\n"
+                   "                   LL/II cards + jump-to-origin card.\n"
                    "  ENTRY <expr>   : source directive sets the entry point\n"
                    "                   (default = load origin).\n");
             return 0;
@@ -741,8 +776,9 @@ int main(int argc, char **argv)
         } else inpath = argv[i];
     }
     if (!inpath) { fprintf(stderr, "gasm: no input file\n"); return 2; }
-    if (boot_out && (card_out || raw_out)) {
-        fprintf(stderr, "gasm: --boot conflicts with --raw/--card\n");
+    if ((boot_out || bootge_out) && (card_out || raw_out || (boot_out && bootge_out))) {
+        fprintf(stderr, "gasm: --boot/--bootge conflict with each other "
+                        "and with --raw/--card\n");
         return 2;
     }
 
@@ -764,6 +800,47 @@ int main(int argc, char **argv)
     if (img_min < 0x100 && img_max > 0xF0)
         fprintf(stderr, "gasm: warning: image spans 0x00F0-0x00FF "
                         "(change-register area); it may clobber segment bases\n");
+
+    if (bootge_out) {
+        /* ---- Original IPL scatter-loader deck ------------------------ */
+        long porg = img_min, plen = img_max - img_min;
+        if (g_entry >= 0 && g_entry != porg)
+            fprintf(stderr, "gasm: warning: --bootge ignores ENTRY 0x%04lX "
+                            "(the loader's final card jumps to the origin "
+                            "0x%04lX)\n", g_entry, porg);
+        if (porg < 0x0086) {
+            fprintf(stderr, "gasm: --bootge: origin 0x%04lX overlaps the "
+                            "loader (0x0000-0x0027) or its card buffer "
+                            "(0x0036-0x0085); ORG at 0x0086 or above\n", porg);
+            return 1;
+        }
+        FILE *out = fopen(outpath, "w");
+        if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
+        cap_write_card(out, 1, ge_loader_cols);
+        uint16_t cols[80];
+        long ncards = 0, off = 0;
+        while (off < plen) {
+            unsigned take = plen - off > 66 ? 66 : (unsigned)(plen - off);
+            cap_scatter_card(cols, (uint16_t)(porg + off),
+                             image + porg + off, take);
+            cap_write_card(out, (int)++ncards + 1, cols);
+            off += take;
+        }
+        /* Termination, verbatim the SAT decks' own final-card pattern:
+         * NOP2, NOP2, jump-always to the origin, laid over the loader head
+         * so its closing JU 0x0004 falls into the jump. */
+        const uint8_t term[8] = {
+            0x07, 0x00, 0x07, 0x00,
+            0x43, 0xF0, (uint8_t)(porg >> 8), (uint8_t)porg,
+        };
+        cap_scatter_card(cols, 0x0000, term, sizeof(term));
+        cap_write_card(out, (int)ncards + 2, cols);
+        fclose(out);
+        printf("gasm: bootge deck %s: GE loader + %ld scatter cards + "
+               "termination, load+entry 0x%04lX (arm %s)\n",
+               outpath, ncards, porg, outpath);
+        return 0;
+    }
 
     if (boot_out) {
         /* ---- Stage 2: link with the boot.s template ------------------ */

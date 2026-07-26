@@ -1458,12 +1458,12 @@ static const char *find_gasm(const char *argv0)
 }
 
 static int run_gasm(const char *gasm, const char *asmpath,
-                    const char *outpath, int bootflag)
+                    const char *outpath, const char *bootarg)
 {
     const char *args[8];
     int n = 0;
     args[n++] = gasm;
-    if (bootflag) args[n++] = "--boot";
+    if (bootarg) args[n++] = bootarg;
     args[n++] = "-o";
     args[n++] = outpath;
     args[n++] = asmpath;
@@ -1482,11 +1482,12 @@ static int run_gasm(const char *gasm, const char *asmpath,
 
 int main(int argc, char **argv) {
     const char *inpath = 0, *outpath = 0;
-    int sflag = 0, bootflag = 0;
+    int sflag = 0, bootflag = 0, bootgeflag = 0;
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-o") && i + 1 < argc) outpath = argv[++i];
         else if (!strcmp(argv[i], "-S")) sflag = 1;
         else if (!strcmp(argv[i], "--boot")) bootflag = 1;
+        else if (!strcmp(argv[i], "--bootge")) bootgeflag = 1;
         else if (argv[i][0] == '-') {
             fprintf(stderr, "gec: unknown option '%s'\n", argv[i]);
             return 1;
@@ -1498,6 +1499,7 @@ int main(int argc, char **argv) {
             "usage: gec input.c [-S] [--boot] [-o out]\n"
             "  default : compile + assemble via gasm -> out (a.bin)\n"
             "  --boot  : link with the boot card, emit a .cap deck (a.cap)\n"
+            "  --bootge: .cap deck with the ORIGINAL IPL scatter loader\n"
             "  -S      : stop after compilation, emit gasm assembly (a.s)\n"
             "  (-o ending in .s implies -S, matching the old behaviour)\n");
         return 1;
@@ -1507,11 +1509,12 @@ int main(int argc, char **argv) {
         size_t ol = strlen(outpath);
         if (ol > 2 && !strcmp(outpath + ol - 2, ".s")) sflag = 1;
     }
-    if (sflag && bootflag) {
-        fprintf(stderr, "gec: -S and --boot are mutually exclusive\n");
+    if ((sflag && (bootflag || bootgeflag)) || (bootflag && bootgeflag)) {
+        fprintf(stderr, "gec: -S/--boot/--bootge are mutually exclusive\n");
         return 1;
     }
-    if (!outpath) outpath = sflag ? "a.s" : (bootflag ? "a.cap" : "a.bin");
+    if (!outpath) outpath = sflag ? "a.s"
+                          : ((bootflag || bootgeflag) ? "a.cap" : "a.bin");
 
     g_file = inpath;
     FILE *in = fopen(inpath, "rb");
@@ -1544,7 +1547,8 @@ int main(int argc, char **argv) {
     if (sflag)
         return 0;
 
-    int rc = run_gasm(find_gasm(argv[0]), tmppath, outpath, bootflag);
+    int rc = run_gasm(find_gasm(argv[0]), tmppath, outpath,
+                      bootflag ? "--boot" : (bootgeflag ? "--bootge" : NULL));
     unlink(tmppath);
     if (rc) {
         fprintf(stderr, "gec: gasm failed\n");

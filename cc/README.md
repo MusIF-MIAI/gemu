@@ -72,3 +72,8 @@ without aliasing the reprogrammed base registers; frame/stack use `disp(5)`/
 `--boot` works because crt0 (`__start`) is emitted first at the origin
 (0x1100), so image entry == origin -- the boot card's exact contract. The
 boot card leaves change-register 0 dirty; gec-generated code never uses R0.
+
+`gec prog.c --bootge -o prog.cap` emits the same kind of deck but carried
+by the ORIGINAL IPL scatter loader from the SAT decks (bench-proven on the
+real machine) instead of the custom boot card: 66-byte LL/II relocation
+cards plus the jump-to-origin termination card.

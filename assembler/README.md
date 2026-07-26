@@ -157,3 +157,10 @@ emulator:
   back-to-back to the origin and jumps there. Feed with `arm prog.cap`.
   The program should ORG at 0x0100 or above (the boot card runs below
   0x0026).
+
+`gasm --bootge -o prog.cap prog.s` is the same as `--boot` but uses the
+ORIGINAL IPL scatter loader (embedded verbatim from the funktionalcpu SAT
+deck, bench-proven) instead of the boot.s template: the program is emitted
+as 66-byte LL/II relocation cards plus the jump-to-origin termination card.
+The origin must be 0x0086 or above (the loader and its card buffer live
+below).
