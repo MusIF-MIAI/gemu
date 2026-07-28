@@ -18,14 +18,22 @@
  *   intact (verified: it then runs the real final-verify CMC at 0x19d4 cleanly).
  *
  * Discriminating the channel-2 print-wait from the channel-1 reader input-wait:
- *   State b8 is SHARED with the card reader (its inter-byte "waiting for next
- *   column" gap looks identical: rSO=b8, rSA=0, RASI=1, lu08=0, RC00=0). The
- *   reader peripheral presents a byte within a couple of cycles, breaking the
- *   wait; a genuine channel-2 print-wait persists. We therefore debounce with a
- *   stall counter: only after the wait has held unbroken for STALL_THRESHOLD
- *   on_clock calls do we treat it as a printer op and complete it. The reader's
- *   inter-byte gap never approaches that, so a concurrently-registered reader is
- *   never disturbed.
+ *   State b8 is SHARED with the card reader, and so is the whole org phase that
+ *   leads to it (c8 d8 ... ab). The machine's own answer to "whose order is
+ *   this?" is the connector decode: PC121 = PUC11 . PB071 . PB06A is connector 2
+ *   on channel 1 -- the integrated card reader -- being the selected peripheral.
+ *   Measured at the wait itself: the reader's order shows PC121=1, a genuine
+ *   channel-2 print PER shows PC121=0. So the printer keeps out of any wait
+ *   PC121 claims (see channel1_reader_owns_the_order).
+ *
+ *   That check has to happen at b8, not at c8 where the order is first noticed:
+ *   PB06/PB07 are latched by CE02 later in the org phase, so PC121 is still 0 at
+ *   c8. The claim made at c8 is therefore provisional, and is disowned at b8.
+ *
+ *   Beyond that, a genuine channel-2 print-wait persists where a reader
+ *   inter-byte gap does not, so a stall counter debounces the remaining cases:
+ *   only after the wait has held unbroken for STALL_THRESHOLD on_clock calls do
+ *   we treat it as a printer op and complete it.
  */
 
 #include "printer.h"
@@ -35,6 +43,7 @@
 
 #include "log.h"
 #include "gecode.h"
+#include "signals.h"
 
 /* Consecutive idle b8-wait cycles before we conclude it is a channel-2 print
  * op and not a reader inter-byte gap. The reader presents within a few cycles;
@@ -175,6 +184,32 @@ static int input_order_ready(struct ge *ge, uint8_t cmd)
     return 0;
 }
 
+/*
+ * Does the card reader own the order the machine is waiting on?
+ *
+ * PC121 is the machine's own decode: connector 2 on channel 1 -- the integrated
+ * card reader -- is the selected peripheral. State b8 is shared between the
+ * channel-1 reader input-wait and the channel-2 print-wait and they are
+ * otherwise indistinguishable from here (both show PUC1=1, RASI=1, and the
+ * reader's IPL order carries no order block in memory at all, so its "command"
+ * byte reads as whatever happens to be at mem[1]).
+ *
+ * Answering a reader order is not a cosmetic error: PUC2 goes up, DU97 fires,
+ * state_b8's microcode completes the PER, and the IPL falls through to alpha at
+ * address 0 having read nothing -- the machine stops at cycle 17 with a deck
+ * still in the hopper.
+ */
+static int channel1_reader_owns_the_order(struct ge *ge)
+{
+    /* LESAB says a card reader is physically on connector 2, so there is a unit
+     * of its own to answer this order. Both halves are needed: PC121 alone is
+     * just "connector 2 on channel 1", and gemu's channel-2 order blocks are
+     * loose enough about the Z byte (CE02 takes the channel from L2 bit 0) that
+     * some of them decode that way too. With a reader on the connector there is
+     * no ambiguity left -- the order is its. */
+    return PC121(ge) && ge->integrated_reader.lesab;
+}
+
 /* Is the machine parked in the channel-2 org-phase external request-wait?
  * rSO=b8 pending, rSA=0 (CPU suspended/idle), CPU-active request not raised,
  * and the integrated reader is not presenting a byte (so this is not a reader
@@ -255,6 +290,16 @@ static int printer_on_clock(struct ge *ge, void *opaque)
             service_input_line(ge, buf, len);
         else if (cmd == KBD_CMD_CHAR && len >= 1 && len <= PRINT_LEN_MAX)
             service_input_char(ge, buf, len);
+    }
+
+    /* Whose wait is this? PC121 is only meaningful once the org phase has
+     * latched the connector select, which is why the claim at c8 above is
+     * provisional: disown it here if the order turns out to be the reader's,
+     * and take no further part in this cycle. */
+    if (ge->rSO == 0xb8 && channel1_reader_owns_the_order(ge)) {
+        ctx->per_pending = 0;
+        ctx->stall = 0;
+        return 0;
     }
 
     /* Input orders (read line / read char) park the CPU at the channel-2

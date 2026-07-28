@@ -447,6 +447,13 @@ def parse_mouse(i, y, x):
             button_pressed -= 1
         if (button_pressed > 10):
             button_pressed -= 2
+        # STEP BY STEP is not a momentary key: it is the maintenance panel's
+        # PAPA switch seen from the front (docs/console.md 3). It travels in the
+        # switch word, bit 0, not in the button word -- one piece of state, one
+        # owner.
+        if (button_pressed == 6):
+            MS_VAL ^= 1
+            return
         BUTTONS_VAL |= (1 << button_pressed)
 
 
@@ -479,6 +486,10 @@ def comm_cpu():
             MS_VAL, AM_VAL, # Switches
             BUTTONS_VAL,
             ROT_VAL))
+        # The panel keys are momentary: CLEAR, LOAD and START do their work on
+        # the way down and are finished with. Release them once the frame that
+        # carries them is away, so holding the mouse still does not re-press.
+        BUTTONS_VAL = 0
 
     except:
         pass

@@ -271,7 +271,7 @@ void cap_free(struct cap_deck *d)
 }
 
 /* -------------------------------------------------------------------------
- * Self-addressed scatter load (mirrors gdis --image; see cap.h).
+ * Self-addressed scatter load (mirrors the gdis depuncher; see cap.h).
  * ------------------------------------------------------------------------- */
 
 static int scat_decode_card(const uint16_t *cols, int ncols, int mode,

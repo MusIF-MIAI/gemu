@@ -1,8 +1,10 @@
 # gasm — GE-120 / GE-130 assembler
 
 `gasm` is a small, self-contained two-pass assembler that turns GE-120 assembly
-source into a **raw machine-code binary** (pure machine code, no header) — the
-encode counterpart of the `gemu` decoder.
+source into a **punched card deck** — the encode counterpart of the `gemu`
+decoder, and of its card reader. A deck is the only thing a GE-120 can be handed
+a program on, so it is the only thing gasm emits: the same `.cap` runs in the
+emulator and goes in the real machine's hopper.
 
 It is intentionally faithful to the emulator's encoding: every opcode, the
 address-field split, the condition masks, and the SS length byte are transcribed
@@ -13,23 +15,27 @@ dictionary lives in [`../docs/ISA.md` Appendix A](../docs/ISA.md).
 
 ```sh
 make            # produces ./gasm
-make examples   # assembles examples/*.s into build/*.bin
+make examples   # punches examples/*.s into build/*.cap
 make clean
 ```
 
 ## Usage
 
 ```sh
-gasm [-o out.bin] [-l listing.txt] [--org 0xNNNN] input.s
+gasm [-o out.cap] [-l listing.txt] [--org 0xNNNN] [--card|--boot] input.s
 ```
 
-- `-o out.bin`   output file (default `a.bin`).
+- `-o out.cap`   output deck (default `a.cap`).
 - `-l list.txt`  also write an address/byte listing.
-- `--org N`      starting origin (default **0x0000**, the directly-runnable
-  convention — see *Loading* below).
+- `--org N`      starting origin (default **0x0000**; see *Loading* below —
+  a program at 0 must be a 40-byte boot card).
+- `--card`       one IPL boot card instead of a loader deck.
+- `--boot`       loader deck led by the `boot.s` template instead of the
+  original IPL scatter loader.
 
-Output is a flat image from the lowest `ORG` to the highest byte emitted; gaps
-are zero-filled. Any error prints `file:line: error: …` and produces no output.
+The image is flat from the lowest `ORG` to the highest byte emitted; gaps are
+zero-filled, and it is then punched onto cards. Any error prints
+`file:line: error: …` and produces no output.
 
 ## Source syntax
 
@@ -94,28 +100,21 @@ itself only has `JC`, `JCC`, and `JU`. See ISA.md Appendix A for the mask table.
 
 ## Loading & running
 
-`gasm` emits raw machine code. The emulator has two load paths:
+There is one load path, because the machine has one. `CLEAR → LOAD1 → LOAD →
+START` reads **exactly one card**: 80 columns, nibble-packed by the channel into
+40 bytes at `0x0000`, and executed there. Everything after that is the
+program's own doing. So a deck comes in one of two shapes:
 
-1. **Direct injection (default ORG 0x0000).** `ge_load_program()` copies the
-   image to `mem[0]` and reset leaves `PO = 0`, so an image assembled at the
-   default origin runs immediately. This is what the unit tests use, e.g.:
+1. **A boot card** (`--card`, `ORG 0x0000`, ≤ 40 bytes). The whole program is
+   the card the IPL reads. `assembler/examples/halt.s` and `bootcard.s` are
+   both this shape.
 
-   ```c
-   uint8_t prog[/* … bytes from the .bin … */];
-   struct ge g;
-   ge_init(&g);
-   ge_load_program(&g, prog, sizeof(prog));
-   ge_clear(&g);
-   ge_start(&g);
-   while (!g.halted) ge_run_cycle(&g);
-   ```
-
-   (`ge_load_program` caps the image at 129 bytes — the storage size of the
-   real bootstrap loader.)
-
-2. **Card-deck bootstrap (ORG 0x0100).** Programs loaded through the integrated
-   card reader load from `0x0100` (entry `JU 0x0100`), the convention used by
-   the `DUMP1`/`funktionalcpu` decks. Assemble with `--org 0x0100` for that path.
+2. **A loader deck** (the default). Card 1 is the original IPL scatter loader,
+   embedded verbatim from the funktionalcpu SAT deck and proven on the real
+   machine; the program follows as 66-byte `LL`/`II` relocation cards, and a
+   final card jumps to the origin. The origin must be **0x0086 or above** — the
+   loader and its `0x0036` card buffer occupy `0x0000-0x0085`. `0x0100` is the
+   `DUMP1`/`funktionalcpu` convention; assemble with `--org 0x0100`.
 
 ## Worked example
 
@@ -130,9 +129,14 @@ start:  MVI 'A', dst
 src:    DB  "HELLO"
 dst:    DS  5
 
-$ gasm -o hello.bin hello.s
-gasm: wrote 74 bytes to hello.bin (origin 0x0000)
+$ gasm --org 0x0100 -o hello.cap hello.s
+gasm: bootge deck hello.cap: GE loader + 2 scatter cards + termination, load+entry 0x0100 (arm hello.cap)
+
+$ ../ge hello.cap
 ```
+
+(The `ORG` lines in the source move with `--org`; `hello.s` above is written at
+0x0000, which only a ≤40-byte boot card may be.)
 
 ## Status notes
 
@@ -140,27 +144,25 @@ gasm: wrote 74 bytes to hello.bin (origin 0x0000)
 assigned opcodes but **no decode path** in the current emulator (they assemble
 but will not execute end-to-end). These are flagged in ISA.md Appendix A.
 
-## Boot cards and boot decks (the real machine's card reader)
+## The three deck shapes
 
-Two output modes target the GE-120's IPL via the rpi-pico-card-reader
-emulator:
+Every one of these is a `.cap`. Run it with `ge prog.cap`, or feed the identical
+file to the real machine with `arm prog.cap` on the rpi-pico-card-reader.
 
-- `gasm --card -o prog.bin prog.s` — ONE IPL boot card: the program must
-  ORG at 0x0000 and fit 40 bytes (80 hex columns); the IPL nibble-packs
-  it to 0x0000 and executes it there. Feed with `arm prog.bin@0`.
+- `gasm -o prog.cap prog.s` — **the default.** Card 1 is the ORIGINAL IPL
+  scatter loader, embedded verbatim from the funktionalcpu SAT deck and proven
+  on the real machine. The program follows as 66-byte `LL`/`II` relocation
+  cards, then a termination card that lays `NOP2 NOP2 JC-always <origin>` over
+  the loader head, where its closing `JU 0x0004` lands. Origin ≥ 0x0086.
+  (`--bootge` is an explicit spelling of this default.)
 
-- `gasm --boot -o prog.cap prog.s` — a complete boot DECK: gasm assembles
-  the program, then links `boot.s` (the boot-card template in this
-  directory) with DEST/DONE patched to the program's origin and size, and
-  emits a ready `.cap`: the boot card first (hex columns), the program as
-  raw 80-byte COLBIN body cards after it. The boot card pulls the body
-  back-to-back to the origin and jumps there. Feed with `arm prog.cap`.
-  The program should ORG at 0x0100 or above (the boot card runs below
+- `gasm --boot -o prog.cap prog.s` — the same idea with the local `boot.s`
+  template in card 1 instead: gasm assembles the program, then assembles
+  `boot.s` with `DEST`/`DONE`/`NCARDS` patched to the program's origin and
+  size, and the program follows as raw 80-byte COLBIN body cards read
+  back-to-back. Origin should be 0x0100 or above (the boot card runs below
   0x0026).
 
-`gasm --bootge -o prog.cap prog.s` is the same as `--boot` but uses the
-ORIGINAL IPL scatter loader (embedded verbatim from the funktionalcpu SAT
-deck, bench-proven) instead of the boot.s template: the program is emitted
-as 66-byte LL/II relocation cards plus the jump-to-origin termination card.
-The origin must be 0x0086 or above (the loader and its card buffer live
-below).
+- `gasm --card -o prog.cap prog.s` — ONE IPL boot card. The program must
+  `ORG 0x0000` and fit 40 bytes (80 hex columns). This is the shape the machine
+  reads unaided, and the shape everything else is bootstrapped from.

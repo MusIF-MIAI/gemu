@@ -105,12 +105,11 @@ CC condition-code NOTE tables (from the microcode), for the jump-condition logic
 - **Condition code (CC)**: a **2-bit** result indicator, set by most data and
   compare instructions, tested by conditional branches (§5).
 
-**Loading software.** gemu has two input paths: a positional binary
-(`./ge prog.bin`) in the **unified format** (a small `origin`+`entry` header then
-the flat image — see `docs/binformat.md`), produced by `gasm` and by
-`gdis --image`; and `./ge --deck deck.cap`, the Hollerith card-reader path
-(`docs/punchcards.md`). The binary path is the primary one and is what the real
-machine's card-reader interface will inject.
+**Loading software.** gemu has one input path, because the machine has one:
+a `.cap` card deck (`./ge deck.cap`; `docs/punchcards.md`). `gasm` and `gec`
+produce decks directly. `CLEAR → LOAD1 → LOAD → START` reads exactly ONE card —
+80 columns nibble-packed to 40 bytes at `0x0000` — and executes it; whatever
+that card does next, including reading the rest of the deck, it does itself.
 
 ---
 
@@ -914,13 +913,17 @@ on both operands — bit 15 is set in each field (`0x100(2)` → `0xA100`,
 
 ## A.5 Loading the output
 
-`gasm` writes pure machine code with no header. Default origin is `0x0000`,
-which matches `ge_load_program()` (copies the image to `mem[0]`; reset leaves
-`PO = 0`) — the path the unit tests use. For card-deck-style programs that the
-integrated reader bootstraps at `0x0100` (the `DUMP1`/`funktionalcpu`
-convention), assemble with `--org 0x0100`. See
-`software/gemu/assembler/README.md` for the full CLI and a `ge_load_program`
-harness snippet.
+`gasm` writes a `.cap` card deck. There are two shapes, and the machine decides
+which is which:
+
+- **A boot card** (`--card`): `ORG 0x0000`, 40 bytes at most. This is what the
+  IPL reads and executes, so it is the only thing that can live at address 0.
+- **A loader deck** (the default): the original one-card IPL scatter loader,
+  then the program as 66-byte relocation cards, then a jump-to-origin card.
+  The origin must be `0x0086` or above — the loader and its card buffer occupy
+  `0x0000-0x0085`. `0x0100` is the `DUMP1`/`funktionalcpu` convention.
+
+See `software/gemu/assembler/README.md` for the full CLI.
 
 ---
 

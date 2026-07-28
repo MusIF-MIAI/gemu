@@ -29,4 +29,4 @@ __pycache__/
 cc/gec
 cc/runrv
 cc/*.s
-cc/*.bin
+cc/*.cap

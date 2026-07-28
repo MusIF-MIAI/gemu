@@ -78,13 +78,21 @@ must not be pressed during machine operation.
 |---------|------|-----------------------------------|
 | **CLEAR** | key | Stops everything in the subsystem, clears all error conditions, presets CPU + peripherals to a defined state. Required after `MEM CHECK` and after power-on. No lamp. |
 | **LOAD 1 / LOAD 2** | switch | Selects one of two peripheral units enabled at install time for program loading (Conn.2/3, Conn.4/3, or Conn.2/4 — CPU[4] fo.43). |
-| **LOAD** | key | *Arms* the bootstrap: sets the `AINI` flip-flop so the next `START` reads an initial program block (≤129 words) from the selected unit and begins executing it. No lamp. |
+| **LOAD** | key | *Arms* the bootstrap and does nothing else: it sets the `AINI` flip-flop. No card moves, no lamp lights. The next `START` is what reads. |
 | **START** (HALT) | key | Starts operation. The white **HALT** lamp shows the machine is stopped. First `START` after `CLEAR`: runs the program if no other switch is set; runs the **load** if `LOAD` was pressed. |
 | **STEP-BY-STEP** | switch | Executes one instruction per `START`. Mid-run, it makes the program stop at the end of the current instruction. **`INS` inhibits it; `ENS`, `CLEAR`, or the maintenance-panel `STOC` switch re-enable it.** White lamp = inserted. |
 | **SWITCH 1 / SWITCH 2** | switch | Two general-purpose switches the program reads via the `JS1` / `JS2` instructions. |
 
 > **Loading sequence (CPU[4] §3.3 / §5.3):** `CLEAR` → select unit (`LOAD1`/`LOAD2`)
 > → `LOAD` → `START`.
+>
+> **What `START` actually reads: one card.** The `80 → c8 → … → e3` walk issues a
+> single "read unchanged" order with `L1 = 0x80` to `V1 = 0x0000`, and the
+> channel packs two presented nibbles per byte — so 80 columns become 40 bytes
+> at address 0, and the machine executes them. It does not read a deck. The card
+> does: `software/loader.txt` is the original bootstrap listing and it is exactly
+> 40 bytes (`0x0000-0x0027`) of two `PER` reads and a `JU 0x0028`. Verified on
+> the bench, July 2026.
 
 > **gemu note / step-by-step:** the panel's STEP-BY-STEP is implemented by the
 > maintenance-panel **PAPA** switch (§4) — `console.lamps.STEP_BY_STEP` follows
@@ -164,7 +172,7 @@ ge_run_cycle(&g);                      /* advance the delay-line clock  */
 
 | Front-end | How to start | Notes |
 |-----------|--------------|-------|
-| **CLI (headless)** | `./ge prog.bin` or `./ge --deck deck.cap` | Drives CLEAR→LOAD→START for you and runs to HLT; `--trace` for logs. |
+| **CLI (headless)** | `./ge deck.cap` (`--deck` is an alias) | Drives CLEAR→LOAD1→LOAD→START for you and runs to HLT; `--trace` for logs. A `.cap` deck is the only input it takes. |
 | **ncurses TUI** | `./ge --tui` | Implies `--console`; spawns `console/curses/console.py` against the `/tmp/gemu.console` socket. |
 | **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `press_power_off`, `set_switches(flags, am)`, `set_register_selector(s)`, `set_switch_1_2(s1, s2)` (the program-readable switches → `JS1`/`JS2`), `set_load_unit(load1)` (LOAD1/LOAD2 selector), `set_speed(mult)` (run-speed multiplier), `mount_deck` (deck loader), `refresh_lamps` (after LAMPS CHECK). The run loop is `requestAnimationFrame`-driven and **paces the cycle count to nominal GE-120 wall-clock time** (one `ge_run_cycle` = one 4 µs elementary cycle → 250 cycles/ms; CPU[4] "memory cycle of nominal 2/4/6 µs for 130/120/115/3"), with a simulator-toolbar speed selector (default real time). For instruction-level inspection use PAPA single-step instead. A live gdb-style disassembly window (shared `disasm.c`, driven from `opcodes.h`) tracks the program counter — `AAAA: <bytes>  MNEM ops`, current instruction highlighted. |
 
@@ -176,31 +184,29 @@ bit 1 INCE   bit 4 ACON   bit 7 PATE
 bit 2 INAR   bit 5 ACOV   bit 8 PAPA
 ```
 
-### 5.1 The WebAssembly "simulator gadget" (deck loading)
+### 5.1 The WebAssembly "simulator gadget" (the reader hopper)
 
 A real GE-120 has no file dialog — a program enters through a deck of cards
 physically loaded into the reader. The browser panel keeps that distinction
 visible with a small **simulator gadget**, drawn deliberately apart from the
 authentic console (dashed border, monospace) so it never reads as a real
-control. Today, for reliability, both `.bin` images and `.cap` decks are staged
-through simulator-side image loading:
+control. The gadget does exactly one thing, and it is the one thing a browser
+cannot do for you: it carries cards to the hopper.
 
 ```
-(gadget) choose deck/image → Stage
-(console) CLEAR → LOAD → START
+(gadget)  choose a .cap deck → Put In Hopper      [mount_deck()]
+(console) CLEAR → LOAD1 → LOAD → START
 ```
 
-For `.bin`, the unified-format image is staged as-is. For `.cap`, the page first
-scatter-decodes the deck into an image and then stages that image, matching the
-working CLI default for positional `.cap` files. The fully authentic browser
-reader/bootstrap path (`mount_deck()`, equivalent to `--deck`) still exists in
-the wasm backend, but it is not the default because the multi-card loader chain
-is not complete yet.
+There is no staging path and no image path. `LOAD` sets `AINI` and nothing else;
+`START` runs the `80 → c8 → … → e3` bootstrap, which reads **one** card, packs
+its 80 columns into 40 bytes at `0x0000` and executes them. Every card after
+that is pulled by a `PER` read the loaded program issues itself.
 
-For unified-format `.bin` images the gadget exposes a simulator-only direct-load
-path instead: the image is staged in MEMFS, `LOAD` copies it into memory at its
-origin, and `START` enters at the header's entry point. That path is only for
-images, not for physical card-deck behaviour.
+The operator's window between `LOAD` and `START` is still there and still
+useful: the rotary register dials can force values into memory (e.g. the
+diagnostic test-select byte at `0x0E00` — dial `V1 ← 0x0E00`, `V1 SCR ← 0x40`)
+and they survive into the run.
 
 ---
 
@@ -320,6 +326,8 @@ reading the lamps is non-destructive.
 | `ACOV` / `ACON` jump-condition stop | implemented in `CI38` (`AVER && ACOV`, `!AVER && ACON`); verified by inspection |
 | **`INCE` parity forcing (`AM08` as check bit)** | implemented — `pulse.c` stores `AM08` as the parity bit during V1-SCR forcing; test `console_fidelity.ince_forces_check_bit` |
 | `SITE` (ignore peripheral availability) | partial — open |
+| **Keys reach the machine over the console socket** | implemented — `console_socket.c` parses the client frame and dispatches CLEAR / LOAD1-2 / LOAD / START edge-triggered; tests `console_socket.*`. Before this the ncurses client's key presses were received and discarded. |
+| **`LOAD` arms only; `START` reads one card** | implemented and regression-tested — `bootstrap.card0_loads_to_alpha` compares all 40 bytes against the deck's own loader card |
 
 The one remaining open item, `SITE` (don't wait for peripheral availability),
 reaches into the peripheral handshaking rather than the console proper, and is

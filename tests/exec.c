@@ -68,7 +68,7 @@ static void run_one_ss(struct ge *g)
 static void setup(struct ge *g, uint8_t *prog, int n)
 {
     ge_init(g);
-    ge_load_program(g, prog, (uint8_t)n);
+    ge_load_image(g, prog, (size_t)n, 0);
     ge_clear(g);
     ge_start(g);
 }

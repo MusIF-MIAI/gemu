@@ -7,10 +7,10 @@
  *   1. The machine reaches state 0xe3 (Alpha phase) after loading exactly
  *      one card (80 columns = 40 packed bytes).
  *
- *   2. mem[0..39] exactly match the oracle nibble-packing of the first 80
- *      bytes of ../DUMP1/funktionalcpu.bin:
+ *   2. mem[0..39] exactly match the deck's own bootstrap loader card, decoded
+ *      in TC_HEX and nibble-packed the way the channel-1 transfer packs it:
  *
- *        oracle[i] = (bin[2*i] & 0x0F) << 4 | (bin[2*i+1] & 0x0F)
+ *        oracle[i] = HEX(col[2*i]) << 4 | HEX(col[2*i+1])
  *
  * SCOPE NOTE:
  *   This test exercises the CHANNEL-LEVEL LOAD path only:
@@ -33,6 +33,8 @@
 #include "decks.h"
 #include "../ge.h"
 #include "../cardreader.h"
+#include "../cap.h"
+#include "../transcode.h"
 #include "../bit.h"
 
 #include <stdio.h>
@@ -66,9 +68,10 @@ static int bootstrap_run_until(struct ge *g, uint8_t target, int max_cycles)
 UTEST(bootstrap, card0_loads_to_alpha)
 {
     const char *cap_path = deck_funktionalcpu_cap();
-    static const char bin_path[] = "../DUMP1/funktionalcpu.bin";
+    uint8_t oracle[40];
+    uint16_t art_cols[80];
 
-    /* Skip gracefully if oracle files are not available */
+    /* Skip gracefully if the deck is not available */
     {
         FILE *p = fopen(cap_path, "r");
         if (!p) {
@@ -76,51 +79,46 @@ UTEST(bootstrap, card0_loads_to_alpha)
             return;
         }
         fclose(p);
-        p = fopen(bin_path, "rb");
-        if (!p) {
-            printf("  [SKIP] %s not found\n", bin_path);
-            return;
-        }
-        fclose(p);
     }
 
-    /* Load oracle: first 80 bytes of .bin = first card (80 columns).
+    /* The oracle is the deck itself. Find the bootstrap loader card the way the
+     * reader does -- a row-8 punch in column 3 -- decode its 80 columns in
+     * TC_HEX, and pack nibble pairs into 40 bytes, which is precisely what the
+     * IPL's channel-1 packing transfer produces (see tests/initial-load.c).
      *
-     * STALE-ORACLE GUARD: this oracle assumes funktionalcpu.bin is a raw,
-     * headerless dump of card 0's nibbles. That is no longer true — the .bin is
-     * now a unified-format image (12-byte "GE12" header + a *scatter* image
-     * placing each card's payload at its embedded `41 addr` target), so its
-     * first bytes are the header/scatter-origin region, NOT card 0's loader.
-     * The authentic card-0 load is exercised (and passes) by
-     * bootstrap.channel_state_sequence and cardreader.* against the .cap deck.
-     * Skip here until this test is repointed to a .cap-decode oracle. */
-    uint8_t bin_card0[80];
+     * This replaces an oracle taken from the first 80 bytes of
+     * ../DUMP1/funktionalcpu.bin. That file is a unified-format *scatter*
+     * image, not a card dump, so the comparison had been skipping itself; .bin
+     * is gone now, and the deck was always the better witness. */
     {
-        FILE *f = fopen(bin_path, "rb");
-        ASSERT_NE(f, NULL);
-        size_t nr = fread(bin_card0, 1, 80, f);
-        fclose(f);
-        ASSERT_EQ((int)nr, 80);
-        if (bin_card0[0] == 'G' && bin_card0[1] == 'E' &&
-            bin_card0[2] == '1' && bin_card0[3] == '2') {
-            printf("  [SKIP] funktionalcpu.bin is a unified-format scatter image; "
-                   ".bin-derived card-0 oracle is stale (see channel_state_sequence)\n");
+        struct cap_deck *deck = cap_load(cap_path);
+        int loader = -1;
+
+        ASSERT_TRUE(deck != NULL);
+        for (int i = 0; i < cap_num_cards(deck) && i < 16; i++) {
+            const uint16_t *cols = cap_card_columns(deck, i);
+            if (cap_card_ncols(deck, i) >= 80 && cols && cols[2] == 0x0100) {
+                loader = i;
+                memcpy(art_cols, cols, sizeof art_cols);
+                break;
+            }
+        }
+        cap_free(deck);
+        if (loader < 0) {
+            printf("  [SKIP] %s carries no row-8 loader card\n", cap_path);
             return;
         }
     }
 
-    /* Compute oracle mem[0..39]:
-     *   oracle[i] = (bin[2i] & 0x0F) << 4 | (bin[2i+1] & 0x0F)
-     * This matches the GE nibble-packing observed in tests/initial-load.c:
-     *   two consecutive nibbles (low nibbles of two successive bytes) are
-     *   packed into one 8-bit memory cell. */
-    uint8_t oracle[40];
-    for (int i = 0; i < 40; i++)
-        oracle[i] = (uint8_t)(((bin_card0[2*i] & 0x0Fu) << 4) |
-                              (bin_card0[2*i+1] & 0x0Fu));
+    for (int i = 0; i < 40; i++) {
+        uint8_t hi = transcode_column(art_cols[2 * i],     TC_HEX) & 0x0f;
+        uint8_t lo = transcode_column(art_cols[2 * i + 1], TC_HEX) & 0x0f;
+        oracle[i] = (uint8_t)((hi << 4) | lo);
+    }
 
-    /* Spot-check: bin[0]=0xF4, bin[1]=0xF7 → (4)<<4 | 7 = 0x47 */
-    ASSERT_EQ((int)oracle[0], 0x47);
+    /* The loader's own first order: PER 0x80 (`9E 80`). */
+    ASSERT_EQ((int)oracle[0], 0x9E);
+    ASSERT_EQ((int)oracle[1], 0x80);
 
     /* ------------------------------------------------------------------ */
     /* Set up emulator                                                       */
@@ -138,8 +136,7 @@ UTEST(bootstrap, card0_loads_to_alpha)
 
     /* ------------------------------------------------------------------ */
     /* Walk through the peri-init and transfer-setup states.               */
-    /* These are identical to tests/cardreader.c :: funktionalcpu_first_card
-     * and tests/initial-load.c :: load_1_button.                          */
+    /* These are identical to tests/initial-load.c :: load_1_button.       */
     /* ------------------------------------------------------------------ */
 
     /* State 00 - Display */
@@ -208,16 +205,13 @@ UTEST(bootstrap, card0_loads_to_alpha)
     /* Verify loaded memory against oracle                                  */
     /* ------------------------------------------------------------------ */
 
-    /* First spot-check */
-    ASSERT_EQ((int)g.mem[0], 0x47);
-
-    /* Full 40-byte comparison */
+    /* Full 40-byte comparison: one card, nibble-packed to address 0. */
     for (int i = 0; i < 40; i++) {
         if (g.mem[i] != oracle[i]) {
             printf("  [FAIL] mem[%2d]: got=0x%02x expected=0x%02x "
-                   "(bin[%d]=0x%02x bin[%d]=0x%02x)\n",
+                   "(cols[%d]=0x%04x cols[%d]=0x%04x)\n",
                    i, g.mem[i], oracle[i],
-                   2*i, bin_card0[2*i], 2*i+1, bin_card0[2*i+1]);
+                   2*i, art_cols[2*i], 2*i+1, art_cols[2*i+1]);
         }
         ASSERT_EQ((int)g.mem[i], (int)oracle[i]);
     }

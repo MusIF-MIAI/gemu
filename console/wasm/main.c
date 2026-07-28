@@ -12,7 +12,6 @@
 #include "../../cardreader.h"
 #include "../../printer.h"
 #include "../../disasm.h"
-#include "../../binimage.h"
 #include "../../cap.h"
 #include "../../peripherical.h"
 #include "../../sat_batches.h"
@@ -236,11 +235,9 @@ void EMSCRIPTEN_KEEPALIVE press_power_off() { wasm_set_power(0); }
 /* Push the real lamp states again (used to restore the panel after a momentary
  * LAMPS CHECK bulb-test, which forces every lamp on from the JS side). */
 void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { send_console(); }
-/* A unified-format image (.bin) or scattered .cap deck staged by the page; LOAD
- * drops it into memory (see press_load / stage_image / stage_cap). */
-static uint8_t  staged_img[MEM_SIZE];
-static uint16_t staged_origin, staged_entry, staged_len;
-static int      staged = 0;
+/* The page's only way in is the reader hopper: it writes the chosen deck to
+ * /deck.cap and calls mount_deck(). There is no path from a file straight into
+ * memory, because the machine has no such door. */
 
 static void reset_sim_bindings(void)
 {
@@ -253,74 +250,19 @@ void EMSCRIPTEN_KEEPALIVE press_clear() { ge_clear(ge); send_console(); }
 
 /* LOAD.
  *
- * If a deck has been staged (file picker -> stage_cap/stage_image), LOAD now
- * magic-loads it into memory and positions PO at its entry, but does NOT run.
- * This leaves the authentic operator window between LOAD and START to force
- * values into memory via the register dials (e.g. the test-select option at
- * 0x0E00: dial V1 <- 0x0E00, V1_SCR <- 0x40), which then survive into the run
- * because START no longer reloads the image.
- *
- * With no staged deck, LOAD is the real card-reader bootstrap: set AINI so the
- * 80 -> c8 IPL sequence pulls the mounted deck in through the reader. */
+ * The key does one thing and does it immediately: it sets AINI. Nothing is read
+ * yet. The next START releases the machine, and the 80 -> c8 IPL sequence pulls
+ * ONE card from the reader, nibble-packs its 80 columns into 40 bytes at
+ * address 0, and executes them. Whatever that card's code does next -- and on
+ * every real deck it reads the rest of the deck -- is the program's business,
+ * not the machine's. */
 void EMSCRIPTEN_KEEPALIVE press_load()  {
     if (!ge->powered) {
         send_console();
         return;
     }
-    if (staged) {
-        ge_load_image(ge, staged_img, staged_len, staged_origin);
-        ge_seed_segment_bases(ge);
-        ge_enter(ge, staged_entry);
-        ge->ALTO = 0;
-        ge->AINI   = 0;   /* magic-loaded: no bootstrap IPL */
-    } else {
-        ge_load(ge);      /* authentic bootstrap: AINI drives the reader IPL */
-    }
+    ge_load(ge);
     send_console();
-}
-
-/* Simplified loader (temporary): a unified-format image (or scattered .cap)
- * staged by the page is dropped straight into memory by LOAD (press_load),
- * bypassing the (not-yet-faithful) card-reader bootstrap, with PO positioned at
- * its entry. START then just runs it. LOAD-loads / START-runs keeps the operator
- * window for console memory-forcing between the two, and lets START resume a
- * halted machine without re-wiping forced values. */
-int EMSCRIPTEN_KEEPALIVE stage_image(void) {
-    reset_sim_bindings();
-    FILE *f = fopen("/image.bin", "rb");
-    if (!f)
-        return -1;
-    int rc = binimage_read(f, &staged_origin, &staged_entry,
-                           staged_img, sizeof staged_img, &staged_len);
-    fclose(f);
-    staged = (rc == BINIMAGE_OK);
-    return rc;
-}
-
-/* Stage a .cap deck (written to /deck.cap by the page) by scattering each card's
- * payload to its embedded load address — the same self-addressed deck format as
- * the CLI default (cap_load_scattered). The populated span is moved down to the
- * start of staged_img so press_load's ge_load_image(origin) path is shared with
- * the .bin loader. This is kept as an expert/debug direct-load path; the normal
- * browser workflow mounts .cap decks into the reader with mount_deck() so the
- * authentic CLEAR -> LOAD -> START bootstrap runs through CAN1. Returns 0 on
- * success, -1 on parse/empty error. */
-int EMSCRIPTEN_KEEPALIVE stage_cap(void) {
-    unsigned lo = 0, hi = 0;
-
-    reset_sim_bindings();
-    memset(staged_img, 0, sizeof staged_img);
-    int nc = cap_load_scattered("/deck.cap", TC_COLBIN, staged_img, &lo, &hi);
-    if (nc < 0)
-        return -1;
-
-    unsigned len = hi - lo + 1;
-    memmove(staged_img, staged_img + lo, len);
-    staged_origin = (uint16_t)lo;
-    staged_entry  = (uint16_t)lo;
-    staged_len    = (uint16_t)len;
-    staged = 1;
-    return 0;
 }
 
 void EMSCRIPTEN_KEEPALIVE press_start() {
@@ -360,10 +302,6 @@ int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
     int rc;
 
     reset_sim_bindings();
-    /* A real deck-in-reader bootstrap must win over any previously staged
-     * direct-load image, otherwise LOAD would still bypass the reader. */
-    staged = 0;
-    staged_origin = staged_entry = staged_len = 0;
     ge_load_1(ge);   /* select connector 2 (LOAD1), matching the reader */
     rc = cardreader_register_from(ge, "/deck.cap",
                                   binary ? TC_BINARY : TC_NORMAL, first_card);
@@ -374,8 +312,6 @@ int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
 int EMSCRIPTEN_KEEPALIVE prepare_sat_batch(const char *id) {
     const struct sat_batch_info *info;
     char note[256];
-    unsigned lo = 0, hi = 0;
-    uint16_t entry = 0;
 
     if (!id)
         return -1;
@@ -385,29 +321,15 @@ int EMSCRIPTEN_KEEPALIVE prepare_sat_batch(const char *id) {
         return -1;
 
     reset_sim_bindings();
-    staged = 0;
-    staged_origin = staged_entry = staged_len = 0;
 
-    if (info->launch == SAT_BATCH_IMAGE) {
-        memset(staged_img, 0, sizeof staged_img);
-        if (sat_batch_prepare_image("/sat", id, staged_img, &lo, &hi, &entry,
-                                    note, sizeof(note)) != 0)
-            return -1;
-        memmove(staged_img, staged_img + lo, hi - lo + 1);
-        staged_origin = (uint16_t)lo;
-        staged_entry = entry;
-        staged_len = (uint16_t)(hi - lo + 1);
-        staged = 1;
-    } else {
-        ge_load_1(ge);
-        if (sat_batch_prepare_deck("/sat", id, "/deck.cap", note, sizeof(note)) != 0)
-            return -1;
-        if (cardreader_register(ge, "/deck.cap", TC_NORMAL) != 0)
-            return -1;
-    }
+    ge_load_1(ge);
+    if (sat_batch_prepare_deck("/sat", id, "/deck.cap", note, sizeof(note)) != 0)
+        return -1;
+    if (cardreader_register(ge, "/deck.cap", TC_NORMAL) != 0)
+        return -1;
 
     send_console();
-    return info->launch;
+    return 0;
 }
 
 void EMSCRIPTEN_KEEPALIVE set_switches(int flags, int am) {

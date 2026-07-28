@@ -1,7 +1,7 @@
 # funktionalcpu deck — annotated disassembly & routine names
 
 Reverse-engineered from `DUMP1/funktionalcpu.cap` (the "130 CPU FUNCTIONAL TEST",
-E. Maccario, Feb 1970). Method: `gdis --image` depunch → load into gemu → dump
+E. Maccario, Feb 1970). Method: `gdis` depunch → load into gemu → dump
 `ge.mem` → recursive flow-following disassembler. The program lives at **0x0100+**;
 data/scratch in low memory; the per-instruction test vectors are in **0x04B0–0x06xx**.
 

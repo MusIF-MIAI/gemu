@@ -5,7 +5,6 @@
 #include "utest.h"
 #include "decks.h"
 #include "../cap.h"
-#include "../binimage.h"
 #include "../transcode.h"
 
 static uint16_t test_colbin_encode_byte(uint8_t b)
@@ -160,7 +159,7 @@ UTEST(cap, isolation_stream_real_deck)
 UTEST(cap, capcat_appends_overlay_cards)
 {
     static const char base_path[] = "/tmp/gemu_capcat_base.cap";
-    static const char overlay_path[] = "/tmp/gemu_capcat_overlay.bin";
+    static const char overlay_path[] = "/tmp/gemu_capcat_overlay.raw";
     static const char out_path[] = "/tmp/gemu_capcat_out.cap";
     static const char tool_path[] = "tools/capcat";
     static const uint8_t prefix[8] = { 0x00, 0x04, 0x40, 0x00, 0x20, 0x40, 0x40, 0x42 };
@@ -190,12 +189,12 @@ UTEST(cap, capcat_appends_overlay_cards)
         uint8_t ov[3] = { 0x11, 0x22, 0x33 };
         FILE *f = fopen(overlay_path, "wb");
         ASSERT_TRUE(f != NULL);
-        ASSERT_EQ(binimage_write(f, 0x0200, 0x0200, ov, (uint16_t)sizeof(ov)), BINIMAGE_OK);
+        ASSERT_EQ(fwrite(ov, 1, sizeof(ov), f), sizeof(ov));
         fclose(f);
     }
 
     snprintf(cmd, sizeof(cmd),
-             "%s --prefix \"00 04 40 00 20 40 40 42\" -o %s %s %s "
+             "%s --prefix \"00 04 40 00 20 40 40 42\" -o %s %s 0x0200:%s "
              ">/tmp/gemu_capcat_cmd.log 2>&1",
              tool_path, out_path, base_path, overlay_path);
     ASSERT_EQ(system(cmd), 0);
@@ -213,7 +212,7 @@ UTEST(cap, capcat_appends_overlay_cards)
 UTEST(cap, capcat_rejects_isolation_base)
 {
     static const char base_path[] = "../DUMP1/isolationcpu01.cap";
-    static const char overlay_path[] = "/tmp/gemu_capcat_iso_overlay.bin";
+    static const char overlay_path[] = "/tmp/gemu_capcat_iso_overlay.raw";
     static const char out_path[] = "/tmp/gemu_capcat_iso_out.cap";
     static const char tool_path[] = "tools/capcat";
     char cmd[512];
@@ -235,11 +234,11 @@ UTEST(cap, capcat_rejects_isolation_base)
         uint8_t ov[1] = { 0x11 };
         FILE *f = fopen(overlay_path, "wb");
         ASSERT_TRUE(f != NULL);
-        ASSERT_EQ(binimage_write(f, 0x0200, 0x0200, ov, (uint16_t)sizeof(ov)), BINIMAGE_OK);
+        ASSERT_EQ(fwrite(ov, 1, sizeof(ov), f), sizeof(ov));
         fclose(f);
     }
 
-    snprintf(cmd, sizeof(cmd), "%s -o %s %s %s >/tmp/gemu_capcat_iso_cmd.log 2>&1",
+    snprintf(cmd, sizeof(cmd), "%s -o %s %s 0x0200:%s >/tmp/gemu_capcat_iso_cmd.log 2>&1",
              tool_path, out_path, base_path, overlay_path);
     ASSERT_NE(system(cmd), 0);
 }

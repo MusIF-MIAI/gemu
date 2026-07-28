@@ -1,8 +1,8 @@
 ; halt.s — the canonical idle tail: spin on self, then halt.
 ;
 ; This mirrors the idle-halt tail observed when DUMP1/funktionalcpu runs to
-; completion (see docs/ISA.md §3.3). With the default ORG 0x0000 it is directly
-; loadable via ge_load_program() (which copies to mem[0] and starts at PO=0).
+; completion (see docs/ISA.md §3.3). Six bytes at ORG 0x0000, so it is a boot
+; card in its own right:  gasm --card -o halt.cap halt.s
 
         ORG     0x0000
 

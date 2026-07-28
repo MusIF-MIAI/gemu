@@ -55,6 +55,14 @@ void ge_init(struct ge *ge)
     ge->ST4.name = "ST4";
 
     ge->channel2.name = "CAN2";
+
+    /* Power-on, and ONLY power-on, establishes the identity change registers.
+     * They are core cells at 0x00F0-0x00FE; core retains, so CLEAR must not
+     * touch them (see ge_clear). A machine that has been powered up all day
+     * holds whatever the last program left there -- which is exactly how the
+     * bench found a compiled program's frame pointer landing at 0x0600 instead
+     * of the assumed 0x6000. */
+    ge_seed_segment_bases(ge);
 }
 
 /*
@@ -165,7 +173,11 @@ void ge_clear(struct ge *ge)
     ge->integrated_reader.active_valid = 0;
     ge->PEC1_pending = 0;
 
-    ge_seed_segment_bases(ge);
+    /* CLEAR does NOT clear core. It "presets CPU + peripherals to a defined
+     * state" (CPU[4] §3.3) -- flip-flops, not memory. The change registers live
+     * in core at 0x00F0-0x00FE and survive, along with every other byte the
+     * last program wrote. Seeding them here would invent a reset identity the
+     * machine does not have; ge_init does it once, at power-on. */
 
     ge_log_options(ge);
 }
@@ -191,19 +203,6 @@ void ge_seed_segment_bases(struct ge *ge)
     }
 }
 
-int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size)
-{
-    if (program == NULL && size != 0)
-        return -1;
-
-    if (size > MAX_PROGRAM_STORAGE_WORDS)
-        size = MAX_PROGRAM_STORAGE_WORDS;
-
-    /* simulate the loading for now */
-    memcpy(ge->mem, program, size);
-    return 0;
-}
-
 /* odd-parity bit for a byte: 1 if the byte has an even number of set bits
  * (so data+parity is odd). Mirrors odd_parity() in pulse.c. */
 static inline uint8_t ge_odd_parity(uint8_t data)
@@ -224,11 +223,12 @@ void ge_mem_store8(struct ge *ge, uint16_t addr, uint8_t val)
     ge->mem_written[addr] = 1;
 }
 
-/* Load a flat image into memory at `origin` (the unified-format payload).
- * Unlike ge_load_program this is origin-aware and not size-capped; it also
- * primes the parity store and marks the cells written, so reads of the loaded
- * code parity-check cleanly. Returns 0 on success, -1 if it would exceed the
- * installed memory. */
+/* Write a flat image into core at `origin`, priming the parity store and
+ * marking the cells written, so reads of it parity-check cleanly.
+ *
+ * NOT A LOAD PATH. The machine takes programs from cards and from nothing else.
+ * This is the bench engineer's hand: test scaffolding, and the model behind the
+ * maintenance panel's memory key-in. Returns 0, or -1 past installed memory. */
 int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
                   uint16_t origin)
 {
@@ -248,11 +248,12 @@ int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
     return 0;
 }
 
-/* Enter execution at `entry` without the peripheral LOAD bootstrap: seed the
- * program counter and drop the sequencer straight into the alpha (fetch) phase.
- * Use after ge_clear + ge_load_image for the direct binary-load path; the
- * --deck card-reader path uses the natural state 00 -> 80 -> alpha bootstrap
- * instead (which leaves entry at 0). */
+/* Force the sequencer into the alpha (fetch) phase at `entry`.
+ *
+ * NOT A MACHINE OPERATION -- there is no console control that does this. The
+ * real entry is the IPL: CLEAR, LOAD1/2, LOAD, START walks 00 -> 80 -> c8 ...
+ * -> e3 and begins executing the one card it read, at address 0. This helper
+ * exists so unit tests can start a fragment mid-machine without a deck. */
 void ge_enter(struct ge *ge, uint16_t entry)
 {
     ge->rPO = entry;

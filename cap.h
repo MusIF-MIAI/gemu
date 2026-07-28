@@ -65,7 +65,7 @@ const char *cap_family_name(enum cap_deck_family family);
  * self-consistent record is accepted (loose). Bytes not written keep their
  * existing value in `image` (caller should pre-zero or pre-seed as desired).
  *
- * This mirrors the gdis `--image` depunch so a .cap deck loads identically
+ * This mirrors the gdis depuncher so a .cap deck decodes identically
  * whether depunched offline or fed to the emulator directly. It honours each
  * card's embedded load address (the deck format), independent of the (separate,
  * cycle-faithful) card-reader bootstrap.

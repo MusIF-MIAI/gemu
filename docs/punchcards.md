@@ -20,7 +20,9 @@ The capture hardware is the project's own Raspberry-Pi-Pico reader; its firmware
 - `software/burroughs-card-reader/main.c` — sampling + dump format.
 - `software/gemu/cap.c`, `cap.h` — the `.cap` parser used by the emulator.
 - `software/gemu/transcode.c`, `transcode.h` — the four conversions.
-- `software/DUMP1/funktionalcpu.cap` / `.bin` — the oracle pair.
+- `software/DUMP1/funktionalcpu.cap` — the deck, and its own oracle: a capture
+  carries the same cards twice, as hex columns and as ASCII hole art, and the
+  two must agree (`tests/transcode.c hex_and_holeart_agree`).
 
 Everything below that says "verified" was checked against one of these.
 
@@ -284,7 +286,7 @@ assuming fixed first/last positions — the captured decks already have the titl
 and summary removed. Verified on the four CPU-ISOLATION decks, whose
 identifiers run contiguously (`001`–`210`, `211`–`502`, `503`–…, `A00`–…).
 The resulting byte stream is the SMAC program; interpreting it (loader + INTE +
-WORDS) is future work — `gdis --hex` / `--image` give the bytes today.
+WORDS) is future work — `gdis --hex` gives the bytes today.
 
 The `ls600-*` / `sat-ls600` / `printer*` / `reading-*` decks are **peripheral
 test decks** — even where they share the `00 04` framing, their payloads are test
@@ -319,7 +321,7 @@ halting in the "no test selected" branch when that byte is zero.
 |---|---|---|
 | `.cap` = 2 dumps (hex + hole-art), 228 = 114+114 | header count + `main.c` dump code | high |
 | cap bit *b* = row *b*; bit 10 absent | `BITMASK 0x1BFF`, GPIO init skips 10 | high |
-| `TC_NORMAL` table | exact match `funktionalcpu.cap`→`.bin` (9120 B) | high |
+| `TC_NORMAL` table | exact match against the externally-supplied 9120-byte EBCDIC rendering of funktionalcpu (historical; that file is no longer carried here) | high |
 | `TC_COLBIN` B2R map | decodes to valid GE code; program runs to HLT | high |
 | `TC_HEX` nibble-sum | loader listing match (38/40 bytes) | medium |
 | Data-card layout (LL/addr/66 B/prefix) | direct decode of 106 cards, addresses step 66 | high |

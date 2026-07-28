@@ -11,7 +11,7 @@ UTEST(beta_phase, execute_nop)
     ge_init(&g);
     ge_clear(&g);
 
-    r = ge_load_program(&g, mem, sizeof(mem));
+    r = ge_load_image(&g, mem, sizeof(mem), 0);
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
@@ -45,7 +45,7 @@ UTEST(beta_phase, execute_lon_loff) {
     struct ge_console c;
 
     ge_init(&g);
-    ge_load_program(&g, mem, sizeof(mem));
+    ge_load_image(&g, mem, sizeof(mem), 0);
 
     ge_clear(&g);
     ge_start(&g);
@@ -104,7 +104,7 @@ UTEST(beta_phase, execute_ins_ens) {
     struct ge_console c;
 
     ge_init(&g);
-    ge_load_program(&g, mem, sizeof(mem));
+    ge_load_image(&g, mem, sizeof(mem), 0);
     ge_clear(&g);
     ge_start(&g);
 

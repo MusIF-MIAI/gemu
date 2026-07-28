@@ -5,7 +5,7 @@
 ; register with an effective address; LR loads it from memory; STR stores it.
 ; Here we point base register 2 at a 4 KiB window and compare it.
 
-        ORG     0x0000
+        ORG     0x0100
 
 start:  LA      2, buf          ; reg[2] <- address of buf
         STR     2, save         ; mem16[save] <- reg[2]
@@ -14,6 +14,6 @@ start:  LA      2, buf          ; reg[2] <- address of buf
         HLT
         JU      start
 
-        ORG     0x0040
+        ORG     0x0140
 save:   DW      0x0000          ; 2-byte scratch word
 buf:    DS      16              ; a little buffer

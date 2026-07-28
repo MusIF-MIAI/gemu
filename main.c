@@ -12,9 +12,7 @@
 #include "printer.h"
 #include "disk.h"
 #include "tape.h"
-#include "cap.h"
 #include "transcode.h"
-#include "binimage.h"
 #include "log.h"
 #include "sat_batches.h"
 #include <fcntl.h>
@@ -81,17 +79,19 @@ static pid_t spawn_tui(const char *argv0)
 static void print_usage(const char *argv0)
 {
     fprintf(stderr,
-        "Usage: %s [OPTIONS] [prog.bin]\n"
+        "Usage: %s [OPTIONS] [deck.cap]\n"
         "\n"
-        "  prog.bin             Unified-format image (gasm output); loaded directly\n"
-        "                       at its origin and entered at its entry point.\n"
+        "  deck.cap             A card deck. It is placed in the reader's hopper and\n"
+        "                       pulled in by the machine's own bootstrap: CLEAR, LOAD1,\n"
+        "                       LOAD, START. The IPL reads exactly ONE card (80 columns\n"
+        "                       nibble-packed to 40 bytes at 0x0000) and executes it;\n"
+        "                       that card's code pulls the rest of the deck.\n"
+        "\n"
+        "  A deck is the only way to get a program into the machine, here as on the\n"
+        "  iron. Build one with `gasm -o prog.cap prog.s` or `gec -o prog.cap prog.c`.\n"
         "\n"
         "Options:\n"
-        "  --raw                Treat the positional file as a headerless flat image\n"
-        "  --org <0xNNNN>       Load origin for --raw (default 0x0000; entry = origin)\n"
-        "  --poke <A=V>         Write byte V to address A after load (repeatable),\n"
-        "                       e.g. --poke 0x0E00=0x80 to set a diagnostic option\n"
-        "  --deck <path>        Path to a .cap card deck; loaded via the reader (connector 2)\n"
+        "  --deck <path>        Explicit alias for the positional .cap argument\n"
         "  --sat <id>           Use a built-in Site Acceptance Test batch\n"
         "  --list-sat           List the built-in SAT batches and exit\n"
         "  --trace <spec>       Enable log types from spec string\n"
@@ -122,11 +122,6 @@ int main(int argc, char *argv[])
     const char *disk_path = NULL;   /* --disk: DSS pack image on connector 3 unit 0 */
     const char *tape_path = NULL;   /* --tape: MTC reel image on connector 4 unit 0 */
     const char *sat_batch = NULL;   /* --sat: built-in SAT batch */
-    const char *cap_path = NULL;    /* positional .cap: scatter-load (default) */
-    const char *image_path = NULL;
-    int raw = 0;
-    long load_org = 0x0000;
-    uint16_t poke_addr[32]; uint8_t poke_val[32]; int npoke = 0;
     int interactive = 0;   /* --interactive: run until killed, switches via signals */
     int sw1_init = 0;      /* --switch1: start with SWITCH 1 (JS1) on */
     int sw2_init = 0;      /* --switch2: start with SWITCH 2 (JS2) on */
@@ -196,53 +191,23 @@ int main(int argc, char *argv[])
             sw1_init = 1;
         } else if (strcmp(argv[i], "--switch2") == 0) {
             sw2_init = 1;
-        } else if (strcmp(argv[i], "--bin") == 0) {
-            /* Force direct binary (unified-format) load — debugging path. */
-            if (i + 1 >= argc) {
-                fprintf(stderr, "error: --bin requires an argument\n");
-                return 1;
-            }
-            image_path = argv[++i];
-        } else if (strcmp(argv[i], "--raw") == 0) {
-            raw = 1;
-        } else if (strcmp(argv[i], "--org") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "error: --org requires an argument\n");
-                return 1;
-            }
-            load_org = strtol(argv[++i], NULL, 0);
-        } else if (strcmp(argv[i], "--poke") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "error: --poke requires ADDR=VAL\n");
-                return 1;
-            }
-            char *eq = strchr(argv[i + 1], '=');
-            if (!eq || npoke >= 32) {
-                fprintf(stderr, "error: bad --poke '%s' (want 0xADDR=0xVAL)\n", argv[i + 1]);
-                return 1;
-            }
-            poke_addr[npoke] = (uint16_t)strtoul(argv[i + 1], NULL, 0);
-            poke_val[npoke]  = (uint8_t)strtoul(eq + 1, NULL, 0);
-            npoke++;
-            i++;
         } else if (argv[i][0] == '-') {
             fprintf(stderr, "error: unknown option '%s'\n", argv[i]);
             print_usage(argv[0]);
             return 1;
-        } else if (!image_path && !deck_path && !sat_batch) {
-            /* Positional input. The DEFAULT is the authentic card-reader flow:
-             * a `.cap` deck is loaded by scattering each card's payload to its
-             * embedded load address (cap_load_scattered — the deck format), then
-             * entering at the lowest loaded address. Any other file (e.g. a
-             * `.bin`) is a direct unified-format binary load — the debugging path.
-             * `--deck` forces the cycle-faithful card-reader bootstrap; `--bin`
-             * forces direct binary load. */
+        } else if (!deck_path && !sat_batch) {
+            /* Positional input: a card deck, and nothing else. There is no
+             * direct-to-memory load — the machine has no such door. */
             const char *p = argv[i];
             size_t n = strlen(p);
-            if (n >= 4 && strcmp(p + n - 4, ".cap") == 0)
-                cap_path = p;
-            else
-                image_path = p;
+            if (n < 4 || strcmp(p + n - 4, ".cap") != 0) {
+                fprintf(stderr,
+                        "error: '%s' is not a .cap card deck.\n"
+                        "       A program reaches the machine only on cards; build a deck with\n"
+                        "       `gasm -o prog.cap prog.s` or `gec -o prog.cap prog.c`.\n", p);
+                return 1;
+            }
+            deck_path = p;
         } else {
             fprintf(stderr, "error: unexpected argument '%s'\n", argv[i]);
             print_usage(argv[0]);
@@ -250,16 +215,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    if ((deck_path && image_path) || (deck_path && cap_path) || (deck_path && sat_batch) ||
-        (cap_path && image_path) || (cap_path && sat_batch) || (image_path && sat_batch)) {
-        fprintf(stderr, "error: give only one of a .cap deck, --deck, --sat, or --bin\n");
+    if (deck_path && sat_batch) {
+        fprintf(stderr, "error: give only one of a .cap deck, --deck, or --sat\n");
         return 1;
     }
 
-    /* The cycle-faithful card-reader bootstrap is substantially slower than a
-     * direct binary or scatter-loaded image. Give `--deck` a roomier default so
-     * a real deck does not time out during the load unless the user explicitly
-     * requested a tighter budget. */
+    /* Reading a deck through the reader costs real machine cycles. Give a deck
+     * run a roomier default so the load does not time out unless the user
+     * explicitly requested a tighter budget. */
     if ((deck_path || sat_batch) && !max_cycles_set)
         max_cycles = 500000;
 
@@ -275,13 +238,12 @@ int main(int argc, char *argv[])
 
     ge_clear(&ge);
 
-    /* Faithful load: drive the LOAD button so the bootstrap pulls the deck in
-     * through the card reader on connector 2 (channel 1), exactly as the
-     * bootstrap.c test does — no direct mem[] writes. */
-    int image_loaded = 0;
-    uint16_t image_entry = 0;
+    /* The only load path there is: put the deck in the hopper, select the load
+     * unit, arm the bootstrap, then START. LOAD itself does nothing but set
+     * AINI — the read happens when the machine is released. */
     if (sat_batch) {
         char note[256];
+        static const char sat_cap_path[] = "/tmp/gemu_sat_batch.cap";
         const struct sat_batch_info *info = sat_batch_find(sat_batch);
         if (!info) {
             fprintf(stderr, "error: unknown SAT batch '%s' (use --list-sat)\n", sat_batch);
@@ -289,46 +251,21 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        if (info->launch == SAT_BATCH_IMAGE) {
-            static uint8_t scat[MEM_SIZE];
-            unsigned lo = 0, hi = 0;
-            uint16_t entry = 0;
-
-            if (sat_batch_prepare_image("Site_Acceptance_Test", sat_batch,
-                                        scat, &lo, &hi, &entry,
-                                        note, sizeof(note)) != 0) {
-                fprintf(stderr, "error: failed to prepare SAT batch '%s'\n", sat_batch);
-                ge_deinit(&ge);
-                return 1;
-            }
-
-            if (ge_load_image(&ge, scat + lo, (uint16_t)(hi - lo + 1), (uint16_t)lo) != 0) {
-                fprintf(stderr, "error: SAT image '%s' does not fit in memory\n", sat_batch);
-                ge_deinit(&ge);
-                return 1;
-            }
-            ge_seed_segment_bases(&ge);
-            image_loaded = 1;
-            image_entry = entry;
-            fprintf(stderr, "SAT batch %s: %s\n", sat_batch, note);
-        } else {
-            static const char sat_cap_path[] = "/tmp/gemu_sat_batch.cap";
-            if (sat_batch_prepare_deck("Site_Acceptance_Test", sat_batch,
-                                       sat_cap_path, note, sizeof(note)) != 0) {
-                fprintf(stderr, "error: failed to compose SAT batch '%s'\n", sat_batch);
-                ge_deinit(&ge);
-                return 1;
-            }
-            ge_load_1(&ge);
-            ge_load(&ge);
-            ret = cardreader_register(&ge, sat_cap_path, TC_NORMAL);
-            if (ret != 0) {
-                fprintf(stderr, "error: failed to load SAT batch '%s'\n", sat_batch);
-                ge_deinit(&ge);
-                return ret;
-            }
-            fprintf(stderr, "SAT batch %s: %s\n", sat_batch, note);
+        if (sat_batch_prepare_deck("Site_Acceptance_Test", sat_batch,
+                                   sat_cap_path, note, sizeof(note)) != 0) {
+            fprintf(stderr, "error: failed to compose SAT batch '%s'\n", sat_batch);
+            ge_deinit(&ge);
+            return 1;
         }
+        ge_load_1(&ge);
+        ge_load(&ge);
+        ret = cardreader_register(&ge, sat_cap_path, TC_NORMAL);
+        if (ret != 0) {
+            fprintf(stderr, "error: failed to load SAT batch '%s'\n", sat_batch);
+            ge_deinit(&ge);
+            return ret;
+        }
+        fprintf(stderr, "SAT batch %s: %s\n", sat_batch, note);
     } else if (deck_path) {
         ge_load_1(&ge);   /* select connector 2 (LOAD1) */
         ge_load(&ge);     /* set AINI: state 80 -> c8 starts the load sequence */
@@ -338,90 +275,9 @@ int main(int argc, char *argv[])
             ge_deinit(&ge);
             return ret;
         }
-    } else if (cap_path) {
-        /* Default .cap load: scatter each card's payload to its embedded load
-         * address (the deck format), then enter at the lowest loaded address.
-         * Honours the card addresses exactly like `gdis --image`; distinct from
-         * the cycle-faithful card-reader bootstrap (--deck). */
-        static uint8_t scat[MEM_SIZE];
-        unsigned lo = 0, hi = 0;
-        memset(scat, 0, sizeof scat);
-
-        int ncards = cap_load_scattered(cap_path, TC_COLBIN, scat, &lo, &hi);
-        if (ncards < 0) {
-            fprintf(stderr, "error: failed to scatter-load .cap '%s'\n", cap_path);
-            ge_deinit(&ge);
-            return 1;
-        }
-
-        uint16_t len = (uint16_t)(hi - lo + 1);
-        if (ge_load_image(&ge, scat + lo, len, (uint16_t)lo) != 0) {
-            fprintf(stderr, "error: scattered image does not fit in memory\n");
-            ge_deinit(&ge);
-            return 1;
-        }
-        ge_seed_segment_bases(&ge);
-        image_loaded = 1;
-        image_entry  = (uint16_t)lo;
-        ge_log(LOG_DEBUG, "scatter-loaded %d cards, span 0x%04x-0x%04x, entry 0x%04x\n",
-               ncards, lo, hi, lo);
-    } else if (image_path) {
-        /* Direct binary load: read the unified-format image (gasm output) and
-         * place it at its origin; entry comes from the header. With --raw the
-         * file is a headerless flat blob loaded at --org (entry = origin). */
-        static uint8_t buf[MEM_SIZE];
-        uint16_t origin, entry, len;
-        FILE *f = fopen(image_path, "rb");
-        if (!f) {
-            fprintf(stderr, "error: cannot open image '%s'\n", image_path);
-            ge_deinit(&ge);
-            return 1;
-        }
-        if (raw) {
-            size_t n = fread(buf, 1, sizeof buf, f);
-            origin = (uint16_t)load_org;
-            entry  = origin;
-            len    = (uint16_t)n;
-        } else {
-            int rc = binimage_read(f, &origin, &entry, buf, sizeof buf, &len);
-            if (rc != BINIMAGE_OK) {
-                fprintf(stderr, "error: %s: %s\n", image_path, binimage_strerror(rc));
-                fclose(f);
-                ge_deinit(&ge);
-                return 1;
-            }
-        }
-        fclose(f);
-        if (ge_load_image(&ge, buf, len, origin) != 0) {
-            fprintf(stderr, "error: image does not fit in memory\n");
-            ge_deinit(&ge);
-            return 1;
-        }
-        /* A contiguous image spanning 0x00F0-0x00FF overwrites the segment-base
-         * registers ge_clear set up; re-establish the identity bases so paged
-         * addressing works (programs may still reload bases at runtime). */
-        ge_seed_segment_bases(&ge);
-        image_loaded = 1;
-        image_entry  = entry;
-        ge_log(LOG_DEBUG, "loaded %u bytes at 0x%04x, entry 0x%04x\n",
-               (unsigned)len, origin, entry);
-    }
-
-    /* Apply --poke writes after the image + base seeding (e.g. the diagnostic
-     * console test-selection byte at 0x0E00) so they override loaded values. */
-    for (int p = 0; p < npoke; p++) {
-        ge.mem[poke_addr[p]] = poke_val[p];
-        ge.mem_parity[poke_addr[p]]  = __builtin_parity(poke_val[p]) ? 0 : 1;
-        ge.mem_written[poke_addr[p]] = 1;
-        ge_log(LOG_DEBUG, "poke mem[0x%04x] = 0x%02x\n", poke_addr[p], poke_val[p]);
     }
 
     ge_start(&ge);
-
-    /* Direct binary load enters at the header's entry point without the
-     * peripheral LOAD bootstrap. */
-    if (image_loaded)
-        ge_enter(&ge, image_entry);
 
     /* Console switch initial state (after ge_start, which clears them). */
     ge.JS1 = sw1_init;
@@ -446,7 +302,17 @@ int main(int argc, char *argv[])
     int printer_enabled = 0;
     int printed = 0;
     int kbd_fl = -1;
-    if (image_loaded && !use_tui) {
+    /* The integrated printer/typewriter on channel 2 is part of the machine,
+     * not an option: attach it for every non-TUI run, so a deck that prints is
+     * not left parked on an unanswered PER.
+     *
+     * It used to swallow the card load instead. State b8 is shared between the
+     * channel-1 reader input-wait and the channel-2 print-wait, and printer.c
+     * answered both, so the IPL fell through to alpha at address 0 having read
+     * nothing. It now checks PC121 -- the machine's own decode of "connector 2
+     * on channel 1", the card reader -- and keeps out of an order that is not
+     * its own. See printer.c. */
+    if (!use_tui) {
         printer_register(&ge);
         printer_enabled = 1;
         kbd_fl = fcntl(0, F_GETFL, 0);

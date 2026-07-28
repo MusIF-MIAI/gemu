@@ -26,7 +26,7 @@ UTEST(halt, hlt_sets_halted)
      * now reads -- was being set a few lines later in ge_clear(). */
     ASSERT_EQ(ge_halted(&g), 1);
 
-    r = ge_load_program(&g, program, sizeof(program));
+    r = ge_load_image(&g, program, sizeof(program), 0);
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
@@ -65,7 +65,7 @@ UTEST(halt, unknown_opcode_0x00_reaches_hlt)
 
     ge_init(&g);
     ge_clear(&g);
-    ASSERT_EQ(ge_load_program(&g, program, sizeof(program)), 0);
+    ASSERT_EQ(ge_load_image(&g, program, sizeof(program), 0), 0);
     ge_start(&g);
 
     for (int i = 0; i < 40 && !ge_halted(&g); i++)
@@ -82,7 +82,7 @@ UTEST(halt, unknown_opcode_0x80_reaches_hlt)
 
     ge_init(&g);
     ge_clear(&g);
-    ASSERT_EQ(ge_load_program(&g, program, sizeof(program)), 0);
+    ASSERT_EQ(ge_load_image(&g, program, sizeof(program), 0), 0);
     ge_start(&g);
 
     for (int i = 0; i < 40 && !ge_halted(&g); i++)

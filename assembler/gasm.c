@@ -16,7 +16,7 @@
  *   signals.h       — branch condition mask (verified_condition): aux bits
  *                     4..7 -> cc 3,2,1,0  (0x80->cc0, 0x40->cc1, 0x20->cc2,
  *                     0x10->cc3); all-ones nibble 0xF0 = jump on any cc.
- *   ge.c            — ge_load_program() memcpy's the image to mem[0] and reset
+ *   ge.c            — the IPL nibble-packs one card to mem[0] and reset
  *                     leaves rPO = 0, so the directly-runnable convention is
  *                     ORG 0. (Card-deck/DUMP1 programs instead load at 0x0100.)
  *
@@ -32,9 +32,9 @@
  * So an absolute address A <= 0x7FFF encodes as field == A (no base added);
  * higher memory is reached relative to a reprogrammed base via disp(N).
  *
- * This file is self-contained C99 apart from binimage.h/.c (the standalone
- * shared definition of the unified output format); it includes no other gemu
- * header, so it still builds independently of the emulator.
+ * This file is self-contained C99 and includes no gemu header, so it builds
+ * independently of the emulator. Its output is always a .cap card deck: that
+ * is the only thing a GE-120 can be handed a program on.
  */
 
 #include <stdio.h>
@@ -44,7 +44,6 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "binimage.h"   /* shared unified-format writer (origin+entry header) */
 
 /* ------------------------------------------------------------------ */
 /* Instruction table                                                   */
@@ -732,10 +731,9 @@ static void cap_scatter_card(uint16_t *cols, uint16_t addr,
 
 int main(int argc, char **argv)
 {
-    const char *inpath = NULL, *outpath = "a.bin", *listpath = NULL;
+    const char *inpath = NULL, *outpath = "a.cap", *listpath = NULL;
     long org = 0x0000;
-    int raw_out = 0;   /* --raw: emit a headerless flat image (old behaviour) */
-    int card_out = 0;  /* --card: one IPL boot card (raw, ORG 0, <=40 bytes) */
+    int card_out = 0;  /* --card: one IPL boot card (ORG 0, <=40 bytes)      */
     int boot_out = 0;  /* --boot: link with boot.s, emit a .cap deck         */
     int bootge_out = 0;/* --bootge: .cap deck with the ORIGINAL IPL loader   */
 
@@ -743,32 +741,38 @@ int main(int argc, char **argv)
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) outpath = argv[++i];
         else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) listpath = argv[++i];
         else if (strcmp(argv[i], "--org") == 0 && i + 1 < argc) org = strtol(argv[++i], NULL, 0);
-        else if (strcmp(argv[i], "--raw") == 0) raw_out = 1;
-        else if (strcmp(argv[i], "--card") == 0) card_out = raw_out = 1;
+        else if (strcmp(argv[i], "--card") == 0) card_out = 1;
         else if (strcmp(argv[i], "--boot") == 0) boot_out = 1;
         else if (strcmp(argv[i], "--bootge") == 0) bootge_out = 1;
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-            printf("Usage: gasm [-o out.bin] [-l listing.txt] [--org 0xNNNN] "
-                   "[--raw|--card|--boot] input.s\n"
-                   "  Default output: unified format (GE12 header + image).\n"
-                   "  --raw          : headerless flat image.\n"
-                   "  --card         : IPL boot-card image (implies --raw):\n"
-                   "                   must ORG at 0x0000, 40 bytes max (one\n"
-                   "                   80-column hex card -- the IPL packs it\n"
-                   "                   to 0x0000 and executes it there). Feed\n"
-                   "                   with  arm <file>.bin@0  on the reader\n"
-                   "                   emulator.\n"
-                   "  --boot         : link with the boot.s template: emit a\n"
-                   "                   ready .cap deck -- the boot card (with\n"
-                   "                   DEST/DONE patched to the program) plus\n"
-                   "                   the program as raw 80-byte body cards.\n"
-                   "                   Feed with  arm <file>.cap .\n"
-                   "  --bootge       : .cap deck with the ORIGINAL IPL scatter\n"
-                   "                   loader (bench-proven, from the SAT\n"
-                   "                   decks) instead of boot.s: 66-byte\n"
-                   "                   LL/II cards + jump-to-origin card.\n"
+            printf("Usage: gasm [-o out.cap] [-l listing.txt] [--org 0xNNNN] "
+                   "[--card|--boot] input.s\n"
+                   "\n"
+                   "  Output is always a .cap card deck -- the only thing a\n"
+                   "  GE-120 can be given a program on. Run it with\n"
+                   "  'ge out.cap' in the emulator, or 'arm out.cap' on the\n"
+                   "  rpi-pico-card-reader against the real machine.\n"
+                   "\n"
+                   "  (default)      : deck carried by the ORIGINAL one-card IPL\n"
+                   "                   scatter loader, embedded verbatim from the\n"
+                   "                   SAT decks and bench-proven on the real\n"
+                   "                   machine: 66-byte LL/II cards plus a\n"
+                   "                   jump-to-origin termination card. Needs\n"
+                   "                   ORG 0x0086 or above (the loader and its\n"
+                   "                   card buffer live below).\n"
+                   "  --boot         : same idea, but the deck leads with the\n"
+                   "                   boot.s template instead (DEST/DONE/NCARDS\n"
+                   "                   patched to the program) and the program\n"
+                   "                   follows as raw 80-byte body cards.\n"
+                   "  --card         : ONE IPL boot card. The machine reads a\n"
+                   "                   single 80-column card, nibble-packs it to\n"
+                   "                   40 bytes at 0x0000 and executes it there,\n"
+                   "                   so the image must ORG at 0x0000 and fit\n"
+                   "                   40 bytes. For anything larger, use the\n"
+                   "                   default loader deck.\n"
                    "  ENTRY <expr>   : source directive sets the entry point\n"
-                   "                   (default = load origin).\n");
+                   "                   (default = load origin; the deck paths\n"
+                   "                   enter at the origin regardless).\n");
             return 0;
         } else if (argv[i][0] == '-') {
             fprintf(stderr, "gasm: unknown option '%s'\n", argv[i]);
@@ -776,11 +780,14 @@ int main(int argc, char **argv)
         } else inpath = argv[i];
     }
     if (!inpath) { fprintf(stderr, "gasm: no input file\n"); return 2; }
-    if ((boot_out || bootge_out) && (card_out || raw_out || (boot_out && bootge_out))) {
-        fprintf(stderr, "gasm: --boot/--bootge conflict with each other "
-                        "and with --raw/--card\n");
+    if ((boot_out && card_out) || (bootge_out && (boot_out || card_out))) {
+        fprintf(stderr, "gasm: --card and --boot are mutually exclusive\n");
         return 2;
     }
+    /* No mode flag: the default IS the loader deck. --bootge is kept as an
+     * explicit spelling of it, since that is what the flag used to mean. */
+    if (!boot_out && !card_out)
+        bootge_out = 1;
 
     if (asm_slurp(inpath)) {
         fprintf(stderr, "gasm: cannot open '%s'\n", inpath);
@@ -800,6 +807,23 @@ int main(int argc, char **argv)
     if (img_min < 0x100 && img_max > 0xF0)
         fprintf(stderr, "gasm: warning: image spans 0x00F0-0x00FF "
                         "(change-register area); it may clobber segment bases\n");
+
+    /* optional listing */
+    if (listpath) {
+        FILE *lf = fopen(listpath, "w");
+        if (lf) {
+            fprintf(lf, "; gasm listing for %s  (origin 0x%04lX, %ld bytes)\n",
+                    inpath, img_min, img_max - img_min);
+            for (long a = img_min; a < img_max; a += 16) {
+                fprintf(lf, "%04lX: ", a);
+                for (long b = a; b < a + 16 && b < img_max; b++)
+                    fprintf(lf, "%02X ", image[b]);
+                fputc('\n', lf);
+            }
+            fclose(lf);
+        }
+    }
+
 
     if (bootge_out) {
         /* ---- Original IPL scatter-loader deck ------------------------ */
@@ -918,11 +942,20 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    /* --card: the IPL nibble-packs ONE 80-column hex card to 0x0000 and
-     * jumps to 0x0000 -- so the image must start there and fit the card. */
-    if (card_out) {
+    /* ---- One IPL boot card ----------------------------------------
+     *
+     * The machine reads exactly ONE card at CLEAR/LOAD/START: 80 columns,
+     * nibble-packed by the channel into 40 bytes at 0x0000, and executed
+     * there. So a boot card is a raw image, ORG 0, 40 bytes at most -- and
+     * whatever it does next, including reading the rest of a deck, it does
+     * itself. */
+    {
         uint16_t origin_c = (uint16_t)img_min;
         uint16_t length_c = (uint16_t)(img_max - img_min);
+        uint16_t cols[80];
+        uint8_t  card[40];
+        FILE *out;
+
         if (origin_c != 0) {
             fprintf(stderr, "gasm: --card: image must ORG at 0x0000 (the "
                             "IPL executes the card there); origin is "
@@ -931,56 +964,41 @@ int main(int argc, char **argv)
         }
         if (length_c > 40) {
             fprintf(stderr, "gasm: --card: %u bytes exceed the 40-byte "
-                            "card (80 hex columns); use the loader-deck "
-                            "path (arm <file>@0x100) for larger programs\n",
-                            length_c);
+                            "card (80 hex columns); drop --card and let the "
+                            "loader deck carry it\n", length_c);
             return 1;
         }
         if (g_entry > 0)
             fprintf(stderr, "gasm: warning: --card ignores ENTRY 0x%04lX "
                             "(the IPL always enters at 0x0000)\n", g_entry);
-    }
 
-    uint16_t origin = (uint16_t)img_min;
-    uint16_t length = (uint16_t)(img_max - img_min);
-    uint16_t entry  = (g_entry >= 0) ? (uint16_t)g_entry : origin;
+        memset(card, 0, sizeof(card));
+        memcpy(card, image, (size_t)length_c);
 
-    FILE *out = fopen(outpath, "wb");
-    if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
-    if (raw_out) {
-        fwrite(image + img_min, 1, (size_t)length, out);
-    } else {
-        int rc = binimage_write(out, origin, entry, image + img_min, length);
-        if (rc != BINIMAGE_OK) {
-            fprintf(stderr, "gasm: cannot write image: %s\n", binimage_strerror(rc));
-            fclose(out);
-            return 2;
+        out = fopen(outpath, "w");
+        if (!out) { fprintf(stderr, "gasm: cannot write '%s'\n", outpath); return 2; }
+        for (int i = 0; i < 40; i++) {
+            cols[2 * i]     = cap_hexcol((unsigned)(card[i] >> 4));
+            cols[2 * i + 1] = cap_hexcol((unsigned)(card[i] & 0x0F));
         }
-    }
-    fclose(out);
+        cap_write_card(out, 1, cols);
+        fclose(out);
 
-    /* optional listing */
-    if (listpath) {
-        FILE *lf = fopen(listpath, "w");
-        if (lf) {
-            fprintf(lf, "; gasm listing for %s  (origin 0x%04lX, %ld bytes)\n",
-                    inpath, img_min, img_max - img_min);
-            for (long a = img_min; a < img_max; a += 16) {
-                fprintf(lf, "%04lX: ", a);
-                for (long b = a; b < a + 16 && b < img_max; b++)
-                    fprintf(lf, "%02X ", image[b]);
-                fputc('\n', lf);
-            }
-            fclose(lf);
-        }
+        /* Column 3 carries the row-8 punch that both readers use to spot a
+         * bootstrap card. It falls out naturally when byte 1 has high nibble
+         * 8 -- which every card opening `PER 0x80` (9E 80 ...) does. A card
+         * that starts otherwise is still read as the loader, because a
+         * one-card deck has nothing else it could be, but say so. */
+        if (cols[2] != 0x0100)
+            fprintf(stderr, "gasm: note: %s carries no row-8 loader marker in "
+                            "column 3 (byte 1 is 0x%02X, not 0x8_). A one-card "
+                            "deck is read as its own loader anyway.\n",
+                            outpath, card[1]);
+
+        printf("gasm: boot card %s: %u/40 bytes used (ge %s, or arm %s)\n",
+               outpath, length_c, outpath, outpath);
     }
 
-    if (card_out)
-        printf("gasm: boot card %s: %u/40 bytes used (arm %s@0)\n",
-               outpath, length, outpath);
-    else
-        printf("gasm: wrote %ld bytes to %s (origin 0x%04lX)\n",
-               img_max - img_min, outpath, img_min);
     return 0;
 }
 

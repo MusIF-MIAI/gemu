@@ -21,21 +21,24 @@
  *   printer.keyboard_queue
  *     printer_feed_key enqueues operator-keyboard bytes (two-way input side).
  *
- * Uses ../DUMP1/funktionalcpu.bin (the depunched oracle image); skips cleanly
+ * Uses ../DUMP1/funktionalcpu.cap, scatter-decoded in-process as a reference
+ * image (cap_load_scattered is a test oracle, never a load path); skips cleanly
  * if the fixture is absent.  No UTEST_MAIN here; the runner provides it.
  */
 
 #include "utest.h"
 #include "../ge.h"
 #include "../printer.h"
-#include "../binimage.h"
+#include "../cap.h"
+#include "../transcode.h"
 #include "../opcodes.h"
 #include "../log.h"
 #include "../gecode.h"
 
 #include <stdio.h>
+#include <string.h>
 
-static const char BIN_PATH[] = "../DUMP1/funktionalcpu.bin";
+static const char CAP_PATH[] = "../DUMP1/funktionalcpu.cap";
 
 /* Load the funktionalcpu image, set the 0x40 (CPU functional + memory) test
  * option, and run with SWITCH 2 off. Returns 1 if the run progressed past the
@@ -50,21 +53,21 @@ static const char BIN_PATH[] = "../DUMP1/funktionalcpu.bin";
 static int run_option40(int with_printer, int *out_len)
 {
     static uint8_t buf[MEM_SIZE];
+    unsigned lo = 0, hi = 0;
     uint16_t org, ent, len;
 
-    FILE *f = fopen(BIN_PATH, "rb");
-    if (!f)
+    memset(buf, 0, sizeof buf);
+    if (cap_load_scattered(CAP_PATH, TC_COLBIN, buf, &lo, &hi) <= 0)
         return -1;
-    int rc = binimage_read(f, &org, &ent, buf, sizeof buf, &len);
-    fclose(f);
-    if (rc != BINIMAGE_OK)
-        return -1;
+    org = (uint16_t)lo;
+    len = (uint16_t)(hi - lo + 1);
+    ent = org;
 
     struct ge g;
     ge_init(&g);
     ge_log_set_active_types(0);
     ge_clear(&g);
-    ge_load_image(&g, buf, len, org);
+    ge_load_image(&g, buf + org, len, org);
     ge_seed_segment_bases(&g);
 
     /* Console test-selection byte: 0x40 = CPU functional + core-memory tests. */
@@ -107,7 +110,7 @@ UTEST(printer, present_completes_channel2_per)
     int out_len = 0;
     int r = run_option40(1, &out_len);
     if (r < 0) {
-        UTEST_SKIP("fixture ../DUMP1/funktionalcpu.bin not present");
+        UTEST_SKIP("fixture ../DUMP1/funktionalcpu.cap not present");
         return;
     }
     /* The print PER completed and execution returned to the post-PER code
@@ -123,7 +126,7 @@ UTEST(printer, absent_leaves_machine_waiting)
 {
     int r = run_option40(0, NULL);
     if (r < 0) {
-        UTEST_SKIP("fixture ../DUMP1/funktionalcpu.bin not present");
+        UTEST_SKIP("fixture ../DUMP1/funktionalcpu.cap not present");
         return;
     }
 

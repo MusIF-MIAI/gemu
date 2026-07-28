@@ -13,7 +13,7 @@ UTEST(alpha_phase, p_instruction_to_alpha)
     ge_clear(&g);
     ASSERT_TRUE(g.AINI == 0);
 
-    r = ge_load_program(&g, mem, sizeof(mem));
+    r = ge_load_image(&g, mem, sizeof(mem), 0);
     ASSERT_EQ(r, 0);
     ASSERT_TRUE(g.AINI == 0);
 
@@ -46,7 +46,7 @@ UTEST(alpha_phase, test_int)
     ge_init(&g);
     ge_clear(&g);
 
-    r = ge_load_program(&g, mem, sizeof(mem));
+    r = ge_load_image(&g, mem, sizeof(mem), 0);
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
@@ -77,7 +77,7 @@ UTEST(alpha_phase, test_hlt)
     ge_init(&g);
     ge_clear(&g);
 
-    r = ge_load_program(&g, mem, sizeof(mem));
+    r = ge_load_image(&g, mem, sizeof(mem), 0);
     ASSERT_EQ(r, 0);
 
     ge_start(&g);
@@ -112,7 +112,7 @@ UTEST(alpha_phase, pm_instruction_to_alpha)
     ge_init(&g);
     ge_clear(&g);
 
-    r = ge_load_program(&g, mem, sizeof(mem));
+    r = ge_load_image(&g, mem, sizeof(mem), 0);
     ASSERT_EQ(r, 0);
 
     ge_start(&g);

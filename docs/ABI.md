@@ -69,7 +69,7 @@ frame/stack via `disp(5)`/`disp(6)` against the reprogrammed base registers —
 The split between `.bss`/heap and the stack base (`0x6000`) is a linker constant
 (`crt0`), adjustable per program. Programs that the integrated card reader
 bootstraps load `.text` at `0x0100` (the `DUMP1` convention, ISA §4.1); unit
-tests that use `ge_load_program` load at `0x0000`.
+unit tests that place a fragment by hand (`ge_load_image`) load at `0x0000`.
 
 ---
 

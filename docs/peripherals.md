@@ -35,28 +35,26 @@ to the external request-wait (`SO→46`, the `b8` family) or, if a higher-priori
 `CAN3` request arrives, "interrupts the operation under way and performs an
 external sequence cycle" (the inter-channel priority/interrupt interplay).
 
-## Input default: the `.cap` card flow (and the IPL scatter-loader status)
+## The only input: a `.cap` card deck
 
-`.cap` is the **default** emulator input: a positional `.cap` argument is fed
-through the authentic card-reader bootstrap (`CLEAR/LOAD/START`, the
-`00→80→c8…b8/b9/b1` load sequence). `--bin FILE` (or any non-`.cap` positional)
-forces a direct unified-format binary load — the *debugging* path that skips the
-bootstrap. `--deck` remains an explicit alias for the card flow.
+A `.cap` deck is the **only** thing gemu will load, because it is the only thing
+the machine will load. `./ge deck.cap` puts the cards in the hopper and drives
+`CLEAR → LOAD1 → LOAD → START`; `--deck` is an alias for the same thing. There is
+no image path, no `--bin`, no poke: those existed, and they were removed,
+because nothing on the iron corresponds to them.
 
-The funktionalcpu deck is a **scatter-loader**: card 0 is the IPL loader (read by
-the bootstrap into `mem[0]`); cards 1–114 each carry an 8-byte header, a load
-address (`41 hi lo`, e.g. card 5 → `0x0100`), and a payload, and the loader
-scatters each payload to its address. `gdis --image` already honours this format
-to build the `.bin` (which is therefore a *scatter image*, not a raw card dump —
-hence the now-skipped `.bin`-oracle bootstrap tests).
+**The IPL reads exactly one card.** 80 columns, nibble-packed by the channel-1
+transfer into 40 bytes at `0x0000`, and executed there. `software/loader.txt` is
+the original listing and it fits that budget exactly — `0x0000..0x0027` is 40
+bytes of two `PER` reads and a `JU 0x0028`. Everything after the first card is
+the *program's* doing.
 
-> **Known blocker (IPL chain-load):** under the authentic flow the card-0 loader
-> executes and PO reaches `0x1424` (into the test region), but the in-machine
-> scatter does **not** populate program regions (`mem[0x100]` stays empty) and
-> execution loops at `PO=0x0002`. Fixing this needs an instruction-level trace of
-> the loader against the card feed. Until then the authentic flow loads card 0
-> and partially chains; the `--bin` path loads the full scatter image directly.
-> This is what gates funktionalcpu executing/printing its real banner.
+The funktionalcpu deck is a **scatter-loader** built on that: the loader card is
+read by the bootstrap into `mem[0]`, and each following card carries an 8-byte
+header, a length `LL`, a load address, and a payload, which the loader's own
+`PER` reads pull in and relocate. The whole 106-card chain self-loads
+byte-perfect and the CPU self-test then executes
+(`cardreader.funktionalcpu_authentic_load_reaches_payload`).
 
 **The `rSI` micro-states (low nibble), commands as drawn:**
 
@@ -180,27 +178,35 @@ not register a printer) leave it 0 and are completely unaffected.
 It issues a `PER 0x80, order`, waits for `__io_status` at `0x0031` to become
 `0x01`, then halts.
 
-Build it:
+Punch it:
 
 ```sh
 make -C software/gemu tools ge
 ./software/gemu/assembler/gasm \
-  -o /tmp/print.bin \
+  -o /tmp/print.cap \
   ./software/gemu/assembler/examples/print.s
 ```
+
+That is a deck: the original one-card IPL scatter loader, the program as 66-byte
+relocation cards, and a jump-to-origin termination card. The same file runs in
+the emulator and on the real machine.
 
 Run it from the CLI:
 
 ```sh
-./software/gemu/ge /tmp/print.bin
+./software/gemu/ge /tmp/print.cap
 ```
 
 You should see:
 
 ```text
-PRN> HELLO
-exit: halted=1 ...
+HELLO
+exit: halted=1 cycles=2745 ...
 ```
+
+That is a program compiled from source, punched onto cards, pulled in by the
+machine's own bootstrap and printed on the integrated typewriter — the whole
+path, with nothing staged.
 
 Run it in wasm:
 
@@ -208,9 +214,9 @@ Run it in wasm:
 make -C software/gemu wasm
 ```
 
-Then open the wasm console, choose `/tmp/print.bin` in the simulator gadget,
-press `Stage`, then on the panel press `CLEAR`, `LOAD`, `START`. The printer
-paper view should show `HELLO`, then the CPU halts.
+Then open the wasm console, choose `/tmp/print.cap` in the simulator gadget,
+press `Put In Hopper`, then on the panel press `CLEAR`, `LOAD1`, `LOAD`,
+`START`.
 
 ### Example: load the authentic printer deck
 

@@ -1482,12 +1482,14 @@ static int run_gasm(const char *gasm, const char *asmpath,
 
 int main(int argc, char **argv) {
     const char *inpath = 0, *outpath = 0;
-    int sflag = 0, bootflag = 0, bootgeflag = 0;
+    int sflag = 0, bootflag = 0, bootgeflag = 0, cardflag = 0;
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-o") && i + 1 < argc) outpath = argv[++i];
         else if (!strcmp(argv[i], "-S")) sflag = 1;
         else if (!strcmp(argv[i], "--boot")) bootflag = 1;
         else if (!strcmp(argv[i], "--bootge")) bootgeflag = 1;
+        else if (!strcmp(argv[i], "-c")) sflag = 1;   /* compile only: .c -> .s */
+        else if (!strcmp(argv[i], "--card")) cardflag = 1;
         else if (argv[i][0] == '-') {
             fprintf(stderr, "gec: unknown option '%s'\n", argv[i]);
             return 1;
@@ -1496,12 +1498,15 @@ int main(int argc, char **argv) {
     }
     if (!inpath) {
         fprintf(stderr,
-            "usage: gec input.c [-S] [--boot] [-o out]\n"
-            "  default : compile + assemble via gasm -> out (a.bin)\n"
-            "  --boot  : link with the boot card, emit a .cap deck (a.cap)\n"
-            "  --bootge: .cap deck with the ORIGINAL IPL scatter loader\n"
-            "  -S      : stop after compilation, emit gasm assembly (a.s)\n"
-            "  (-o ending in .s implies -S, matching the old behaviour)\n");
+            "usage: gec input.c [-c] [--boot|--card] [-o out]\n"
+            "  default : compile, assemble and link a card deck (a.cap),\n"
+            "            carried by the ORIGINAL IPL scatter loader. Run it\n"
+            "            with 'ge out.cap', or 'arm out.cap' on the real\n"
+            "            machine's reader -- the same file either way.\n"
+            "  -c      : compile only, stop at gasm assembly (a.s)\n"
+            "  --boot  : deck led by the boot.s template instead\n"
+            "  --card  : one 40-byte IPL boot card (ORG 0)\n"
+            "  (-S is the old spelling of -c; -o ending in .s implies it)\n");
         return 1;
     }
     /* Back-compat: 'gec prog.c -o prog.s' keeps emitting assembly. */
@@ -1509,12 +1514,13 @@ int main(int argc, char **argv) {
         size_t ol = strlen(outpath);
         if (ol > 2 && !strcmp(outpath + ol - 2, ".s")) sflag = 1;
     }
-    if ((sflag && (bootflag || bootgeflag)) || (bootflag && bootgeflag)) {
-        fprintf(stderr, "gec: -S/--boot/--bootge are mutually exclusive\n");
+    if ((sflag && (bootflag || bootgeflag || cardflag)) ||
+        (bootflag && bootgeflag) || (cardflag && (bootflag || bootgeflag))) {
+        fprintf(stderr, "gec: -c, --boot, --bootge and --card are mutually "
+                        "exclusive\n");
         return 1;
     }
-    if (!outpath) outpath = sflag ? "a.s"
-                          : ((bootflag || bootgeflag) ? "a.cap" : "a.bin");
+    if (!outpath) outpath = sflag ? "a.s" : "a.cap";
 
     g_file = inpath;
     FILE *in = fopen(inpath, "rb");
@@ -1547,8 +1553,12 @@ int main(int argc, char **argv) {
     if (sflag)
         return 0;
 
+    /* The default is the loader deck: pass no mode flag and let gasm's own
+     * default (--bootge) stand, so the two tools cannot drift apart. */
     int rc = run_gasm(find_gasm(argv[0]), tmppath, outpath,
-                      bootflag ? "--boot" : (bootgeflag ? "--bootge" : NULL));
+                      bootflag ? "--boot" :
+                      (cardflag ? "--card" :
+                       (bootgeflag ? "--bootge" : NULL)));
     unlink(tmppath);
     if (rc) {
         fprintf(stderr, "gec: gasm failed\n");

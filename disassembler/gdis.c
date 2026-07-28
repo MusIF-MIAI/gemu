@@ -34,7 +34,6 @@
 
 #include "cap.h"
 #include "transcode.h"
-#include "binimage.h"
 #include "gecode.h"
 
 /* ------------------------------------------------------------------ */
@@ -662,9 +661,8 @@ int main(int argc, char **argv)
 {
     const char *inpath = NULL, *outpath = NULL;
     enum transcode_mode mode = TC_COLBIN;
-    int is_bin = 0, loose = 0, do_cards = 0, do_hex = 0, do_image = 0, is_iso = 0, verbose = 0;
+    int is_bin = 0, loose = 0, do_cards = 0, do_hex = 0, is_iso = 0, verbose = 0;
     long org = 0x0000;
-    long entry = -1;   /* --entry; default = image origin (img_min) */
     const char *sympath = NULL;
     uint8_t user_prefix[8]; int have_user_prefix = 0;
 
@@ -676,9 +674,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--loose")) loose = 1;
         else if (!strcmp(argv[i], "--cards")) do_cards = 1;
         else if (!strcmp(argv[i], "--hex")) do_hex = 1;
-        else if (!strcmp(argv[i], "--image")) do_image = 1;
         else if (!strcmp(argv[i], "--iso")) is_iso = 1;
-        else if (!strcmp(argv[i], "--entry") && i + 1 < argc) entry = strtol(argv[++i], NULL, 0);
         else if (!strcmp(argv[i], "--symbols") && i + 1 < argc) sympath = argv[++i];
         else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) verbose = 1;
         else if (!strcmp(argv[i], "--prefix") && i + 1 < argc) {
@@ -692,6 +688,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
             printf("Usage: gdis [options] input\n"
                    "  input is a .cap deck (default) or a raw image (--bin).\n"
+                   "  Output is assembly, or a dump (--cards / --hex).\n"
                    "Options:\n"
                    "  -o FILE        write output to FILE (default stdout)\n"
                    "  --bin          treat input as a raw machine-code image\n"
@@ -703,8 +700,6 @@ int main(int argc, char **argv)
                    "  --hex          dump the reconstructed image as hex, then exit\n"
                    "  --iso          CPU ISOLATION TEST deck: payload = COLBIN cols 1-76,\n"
                    "                 id = Hollerith cols 77-79; concatenate cards at --org\n"
-                   "  --image        write a unified-format binary (GE12 header + image)\n"
-                   "  --entry 0xNNNN entry point for --image (default = image origin)\n"
             "  --symbols FILE name addresses from a .sym file (ADDR NAME ; comment);\n"
             "                 renames L_xxxx labels + operands, comments variables\n"
                    "  -v             verbose card-by-card report on stderr\n");
@@ -765,35 +760,6 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    /* Auto-detect the unified format (GE12 header) regardless of --bin/.cap:
-     * gasm and `gdis --image` emit it, so a unified .bin is recognised by its
-     * magic, the header stripped, and the stored origin honoured. */
-    {
-        FILE *pf = fopen(inpath, "rb");
-        if (pf) {
-            uint8_t peek[4];
-            size_t got = fread(peek, 1, sizeof(peek), pf);
-            if (got == 4 && peek[0] == BINIMAGE_MAGIC0 && peek[1] == BINIMAGE_MAGIC1 &&
-                peek[2] == BINIMAGE_MAGIC2 && peek[3] == BINIMAGE_MAGIC3) {
-                rewind(pf);
-                static uint8_t ibuf[65536];
-                uint16_t origin, e, len;
-                int rc = binimage_read(pf, &origin, &e, ibuf, sizeof(ibuf), &len);
-                fclose(pf);
-                if (rc != BINIMAGE_OK) {
-                    fprintf(stderr, "gdis: %s: %s\n", inpath, binimage_strerror(rc));
-                    return 2;
-                }
-                for (uint16_t k = 0; k < len; k++) put(origin + k, ibuf[k]);
-                is_bin = 1;   /* a flat image, not a .cap deck */
-                fprintf(stderr, "gdis: %s: unified image 0x%04X..0x%04X (%u bytes, entry 0x%04X)\n",
-                        inpath, origin, (unsigned)(origin + len - 1), (unsigned)len, e);
-                goto image_loaded;
-            }
-            fclose(pf);
-        }
-    }
-
     /* Load the image. */
     if (is_bin) {
         FILE *f = fopen(inpath, "rb");
@@ -827,31 +793,7 @@ int main(int argc, char **argv)
         }
     }
 
-image_loaded:;
 
-    /* --image: write a gemu-loadable unified-format binary (GE12 header +
-     * the reconstructed contiguous image img_min..img_max). origin = img_min,
-     * entry = --entry or origin. Binary output mode. */
-    if (do_image) {
-        if (img_min < 0 || img_max <= img_min) {
-            fprintf(stderr, "gdis: empty image, nothing to write\n");
-            return 2;
-        }
-        uint16_t origin = (uint16_t)img_min;
-        uint16_t length = (uint16_t)(img_max - img_min);
-        uint16_t epoint = (entry >= 0) ? (uint16_t)entry : origin;
-        FILE *out = outpath ? fopen(outpath, "wb") : stdout;
-        if (!out) { fprintf(stderr, "gdis: cannot write '%s'\n", outpath); return 2; }
-        int rc = binimage_write(out, origin, epoint, image + img_min, length);
-        if (out != stdout) fclose(out);
-        if (rc != BINIMAGE_OK) {
-            fprintf(stderr, "gdis: cannot write image: %s\n", binimage_strerror(rc));
-            return 2;
-        }
-        fprintf(stderr, "gdis: wrote unified image: origin 0x%04X, entry 0x%04X, %u bytes\n",
-                origin, epoint, (unsigned)length);
-        return 0;
-    }
 
     FILE *out = outpath ? fopen(outpath, "w") : stdout;
     if (!out) { fprintf(stderr, "gdis: cannot write '%s'\n", outpath); return 2; }

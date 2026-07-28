@@ -4,7 +4,8 @@
  * Tests use the utest.h framework.  No UTEST_MAIN here; the test runner
  * main() is provided by tests/main.c (auto-discovery).
  *
- * Two test suites:
+ * The suites here cover the reader as a whole: the synthetic decks that pin the
+ * handshake, and the real funktionalcpu deck that proves the whole self-load.
  *
  *  cardreader.synthetic_4byte
  *    Writes a tiny synthetic .cap deck to /tmp that encodes exactly 4 bytes
@@ -14,17 +15,23 @@
  *    feeding in tests/initial-load.c, but done automatically by the
  *    cardreader peripheral.
  *
- *  cardreader.funktionalcpu_first_card
- *    Points at ../DUMP1/funktionalcpu.cap (the real oracle deck) and loads
- *    the first card using TC_NORMAL transcoding.  Checks that the machine
- *    reaches state 0xe3 and that mem[0..1] match the oracle bytes from
- *    transcode.c's known-good table.
+ *  cardreader.tu03_triggers_the_card / no_feed_means_no_card
+ *    The wire order: a read command latches and strobes nothing; TU03N is what
+ *    starts the card moving. No LU08N may appear before the first TU03N.
  *
- * Feeding trigger/cadence implemented in cardreader.c:
+ *  cardreader.lupob_is_busy_for_the_whole_card / finin_stands_after_the_last_strobe
+ *    The two status lines whose behaviour the bench settled in July 2026.
+ *
+ *  cardreader.funktionalcpu_loader_autodetect / _authentic_load_reaches_payload
+ *    The real deck: find the bootstrap card, read it, and let its own code pull
+ *    the remaining 106 cards in and relocate them.
+ *
+ * Feeding trigger/cadence implemented in cardreader.c (see its header comment):
  *   on_clock (TO00) is called once per machine cycle.
- *   - CR_IDLE:     if lu08==0, call reader_setup_to_send and go to CR_PRESENTED.
- *   - CR_PRESENTED: call reader_clear_sending, go to CR_IDLE, then immediately
- *                   attempt to present the next byte if lu08 is still 0.
+ *   - CR_ARMED_WAIT: a command latches; TU03N triggers the card.
+ *   - CR_PRESENTING: present, then retire, then present again -- the gap is the
+ *                    machine's b1 pack cycle.
+ *   - CR_CARD_DONE:  FININ stands until something takes it down.
  *   This mirrors the exact pattern from initial-load.c:
  *     reader_setup_to_send(...)   <- before b8/b9 cycle
  *     ge_run_cycle()              <- machine reads nibble
@@ -39,6 +46,7 @@
 #include "../cap.h"
 #include "../transcode.h"
 #include "../bit.h"
+#include "../reader.h"
 #include "../log.h"
 
 #include <stdio.h>
@@ -326,15 +334,15 @@ UTEST(cardreader, lupor_ready_invariant)
 }
 
 /* --------------------------------------------------------------------------
- * Test (Phase 4): TU03N is the end-of-card feed strobe.
+ * Test: TU03N (CE09) is the trigger, not the epilogue.
  *
- * The CPU raises TU03N (CE09) once per card, in the end state (ea), to feed the
- * card out and bring the next one under the read station — it is NOT a per-column
- * clock. This checks the strobe is observed exactly at end-of-card (rSO==0xea)
- * and that the load still completes. (The cross-to-next-card advance is gated on
- * this pulse; the multi-card cadence is covered by sequential_two_cards.)
+ * The wire order the bench measured, and the one the Pico reader implements:
+ * the CPU sends the read command on RE with a TU00N strobe, the reader latches
+ * it and strobes NOTHING, and then TU03N arrives and the card starts moving.
+ * Presenting on the command instead hands the card to a channel that is not
+ * armed yet. So: no LU08N may appear before the first TU03N.
  * -------------------------------------------------------------------------- */
-UTEST(cardreader, tu03_feeds_at_end_of_card)
+UTEST(cardreader, tu03_triggers_the_card)
 {
     static const char cap_path[] = "/tmp/gemu_test_tu03.cap";
     uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
@@ -349,28 +357,190 @@ UTEST(cardreader, tu03_feeds_at_end_of_card)
     ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
     ge_start(&g);
 
+    int first_feed = -1;
+    int first_strobe = -1;
     int feed_pulses = 0;
-    int feed_at_ea = 0;
-    int feed_during_transfer = 0;
     int reached_e3 = 0;
+
     for (int i = 0; i < 2048; i++) {
         ASSERT_EQ(ge_run_cycle(&g), 0);
         if (g.integrated_reader.tu03) {
             feed_pulses++;
-            if (g.rSO == 0xea) feed_at_ea = 1;
-            /* It must NOT pulse while a data byte is being transferred (b1/b8). */
-            if (g.rSO == 0xb1 || g.rSO == 0xb8) feed_during_transfer = 1;
+            if (first_feed < 0)
+                first_feed = i;
         }
+        if (g.integrated_reader.lu08 && first_strobe < 0)
+            first_strobe = i;
         if (g.rSO == 0xe3) { reached_e3 = 1; break; }
         if (ge_halted(&g)) break;
     }
 
-    ASSERT_TRUE(reached_e3);             /* load completes */
-    ASSERT_EQ(feed_pulses, 1);           /* exactly one feed strobe for one card */
-    ASSERT_TRUE(feed_at_ea);             /* and it is at end-of-card (ea) */
-    ASSERT_FALSE(feed_during_transfer);  /* never mid-transfer */
+    ASSERT_TRUE(reached_e3);              /* the load completes */
+    ASSERT_GT(feed_pulses, 0);            /* the machine did ask for the feed */
+    ASSERT_GE(first_feed, 0);
+    ASSERT_GE(first_strobe, 0);
+    ASSERT_LT(first_feed, first_strobe);  /* and it asked BEFORE any data moved */
+
     ASSERT_EQ(g.mem[0], 0xBD);
     ASSERT_EQ(g.mem[1], 0xFA);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test: a reader with no feed presents nothing, then gives up and feeds itself.
+ *
+ * LENON ("not operable") suppresses TU03N at the reader input (reader.c). With
+ * the feed gone the latched read command has nothing to start it, so no card
+ * moves -- until the autofeed fallback fires, which is the Pico's D timeout and
+ * exists so a wiring fault shows up as a late card rather than a dead machine.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, no_feed_means_no_card)
+{
+    static const char cap_path[] = "/tmp/gemu_test_nofeed.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    g.integrated_reader.lenon = 1;   /* not operable: the feed never arrives */
+    ge_start(&g);
+
+    int strobes = 0;
+    for (int i = 0; i < 2048; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        if (g.integrated_reader.lu08)
+            strobes++;
+        if (ge_halted(&g)) break;
+    }
+
+    ASSERT_EQ(g.integrated_reader.tu03, 0);   /* suppressed at the reader */
+    ASSERT_EQ(strobes, 0);                    /* so nothing was ever presented */
+    ASSERT_EQ((int)g.mem[0], 0);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test: FININ stands after the last strobe, and comes down on the next command.
+ *
+ * On the wire FININ rides the last presentation of a card and STAYS asserted
+ * once the strobe has gone -- the presenter has stalled with the word still on
+ * the pins. It is released by the next read command, by a TU03N, or by a
+ * timeout. Clearing it together with the strobe (which is what gemu used to do)
+ * hides a whole class of end-of-transfer timing from the model.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, finin_stands_after_the_last_strobe)
+{
+    static const char cap_path[] = "/tmp/gemu_test_finin.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    int saw_finin_without_strobe = 0;
+    int reached_e3 = 0;
+
+    for (int i = 0; i < 2048; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        /* FININ up while LU08N is down: the end-of-card word left standing. */
+        if (g.integrated_reader.fini && !g.integrated_reader.lu08)
+            saw_finin_without_strobe = 1;
+        if (g.rSO == 0xe3) { reached_e3 = 1; break; }
+        if (ge_halted(&g)) break;
+    }
+
+    ASSERT_TRUE(reached_e3);
+    ASSERT_TRUE(saw_finin_without_strobe);
+    /* The deck is one card long, so nothing has released it yet. */
+    ASSERT_EQ((int)g.integrated_reader.fini, 1);
+
+    /* The next read command takes it down -- and, because the command latches
+     * before any ready/busy update, without a ready front in between. */
+    g.rRE = 0x40;
+    reader_send_tu00(&g);
+    ASSERT_EQ((int)g.integrated_reader.fini, 0);
+    ASSERT_EQ((int)g.integrated_reader.cmd_pending, 1);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test: LUPOB is a per-card ready/busy line, not a per-character one.
+ *
+ * The Pico's predicate, which gemu now shares (feeder.c lupob_update):
+ * ready means a deck is loaded, nothing is presenting, no command is waiting
+ * for its feed, no FININ is standing, and we are parked before or after a card.
+ * Everything else is busy -- including "no deck at all", which is why an
+ * unarmed reader reads busy rather than ready.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, lupob_is_busy_for_the_whole_card)
+{
+    static const char cap_path[] = "/tmp/gemu_test_lupob.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    /* No deck registered: the reader is busy, never ready. */
+    ASSERT_EQ((int)g.integrated_reader.lupor, 0);
+
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    int ready_to_busy_fronts = 0;
+    int busy_to_ready_fronts = 0;
+    int prev_ready = -1;
+    int ready_while_presenting = 0;
+    int reached_e3 = 0;
+
+    for (int i = 0; i < 2048; i++) {
+        int ready;
+
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        ready = g.integrated_reader.lupor;
+
+        /* Busy for every character of the card, not just the one on the pins. */
+        if (ready && (g.integrated_reader.lu08 || g.integrated_reader.fini))
+            ready_while_presenting = 1;
+
+        if (prev_ready >= 0 && ready != prev_ready) {
+            if (ready)
+                busy_to_ready_fronts++;
+            else
+                ready_to_busy_fronts++;
+        }
+        prev_ready = ready;
+
+        if (g.rSO == 0xe3) { reached_e3 = 1; break; }
+        if (ge_halted(&g)) break;
+    }
+
+    ASSERT_TRUE(reached_e3);
+    ASSERT_FALSE(ready_while_presenting);
+
+    /* Exactly one busy front for the one card that was read: the reader goes
+     * busy when the command latches and stays busy through the whole card. A
+     * per-character LUPOB would produce one front per nibble. */
+    ASSERT_EQ(ready_to_busy_fronts, 1);
+    ASSERT_EQ(busy_to_ready_fronts, 0);
 
     ge_deinit(&g);
 }
@@ -507,117 +677,14 @@ UTEST(cardreader, feed_state_lines_pom_pico_bi20)
 }
 
 /* --------------------------------------------------------------------------
- * Test: real funktionalcpu.cap, TC_NORMAL, first card only.
+ * (removed) cardreader.funktionalcpu_first_card
  *
- * Points at ../DUMP1/funktionalcpu.cap (and funktionalcpu.bin for oracle).
- * Card 0 has 80 columns (80 nibbles = 40 packed bytes).  After a complete
- * channel-1 input load the machine must reach state 0xe3 (Alpha) with
- * mem[0..39] matching the nibble-packed oracle.
- *
- * Oracle packing formula (from the task specification):
- *   mem[i] = (bin[2*i] & 0x0F) << 4 | (bin[2*i+1] & 0x0F)  for i=0..39
- *
- * Verification:
- *   bin[0]=0xF4, bin[1]=0xF7  → mem[0] = (0x04)<<4 | 0x07 = 0x47
- *   bin[2]=0xF1, bin[3]=0xF4  → mem[1] = (0x01)<<4 | 0x04 = 0x14
- *   ... etc.
- *
- * NOTE: This test skips gracefully if either oracle file is not found.
+ * It asserted mem[0..39] after the one-card IPL against an oracle read from
+ * ../DUMP1/funktionalcpu.bin -- a unified-format scatter image, not a card
+ * dump, so the test had been guarding itself off and passing vacuously. .bin
+ * is gone; bootstrap.card0_loads_to_alpha now makes the same 40-byte
+ * assertion against an oracle decoded from the deck itself, live.
  * -------------------------------------------------------------------------- */
-UTEST(cardreader, funktionalcpu_first_card)
-{
-    /* The test runner cwd is the gemu/ source dir */
-    const char *cap_path = deck_funktionalcpu_cap();
-    static const char bin_path[] = "../DUMP1/funktionalcpu.bin";
-
-    /* Check existence of both files */
-    FILE *probe = fopen(cap_path, "r");
-    if (!probe) {
-        printf("  [SKIP] %s not found\n", cap_path);
-        return;
-    }
-    fclose(probe);
-    probe = fopen(bin_path, "rb");
-    if (!probe) {
-        printf("  [SKIP] %s not found\n", bin_path);
-        return;
-    }
-
-    /* Read the first 80 oracle bytes (first card = 80 columns) */
-    uint8_t bin[80];
-    size_t nr = fread(bin, 1, 80, probe);
-    fclose(probe);
-    ASSERT_EQ((int)nr, 80);
-
-    /* STALE-ORACLE GUARD (see bootstrap.c): funktionalcpu.bin is now a
-     * unified-format scatter image ("GE12" header), not a raw card-0 dump, so a
-     * .bin-derived card-0 oracle no longer holds. The authentic load is covered
-     * by bootstrap.channel_state_sequence. Skip until repointed to a .cap oracle. */
-    if (bin[0] == 'G' && bin[1] == 'E' && bin[2] == '1' && bin[3] == '2') {
-        printf("  [SKIP] funktionalcpu.bin is a unified-format scatter image; "
-               ".bin-derived card-0 oracle is stale\n");
-        return;
-    }
-
-    /* Compute oracle mem[0..39] */
-    uint8_t oracle[40];
-    for (int i = 0; i < 40; i++)
-        oracle[i] = (uint8_t)(((bin[2*i] & 0x0Fu) << 4) | (bin[2*i+1] & 0x0Fu));
-
-    struct ge g;
-    ge_init(&g);
-    ge_clear(&g);
-    ge_load_1(&g);
-    ge_load(&g);
-
-    int rc = cardreader_register(&g, cap_path, TC_NORMAL);
-    ASSERT_EQ(rc, 0);
-
-    ge_start(&g);
-
-    /* Fast-forward through the peri-init states (rRE is set DURING the cycle) */
-    ASSERT_EQ(g.rSO, 0x00); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0x80); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xc8); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xd8); ge_run_cycle(&g); ASSERT_EQ(g.rRE, 0x80);
-    ASSERT_EQ(g.rSO, 0xd9); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xda); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xdb); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xdc); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xcc); ge_run_cycle(&g); ASSERT_EQ(g.rRE, 0x40);
-    ASSERT_EQ(g.rSO, 0xca); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xa8); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xa9); ge_run_cycle(&g); ASSERT_EQ(g.rL1, 0x80);
-    ASSERT_EQ(g.rSO, 0xaa); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xab); ge_run_cycle(&g);
-    ASSERT_EQ(g.rSO, 0xb8);
-
-    /*
-     * Run with the real deck until 0xe3 (Alpha).
-     * Card 0 has 80 columns; the load terminates on end-of-card (FINI).
-     * Allow enough cycles: 80 cols * ~4 cycles each + overhead ~ 4096 cycles.
-     */
-    int final = run_until_state(&g, 0xe3, 8192);
-    ASSERT_EQ(final, 0xe3);
-
-    /*
-     * Verify all 40 loaded bytes against the oracle.
-     * The oracle formula is: mem[i] = (bin[2i] & 0x0F)<<4 | (bin[2i+1] & 0x0F)
-     * which corresponds to the GE nibble-packing scheme observed in initial-load.c.
-     *
-     * Key spot-check: oracle[0] = (0xF4 & 0x0F)<<4 | (0xF7 & 0x0F) = 0x40|0x07 = 0x47
-     */
-    ASSERT_EQ(g.mem[0], 0x47);  /* spot-check first byte */
-    for (int i = 0; i < 40; i++) {
-        if (g.mem[i] != oracle[i]) {
-            printf("  [FAIL] mem[%d]: got=0x%02x expected=0x%02x\n",
-                   i, g.mem[i], oracle[i]);
-        }
-        ASSERT_EQ((int)g.mem[i], (int)oracle[i]);
-    }
-
-    ge_deinit(&g);
-}
 
 /* --------------------------------------------------------------------------
  * Test: mixed funktionalcpu deck auto-detects the Hollerith bootstrap loader.

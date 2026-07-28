@@ -4,16 +4,21 @@
 ; characters from 0x0200, then waits for gemu's completion cell to flip. The
 ; printer detects the order, arms the transfer engine, and the rSI output
 ; microcode drains the buffer to the typewriter (GE 100-series graphic set) on
-; stolen channel-2 cycles while the CPU polls. Load it in the wasm console
-; (Stage -> CLEAR -> LOAD -> START) and watch the Printer panel print HELLO.
+; stolen channel-2 cycles while the CPU polls.
+;
+;   gasm -o print.cap print.s
+;
+; then put the deck in the hopper and run CLEAR -> LOAD1 -> LOAD -> START.
+; It lives at 0x0100 because the scatter loader and its card buffer occupy
+; 0x0000-0x0085: on this machine only a 40-byte boot card can sit at 0.
 
-        ORG     0x0000
+        ORG     0x0100
         PER     0x80, order     ; connector-2 output PER, order block @ order
 wait:   CMI     0x01, 0x0031    ; low byte of __io_status / printer done flag
         JNE     wait            ; wait until the channel-2 transfer ends
         HLT                     ; halt cleanly once HELLO has drained
 
-        ORG     0x0010
+        ORG     0x0110
 order:  DB      0x80            ; z   : L207 (output)
         DB      0x85            ; cmd : put / print
         DB      0x00            ; length high

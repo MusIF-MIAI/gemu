@@ -1,15 +1,18 @@
 # gec — a small C compiler for the GE-120 / GE-130
 
-`gec` compiles a useful subset of C to **`gasm` assembly**, which assembles to a
-machine-code image the `gemu` emulator runs. It implements the calling
-convention and data model in [`../docs/ABI.md`](../docs/ABI.md).
+`gec` compiles a useful subset of C to **`gasm` assembly**, and drives `gasm` to
+punch a **card deck**. That deck is the whole output: it is what the emulator
+runs and what goes in the real machine's reader, the same file either way. It
+implements the calling convention and data model in
+[`../docs/ABI.md`](../docs/ABI.md).
 
 ```
 make                       # builds ./gec and ./runrv
-./gec prog.c -o prog.s     # C -> gasm assembly
-../assembler/gasm -o prog.bin prog.s
-../ge prog.bin             # run; main()'s return value lands in __rv (0x0010)
-./runrv prog.bin           # convenience: run to HLT and print __rv
+./gec prog.c -o prog.cap   # C -> assembly -> card deck, one command
+../ge prog.cap             # put it in the hopper and run it
+./runrv prog.cap           # same, and print main()'s return value (__rv)
+
+./gec prog.c -c -o prog.s  # compile only, stop at gasm assembly
 ```
 
 ## Language subset
@@ -38,7 +41,8 @@ generated into a `crt0` preamble together with the stack/return-value setup.
 ## Tests
 
 `./test.sh` (also run by `make check` in the parent) compiles each program in
-`examples/`, runs it on `gemu`, and checks `main()`'s return value:
+`examples/` to a deck, feeds the deck through the card reader, and checks
+`main()`'s return value:
 
 | example | checks | `__rv` |
 |---|---|---|
@@ -62,18 +66,18 @@ without aliasing the reprogrammed base registers; frame/stack use `disp(5)`/
 `gec` now drives `gasm` itself (found next to the binary at
 `../assembler/gasm`, else in PATH):
 
-    gec prog.c -o prog.bin        # compile + assemble (unified image)
-    gec prog.c --boot -o prog.cap # ready boot DECK for the real machine:
-                                  #   boot card + program as body cards;
-                                  #   feed with 'arm prog.cap'
-    gec prog.c -S -o prog.s       # stop at gasm assembly
-    gec prog.c -o prog.s          # same (back-compat: .s output implies -S)
+    gec prog.c -o prog.cap        # the default: a card deck carried by the
+                                  #   ORIGINAL IPL scatter loader, embedded
+                                  #   verbatim from the SAT decks and proven
+                                  #   on the real machine -- 66-byte LL/II
+                                  #   relocation cards plus a jump-to-origin
+                                  #   termination card
+    gec prog.c --boot -o prog.cap # deck led by the boot.s template instead:
+                                  #   boot card + program as body cards
+    gec prog.c --card -o prog.cap # one 40-byte IPL boot card (ORG 0)
+    gec prog.c -c -o prog.s       # compile only, stop at gasm assembly
+    gec prog.c -o prog.s          # same (back-compat: .s output implies -c)
 
 `--boot` works because crt0 (`__start`) is emitted first at the origin
 (0x1100), so image entry == origin -- the boot card's exact contract. The
 boot card leaves change-register 0 dirty; gec-generated code never uses R0.
-
-`gec prog.c --bootge -o prog.cap` emits the same kind of deck but carried
-by the ORIGINAL IPL scatter loader from the SAT decks (bench-proven on the
-real machine) instead of the custom boot card: 66-byte LL/II relocation
-cards plus the jump-to-origin termination card.

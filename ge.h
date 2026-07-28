@@ -768,16 +768,16 @@ void ge_init(struct ge *ge);
 /// Deinitialize the emulator
 int ge_deinit(struct ge *ge);
 
-/// Copy a program at the start of memory
-int ge_load_program(struct ge *ge, uint8_t *program, uint8_t size);
-
-/// Load a flat image at `origin` (unified-format payload); origin-aware, not
-/// size-capped, primes the parity store. Returns 0 on success, -1 on range error.
+/// Write a flat image into core at `origin`, priming the parity store.
+/// NOT a load path -- programs reach the machine on cards. Test scaffolding,
+/// and the model behind the maintenance panel's memory key-in.
+/// Returns 0 on success, -1 on range error.
 int ge_load_image(struct ge *ge, const uint8_t *image, size_t size,
                   uint16_t origin);
 
-/// Enter execution at `entry`: seed PO and drop into the alpha (fetch) phase,
-/// bypassing the peripheral LOAD bootstrap (direct binary-load path).
+/// Force the sequencer into the alpha (fetch) phase at `entry`.
+/// NOT a machine operation -- no console control does this. Test scaffolding
+/// for starting a fragment mid-machine without a deck.
 void ge_enter(struct ge *ge, uint16_t entry);
 
 /// Store a byte with generated odd parity + mark-written (for the hybrid ALU/SS
@@ -786,8 +786,9 @@ void ge_enter(struct ge *ge, uint16_t entry);
 void ge_mem_store8(struct ge *ge, uint16_t addr, uint8_t val);
 
 /// Seed the eight change/segment-base registers (mem[240+2N]) to identity
-/// bases N<<12. Called by ge_clear; re-apply after a direct image load that
-/// may have overwritten the 0x00F0-0x00FF window.
+/// bases N<<12. Called by ge_init at POWER-ON only -- these are core cells and
+/// core retains across CLEAR. Re-apply by hand if a test image overwrote the
+/// 0x00F0-0x00FF window and wants the identity bases back.
 void ge_seed_segment_bases(struct ge *ge);
 
 /// Run the emulator

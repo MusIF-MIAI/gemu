@@ -13,7 +13,7 @@
  *   col     79   optional sequence/check byte
  *
  * Overlay inputs are either:
- *   - unified GE12 images (origin/length taken from the header), or
+ *   - .cap decks, scatter-decoded to their embedded load addresses, or
  *   - raw files specified as 0xADDR:path, which are loaded contiguously at ADDR.
  */
 
@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../binimage.h"
 #include "../cap.h"
 #include "../transcode.h"
 
@@ -44,8 +43,8 @@ static void usage(const char *argv0)
             "\n"
             "Append one or more overlays as self-addressed scatter cards to base.cap.\n"
             "Overlay forms:\n"
-            "  image.bin        unified GE12 image (origin taken from header)\n"
-            "  0xADDR:file.bin  raw flat file loaded contiguously at ADDR\n"
+            "  overlay.cap      .cap deck, scatter-decoded to its card addresses\n"
+            "  0xADDR:file      raw flat file loaded contiguously at ADDR\n"
             "\n"
             "Options:\n"
             "  -o FILE          output .cap path (required)\n"
@@ -166,16 +165,26 @@ static int load_overlay_spec(const char *spec, struct overlay *ov)
         return ov->len ? 0 : -1;
     }
 
-    fp = fopen(spec, "rb");
-    if (!fp)
-        return -1;
-    if (binimage_read(fp, &ov->origin, NULL, ov->data, sizeof(ov->data),
-                      &ov->len) != BINIMAGE_OK) {
-        fclose(fp);
-        return -1;
+    {
+        /* A .cap overlay: scatter-decode the deck to its own card addresses and
+         * hand back the covered span. */
+        size_t n = strlen(spec);
+        unsigned lo = 0, hi = 0;
+
+        if (n < 4 || strcmp(spec + n - 4, ".cap") != 0) {
+            fprintf(stderr, "capcat: '%s' is neither a .cap deck nor 0xADDR:file\n",
+                    spec);
+            return -1;
+        }
+        if (cap_load_scattered(spec, TC_COLBIN, ov->data, &lo, &hi) <= 0)
+            return -1;
+        if (hi < lo)
+            return -1;
+        ov->origin = (uint16_t)lo;
+        ov->len    = (uint16_t)(hi - lo + 1);
+        memmove(ov->data, ov->data + lo, ov->len);
+        return 0;
     }
-    fclose(fp);
-    return 0;
 }
 
 static int write_card(FILE *out, int card_no, const uint16_t cols[CARD_COLS])
