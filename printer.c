@@ -17,6 +17,37 @@
  *   sequencer returns to alpha at the post-PER instruction with PO/registers
  *   intact (verified: it then runs the real final-verify CMC at 0x19d4 cleanly).
  *
+ * Whose order is it? The Z character says so (CPU[4] §5.8.2/§5.8.3.1, dwg
+ * 30004122 o/A fo.72-73):
+ *
+ *     PER/PERI = [OP][C][I1]      C = the NAME of the peripheral unit
+ *     order block at I1: TPER = Z X L L I I ; CPER/EPER/SPER/LPER = Z X
+ *
+ *   "The Z character specifies the type of operation, some procedures to
+ *    perform the operation itself, and the interested channel."
+ *
+ *   "The bits 03 and 00 of the Z character indicate the channel to be used":
+ *
+ *        03 00
+ *         0  0   channel 1
+ *         1  0   channel 3
+ *         0  1   channel 2, not overlapped to calculation
+ *         1  1   channel 2, overlapped to calculation
+ *
+ *   "The indication of the channel must be coherent with the one of the
+ *    peripheral unit selected: channel 2 is reserved to the integrated
+ *    parallel printer and reader; channels 1 and 3 cannot be used with the
+ *    integrated parallel printer."
+ *
+ *   Bit 02 of Z asks for a preliminary availability check: 1 = ignore the
+ *   unit's status and go ahead, 0 = block the CPU until it is available.
+ *
+ * So this peripheral answers an order if, and only if, its Z selects channel 2
+ * -- ORDER_IS_CHANNEL2 below. The real SAT decks agree with the manual: every
+ * printer order in printermechanicaltest.cap carries Z bit 00 (Z=51 WRITE,
+ * Z=81, Z=C5 space), and the centre-card read that used to be answered here by
+ * mistake carries Z=00, channel 1.
+ *
  * Discriminating the channel-2 print-wait from the channel-1 reader input-wait:
  *   State b8 is SHARED with the card reader, and so is the whole org phase that
  *   leads to it (c8 d8 ... ab). The machine's own answer to "whose order is
@@ -75,6 +106,11 @@ struct printer_ctx {
  * transfer is armed when the PER returns to alpha. */
 #define LP_CMD_WRITE 0x42
 #define IS_OUTPUT_CMD(cmd) (PRINT_CMD_IS_PUT(cmd) || (cmd) == LP_CMD_WRITE)
+
+/* Z bit 00: channel 2 (with bit 03 distinguishing overlapped from not). The
+ * printer is on channel 2 and nowhere else, so this is the whole test. */
+#define Z_CHANNEL2_BIT   0x01
+#define ORDER_IS_CHANNEL2(ge, base) (((ge)->mem[(uint16_t)(base)] & Z_CHANNEL2_BIT) != 0)
 
 #define STDIO_STATUS_ADDR 0x0030
 #define STDIO_COUNT_ADDR  0x0032
@@ -201,12 +237,14 @@ static int input_order_ready(struct ge *ge, uint8_t cmd)
  */
 static int channel1_reader_owns_the_order(struct ge *ge)
 {
-    /* LESAB says a card reader is physically on connector 2, so there is a unit
-     * of its own to answer this order. Both halves are needed: PC121 alone is
-     * just "connector 2 on channel 1", and gemu's channel-2 order blocks are
-     * loose enough about the Z byte (CE02 takes the channel from L2 bit 0) that
-     * some of them decode that way too. With a reader on the connector there is
-     * no ambiguity left -- the order is its. */
+    /* A second, independent guard for the one order that has no order block to
+     * read: the IPL's. Its Z is whatever core happens to hold at rV1 -- and core
+     * retains, so on a machine that has run before, that byte can have bit 00
+     * set by pure accident. PC121 is the machine's own decode of "connector 2 on
+     * channel 1" (PUC11 . PB071 . PB06A), i.e. the card reader is the selected
+     * peripheral, and LESAB says a reader is physically there to answer. It is
+     * only meaningful once the org phase has latched the connector select, so
+     * it is checked at the wait, not at c8. */
     return PC121(ge) && ge->integrated_reader.lesab;
 }
 
@@ -268,7 +306,11 @@ static int printer_on_clock(struct ge *ge, void *opaque)
      * decode the order and, for a put command with a plausible length, start the
      * transfer engine (which then drains the buffer over channel 2). */
     if (ge->rSO == 0xc8) {
-        ctx->per_pending = 1;
+        /* Claim the order only if its Z names channel 2. State c8 is the org
+         * phase of EVERY peripheral order -- the channel-1 card reader walks
+         * through it too -- and answering one that is not ours puts PUC2 up,
+         * fires DU97 and completes the READER's PER on its behalf. */
+        ctx->per_pending = ORDER_IS_CHANNEL2(ge, ge->rV1);
         ctx->per_base = ge->rV1;
         /* Start each PER's org phase with a clean channel-2 handshake. PUC2 is
          * a flip-flop the real machine clears via the L2.3 toggle; the model

@@ -19,8 +19,10 @@ wait:   CMI     0x01, 0x0031    ; low byte of __io_status / printer done flag
         HLT                     ; halt cleanly once HELLO has drained
 
         ORG     0x0110
-order:  DB      0x80            ; z   : L207 (output)
-        DB      0x85            ; cmd : put / print
+order:  DB      0x81            ; Z   : bit 00 set = channel 2, the only
+                                ;       channel the integrated printer can be
+                                ;       reached on (CPU[4] 5.8.3.1, fo.73)
+        DB      0x85            ; X   : put / print
         DB      0x00            ; length high
         DB      0x05            ; length low  (5 characters)
         DB      0x02            ; buffer high

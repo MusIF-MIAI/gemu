@@ -136,6 +136,61 @@ header for the per-byte / per-card state machine and end-of-card cadence. This i
 the bootstrap LOAD path (`./ge --deck X.cap`, or `mount_deck` + CLEAR/LOAD/START
 in the wasm console).
 
+## The PER order block, and which channel an order names
+
+Transcribed from the page, not inferred: **CPU[4] §5.8.2 / §5.8.3.1**, drawing
+**30004122 o/A**, folios 72-73 (emiss. 27/1/69).
+
+```
+PER / PERI :  [ OP ][ C ][ I1        ]
+
+  OP   type of operation -- distinguishes PER from PERI
+  C    auxiliary character. For PER it is the NAME OF THE PERIPHERAL UNIT to
+       be selected. For PERI it is unused, and the name is taken from the
+       memory word at address 224 (0x00E0) instead.
+  I1   address of the first of a group of characters that specify the
+       operation completely -- 6 for TPER, 2 for the others:
+
+         TPER                    :  Z  X  L  L  I  I
+         CPER, EPER, SPER, LPER  :  Z  X
+```
+
+> "The Z character specifies the type of operation, some procedures to perform
+> the operation itself, and **the interested channel**. The X character further
+> specifies an operation, among the ones of a certain type. The fields LL, II
+> specify, in the case of TPER, the length and the address of the memory area
+> interested to the transfer of data with the peripheral unit."
+
+**The channel is Z bits 03 and 00** (§5.8.3.1):
+
+| Z bit 03 | Z bit 00 | channel |
+|---|---|---|
+| 0 | 0 | channel 1 |
+| 1 | 0 | channel 3 |
+| 0 | 1 | channel 2, **not** overlapped to calculation |
+| 1 | 1 | channel 2, overlapped to calculation |
+
+> "The indication of the channel must be coherent with the one of the peripheral
+> unit selected: **channel 2 is reserved to the integrated parallel printer and
+> reader**; channels 1 and 3 cannot be used with the integrated parallel
+> printer."
+
+**Z bit 02** asks for a preliminary availability check: `1` = ignore the unit's
+status and perform the instruction anyway; `0` = block the CPU in a waiting
+period until the unit is available again (for `LPER`, fold availability into the
+qualitative result instead of waiting).
+
+gemu models the channel decode in `CE02` (`msl-commands.c`): `L2` holds Z, and
+`BIT(rL2, 0)` latches `PB26` for channel 2, while `L1` bits 6/7 latch
+`PB06`/`PB07`, the connector select that `PC111`/`PC121`/`PC131`/`PC141` decode.
+
+**This is how `printer.c` knows an order is its own.** State `c8` is the org
+phase of *every* peripheral order — the channel-1 card reader walks through it
+too — so the printer claims one only when its Z names channel 2. The real SAT
+decks agree with the manual: every printer order in `printermechanicaltest.cap`
+carries Z bit 00 (`Z=51` line-printer WRITE, `Z=81`, `Z=C5` paper space), while
+the centre-card read in the same deck carries `Z=00`, channel 1.
+
 ## Printer / console-typewriter — channel 2 (`printer.c`)
 
 Pragmatic model. gemu drives no channel-2 timing at signal level, so a print

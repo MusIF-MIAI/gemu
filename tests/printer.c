@@ -284,8 +284,10 @@ UTEST(printer, output_per_prints)
 
     /* PER connector-2, order block @ 0x10. */
     g.mem[0] = PER_OPCODE; g.mem[1] = 0x80; g.mem[2] = 0x00; g.mem[3] = 0x10;
-    /* z=0x80 (L207 output), cmd=0x85 (put), len=5, buffer=0x0200 */
-    g.mem[0x10] = 0x80; g.mem[0x11] = 0x85;
+    /* Z=0x81: bit 00 set = channel 2, which is where the integrated printer
+     * lives and the only channel it can be reached on (CPU[4] §5.8.3.1, dwg
+     * 30004122 o/A fo.73). X=0x85 (put), len=5, buffer=0x0200. */
+    g.mem[0x10] = 0x81; g.mem[0x11] = 0x85;
     g.mem[0x12] = 0x00; g.mem[0x13] = 0x05;
     g.mem[0x14] = 0x02; g.mem[0x15] = 0x00;
     /* "HELLO" in GE graphic code. */
@@ -325,8 +327,10 @@ UTEST(printer, output_per_prints_and_halts_when_polled)
     g.mem[0x08] = JC_OPCODE;  g.mem[0x09] = 0x50; g.mem[0x0A] = 0x00; g.mem[0x0B] = 0x04;
     g.mem[0x0C] = HLT_OPCODE; g.mem[0x0D] = 0x00;
 
-    /* z=0x80 (L207 output), cmd=0x85 (put), len=5, buffer=0x0200 */
-    g.mem[0x10] = 0x80; g.mem[0x11] = 0x85;
+    /* Z=0x81: bit 00 set = channel 2, which is where the integrated printer
+     * lives and the only channel it can be reached on (CPU[4] §5.8.3.1, dwg
+     * 30004122 o/A fo.73). X=0x85 (put), len=5, buffer=0x0200. */
+    g.mem[0x10] = 0x81; g.mem[0x11] = 0x85;
     g.mem[0x12] = 0x00; g.mem[0x13] = 0x05;
     g.mem[0x14] = 0x02; g.mem[0x15] = 0x00;
 
@@ -388,7 +392,7 @@ UTEST(printer, input_line_waits_for_keyboard_and_fills_buffer)
 
     /* PER connector-2, order block @ 0x10: read a line into 0x0200. */
     g.mem[0x00] = PER_OPCODE; g.mem[0x01] = 0x80; g.mem[0x02] = 0x00; g.mem[0x03] = 0x10;
-    g.mem[0x10] = 0x00; g.mem[0x11] = 0x40;  /* z, cmd=KBD_CMD_LINE */
+    g.mem[0x10] = 0x01; g.mem[0x11] = 0x40;  /* Z: channel 2. X=KBD_CMD_LINE */
     g.mem[0x12] = 0x00; g.mem[0x13] = 0x20;  /* len = 32 */
     g.mem[0x14] = 0x02; g.mem[0x15] = 0x00;  /* buf = 0x0200 */
 

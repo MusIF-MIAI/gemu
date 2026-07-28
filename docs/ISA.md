@@ -839,6 +839,14 @@ takes it as a raw `aux` byte (see §6.11 for the bit meanings).
 |---|---|----|----|---|----|
 | `PER`  | `PER aux, addr`  | `9E` | 4 | Peripheral / external operation. | ✅ |
 | `PERI` | `PERI aux, addr` | `9C` | 4 | Peripheral operation, interrupt variant. | ✅ |
+
+> **The `aux` byte is the peripheral unit's NAME**, and the `addr` operand points
+> at the order block — `Z X L L I I` for a transfer, `Z X` otherwise. `Z` carries
+> the operation type *and the channel*: bits 03/00 = `00` channel 1, `10`
+> channel 3, `01`/`11` channel 2 (not overlapped / overlapped). Channel 2 is
+> reserved to the integrated printer and reader. Bit 02 of `Z` = ignore the
+> unit's availability rather than wait for it. CPU[4] §5.8.2 / §5.8.3.1, dwg
+> 30004122 o/A fo.72-73; see `docs/peripherals.md`.
 | `RDC`  | `RDC aux, addr`  | `90` | 4 | Read card (PER-family, decimal-deck variant). | ✅ |
 | `LPSR` | `LPSR aux, addr` | `9D` | 4 | Load program status register. | ✗ |
 | `JRT`  | `JRT aux, addr`  | `41` | 4 | Jump-and-return / linkage. | ✗ |
