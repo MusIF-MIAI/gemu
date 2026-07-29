@@ -44,8 +44,8 @@
   <div class="headertitle"><div class="title">Hybrid → per-clock conversion checklist</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md62"></a> Standing protocol for replacing a <code>EXEC_*</code> one-shot with transcribed per-clock executive states. Written down so it is not re-derived (or re-argued) once per family. Companion to <code><a class="el" href="flowchart-sheets_8md.html">flowchart-sheets.md</a></code> (what is left) and <code>transcriptions/</code> (the raw sheet reads).</p>
-<h1><a class="anchor" id="autotoc_md63"></a>
+<div class="textblock"><p><a class="anchor" id="autotoc_md54"></a> Standing protocol for replacing a <code>EXEC_*</code> one-shot with transcribed per-clock executive states. Written down so it is not re-derived (or re-argued) once per family. Companion to <code><a class="el" href="flowchart-sheets_8md.html">flowchart-sheets.md</a></code> (what is left) and <code>transcriptions/</code> (the raw sheet reads).</p>
+<h1><a class="anchor" id="autotoc_md55"></a>
 Ground rules</h1>
 <ul>
 <li><b>Never co-author commits. Never push.</b> Commit each step locally.</li>
@@ -53,7 +53,7 @@ Ground rules</h1>
 <li>A row that is <b>not</b> a transcription gets a comment saying so, in place. Currently two: <code>ss_hybrid_exit</code>, <code>beta_unclaimed</code> (<code><a class="el" href="msl-states_8c.html">msl-states.c</a></code>).</li>
 <li>Inferences (clock placement, pass-through behaviour, overbar reads) get labelled as inferences at the definition site. Do not launder them into transcriptions.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md64"></a>
+<h1><a class="anchor" id="autotoc_md56"></a>
 Per-family conversion sequence</h1>
 <ol type="1">
 <li><b>Transcribe first, convert second.</b> Sheet → <code>docs/transcriptions/&lt;family&gt;.md</code> with fo. numbers, before any code. Commit the transcription on its own if the conversion is going to be deferred.</li>
@@ -68,7 +68,7 @@ Per-family conversion sequence</h1>
 <li><b>Extend the fetch/exit predicates</b> the family needs (e.g. <code>exec60_fetches_source</code>).</li>
 <li>Update <code><a class="el" href="flowchart-sheets_8md.html">flowchart-sheets.md</a></code> (mark the family <code>*</code>) and the memory note.</li>
 </ol>
-<h1><a class="anchor" id="autotoc_md65"></a>
+<h1><a class="anchor" id="autotoc_md57"></a>
 Acceptance criteria</h1>
 <p>Every one of these, every conversion:</p>
 <ul>
@@ -83,7 +83,7 @@ Acceptance criteria</h1>
 <div class="line"># begins at the converted family&#39;s first deck step.</div>
 </div><!-- fragment --> All step/PO transitions must match; cycle numbers may drift only from the converted family's first test onward, and the total drift must be explained (iterations x states x instructions).</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md66"></a>
+<h1><a class="anchor" id="autotoc_md58"></a>
 Traps, learned the expensive way</h1>
 <ul>
 <li><b>First-match exclusivity is gone.</b> The old variant matrix was ordered and silently shadowed overlapping predicates. <code>is_ss_data_op</code> still lists converted opcodes; only <code>ss_hybrid_family</code>'s <code>!ss_byte_loop</code> guard keeps them from running the one-shot <em>and</em> the executive loop. That failure produces <b>correct results in far fewer cycles</b> — no assertion in the suite notices. The pinned <code>want_cyc</code> is the only thing that catches it.</li>
@@ -92,7 +92,7 @@ Traps, learned the expensive way</h1>
 <li><b>Read the whole gate.</b> Two corrections came from mis-read arity/inputs (gate 27's third input <code>CI461</code> flipped <code>UCO01</code> from binary to decimal add). When a signal's meaning hinges on a gate, have the trace confirmed.</li>
 <li><b>TAB.1 rows are per-configuration.</b> <code>FUL4G</code> was wrong because it was read off the "no interrupts" rows only.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md67"></a>
+<h1><a class="anchor" id="autotoc_md59"></a>
 Roadmap</h1>
 <p>Order is roughly cheapest-first; each needs its own transcription + prerequisite check.</p>
 <ul>
@@ -104,7 +104,7 @@ Roadmap</h1>
 <li>[ ] TL/EDT (fo.130-132).</li>
 <li>[ ] <b>TR</b> (fo.134-136) — absent from <code><a class="el" href="opcodes_8h.html">opcodes.h</a></code> entirely; needs the opcode added before the states.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md68"></a>
+<h1><a class="anchor" id="autotoc_md60"></a>
 Open questions, parked</h1>
 <ul>
 <li><code>CI89 SET ALTO {FUL4}</code> at TO80 is printed with <b>no overbar</b>. Taken verbatim it halts a MAX machine at <code>PO=09b8</code>. Unresolved; not committed.</li>

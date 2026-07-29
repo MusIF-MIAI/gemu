@@ -59,6 +59,7 @@
 <code>#include &lt;string.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="log_8h_source.html">log.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="gecode_8h_source.html">gecode.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="signals_8h_source.html">signals.h</a>&quot;</code><br />
 </div>
 <p><a href="printer_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -83,6 +84,10 @@ Macros</h2></td></tr>
 <tr class="separator:a0d0352a024d67016e6303e35a0914905"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0a6b0de150a31768c7308e37d353687" id="r_ab0a6b0de150a31768c7308e37d353687"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#ab0a6b0de150a31768c7308e37d353687">IS_OUTPUT_CMD</a>(cmd)&#160;&#160;&#160;(<a class="el" href="printer_8c.html#a145040ad3ebe48cf3897f4e26e998cde">PRINT_CMD_IS_PUT</a>(cmd) || (cmd) == <a class="el" href="printer_8c.html#a0d0352a024d67016e6303e35a0914905">LP_CMD_WRITE</a>)</td></tr>
 <tr class="separator:ab0a6b0de150a31768c7308e37d353687"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3233b63e94420baea0f3a60c17cbe0ad" id="r_a3233b63e94420baea0f3a60c17cbe0ad"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a3233b63e94420baea0f3a60c17cbe0ad">Z_CHANNEL2_BIT</a>&#160;&#160;&#160;0x01</td></tr>
+<tr class="separator:a3233b63e94420baea0f3a60c17cbe0ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4afbb42ff835de94e7237fbd8db5b91" id="r_aa4afbb42ff835de94e7237fbd8db5b91"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#aa4afbb42ff835de94e7237fbd8db5b91">ORDER_IS_CHANNEL2</a>(<a class="el" href="structge.html">ge</a>,  base)&#160;&#160;&#160;(((<a class="el" href="structge.html">ge</a>)-&gt;mem[(uint16_t)(base)] &amp; <a class="el" href="printer_8c.html#a3233b63e94420baea0f3a60c17cbe0ad">Z_CHANNEL2_BIT</a>) != 0)</td></tr>
+<tr class="separator:aa4afbb42ff835de94e7237fbd8db5b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0694e146a2288b946e29dce5e15ad9a7" id="r_a0694e146a2288b946e29dce5e15ad9a7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a0694e146a2288b946e29dce5e15ad9a7">STDIO_STATUS_ADDR</a>&#160;&#160;&#160;0x0030</td></tr>
 <tr class="separator:a0694e146a2288b946e29dce5e15ad9a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee9893cd11f67f01b1d6855d2feaa21d" id="r_aee9893cd11f67f01b1d6855d2feaa21d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#aee9893cd11f67f01b1d6855d2feaa21d">STDIO_COUNT_ADDR</a>&#160;&#160;&#160;0x0032</td></tr>
@@ -114,6 +119,8 @@ Functions</h2></td></tr>
 <tr class="separator:a1115cc73fca3bab8ed0e19277620d9f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8add2ebdd727d97ab81867373bc1746f" id="r_a8add2ebdd727d97ab81867373bc1746f"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a8add2ebdd727d97ab81867373bc1746f">input_order_ready</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint8_t cmd)</td></tr>
 <tr class="separator:a8add2ebdd727d97ab81867373bc1746f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af296f5098e1b4d0d821725159536ae36" id="r_af296f5098e1b4d0d821725159536ae36"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#af296f5098e1b4d0d821725159536ae36">channel1_reader_owns_the_order</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
+<tr class="separator:af296f5098e1b4d0d821725159536ae36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a53e0b9c9a8a2d33d203a408b6b2d554c" id="r_a53e0b9c9a8a2d33d203a408b6b2d554c"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a53e0b9c9a8a2d33d203a408b6b2d554c">in_channel2_print_wait</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:a53e0b9c9a8a2d33d203a408b6b2d554c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22eb817acc4ab34ed0b1e4dbdd2ee8fc" id="r_a22eb817acc4ab34ed0b1e4dbdd2ee8fc"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="printer_8c.html#a22eb817acc4ab34ed0b1e4dbdd2ee8fc">printer_on_clock</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *opaque)</td></tr>
@@ -152,7 +159,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00068">68</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00108">108</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -168,7 +175,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00058">58</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00098">98</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -184,7 +191,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00057">57</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00097">97</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -200,7 +207,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00072">72</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00117">117</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -216,7 +223,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00073">73</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00118">118</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -232,7 +239,37 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00067">67</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00107">107</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="aa4afbb42ff835de94e7237fbd8db5b91" name="aa4afbb42ff835de94e7237fbd8db5b91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4afbb42ff835de94e7237fbd8db5b91">&#9670;&#160;</a></span>ORDER_IS_CHANNEL2</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define ORDER_IS_CHANNEL2</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="structge.html">ge</a>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">base&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>&#160;&#160;&#160;(((<a class="el" href="structge.html">ge</a>)-&gt;mem[(uint16_t)(base)] &amp; <a class="el" href="printer_8c.html#a3233b63e94420baea0f3a60c17cbe0ad">Z_CHANNEL2_BIT</a>) != 0)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00113">113</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -252,7 +289,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00055">55</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00095">95</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -268,7 +305,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00056">56</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00096">96</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -284,7 +321,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00042">42</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00082">82</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -300,7 +337,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00071">71</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00116">116</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -316,11 +353,55 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00070">70</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00115">115</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
+<a id="a3233b63e94420baea0f3a60c17cbe0ad" name="a3233b63e94420baea0f3a60c17cbe0ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3233b63e94420baea0f3a60c17cbe0ad">&#9670;&#160;</a></span>Z_CHANNEL2_BIT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Z_CHANNEL2_BIT&#160;&#160;&#160;0x01</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00112">112</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="af296f5098e1b4d0d821725159536ae36" name="af296f5098e1b4d0d821725159536ae36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af296f5098e1b4d0d821725159536ae36">&#9670;&#160;</a></span>channel1_reader_owns_the_order()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int channel1_reader_owns_the_order </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00238">238</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+
+</div>
+</div>
 <a id="a53e0b9c9a8a2d33d203a408b6b2d554c" name="a53e0b9c9a8a2d33d203a408b6b2d554c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a53e0b9c9a8a2d33d203a408b6b2d554c">&#9670;&#160;</a></span>in_channel2_print_wait()</h2>
 
@@ -345,7 +426,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00182">182</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00255">255</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -383,7 +464,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00169">169</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00214">214</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -411,7 +492,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00114">114</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00159">159</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -439,7 +520,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00123">123</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00168">168</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -467,7 +548,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00109">109</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00154">154</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -509,7 +590,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00373">373</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00460">460</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -547,7 +628,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00089">89</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00134">134</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -585,7 +666,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00081">81</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00126">126</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -623,7 +704,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00095">95</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00140">140</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -661,7 +742,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00329">329</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00416">416</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -691,7 +772,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00383">383</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00470">470</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -729,7 +810,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00197">197</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00270">270</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -749,7 +830,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00398">398</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00485">485</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -769,7 +850,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00403">403</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00490">490</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -789,7 +870,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00393">393</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00480">480</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -809,7 +890,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00349">349</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00436">436</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -853,7 +934,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00341">341</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00428">428</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -897,7 +978,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00152">152</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00197">197</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -941,7 +1022,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00130">130</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00175">175</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>
@@ -985,7 +1066,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00075">75</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="printer_8c_source.html#l00120">120</a> of file <a class="el" href="printer_8c_source.html">printer.c</a>.</p>
 
 </div>
 </div>

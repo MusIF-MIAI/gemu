@@ -102,7 +102,7 @@
 <div class="line">......             .data  (initialised globals)</div>
 <div class="line">......             .bss   (zeroed globals)</div>
 <div class="line">0x6000 .. 0x7FFF   stack  (R6 starts at 0x6000, grows up)     [abi]</div>
-</div><!-- fragment --><p>The split between <code>.bss</code>/heap and the stack base (<code>0x6000</code>) is a linker constant (<code>crt0</code>), adjustable per program. Programs that the integrated card reader bootstraps load <code>.text</code> at <code>0x0100</code> (the <code>DUMP1</code> convention, ISA §4.1); unit tests that use <code>ge_load_program</code> load at <code>0x0000</code>.</p>
+</div><!-- fragment --><p>The split between <code>.bss</code>/heap and the stack base (<code>0x6000</code>) is a linker constant (<code>crt0</code>), adjustable per program. Programs that the integrated card reader bootstraps load <code>.text</code> at <code>0x0100</code> (the <code>DUMP1</code> convention, ISA §4.1); unit unit tests that place a fragment by hand (<code>ge_load_image</code>) load at <code>0x0000</code>.</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md11"></a>
 2. Registers (the eight change registers)</h1>

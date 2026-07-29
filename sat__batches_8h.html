@@ -49,7 +49,6 @@
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
-<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">sat_batches.h File Reference</div></div>
 </div><!--header-->
@@ -65,13 +64,6 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsat__batch__info.html">sat_batch_info</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
-Enumerations</h2></td></tr>
-<tr class="memitem:aeab407171a3d93d5ccca219b229f1cc9" id="r_aeab407171a3d93d5ccca219b229f1cc9"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sat__batches_8h.html#aeab407171a3d93d5ccca219b229f1cc9">sat_batch_launch</a> { <a class="el" href="sat__batches_8h.html#aeab407171a3d93d5ccca219b229f1cc9a0e74bdaa99a6c89cee4a56f1518e9833">SAT_BATCH_IMAGE</a> = 1
-, <a class="el" href="sat__batches_8h.html#aeab407171a3d93d5ccca219b229f1cc9ad8ef3384635a6203f142650bd0526997">SAT_BATCH_READER</a> = 2
- }</td></tr>
-<tr class="separator:aeab407171a3d93d5ccca219b229f1cc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a663d23b2b04b3d08d63e9f1ba7950003" id="r_a663d23b2b04b3d08d63e9f1ba7950003"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sat__batches_8h.html#a663d23b2b04b3d08d63e9f1ba7950003">sat_batch_count</a> (void)</td></tr>
@@ -80,32 +72,9 @@ Functions</h2></td></tr>
 <tr class="separator:aa0259ca864ed3e5cc4a4e6c4a71078a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b2057ca8e4d7471679d48296857d7f9" id="r_a0b2057ca8e4d7471679d48296857d7f9"><td class="memItemLeft" align="right" valign="top">const struct <a class="el" href="structsat__batch__info.html">sat_batch_info</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sat__batches_8h.html#a0b2057ca8e4d7471679d48296857d7f9">sat_batch_find</a> (const char *id)</td></tr>
 <tr class="separator:a0b2057ca8e4d7471679d48296857d7f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e5243c3a23ec579a1134038e39e5ccc" id="r_a1e5243c3a23ec579a1134038e39e5ccc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sat__batches_8h.html#a1e5243c3a23ec579a1134038e39e5ccc">sat_batch_prepare_image</a> (const char *root, const char *id, unsigned char *image, unsigned *lo, unsigned *hi, uint16_t *entry, char *note, size_t note_sz)</td></tr>
-<tr class="separator:a1e5243c3a23ec579a1134038e39e5ccc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae271e7966791a864523cd95b9f3dfdb8" id="r_ae271e7966791a864523cd95b9f3dfdb8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sat__batches_8h.html#ae271e7966791a864523cd95b9f3dfdb8">sat_batch_prepare_deck</a> (const char *root, const char *id, const char *out_path, char *note, size_t note_sz)</td></tr>
 <tr class="separator:ae271e7966791a864523cd95b9f3dfdb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="aeab407171a3d93d5ccca219b229f1cc9" name="aeab407171a3d93d5ccca219b229f1cc9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeab407171a3d93d5ccca219b229f1cc9">&#9670;&#160;</a></span>sat_batch_launch</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="sat__batches_8h.html#aeab407171a3d93d5ccca219b229f1cc9">sat_batch_launch</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aeab407171a3d93d5ccca219b229f1cc9a0e74bdaa99a6c89cee4a56f1518e9833" name="aeab407171a3d93d5ccca219b229f1cc9a0e74bdaa99a6c89cee4a56f1518e9833"></a>SAT_BATCH_IMAGE&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aeab407171a3d93d5ccca219b229f1cc9ad8ef3384635a6203f142650bd0526997" name="aeab407171a3d93d5ccca219b229f1cc9ad8ef3384635a6203f142650bd0526997"></a>SAT_BATCH_READER&#160;</td><td class="fielddoc"></td></tr>
-</table>
-
-<p class="definition">Definition at line <a class="el" href="sat__batches_8h_source.html#l00009">9</a> of file <a class="el" href="sat__batches_8h_source.html">sat_batches.h</a>.</p>
-
-</div>
-</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a663d23b2b04b3d08d63e9f1ba7950003" name="a663d23b2b04b3d08d63e9f1ba7950003"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a663d23b2b04b3d08d63e9f1ba7950003">&#9670;&#160;</a></span>sat_batch_count()</h2>
@@ -123,7 +92,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00236">236</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00225">225</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
 
 </div>
 </div>
@@ -143,7 +112,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00248">248</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00237">237</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
 
 </div>
 </div>
@@ -163,7 +132,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00241">241</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00230">230</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
 
 </div>
 </div>
@@ -211,73 +180,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00279">279</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
-
-</div>
-</div>
-<a id="a1e5243c3a23ec579a1134038e39e5ccc" name="a1e5243c3a23ec579a1134038e39e5ccc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e5243c3a23ec579a1134038e39e5ccc">&#9670;&#160;</a></span>sat_batch_prepare_image()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int sat_batch_prepare_image </td>
-          <td>(</td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>root</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned char *&#160;</td>
-          <td class="paramname"><em>image</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned *&#160;</td>
-          <td class="paramname"><em>lo</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned *&#160;</td>
-          <td class="paramname"><em>hi</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint16_t *&#160;</td>
-          <td class="paramname"><em>entry</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">char *&#160;</td>
-          <td class="paramname"><em>note</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>note_sz</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00254">254</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sat__batches_8c_source.html#l00243">243</a> of file <a class="el" href="sat__batches_8c_source.html">sat_batches.c</a>.</p>
 
 </div>
 </div>

@@ -49,6 +49,7 @@
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">cardreader.c File Reference</div></div>
@@ -68,12 +69,23 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcardreader__ctx.html">cardreader_ctx</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a0ae247aa05489563129f8054b4751728" id="r_a0ae247aa05489563129f8054b4751728"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a0ae247aa05489563129f8054b4751728">CR_CMD_TIMEOUT_CYCLES</a>&#160;&#160;&#160;12500   /* 50 ms */</td></tr>
+<tr class="separator:a0ae247aa05489563129f8054b4751728"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0611a029d1b3b21c7224d47d40cde4f" id="r_af0611a029d1b3b21c7224d47d40cde4f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#af0611a029d1b3b21c7224d47d40cde4f">CR_FININ_TIMEOUT_CYCLES</a>&#160;&#160;&#160;250   /*  1 ms */</td></tr>
+<tr class="separator:af0611a029d1b3b21c7224d47d40cde4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a4c8b6fb196f1a22b10c279086e2cf570" id="r_a4c8b6fb196f1a22b10c279086e2cf570"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570">cr_state</a> { <a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570a55e8c3146f9e931f006990494a6ae11a">CR_IDLE</a>
-, <a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570aca5bf1ac1f9439bc33b8914ff4512ac1">CR_PRESENTED</a>
+<tr class="memitem:a4c8b6fb196f1a22b10c279086e2cf570" id="r_a4c8b6fb196f1a22b10c279086e2cf570"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570">cr_state</a> { <br />
+&#160;&#160;<a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570a828fb46352beff96fa4acc6a2575bbec">CR_ARMED_WAIT</a>
+, <a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570a6bdd9b439ef18c1638b534e67f5a4cd9">CR_PRESENTING</a>
 , <a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570a5738baf420b5a11d5e6f974dfc9e0024">CR_CARD_DONE</a>
 , <a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570acef00778ca41aa9c5fa0fbd966f81689">CR_DONE</a>
+, <br />
+&#160;&#160;<a class="el" href="cardreader_8c.html#a4c8b6fb196f1a22b10c279086e2cf570aa0217fa70938cd918ed1116af229c909">CR_ERROR</a>
+<br />
  }</td></tr>
 <tr class="separator:a4c8b6fb196f1a22b10c279086e2cf570"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -81,8 +93,18 @@ Enumerations</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:aa681600f563fe2aedcb4b193a014767e" id="r_aa681600f563fe2aedcb4b193a014767e"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#aa681600f563fe2aedcb4b193a014767e">cr_find_hollerith_loader_card</a> (struct <a class="el" href="structcap__deck.html">cap_deck</a> *deck)</td></tr>
 <tr class="separator:aa681600f563fe2aedcb4b193a014767e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a44950d335bb737861b81d7199ce6f58c" id="r_a44950d335bb737861b81d7199ce6f58c"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a44950d335bb737861b81d7199ce6f58c">cr_advance</a> (struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx)</td></tr>
-<tr class="separator:a44950d335bb737861b81d7199ce6f58c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1579fde01ec3349015b9a9988f56922c" id="r_a1579fde01ec3349015b9a9988f56922c"><td class="memItemLeft" align="right" valign="top">static enum <a class="el" href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a1579fde01ec3349015b9a9988f56922c">cr_effective_mode</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx)</td></tr>
+<tr class="separator:a1579fde01ec3349015b9a9988f56922c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6057ed0e4e77932f6b1fa09d6d8c0da" id="r_af6057ed0e4e77932f6b1fa09d6d8c0da"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#af6057ed0e4e77932f6b1fa09d6d8c0da">cr_pack_now</a> (struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx, enum <a class="el" href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a> m)</td></tr>
+<tr class="separator:af6057ed0e4e77932f6b1fa09d6d8c0da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60a07151a0fb86b47a7ddc0917c6b07d" id="r_a60a07151a0fb86b47a7ddc0917c6b07d"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a60a07151a0fb86b47a7ddc0917c6b07d">cr_next_card</a> (struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx)</td></tr>
+<tr class="separator:a60a07151a0fb86b47a7ddc0917c6b07d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc845a28c45210bbb0218c4c6558b22a" id="r_afc845a28c45210bbb0218c4c6558b22a"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#afc845a28c45210bbb0218c4c6558b22a">cr_finin_release</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx)</td></tr>
+<tr class="separator:afc845a28c45210bbb0218c4c6558b22a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac82b4093b888cb2131d52b031caee79f" id="r_ac82b4093b888cb2131d52b031caee79f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#ac82b4093b888cb2131d52b031caee79f">cr_lupob_update</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx)</td></tr>
+<tr class="separator:ac82b4093b888cb2131d52b031caee79f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9042252bbc956bbdafb1efae156143bc" id="r_a9042252bbc956bbdafb1efae156143bc"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a9042252bbc956bbdafb1efae156143bc">cr_trigger_present</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *ctx)</td></tr>
+<tr class="separator:a9042252bbc956bbdafb1efae156143bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f51b0234a98bf5a3688f5a3e3b4c635" id="r_a8f51b0234a98bf5a3688f5a3e3b4c635"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a8f51b0234a98bf5a3688f5a3e3b4c635">cardreader_on_clock</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *opaque)</td></tr>
 <tr class="separator:a8f51b0234a98bf5a3688f5a3e3b4c635"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a487a8e21e7ce8a33806bab8f83601c42" id="r_a487a8e21e7ce8a33806bab8f83601c42"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a487a8e21e7ce8a33806bab8f83601c42">cardreader_deinit</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *opaque)</td></tr>
@@ -96,6 +118,39 @@ Functions</h2></td></tr>
 <tr class="memitem:a2172176e037dc4f2e5668e877ba28f6a" id="r_a2172176e037dc4f2e5668e877ba28f6a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cardreader_8c.html#a2172176e037dc4f2e5668e877ba28f6a">cardreader_register_packed</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, const char *cap_path, enum <a class="el" href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a> mode)</td></tr>
 <tr class="separator:a2172176e037dc4f2e5668e877ba28f6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a0ae247aa05489563129f8054b4751728" name="a0ae247aa05489563129f8054b4751728"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ae247aa05489563129f8054b4751728">&#9670;&#160;</a></span>CR_CMD_TIMEOUT_CYCLES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CR_CMD_TIMEOUT_CYCLES&#160;&#160;&#160;12500   /* 50 ms */</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00086">86</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
+<a id="af0611a029d1b3b21c7224d47d40cde4f" name="af0611a029d1b3b21c7224d47d40cde4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0611a029d1b3b21c7224d47d40cde4f">&#9670;&#160;</a></span>CR_FININ_TIMEOUT_CYCLES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CR_FININ_TIMEOUT_CYCLES&#160;&#160;&#160;250   /*  1 ms */</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00087">87</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a4c8b6fb196f1a22b10c279086e2cf570" name="a4c8b6fb196f1a22b10c279086e2cf570"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4c8b6fb196f1a22b10c279086e2cf570">&#9670;&#160;</a></span>cr_state</h2>
@@ -109,13 +164,14 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570a55e8c3146f9e931f006990494a6ae11a" name="a4c8b6fb196f1a22b10c279086e2cf570a55e8c3146f9e931f006990494a6ae11a"></a>CR_IDLE&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570aca5bf1ac1f9439bc33b8914ff4512ac1" name="a4c8b6fb196f1a22b10c279086e2cf570aca5bf1ac1f9439bc33b8914ff4512ac1"></a>CR_PRESENTED&#160;</td><td class="fielddoc"></td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570a828fb46352beff96fa4acc6a2575bbec" name="a4c8b6fb196f1a22b10c279086e2cf570a828fb46352beff96fa4acc6a2575bbec"></a>CR_ARMED_WAIT&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570a6bdd9b439ef18c1638b534e67f5a4cd9" name="a4c8b6fb196f1a22b10c279086e2cf570a6bdd9b439ef18c1638b534e67f5a4cd9"></a>CR_PRESENTING&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570a5738baf420b5a11d5e6f974dfc9e0024" name="a4c8b6fb196f1a22b10c279086e2cf570a5738baf420b5a11d5e6f974dfc9e0024"></a>CR_CARD_DONE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570acef00778ca41aa9c5fa0fbd966f81689" name="a4c8b6fb196f1a22b10c279086e2cf570acef00778ca41aa9c5fa0fbd966f81689"></a>CR_DONE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a4c8b6fb196f1a22b10c279086e2cf570aa0217fa70938cd918ed1116af229c909" name="a4c8b6fb196f1a22b10c279086e2cf570aa0217fa70938cd918ed1116af229c909"></a>CR_ERROR&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00053">53</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00067">67</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -154,7 +210,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00424">424</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00544">544</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -192,7 +248,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00216">216</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00363">363</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -228,7 +284,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00442">442</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00563">563</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -270,7 +326,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00448">448</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00569">569</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -306,12 +362,12 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00458">458</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00579">579</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
-<a id="a44950d335bb737861b81d7199ce6f58c" name="a44950d335bb737861b81d7199ce6f58c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a44950d335bb737861b81d7199ce6f58c">&#9670;&#160;</a></span>cr_advance()</h2>
+<a id="a1579fde01ec3349015b9a9988f56922c" name="a1579fde01ec3349015b9a9988f56922c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1579fde01ec3349015b9a9988f56922c">&#9670;&#160;</a></span>cr_effective_mode()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -320,11 +376,21 @@ Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static int cr_advance </td>
+          <td class="memname">static enum <a class="el" href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a> cr_effective_mode </td>
           <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
-          <td class="paramname"><em>ctx</em></td><td>)</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -334,7 +400,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00154">154</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00231">231</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -362,7 +428,149 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00113">113</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00167">167</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
+<a id="afc845a28c45210bbb0218c4c6558b22a" name="afc845a28c45210bbb0218c4c6558b22a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc845a28c45210bbb0218c4c6558b22a">&#9670;&#160;</a></span>cr_finin_release()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void cr_finin_release </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00285">285</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
+<a id="ac82b4093b888cb2131d52b031caee79f" name="ac82b4093b888cb2131d52b031caee79f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac82b4093b888cb2131d52b031caee79f">&#9670;&#160;</a></span>cr_lupob_update()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void cr_lupob_update </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00309">309</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
+<a id="a60a07151a0fb86b47a7ddc0917c6b07d" name="a60a07151a0fb86b47a7ddc0917c6b07d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60a07151a0fb86b47a7ddc0917c6b07d">&#9670;&#160;</a></span>cr_next_card()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void cr_next_card </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
+          <td class="paramname"><em>ctx</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00259">259</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
+<a id="af6057ed0e4e77932f6b1fa09d6d8c0da" name="af6057ed0e4e77932f6b1fa09d6d8c0da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6057ed0e4e77932f6b1fa09d6d8c0da">&#9670;&#160;</a></span>cr_pack_now()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int cr_pack_now </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
+          <td class="paramname"><em>ctx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">enum <a class="el" href="transcode_8h.html#a0537f914f7639fb4485a2963402ea69a">transcode_mode</a>&#160;</td>
+          <td class="paramname"><em>m</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00247">247</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>
@@ -418,7 +626,45 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00464">464</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00585">585</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
+
+</div>
+</div>
+<a id="a9042252bbc956bbdafb1efae156143bc" name="a9042252bbc956bbdafb1efae156143bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9042252bbc956bbdafb1efae156143bc">&#9670;&#160;</a></span>cr_trigger_present()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void cr_trigger_present </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct <a class="el" href="structcardreader__ctx.html">cardreader_ctx</a> *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cardreader_8c_source.html#l00321">321</a> of file <a class="el" href="cardreader_8c_source.html">cardreader.c</a>.</p>
 
 </div>
 </div>

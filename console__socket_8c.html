@@ -48,6 +48,8 @@
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#define-members">Macros</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">console_socket.c File Reference</div></div>
@@ -58,6 +60,7 @@
 <code>#include &lt;unistd.h&gt;</code><br />
 <code>#include &lt;fcntl.h&gt;</code><br />
 <code>#include &lt;string.h&gt;</code><br />
+<code>#include &lt;stdint.h&gt;</code><br />
 <code>#include &lt;stdlib.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="console__socket_8h_source.html">console_socket.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="ge_8h_source.html">ge.h</a>&quot;</code><br />
@@ -66,10 +69,51 @@
 </div>
 <p><a href="console__socket_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a60fb5716373e45c442b7a4a0dcf134c4" id="r_a60fb5716373e45c442b7a4a0dcf134c4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a60fb5716373e45c442b7a4a0dcf134c4">CONSOLE_FRAME_BYTES</a>&#160;&#160;&#160;19</td></tr>
+<tr class="separator:a60fb5716373e45c442b7a4a0dcf134c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ba09d275d57c10f5487c1dae6db5862" id="r_a5ba09d275d57c10f5487c1dae6db5862"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a5ba09d275d57c10f5487c1dae6db5862">CONSOLE_OFF_SWITCHES</a>&#160;&#160;&#160;12</td></tr>
+<tr class="separator:a5ba09d275d57c10f5487c1dae6db5862"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a476e459aa6d618a5d1297bebb9094f9b" id="r_a476e459aa6d618a5d1297bebb9094f9b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a476e459aa6d618a5d1297bebb9094f9b">CONSOLE_OFF_BUTTONS</a>&#160;&#160;&#160;16</td></tr>
+<tr class="separator:a476e459aa6d618a5d1297bebb9094f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc46236f4f16a6188946d102dcac64ca" id="r_acc46236f4f16a6188946d102dcac64ca"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#acc46236f4f16a6188946d102dcac64ca">CONSOLE_OFF_ROTARY</a>&#160;&#160;&#160;18</td></tr>
+<tr class="separator:acc46236f4f16a6188946d102dcac64ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a06fc87d81c62e9abb8790b6e5713c55b" id="r_a06fc87d81c62e9abb8790b6e5713c55b"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom">{ <br />
+&#160;&#160;<a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba5d4e4416357138b753c479a5d7194f92">BTN_AC_ON</a> = 0
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba449022b8158026f101288be9bac363ac">BTN_DC_ALERT</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba6622e34a4bf9b229286d92e26d36f911">BTN_POWER_ON</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55bae393563f396cbb5c8c136edcc5fe7560">BTN_MAINTENANCE_ON</a>
+, <br />
+&#160;&#160;<a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55bae4240491dcc7f19b5371a7d8440ea7e0">BTN_SWITCH_1</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba82832c9ffb58223446716db91356fb59">BTN_SWITCH_2</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba2f5a6c0433455fbff6ec2e052eabe48d">BTN_STEP_BY_STEP</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55baf8f25008dc952965d0133e60a3a17d32">BTN_LOAD_1_2</a>
+, <br />
+&#160;&#160;<a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba873da235e7ac8ecad6064b626096cf42">BTN_EMERGEN_OFF</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba8ef7e291d495768e542c1648922776cb">BTN_STANDBY</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55bae2f72e6900deb126ed6ac082a0e5dfbb">BTN_PAD</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba5dff36fc41764f3ab25100f597eb620c">BTN_MEM_CHECK</a>
+, <br />
+&#160;&#160;<a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba90f865deb0c4959ddf2ae70c90759572">BTN_CLEAR</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55bafd265ee6beee6aa34fb9f47ac6b9a38d">BTN_LOAD</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba5dd5f3ace3e895381d986fffb59bd31e">BTN_HALT_START</a>
+, <a class="el" href="console__socket_8c.html#a06fc87d81c62e9abb8790b6e5713c55baf7cf8d210489fbb708ffb5c40c13394e">BTN_OPER_CALL</a>
+<br />
+ }</td></tr>
+<tr class="separator:a06fc87d81c62e9abb8790b6e5713c55b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a9cda96516e5d1064aa546e26b1accb10" id="r_a9cda96516e5d1064aa546e26b1accb10"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *ctx)</td></tr>
 <tr class="separator:a9cda96516e5d1064aa546e26b1accb10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b1f1b7300d3ab97f8ebd7cb225c5cc0" id="r_a5b1f1b7300d3ab97f8ebd7cb225c5cc0"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a5b1f1b7300d3ab97f8ebd7cb225c5cc0">console_socket_deinit</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *ctx)</td></tr>
+<tr class="separator:a5b1f1b7300d3ab97f8ebd7cb225c5cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a106f9deaea580b9ac1a20827f9ddebdc" id="r_a106f9deaea580b9ac1a20827f9ddebdc"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a106f9deaea580b9ac1a20827f9ddebdc">console_press_buttons</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t buttons)</td></tr>
+<tr class="separator:a106f9deaea580b9ac1a20827f9ddebdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f550b5f0bed24d71ad66b50e71875eb" id="r_a5f550b5f0bed24d71ad66b50e71875eb"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, void *ctx)</td></tr>
 <tr class="separator:a5f550b5f0bed24d71ad66b50e71875eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7b4982022417205e5b17713799b24f5" id="r_ae7b4982022417205e5b17713799b24f5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#ae7b4982022417205e5b17713799b24f5">console_socket_register</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
@@ -81,10 +125,150 @@ Variables</h2></td></tr>
 <tr class="separator:a69d2a2b27248e6e5117ce529aec88d4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a111b3a5b44da0ca35941f55661036fc3" id="r_a111b3a5b44da0ca35941f55661036fc3"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a111b3a5b44da0ca35941f55661036fc3">console_socket_fd</a> = -1</td></tr>
 <tr class="separator:a111b3a5b44da0ca35941f55661036fc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f87e11673fa0e72bf2f3c2576e56ee9" id="r_a8f87e11673fa0e72bf2f3c2576e56ee9"><td class="memItemLeft" align="right" valign="top">static uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#a8f87e11673fa0e72bf2f3c2576e56ee9">console_prev_buttons</a></td></tr>
+<tr class="separator:a8f87e11673fa0e72bf2f3c2576e56ee9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad79e8fa1788f02276e61d34544247352" id="r_ad79e8fa1788f02276e61d34544247352"><td class="memItemLeft" align="right" valign="top">static struct <a class="el" href="structge__peri.html">ge_peri</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="console__socket_8c.html#ad79e8fa1788f02276e61d34544247352">console_socket</a></td></tr>
 <tr class="separator:ad79e8fa1788f02276e61d34544247352"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a60fb5716373e45c442b7a4a0dcf134c4" name="a60fb5716373e45c442b7a4a0dcf134c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60fb5716373e45c442b7a4a0dcf134c4">&#9670;&#160;</a></span>CONSOLE_FRAME_BYTES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CONSOLE_FRAME_BYTES&#160;&#160;&#160;19</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00073">73</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="a476e459aa6d618a5d1297bebb9094f9b" name="a476e459aa6d618a5d1297bebb9094f9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a476e459aa6d618a5d1297bebb9094f9b">&#9670;&#160;</a></span>CONSOLE_OFF_BUTTONS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CONSOLE_OFF_BUTTONS&#160;&#160;&#160;16</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00075">75</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="acc46236f4f16a6188946d102dcac64ca" name="acc46236f4f16a6188946d102dcac64ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc46236f4f16a6188946d102dcac64ca">&#9670;&#160;</a></span>CONSOLE_OFF_ROTARY</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CONSOLE_OFF_ROTARY&#160;&#160;&#160;18</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00076">76</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="a5ba09d275d57c10f5487c1dae6db5862" name="a5ba09d275d57c10f5487c1dae6db5862"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ba09d275d57c10f5487c1dae6db5862">&#9670;&#160;</a></span>CONSOLE_OFF_SWITCHES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CONSOLE_OFF_SWITCHES&#160;&#160;&#160;12</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00074">74</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a06fc87d81c62e9abb8790b6e5713c55b" name="a06fc87d81c62e9abb8790b6e5713c55b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06fc87d81c62e9abb8790b6e5713c55b">&#9670;&#160;</a></span>anonymous enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">anonymous enum</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba5d4e4416357138b753c479a5d7194f92" name="a06fc87d81c62e9abb8790b6e5713c55ba5d4e4416357138b753c479a5d7194f92"></a>BTN_AC_ON&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba449022b8158026f101288be9bac363ac" name="a06fc87d81c62e9abb8790b6e5713c55ba449022b8158026f101288be9bac363ac"></a>BTN_DC_ALERT&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba6622e34a4bf9b229286d92e26d36f911" name="a06fc87d81c62e9abb8790b6e5713c55ba6622e34a4bf9b229286d92e26d36f911"></a>BTN_POWER_ON&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55bae393563f396cbb5c8c136edcc5fe7560" name="a06fc87d81c62e9abb8790b6e5713c55bae393563f396cbb5c8c136edcc5fe7560"></a>BTN_MAINTENANCE_ON&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55bae4240491dcc7f19b5371a7d8440ea7e0" name="a06fc87d81c62e9abb8790b6e5713c55bae4240491dcc7f19b5371a7d8440ea7e0"></a>BTN_SWITCH_1&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba82832c9ffb58223446716db91356fb59" name="a06fc87d81c62e9abb8790b6e5713c55ba82832c9ffb58223446716db91356fb59"></a>BTN_SWITCH_2&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba2f5a6c0433455fbff6ec2e052eabe48d" name="a06fc87d81c62e9abb8790b6e5713c55ba2f5a6c0433455fbff6ec2e052eabe48d"></a>BTN_STEP_BY_STEP&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55baf8f25008dc952965d0133e60a3a17d32" name="a06fc87d81c62e9abb8790b6e5713c55baf8f25008dc952965d0133e60a3a17d32"></a>BTN_LOAD_1_2&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba873da235e7ac8ecad6064b626096cf42" name="a06fc87d81c62e9abb8790b6e5713c55ba873da235e7ac8ecad6064b626096cf42"></a>BTN_EMERGEN_OFF&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba8ef7e291d495768e542c1648922776cb" name="a06fc87d81c62e9abb8790b6e5713c55ba8ef7e291d495768e542c1648922776cb"></a>BTN_STANDBY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55bae2f72e6900deb126ed6ac082a0e5dfbb" name="a06fc87d81c62e9abb8790b6e5713c55bae2f72e6900deb126ed6ac082a0e5dfbb"></a>BTN_PAD&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba5dff36fc41764f3ab25100f597eb620c" name="a06fc87d81c62e9abb8790b6e5713c55ba5dff36fc41764f3ab25100f597eb620c"></a>BTN_MEM_CHECK&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba90f865deb0c4959ddf2ae70c90759572" name="a06fc87d81c62e9abb8790b6e5713c55ba90f865deb0c4959ddf2ae70c90759572"></a>BTN_CLEAR&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55bafd265ee6beee6aa34fb9f47ac6b9a38d" name="a06fc87d81c62e9abb8790b6e5713c55bafd265ee6beee6aa34fb9f47ac6b9a38d"></a>BTN_LOAD&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55ba5dd5f3ace3e895381d986fffb59bd31e" name="a06fc87d81c62e9abb8790b6e5713c55ba5dd5f3ace3e895381d986fffb59bd31e"></a>BTN_HALT_START&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a06fc87d81c62e9abb8790b6e5713c55baf7cf8d210489fbb708ffb5c40c13394e" name="a06fc87d81c62e9abb8790b6e5713c55baf7cf8d210489fbb708ffb5c40c13394e"></a>BTN_OPER_CALL&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00079">79</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a106f9deaea580b9ac1a20827f9ddebdc" name="a106f9deaea580b9ac1a20827f9ddebdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a106f9deaea580b9ac1a20827f9ddebdc">&#9670;&#160;</a></span>console_press_buttons()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void console_press_buttons </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>buttons</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00091">91</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
 <a id="a5f550b5f0bed24d71ad66b50e71875eb" name="a5f550b5f0bed24d71ad66b50e71875eb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5f550b5f0bed24d71ad66b50e71875eb">&#9670;&#160;</a></span>console_socket_check()</h2>
 
@@ -119,7 +303,45 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00040">40</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00159">159</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
+<a id="a5b1f1b7300d3ab97f8ebd7cb225c5cc0" name="a5b1f1b7300d3ab97f8ebd7cb225c5cc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b1f1b7300d3ab97f8ebd7cb225c5cc0">&#9670;&#160;</a></span>console_socket_deinit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int console_socket_deinit </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>ctx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00044">44</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
@@ -157,7 +379,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00016">16</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00020">20</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
@@ -177,11 +399,35 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00073">73</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00212">212</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
+<a id="a8f87e11673fa0e72bf2f3c2576e56ee9" name="a8f87e11673fa0e72bf2f3c2576e56ee9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f87e11673fa0e72bf2f3c2576e56ee9">&#9670;&#160;</a></span>console_prev_buttons</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t console_prev_buttons</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00018">18</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+
+</div>
+</div>
 <a id="ad79e8fa1788f02276e61d34544247352" name="ad79e8fa1788f02276e61d34544247352"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad79e8fa1788f02276e61d34544247352">&#9670;&#160;</a></span>console_socket</h2>
 
@@ -204,11 +450,13 @@ Variables</h2></td></tr>
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
 <div class="line">    .init = <a class="code hl_function" href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a>,</div>
 <div class="line">    .on_pulse = <a class="code hl_function" href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a>,</div>
+<div class="line">    .deinit = <a class="code hl_function" href="console__socket_8c.html#a5b1f1b7300d3ab97f8ebd7cb225c5cc0">console_socket_deinit</a>,</div>
 <div class="line">}</div>
-<div class="ttc" id="aconsole__socket_8c_html_a5f550b5f0bed24d71ad66b50e71875eb"><div class="ttname"><a href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a></div><div class="ttdeci">static int console_socket_check(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition</b> <a href="console__socket_8c_source.html#l00040">console_socket.c:40</a></div></div>
-<div class="ttc" id="aconsole__socket_8c_html_a9cda96516e5d1064aa546e26b1accb10"><div class="ttname"><a href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a></div><div class="ttdeci">static int console_socket_init(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition</b> <a href="console__socket_8c_source.html#l00016">console_socket.c:16</a></div></div>
+<div class="ttc" id="aconsole__socket_8c_html_a5b1f1b7300d3ab97f8ebd7cb225c5cc0"><div class="ttname"><a href="console__socket_8c.html#a5b1f1b7300d3ab97f8ebd7cb225c5cc0">console_socket_deinit</a></div><div class="ttdeci">static int console_socket_deinit(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition</b> <a href="console__socket_8c_source.html#l00044">console_socket.c:44</a></div></div>
+<div class="ttc" id="aconsole__socket_8c_html_a5f550b5f0bed24d71ad66b50e71875eb"><div class="ttname"><a href="console__socket_8c.html#a5f550b5f0bed24d71ad66b50e71875eb">console_socket_check</a></div><div class="ttdeci">static int console_socket_check(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition</b> <a href="console__socket_8c_source.html#l00159">console_socket.c:159</a></div></div>
+<div class="ttc" id="aconsole__socket_8c_html_a9cda96516e5d1064aa546e26b1accb10"><div class="ttname"><a href="console__socket_8c.html#a9cda96516e5d1064aa546e26b1accb10">console_socket_init</a></div><div class="ttdeci">static int console_socket_init(struct ge *ge, void *ctx)</div><div class="ttdef"><b>Definition</b> <a href="console__socket_8c_source.html#l00020">console_socket.c:20</a></div></div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00068">68</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00206">206</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
@@ -232,7 +480,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00014">14</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00015">15</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>
@@ -256,7 +504,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00013">13</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="console__socket_8c_source.html#l00014">14</a> of file <a class="el" href="console__socket_8c_source.html">console_socket.c</a>.</p>
 
 </div>
 </div>

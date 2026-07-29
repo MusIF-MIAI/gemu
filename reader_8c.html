@@ -126,6 +126,8 @@ Functions</h2></td></tr>
 <div class="line">    X(0x84, put_mixed_2,   <span class="stringliteral">&quot;Put mixed ii&quot;</span>  ) \</div>
 <div class="line">    X(0xa0, put_binary,    <span class="stringliteral">&quot;Put binary&quot;</span>    ) \</div>
 <div class="line">    X(0xac, put_manual,    <span class="stringliteral">&quot;Put manual&quot;</span>    ) \</div>
+<div class="line">    X(0x44, exam_cond,     <span class="stringliteral">&quot;Exam of conditions&quot;</span>) \</div>
+<div class="line">    X(0x47, reset_error,   <span class="stringliteral">&quot;Reset error&quot;</span>   ) \</div>
 <div class="line">    X(0x48, card_reject,   <span class="stringliteral">&quot;Card_reject&quot;</span>   ) \</div>
 <div class="line">    X(0x0c, no_function,   <span class="stringliteral">&quot;No function&quot;</span>   )</div>
 <div class="ttc" id="areader_8c_html_a302009dfd17122eaba2ad131953ee4db"><div class="ttname"><a href="reader_8c.html#a302009dfd17122eaba2ad131953ee4db">X</a></div><div class="ttdeci">#define X(cmd, name, desc)</div></div>
@@ -167,6 +169,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">        <span class="keywordflow">case</span> cmd: \</div>
 <div class="line">            ge_log(<a class="code hl_enumvalue" href="log_8h.html#a6b8f8e01c909fba9f31c0ac6beb0cf1fad71aeca0699baecdb561e89861c3f55e">LOG_READER</a>, <span class="stringliteral">&quot;    Command: %02x - %s\n&quot;</span>, cmd, desc ); \</div>
+<div class="line">            known = 1; \</div>
 <div class="line">            <span class="keywordflow">break</span>;</div>
 <div class="ttc" id="alog_8h_html_a6b8f8e01c909fba9f31c0ac6beb0cf1fad71aeca0699baecdb561e89861c3f55e"><div class="ttname"><a href="log_8h.html#a6b8f8e01c909fba9f31c0ac6beb0cf1fad71aeca0699baecdb561e89861c3f55e">LOG_READER</a></div><div class="ttdeci">@ LOG_READER</div><div class="ttdoc">Integrated Reader.</div><div class="ttdef"><b>Definition</b> <a href="log_8h_source.html#l00028">log.h:28</a></div></div>
 </div><!-- fragment -->
@@ -226,7 +229,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00207">207</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00265">265</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -246,7 +249,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00177">177</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00235">235</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -266,7 +269,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00153">153</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00211">211</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -286,7 +289,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00159">159</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00217">217</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -306,7 +309,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00165">165</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00223">223</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -326,7 +329,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00171">171</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00229">229</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -356,7 +359,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00216">216</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00274">274</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -398,7 +401,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00183">183</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00241">241</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -418,7 +421,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00098">98</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00162">162</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -438,7 +441,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00147">147</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00205">205</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -458,7 +461,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00127">127</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00185">185</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -478,7 +481,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00140">140</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00198">198</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -498,7 +501,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00022">22</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00043">43</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -518,7 +521,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00109">109</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00167">167</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
@@ -554,7 +557,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00064">64</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="reader_8c_source.html#l00116">116</a> of file <a class="el" href="reader_8c_source.html">reader.c</a>.</p>
 
 </div>
 </div>
