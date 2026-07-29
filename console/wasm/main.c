@@ -232,8 +232,16 @@ void EMSCRIPTEN_KEEPALIVE press_on()        { press_power_on(); }
 void EMSCRIPTEN_KEEPALIVE press_off()       { wasm_set_power(0); }
 void EMSCRIPTEN_KEEPALIVE press_power_off() { wasm_set_power(0); }
 
-/* Push the real lamp states again (used to restore the panel after a momentary
- * LAMPS CHECK bulb-test, which forces every lamp on from the JS side). */
+/* LAMPS CHECK, the momentary bulb test sharing the MAINT ON button: held = 1
+ * lights every lamp, held = 0 restores the real states. The model owns it
+ * (ge->lamps_test, see console.c) so the browser panel and the ncurses panel
+ * test the same lamps the same way. */
+void EMSCRIPTEN_KEEPALIVE set_lamps_check(int held) {
+    ge->lamps_test = held ? 1 : 0;
+    send_console();
+}
+
+/* Push the real lamp states again. */
 void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { send_console(); }
 /* The page's only way in is the reader hopper: it writes the chosen deck to
  * /deck.cap and calls mount_deck(). There is no path from a file straight into
@@ -262,6 +270,14 @@ void EMSCRIPTEN_KEEPALIVE press_load()  {
         return;
     }
     ge_load(ge);
+    send_console();
+}
+
+/* STEP BY STEP: the operator panel's own switch (ASIN). A toggle, and a
+ * different circuit from the maintenance PAPA -- it stops the machine at each
+ * instruction and the program can inhibit it with INS. See ge.h ASIN. */
+void EMSCRIPTEN_KEEPALIVE press_step_by_step() {
+    ge->ASIN = !ge->ASIN;
     send_console();
 }
 

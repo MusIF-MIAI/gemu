@@ -2,6 +2,8 @@
 #include "../ge.h"
 #include "../log.h"
 
+#include <string.h>
+
 /** diag fo. 82 */
 UTEST(cpu_isolation, test_k)
 {
@@ -154,7 +156,11 @@ UTEST(cpu_isolation, oper_call_by_register_forcing)
     ASSERT_EQ(lit, 1);                            /* LON executed -> ALAM set */
     ge_fill_console_data(&g, &c);
     ASSERT_EQ((int)c.lamps.OPERATOR_CALL, 1);     /* OPER CALL lamp on */
-    ASSERT_EQ((int)c.lamps.STEP_BY_STEP, 1);      /* PAPA -> step-by-step lamp */
+    /* The whole walk above was driven by the maintenance PAPA switch, and PAPA
+     * has no lamp: STEP BY STEP belongs to the operator panel's own switch
+     * (ASIN), a separate circuit. This used to assert 1, back when gemu treated
+     * the two as one thing. */
+    ASSERT_EQ((int)c.lamps.STEP_BY_STEP, 0);
 }
 
 /*
@@ -184,14 +190,137 @@ UTEST(console_fidelity, switch_lamps)
 }
 
 /*
- * Step-by-step (PAPA) can be inhibited by the program: INS sets ADIR, ENS /
- * CLEAR clear it, and the maintenance STOC switch overrides the inhibit.
- * CPU[4] §3.3; HW gate ALTO <- ASIN(ATOC + !ADIR). Drives fsn_last_clock with
- * a CPU cycle pending (RIA0) and the rotary in NORM.
+ * MAINT ON follows the panel, not the program: lit when a maintenance switch is
+ * inserted OR the register selector is off NORM, and only while the machine is
+ * stopped. Observed on the restored machine, 2026-07-29.
  */
-UTEST(console_fidelity, step_by_step_inhibit)
+UTEST(console_fidelity, maint_on_lamp)
 {
     struct ge g;
+    struct ge_console c = { 0 };
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_clear(&g);                       /* stopped: ALTO = 1 */
+
+    /* Untouched panel, rotary at NORM, machine stopped: dark. */
+    ge_set_console_rotary(&g, RS_NORM);
+    ge_set_console_switches(&g, &s);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 0);
+
+    /* One switch inserted is enough. */
+    s.PAPA = 1;
+    ge_set_console_switches(&g, &s);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+
+    /* ... and so is the rotary alone, with every switch out. */
+    s.PAPA = 0;
+    ge_set_console_switches(&g, &s);
+    ge_set_console_rotary(&g, RS_V1_SCR);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+
+    /* But not while the machine is running. */
+    ge_start(&g);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 0);
+
+    /* Stopping it again with the panel still off NORM lights it back up. */
+    g.ALTO = 1;
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+
+    /* The AM forcing toggles are switches on that panel too, and count. */
+    ge_set_console_rotary(&g, RS_NORM);
+    memset(&s, 0, sizeof(s));
+    s.AM = 0x0001;
+    ge_set_console_switches(&g, &s);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+
+    s.AM = 0x8000;
+    ge_set_console_switches(&g, &s);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+
+    s.AM = 0;
+    ge_set_console_switches(&g, &s);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 0);
+
+    /* Every maintenance switch counts, one at a time. */
+    ge_set_console_rotary(&g, RS_NORM);
+    {
+        struct ge_console_switches each[9] = { {0} };
+        each[0].PATE = 1; each[1].RICI = 1; each[2].ACOV = 1;
+        each[3].ACON = 1; each[4].INAR = 1; each[5].STOC = 1;
+        each[6].INCE = 1; each[7].SITE = 1; each[8].PAPA = 1;
+        for (int i = 0; i < 9; i++) {
+            ge_set_console_switches(&g, &each[i]);
+            ge_fill_console_data(&g, &c);
+            ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+        }
+    }
+}
+
+/*
+ * LAMPS CHECK is a bulb test: held, every console lamp lights whatever the
+ * machine is doing, and nothing in the CPU is disturbed. CPU[4] §3.2.
+ */
+UTEST(console_fidelity, lamps_check_lights_everything)
+{
+    struct ge g;
+    struct ge_console c = { 0 };
+
+    ge_init(&g);
+    ge_clear(&g);
+
+    /* Cold panel: most lamps dark. */
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.OPERATOR_CALL, 0);
+    ASSERT_EQ((int)c.lamps.MEM_CHECK, 0);
+    ASSERT_EQ((int)c.lamps.SWITCH_1, 0);
+    ASSERT_EQ((int)c.lamps.RO, 0);
+
+    /* Held: everything on, including the register lamps. */
+    g.lamps_test = 1;
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.OPERATOR_CALL, 1);
+    ASSERT_EQ((int)c.lamps.MEM_CHECK, 1);
+    ASSERT_EQ((int)c.lamps.SWITCH_1, 1);
+    ASSERT_EQ((int)c.lamps.MAINTENANCE_ON, 1);
+    ASSERT_EQ((int)c.lamps.HALT, 1);
+    ASSERT_EQ((int)c.lamps.RO, 0x1FF);       /* all nine RO lamps */
+    ASSERT_EQ((int)c.lamps.SO, 0xFF);
+    ASSERT_EQ((int)c.lamps.SA, 0xFF);
+    ASSERT_EQ((int)c.lamps.ADD_reg, 0xFFFF);
+
+    /* Released: the real states come back, and the CPU never noticed. */
+    g.lamps_test = 0;
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.OPERATOR_CALL, 0);
+    ASSERT_EQ((int)c.lamps.MEM_CHECK, 0);
+    ASSERT_EQ((int)c.lamps.RO, 0);
+    ASSERT_EQ((int)g.ALTO, 1);               /* still just stopped by CLEAR */
+}
+
+/*
+ * STEP-BY-STEP (operator panel, ASIN) and PAPA (maintenance panel) are two
+ * independent circuits, CPU[4] fo.115:
+ *
+ *   ASIN -> CI891 at E2/E3 of alpha: stops at each INSTRUCTION, gated by the
+ *           program (INS sets ADIR; ENS/CLEAR clear it) with STOC overriding.
+ *   PAPA -> ALS71 after a CPU work cycle: stops after each MICROSEQUENCE, and
+ *           is not gated by the program at all.
+ *
+ * Only ASIN has a lamp.
+ */
+UTEST(console_fidelity, step_by_step_and_papa_are_separate)
+{
+    struct ge g;
+    struct ge_console c = { 0 };
     struct ge_console_switches s = { 0 };
 
     ge_init(&g);
@@ -199,29 +328,101 @@ UTEST(console_fidelity, step_by_step_inhibit)
     g.register_selector = RS_NORM;
     g.RC00 = 1;
     g.RIA0 = 1;
-    s.PAPA = 1;
 
-    /* step-by-step enabled (ADIR = 0): the CPU halts after the step */
-    g.ADIR = 0;
+    /* --- PAPA: steps microsequences, and the program cannot stop it. --- */
+    s.PAPA = 1;
     g.console_switches = s;
-    g.ALTO = 0;
+
+    g.ADIR = 0; g.ALTO = 0;
     fsn_last_clock(&g);
     ASSERT_EQ((int)g.ALTO, 1);
 
-    /* INS inhibited step-by-step (ADIR = 1), STOC off: PAPA no longer halts */
-    g.ADIR = 1;
-    s.STOC = 0;
+    /* INS (ADIR) inhibits STEP-BY-STEP, never PAPA: PAPA still halts. */
+    g.ADIR = 1; g.ALTO = 0;
+    fsn_last_clock(&g);
+    ASSERT_EQ((int)g.ALTO, 1);
+
+    /* ... and PAPA lights no lamp. */
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.STEP_BY_STEP, 0);
+
+    /* --- ASIN: stops at each instruction, and the program CAN inhibit it. --- */
+    s.PAPA = 0;
     g.console_switches = s;
-    g.ALTO = 0;
+    g.ASIN = 1;
+
+    /* It is the operator switch that owns the lamp. */
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.STEP_BY_STEP, 1);
+
+    /* It does not come through the microsequence path at all. */
+    g.ADIR = 0; g.ALTO = 0;
     fsn_last_clock(&g);
     ASSERT_EQ((int)g.ALTO, 0);
 
-    /* STOC overrides the program inhibit: PAPA halts again */
-    s.STOC = 1;
-    g.console_switches = s;
-    g.ALTO = 0;
-    fsn_last_clock(&g);
-    ASSERT_EQ((int)g.ALTO, 1);
+}
+
+/* Run a short NOP2 program with the given panel state and report how many
+ * cycles RAN before the machine stopped (so 1 = it stopped on the first cycle,
+ * which is what "interrupted at the beginning of the instruction" looks like),
+ * or -1 if it ran the budget out. */
+static long cycles_to_halt(int asin, int adir, int stoc, int papa)
+{
+    /* NOP2 NOP2 NOP2 HLT */
+    static uint8_t prog[] = { 0x07, 0x00, 0x07, 0x00, 0x07, 0x00, 0x0A, 0x00 };
+    struct ge g;
+    struct ge_console_switches s = { 0 };
+    long i;
+
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_image(&g, prog, sizeof(prog), 0);
+    s.STOC = stoc;
+    s.PAPA = papa;
+    ge_set_console_switches(&g, &s);
+    ge_set_console_rotary(&g, RS_NORM);
+    g.ASIN = asin;
+    g.ADIR = adir;
+    ge_start(&g);
+    ge_enter(&g, 0x0000);
+
+    for (i = 0; i < 400; i++) {
+        if (ge_run_cycle(&g) != 0)
+            break;
+        if (ge_halted(&g))
+            return i + 1;
+    }
+    return -1;
+}
+
+/*
+ * The same two circuits, seen from outside: how soon does the machine stop?
+ *
+ * Free-running it reaches the HLT at the end of the program. With STEP-BY-STEP
+ * inserted it stops much sooner, at the first instruction -- unless the program
+ * has inhibited it with INS, which STOC then overrides. PAPA stops sooner still
+ * (a microsequence is shorter than an instruction) and no INS can stop it.
+ */
+UTEST(console_fidelity, step_by_step_stops_earlier_than_the_program_end)
+{
+    long free_run = cycles_to_halt(0, 0, 0, 0);
+    long stepping = cycles_to_halt(1, 0, 0, 0);
+    long inhibited = cycles_to_halt(1, 1, 0, 0);
+    long overridden = cycles_to_halt(1, 1, 1, 0);
+    long papa = cycles_to_halt(0, 0, 0, 1);
+    long papa_inhibited = cycles_to_halt(0, 1, 0, 1);
+
+    ASSERT_GT(free_run, 0);                 /* reaches its own HLT       */
+    ASSERT_GT(stepping, 0);
+    ASSERT_LT(stepping, free_run);          /* STEP-BY-STEP stops sooner */
+
+    ASSERT_EQ(inhibited, free_run);         /* INS inhibits it entirely  */
+    ASSERT_EQ(overridden, stepping);        /* STOC brings it back       */
+
+    ASSERT_GT(papa, 0);
+    ASSERT_LE(papa, stepping);              /* a microsequence is shorter */
+    ASSERT_EQ(papa_inhibited, papa);        /* and INS cannot touch PAPA  */
 }
 
 /*

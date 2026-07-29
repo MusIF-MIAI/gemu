@@ -97,8 +97,16 @@ static const struct msl_timing_chart state_80[] = {
 //           E0 if !RINT | FA06)
 
 static uint8_t state_E2_E3_TO80_CI89(struct ge *ge) {
-    /* (deltaRO = HLT + ASIN(ATOC+!ADIR)) */
-    return ge->rRO == HLT_OPCODE;
+    /* (deltaRO = HLT + ASIN(ATOC+!ADIR))
+     *
+     * Both terms now. ASIN is the operator panel's STEP-BY-STEP switch, which
+     * stops the machine at each instruction through this very command -- the
+     * one HLT uses -- which is why the stop lands with the program addresser
+     * still on the OP code just read (CPU[4] §5.1 b). ATOC = STOC overrides a
+     * program inhibit set by INS (ADIR). The maintenance PAPA switch is a
+     * different circuit entirely and does not come through here. */
+    return ge->rRO == HLT_OPCODE ||
+           (ge->ASIN && (ge->console_switches.STOC || !ge->ADIR));
 }
 
 static uint8_t state_E2_E3_TI06_CI82(struct ge *ge) {

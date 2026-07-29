@@ -1,4 +1,6 @@
 #include "console.h"
+
+#include <string.h>
 #include "ge.h"
 #include "bit.h"
 #include "log.h"
@@ -21,6 +23,31 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
 
     console->lamps.HALT = ge->ALTO;
     console->lamps.OPERATOR_CALL = ge->ALAM;
+
+    /* MAINT ON: the maintenance panel has the machine.
+     *
+     * The lamp answers one question -- is the field engineer in control, or the
+     * program? It lights when the panel has been touched AND the machine is
+     * stopped: any maintenance switch inserted, or the register selector turned
+     * off NORM, with the CPU held by ALTO. A machine that is running, or one
+     * whose panel is untouched and rotary at NORM, is the operator's and the
+     * lamp stays dark.
+     *
+     * Behaviour as observed on the restored machine, 2026-07-29. Note the
+     * rotary alone is enough: turning the selector off NORM arms the forcing
+     * cycle that START would perform (see the rotary table in docs/console.md
+     * §4.2), which is precisely when an operator needs telling. */
+    {
+        const struct ge_console_switches *sw = &ge->console_switches;
+        int inserted = sw->PAPA || sw->PATE || sw->RICI || sw->ACOV ||
+                       sw->ACON || sw->INAR || sw->STOC || sw->INCE || sw->SITE;
+
+        /* The sixteen AM forcing toggles are switches on that panel too, and
+         * count: setting one up is the engineer preparing a value to force. */
+        console->lamps.MAINTENANCE_ON =
+            (inserted || sw->AM != 0 ||
+             ge->register_selector != RS_NORM) && ge_halted(ge);
+    }
 
     /* SWITCH 1 / SWITCH 2 lamps show the positions of the two program-readable
      * switches: lit when the switch reads logic 1 (the value that makes JS1 /
@@ -51,16 +78,22 @@ void ge_fill_console_data(struct ge* ge, struct ge_console *console)
     console->lamps.MEM_CHECK = ge->mem_check;
     console->lamps.INV_ADD   = ge->inv_add;
 
-    /* STEP BY STEP lamp reflects the PAPA (passo-passo) switch: when inserted
-     * the CPU halts after each operation (fsn_last_clock re-arms ALTO), so each
-     * START performs exactly one operation — the step-by-step mode used to key
-     * data/instructions in from the panel. */
-    console->lamps.STEP_BY_STEP = ge->console_switches.PAPA;
+    /* STEP BY STEP is the operator panel's own switch (ASIN) and has the only
+     * lamp of the two step circuits. The maintenance PAPA switch steps the
+     * microsequences with no lamp of its own -- they are independent, and
+     * inserting PAPA must not light this. (CPU[4] fo.115; see ge.h ASIN.) */
+    console->lamps.STEP_BY_STEP = ge->ASIN;
 
     console->lamps.OP_reg  = ge->rFO;
 
     console->rotary = ge->register_selector;
     console->switches = ge->console_switches;
+
+    /* LAMPS CHECK, held: every lamp on the console lights, whatever the machine
+     * is doing. A bulb test, so it is the last word here -- it overwrites the
+     * states computed above rather than mixing with them. (CPU[4] §3.2) */
+    if (ge->lamps_test)
+        memset(&console->lamps, 0xff, sizeof(console->lamps));
 }
 
 void ge_set_console_switches(struct ge *ge, struct ge_console_switches *switches)

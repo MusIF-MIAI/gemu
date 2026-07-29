@@ -32,6 +32,26 @@ The maintenance panel only comes alive when one of its switches is inserted **or
 the `LAMPS` switch is at `ON`/`DIAG` (CPU[4] §4.3, fo.37). In `DIAG` the unit is
 put in diagnostic mode and `MAINT ON` is lit.
 
+**`MAINT ON` — observed on the restored machine, 2026-07-29.** The lamp says the
+maintenance panel has the machine, and it is lit when
+
+```
+(any maintenance switch inserted  OR  register selector off NORM)  AND  stopped
+```
+
+The nine maintenance switches are the ones in §4.3 — `PAPA`, `PATE`, `RICI`,
+`ACOV`, `ACON`, `INAR`, `STOC`, `INCE`, `SITE` — **and the sixteen `AM` forcing
+toggles**, which are switches on that panel too: setting one up is the engineer
+preparing a value to force. The operator panel's `SWITCH 1` /
+`SWITCH 2` are **not** part of it: those are program-readable (`JS1`/`JS2`) and
+belong to the running program, not to the engineer. Turning the rotary off `NORM`
+is enough on its own — that is what arms the forcing cycle `START` would perform
+(§4.2), which is exactly when an operator wants telling. A running machine keeps
+the lamp dark whatever the panel is doing.
+
+Modelled in `console.c` (`ge_fill_console_data`); test
+`console_fidelity.maint_on_lamp`.
+
 ---
 
 ## 2. Lamps and indicators
@@ -68,7 +88,14 @@ machine is stopped (see §5). gemu surfaces it as `ADD_reg` (`ge->rBO`), `OP_reg
 ### 2.3 LAMPS CHECK
 
 A momentary key that lights every console lamp for a bulb test (CPU[4] §3.2). It
-must not be pressed during machine operation.
+must not be pressed during machine operation. On the panel it shares a button
+with the `MAINT ON` lamp — `MAINT.ON` above, `LAMPS CHECK` below — so pressing
+that button lights the whole console for as long as it is held.
+
+Modelled as `ge->lamps_test`: `ge_fill_console_data` overwrites every lamp while
+it is set, so the ncurses panel and the browser panel test the same lamps from
+the same place, and nothing in the CPU is disturbed. Test
+`console_fidelity.lamps_check_lights_everything`.
 
 ---
 
@@ -80,7 +107,7 @@ must not be pressed during machine operation.
 | **LOAD 1 / LOAD 2** | switch | Selects one of two peripheral units enabled at install time for program loading (Conn.2/3, Conn.4/3, or Conn.2/4 — CPU[4] fo.43). |
 | **LOAD** | key | *Arms* the bootstrap and does nothing else: it sets the `AINI` flip-flop. No card moves, no lamp lights. The next `START` is what reads. |
 | **START** (HALT) | key | Starts operation. The white **HALT** lamp shows the machine is stopped. First `START` after `CLEAR`: runs the program if no other switch is set; runs the **load** if `LOAD` was pressed. |
-| **STEP-BY-STEP** | switch | Executes one instruction per `START`. Mid-run, it makes the program stop at the end of the current instruction. **`INS` inhibits it; `ENS`, `CLEAR`, or the maintenance-panel `STOC` switch re-enable it.** White lamp = inserted. |
+| **STEP-BY-STEP** | switch | Executes one instruction per `START`. Mid-run, it makes the program stop at the end of the current instruction. **`INS` inhibits it; `ENS`, `CLEAR`, or the maintenance-panel `STOC` switch re-enable it.** White lamp = inserted. This is the operator panel's own switch, signal `ASIN`, and it is **not** the maintenance panel's `PAPA` — see the note below. |
 | **SWITCH 1 / SWITCH 2** | switch | Two general-purpose switches the program reads via the `JS1` / `JS2` instructions. |
 
 > **Loading sequence (CPU[4] §3.3 / §5.3):** `CLEAR` → select unit (`LOAD1`/`LOAD2`)
@@ -94,11 +121,28 @@ must not be pressed during machine operation.
 > 40 bytes (`0x0000-0x0027`) of two `PER` reads and a `JU 0x0028`. Verified on
 > the bench, July 2026.
 
-> **gemu note / step-by-step:** the panel's STEP-BY-STEP is implemented by the
-> maintenance-panel **PAPA** switch (§4) — `console.lamps.STEP_BY_STEP` follows
-> `PAPA`. The documented `INS`-inhibit / `STOC`-override interaction is modelled:
-> `ge.c:fsn_last_clock` gates the PAPA halt by `STOC || !ADIR` (`ADIR` set by
-> `INS`/`CI77`, cleared by `ENS`/`CI78` and CLEAR). See §7.
+> **STEP-BY-STEP and PAPA are two separate circuits.** They have the same
+> apparent effect — the machine stops and each `START` advances it — but they are
+> independent, and only one of them has a lamp. From the `ALTO` set conditions
+> (CPU[4] fo.115):
+>
+> | | signal | path | stops after | program can inhibit? | lamp |
+> |---|---|---|---|---|---|
+> | **STEP-BY-STEP** (operator panel) | `ASIN` | `CI891` at `E2`/`E3` of alpha — the command `HLT` itself uses | each **instruction** | yes: `INS` sets `ADIR`, `ENS`/`CLEAR` clear it, `STOC` overrides | **yes** |
+> | **PAPA** (maintenance panel) | `AMICB` | `ALS71` at the end of a CPU work cycle | each **microsequence** | **no** | no |
+>
+> Because `ASIN` goes through `CI891`, the stop lands after the function code is
+> read with the program addresser still on the OP code of the instruction just
+> read (CPU[4] §5.1 b). `PAPA` steps the microsequences "without interfering
+> with the transfers from peripheral unit" (CPU[4] §2.4); the same `ALS71` term
+> also stops the machine whenever the rotary is off `NORM` and off position 8.
+>
+> gemu modelled the two as one thing until 2026-07-29, with the lamp following
+> `PAPA` and the `INS` inhibit wrongly applied to it — so any program that had
+> issued `INS` could silently ignore an inserted `PAPA`. They are now separate:
+> `ge.h` `ASIN`, `msl-states.c state_E2_E3_TO80_CI89`, `ge.c fsn_last_clock`.
+> Tests `console_fidelity.step_by_step_and_papa_are_separate` and
+> `console_fidelity.step_by_step_stops_earlier_than_the_program_end`.
 
 ---
 
@@ -320,7 +364,8 @@ reading the lamps is non-destructive.
 | Rotary force/display, SO-preserving forcing | implemented (§6.3, §6.4) |
 | OPER CALL via keyed `LON` | implemented + regression-tested (§6.4) |
 | `INAR` inhibits the error stop during forcing | exercised by `test_k`; full stop-on-fault model partial |
-| **`INS` inhibits step-by-step; `ENS`/`STOC` re-enable** | implemented — `fsn_last_clock` gates the `PAPA` halt by `STOC \|\| !ADIR` (`CI77`/`CI78`); test `console_fidelity.step_by_step_inhibit` |
+| **STEP-BY-STEP (`ASIN`) and PAPA are independent circuits** | implemented — only `ASIN` lights the lamp and only `ASIN` is inhibitable by `INS`; tests `console_fidelity.step_by_step_and_papa_are_separate`, `…_stops_earlier_than_the_program_end` (§3) |
+| **`INS` inhibits step-by-step; `ENS`/`STOC` re-enable** | implemented — `state_E2_E3_TO80_CI89` gates `ASIN` by `STOC \|\| !ADIR` (`CI77`/`CI78`) |
 | **SWITCH 1 / SWITCH 2 lamps** ← `JS1`/`JS2` | implemented — `console.c`; test `console_fidelity.switch_lamps` |
 | **PATE** (single delay-line-cycle step) | implemented — `fsn_last_clock` halts after every delay-line cycle; test `console_fidelity.pate_single_cycle` |
 | `ACOV` / `ACON` jump-condition stop | implemented in `CI38` (`AVER && ACOV`, `!AVER && ACON`); verified by inspection |

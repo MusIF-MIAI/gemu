@@ -509,17 +509,17 @@ void fsn_last_clock(struct ge *ge)
     uint8_t is_norm = ge->register_selector == RS_NORM;
     uint8_t is_scr  = ge->register_selector == RS_V1_SCR;
 
-    /* Step-by-step (PAPA, the ASIN request) can be inhibited by the program:
-     * INS sets ADIR=1, ENS / CLEAR clear it (CPU[4] §3.3). The maintenance STOC
-     * switch overrides the inhibit. This is the HW gate ALTO <- ... ASIN(ATOC +
-     * !ADIR), with ATOC = STOC (msl-states.c fo., cpu fo. 98). */
-    uint8_t step_enabled = ge->console_switches.STOC || !ge->ADIR;
-    uint8_t papa_stop = is_papa && step_enabled;
-    ge_log(LOG_FUTURE, "    papa: %d, step_en: %d, norm: %d, scr: %d ==> %d\n",
-           is_papa, step_enabled, is_norm, is_scr,
-           ge->RIA0 && (papa_stop || !(is_norm || is_scr)));
+    /* PAPA steps the MICROSEQUENCES and is NOT gated by the program. The
+     * INS/ENS inhibit and the STOC override belong to the operator panel's
+     * STEP-BY-STEP switch (ASIN), which is a separate circuit stopping at each
+     * instruction through CI891 -- see ge.h ASIN and msl-states.c
+     * state_E2_E3_TO80_CI89. The two used to be one thing here, which made PAPA
+     * silently ignorable by any program that had issued INS. */
+    ge_log(LOG_FUTURE, "    papa: %d, norm: %d, scr: %d ==> %d\n",
+           is_papa, is_norm, is_scr,
+           ge->RIA0 && (is_papa || !(is_norm || is_scr)));
 
-    if (ge->RIA0 && (papa_stop || !(is_norm || is_scr)))
+    if (ge->RIA0 && (is_papa || !(is_norm || is_scr)))
         ge->ALTO = 1;
 
     /* PATE stops the timing after every cycle of the delay line — a finer step

@@ -455,6 +455,41 @@ struct ge {
      */
     uint8_t ADIR:1;
 
+    /**
+     * STEP-BY-STEP, the OPERATOR panel switch (signal ASIN).
+     *
+     * A different circuit from the maintenance panel's PAPA, and independent of
+     * it (CPU[4] fo.115, the ALTO set conditions):
+     *
+     *   ASIN  stops at each INSTRUCTION, through CI891 at E2/E3 of the alpha
+     *         phase -- the same command HLT uses -- so the stop lands after the
+     *         function code is read with the addresser still on the OP code
+     *         (CPU[4] §5.1 b). It is subject to the program: INS inhibits it,
+     *         ENS and CLEAR re-enable it, and the maintenance STOC switch
+     *         overrides the inhibit. Gate: ASIN . (ATOC + !ADIR).
+     *   PAPA  stops after each MICROSEQUENCE, through ALS71 at the end of a CPU
+     *         work cycle, "without interfering with the transfers from
+     *         peripheral unit" (CPU[4] §2.4). Not gated by the program at all.
+     *
+     * Only this one has a lamp: STEP BY STEP on the operator panel follows
+     * ASIN, never PAPA.
+     */
+    uint8_t ASIN:1;
+
+    /**
+     * LAMPS CHECK held (CPU[4] §3.2).
+     *
+     * The momentary key sharing the MAINT ON button on the operator panel. It
+     * is a bulb test and nothing more: while it is held every console lamp
+     * lights, whatever the machine is doing, and nothing in the CPU is
+     * disturbed. Not to be pressed during a run.
+     *
+     * Modelled here rather than in a front-end so that every console -- the
+     * ncurses panel, the browser panel, anything later -- gets the same test
+     * from the same place.
+     */
+    uint8_t lamps_test:1;
+
     uint8_t RINT:1;
 
     uint8_t JS1:1;  ///< Console jump condition 1

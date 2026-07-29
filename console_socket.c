@@ -93,6 +93,12 @@ static void console_press_buttons(struct ge *ge, uint16_t buttons)
     uint16_t edge = (uint16_t)(buttons & ~console_prev_buttons);
 
     console_prev_buttons = buttons;
+
+    /* LAMPS CHECK shares the MAINT ON button and is the one control here that
+     * is not edge-triggered: it is a bulb test that lasts exactly as long as
+     * the key is held, so it follows the level. */
+    ge->lamps_test = (buttons >> BTN_MAINTENANCE_ON) & 1u;
+
     if (!edge)
         return;
 
@@ -137,12 +143,12 @@ static void console_press_buttons(struct ge *ge, uint16_t buttons)
     if (edge & (1u << BTN_SWITCH_2))
         ge->JS2 = !ge->JS2;
 
-    /* STEP-BY-STEP is deliberately not handled here. It is not a momentary key
-     * but the panel face of the maintenance PAPA switch (docs/console.md §3),
-     * and the switch word in every frame already carries PAPA authoritatively.
-     * Toggling it from the button word too would give one piece of state two
-     * owners, and the next frame would undo the press. The client toggles its
-     * own PAPA bit instead. */
+    /* STEP-BY-STEP is the operator panel's own switch (ASIN), a separate circuit
+     * from the maintenance PAPA and with its own lamp -- so it is a key here,
+     * and it owns its own state. It stops the machine at each instruction and
+     * can be inhibited by the program (INS/ENS), which PAPA cannot. */
+    if (edge & (1u << BTN_STEP_BY_STEP))
+        ge->ASIN = !ge->ASIN;
 
     if (edge & (1u << BTN_POWER_ON))
         ge->powered = 1;
