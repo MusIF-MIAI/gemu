@@ -380,10 +380,11 @@ Indicative HLT codes (diagnostic convention)</h3>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><b>JIE</b>   </td><td class="markdownTableBodyNone"><code>53</code> / <code>20</code>   </td><td class="markdownTableBodyNone">Jump "if end"(?) — decoded; condition source not yet confirmed.   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">○    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><b>JRT</b>   </td><td class="markdownTableBodyNone"><code>41</code>   </td><td class="markdownTableBodyNone">Jump-and-return / return (subroutine linkage).   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">✗   </td></tr>
+<td class="markdownTableBodyNone"><b>JRT</b>   </td><td class="markdownTableBodyNone"><code>41</code>   </td><td class="markdownTableBodyNone">Jump-and-return: jumps and deposits the address of the next instruction into change register 7 (<code>mem[0x00FE..0x00FF]</code>). The link is written even when the conditional form does not take the jump.   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">✅   </td></tr>
 </table>
 <blockquote class="doxtable">
-<p>&zwj;⚠️ <code>JU</code>/<code>JCC</code> share the mask path with <code>JC</code> in the current code (mask read from the aux char <code>L1</code>); the comment in <code><a class="el" href="opcodes_8h.html">opcodes.h</a>:40</code> notes JU as "mask 0xF0" — i.e. the <em>family</em> low-nibble distinguishes the variants. Exact mask source per variant: medium confidence. <code>JRT</code> (<code>0x41</code>) has an assigned opcode but <b>no decode path</b> (<code>jc_js1_js2_jie</code> does not list it) — reserved/unimplemented. </p>
+<p>&zwj;⚠️ <code>JU</code>/<code>JCC</code> share the mask path with <code>JC</code> in the current code (mask read from the aux char <code>L1</code>); the comment in <code><a class="el" href="opcodes_8h.html">opcodes.h</a>:40</code> notes JU as "mask 0xF0" — i.e. the <em>family</em> low-nibble distinguishes the variants. Exact mask source per variant: medium confidence. <code>JRT</code> is covered by <code>jc_js1_js2_jie</code> and takes a mask like the others, with the link deposit handled in EA/EB.</p>
+<p><b>Subroutine linkage in practice.</b> Because the link lands in a memory cell rather than on a stack, the decks return by writing it into the operand field of the routine's own closing jump — so a callee's first instruction is normally <code>MVC 2, &lt;that field&gt;, 0x00FE</code>, and the jump shows an unpatched placeholder in a static listing. Recognising that prologue is how you find subroutine entries. </p>
 </blockquote>
 <h2><a class="anchor" id="autotoc_md130"></a>
 6.3 Register &amp; address — PM format (4 bytes)</h2>
@@ -559,26 +560,9 @@ Indicative HLT codes (diagnostic convention)</h3>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Address bit 15   </td><td class="markdownTableBodyNone"><b>honored</b>: absolute(0)/modified(1) flag (CPU[4] §2.5). gemu resolves the EA in operand fetch — absolute verbatim, modified via the indexing micro-cycle <code>ED\|EC → EF\|EE</code> (flow chart dwg 14023130), for single- and two-address ops. <code>gasm</code>/<code>gdis</code> encode/decode <code>disp(N)</code> with bit 15.   </td><td class="markdownTableBodyNone">implemented; flow chart 14023130    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">ENS/INS/LON/LOFF/LOLL   </td><td class="markdownTableBodyNone">sub-function meanings unverified   </td><td class="markdownTableBodyNone">interrupt + console-indicator manual pages; APS manual    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">JRT (<code>0x41</code>)   </td><td class="markdownTableBodyNone">opcode assigned, no decode   </td><td class="markdownTableBodyNone">branch/linkage section of manual; APS manual    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">LPSR (<code>0x9D</code>)   </td><td class="markdownTableBodyNone">opcode assigned, no decode   </td><td class="markdownTableBodyNone">PSW / status-register section    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">CI vs CMI   </td><td class="markdownTableBodyNone">both map to <code>alu_ci</code>; signed-vs-logical distinction?   </td><td class="markdownTableBodyNone">§5.5.5.1 page image    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">JU/JCC mask source   </td><td class="markdownTableBodyNone">shared mask path with JC   </td><td class="markdownTableBodyNone">§fo.56/57 page image    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">AD/SD CC tables   </td><td class="markdownTableBodyNone">OCR-inferred   </td><td class="markdownTableBodyNone">§5.5.1.1 / §5.5.1.2 page images    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">MVQ zones   </td><td class="markdownTableBodyNone">"zones not processed" interpretation   </td><td class="markdownTableBodyNone">§3.084/3.098 + hardware trace    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">SR/SL   </td><td class="markdownTableBodyNone">ALU done, not wired — SS model-byte/result-register encoding unconfirmed   </td><td class="markdownTableBodyNone">search-instruction page image    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">funktionalcpu memory-test execution   </td><td class="markdownTableBodyNone">option-byte dispatch + halt addresses now recovered from the deck (§6.1); running the tests to their halts needs realistic RAM-above-image + peripheral-output modelling (they wander near <code>0x2003</code>). <code>0x3465</code> code unverified.   </td><td class="markdownTableBodyNone">run under a fuller memory/peripheral model    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">isolation decks (<code>isolationcpu0x</code>)   </td><td class="markdownTableBodyNone">distinct card framing is now extracted family-aware (COLBIN cols 1–76, Hollerith 77–79 numbering); higher-level SMAC/INTE interpretation remains open   </td><td class="markdownTableBodyNone">CPU[1] folio 52/53a + CPU[3]; see <code><a class="el" href="punchcards_8md.html">docs/punchcards.md</a></code> §5   </td></tr>
+<td class="markdownTableBodyNone">ENS/INS/LON/LOFF/LOLL   </td><td class="markdownTableBodyNone">sub-function meanings unverified   </td><td class="markdownTableBodyNone">interrupt + console-indicator manual pages; APS manual   </td></tr>
 </table>
+<p>| LPSR (<code>0x9D</code>) | opcode assigned, no decode | PSW / status-register section | | CI vs CMI | both map to <code>alu_ci</code>; signed-vs-logical distinction? | §5.5.5.1 page image | | JU/JCC mask source | shared mask path with JC | §fo.56/57 page image | | AD/SD CC tables | OCR-inferred | §5.5.1.1 / §5.5.1.2 page images | | MVQ zones | "zones not processed" interpretation | §3.084/3.098 + hardware trace | | SR/SL | ALU done, not wired — SS model-byte/result-register encoding unconfirmed | search-instruction page image | | funktionalcpu memory-test execution | option-byte dispatch + halt addresses now recovered from the deck (§6.1); running the tests to their halts needs realistic RAM-above-image + peripheral-output modelling (they wander near <code>0x2003</code>). <code>0x3465</code> code unverified. | run under a fuller memory/peripheral model | | isolation decks (<code>isolationcpu0x</code>) | distinct card framing is now extracted family-aware (COLBIN cols 1–76, Hollerith 77–79 numbering); higher-level SMAC/INTE interpretation remains open | CPU[1] folio 52/53a + CPU[3]; see <code><a class="el" href="punchcards_8md.html">docs/punchcards.md</a></code> §5 |</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md144"></a>
 9. Opcode map (quick reference, sorted by byte)</h1>
@@ -784,9 +768,9 @@ A.3.5 Peripheral / misc — PM format (4 bytes, generic &lt;tt&gt;aux, addr&lt;/
 <blockquote class="doxtable">
 <p>&zwj;<b>The <code>aux</code> byte is the peripheral unit's NAME</b>, and the <code>addr</code> operand points at the order block — <code>Z X L L I I</code> for a transfer, <code>Z X</code> otherwise. <code>Z</code> carries the operation type <em>and the channel</em>: bits 03/00 = <code>00</code> channel 1, <code>10</code> channel 3, <code>01</code>/<code>11</code> channel 2 (not overlapped / overlapped). Channel 2 is reserved to the integrated printer and reader. Bit 02 of <code>Z</code> = ignore the unit's availability rather than wait for it. CPU[4] §5.8.2 / §5.8.3.1, dwg 30004122 o/A fo.72-73; see <code><a class="el" href="peripherals_8md.html">docs/peripherals.md</a></code>. </p>
 </blockquote>
-<p>| <code>RDC</code> | <code>RDC aux, addr</code> | <code>90</code> | 4 | Read card (PER-family, decimal-deck variant). | ✅ | | <code>LPSR</code> | <code>LPSR aux, addr</code> | <code>9D</code> | 4 | Load program status register. | ✗ | | <code>JRT</code> | <code>JRT aux, addr</code> | <code>41</code> | 4 | Jump-and-return / linkage. | ✗ |</p>
+<p>| <code>RDC</code> | <code>RDC aux, addr</code> | <code>90</code> | 4 | Read card (PER-family, decimal-deck variant). | ✅ | | <code>LPSR</code> | <code>LPSR aux, addr</code> | <code>9D</code> | 4 | Load program status register. | ✗ | | <code>JRT</code> | <code>JRT aux, addr</code> | <code>41</code> | 4 | Jump-and-return; link -&gt; change register 7. | ✅ |</p>
 <blockquote class="doxtable">
-<p>&zwj;<code>LPSR</code> and <code>JRT</code> have assigned opcodes but <b>no decode path</b> in the current emulator: they assemble but will not execute end-to-end. </p>
+<p>&zwj;<code>LPSR</code> has an assigned opcode but <b>no decode path</b> in the current emulator: it assembles but will not execute end-to-end. <code>JRT</code> <b>is</b> implemented (<code><a class="el" href="msl-commands_8c.html">msl-commands.c</a>:208</code>, <code><a class="el" href="msl-states_8c.html">msl-states.c</a></code> fo.33 beta sheet); it is the call instruction the diagnostic decks are built on — <code>disc-monitor</code> alone has 122 call sites. </p>
 </blockquote>
 <h3><a class="anchor" id="autotoc_md156"></a>
 A.3.6 SS single-length — SS format (6 bytes): &lt;tt&gt;len, A1, A2&lt;/tt&gt;</h3>
