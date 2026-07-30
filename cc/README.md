@@ -13,7 +13,61 @@ make                       # builds ./gec and ./runrv
 ./runrv prog.cap           # same, and print main()'s return value (__rv)
 
 ./gec prog.c -c -o prog.s  # compile only, stop at gasm assembly
+./gec prog.c -E -o prog.i  # preprocess only, stop at expanded C
 ```
+
+## Preprocessor
+
+`#define` (object- and function-like), `#undef`, `#include` (`<...>` and
+`"..."`), and `#ifdef`/`#ifndef`/`#else`/`#endif` — enough for a guarded header.
+Comments are stripped before expansion, and identifiers inside string and
+character literals are left alone. There is no `#if` arithmetic and no `#`/`##`.
+
+Includes are searched next to the source file, then in `<gec-binary-dir>/include`.
+`#include <stdio.h>` keeps its old meaning of enabling `printf`/`scanf`.
+
+`-E` stops after this stage and writes the expanded C, which is the quickest way
+to see what a macro really turned into.
+
+## Peripheral access
+
+`<ge.h>` gives C a device interface without exposing the `PER` instruction or its
+order blocks:
+
+```c
+#include <ge.h>
+
+char card[80];
+
+int main(void) {
+    int rdr = _open_reader();
+    _read(rdr, card, 80);
+    if (GE_STATUS(rdr) != GE_QR_GT)
+            lon();
+    _close(rdr);
+    return card[0];
+}
+```
+
+| Primitive | Meaning |
+|---|---|
+| `_open_reader()`, `_open_reader_bypass()` | yield a device's unit byte; emit no code |
+| `_read(dev, buf, n)` / `_write(dev, buf, n)` | transfer `n` bytes to/from a global buffer |
+| `_order(dev, z, x)` | issue a command/status order; returns the qualitative result |
+| `_close(dev)` | no-op, for symmetry |
+
+Two things the compiler enforces, both because the order block is *data* the
+instruction points at:
+
+- **The device must come from an `_open_*()` call.** The `PER` unit name is an
+  immediate inside the instruction, so it cannot be a computed value. A local
+  initialised from `_open_*()` is folded; reassigning it invalidates that.
+- **The length must be a constant**, and it is written in **bytes**. The
+  machine's `LL` field is *length−1*, and that subtraction happens in exactly one
+  place — `_read(dev, buf, 80)` emits `LL=79`, so it cannot be got wrong by hand.
+
+Only unit values this project has established are exposed. The rest of the device
+list needs CPU[1]'s channel-code table, which has not been transcribed.
 
 ## Language subset
 

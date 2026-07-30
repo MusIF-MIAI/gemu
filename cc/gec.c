@@ -124,52 +124,358 @@ static int esc(int c) { /* C escape after backslash */
     return c;
 }
 
-static char *preprocess_source(const char *src)
-{
-    size_t cap = strlen(src) + 1;
-    char *out = malloc(cap);
-    size_t oi = 0;
+/* ------------------------------------------------------------------ */
+/* preprocessor                                                        */
+/*                                                                     */
+/* Deliberately small: object- and function-like #define, #undef,      */
+/* #include, and #ifdef/#ifndef/#else/#endif -- enough for a header    */
+/* with guards, which is what <ge.h> needs. No #if arithmetic, no      */
+/* '#'/'##' operators.                                                 */
+/* ------------------------------------------------------------------ */
 
-    g_use_stdio = 0;
+#define PP_MAXDEPTH   32     /* macro rescan depth                     */
+#define PP_MAXINC      8     /* nested #include depth                  */
+
+struct Macro {
+    char  *name;
+    char  *body;
+    char **params;           /* NULL => object-like                    */
+    int    nparams;
+    struct Macro *next;
+};
+static struct Macro *g_macros;
+static char g_incdir[512];   /* <gec-binary-dir>/include               */
+
+/* growable text buffer ------------------------------------------------ */
+struct Buf { char *p; size_t len, cap; };
+
+static void buf_need(struct Buf *b, size_t extra)
+{
+    if (b->len + extra + 1 <= b->cap) return;
+    while (b->len + extra + 1 > b->cap) b->cap = b->cap ? b->cap * 2 : 1024;
+    b->p = realloc(b->p, b->cap);
+    if (!b->p) die("out of memory");
+}
+static void buf_add(struct Buf *b, const char *s, size_t n)
+{
+    buf_need(b, n); memcpy(b->p + b->len, s, n); b->len += n; b->p[b->len] = 0;
+}
+static void buf_ch(struct Buf *b, char c) { buf_add(b, &c, 1); }
+
+static int id_char(int c)  { return isalnum((unsigned char)c) || c == '_'; }
+static int id_start(int c) { return isalpha((unsigned char)c) || c == '_'; }
+
+static struct Macro *macro_find(const char *n, size_t len)
+{
+    for (struct Macro *m = g_macros; m; m = m->next)
+        if (strlen(m->name) == len && !strncmp(m->name, n, len)) return m;
+    return 0;
+}
+
+static void macro_undef(const char *n, size_t len)
+{
+    struct Macro **pp = &g_macros;
+    while (*pp) {
+        if (strlen((*pp)->name) == len && !strncmp((*pp)->name, n, len)) {
+            struct Macro *d = *pp; *pp = d->next;
+            free(d->name); free(d->body);
+            for (int i = 0; i < d->nparams; i++) free(d->params[i]);
+            free(d->params); free(d);
+            return;
+        }
+        pp = &(*pp)->next;
+    }
+}
+
+static char *dupn(const char *s, size_t n)
+{
+    char *r = malloc(n + 1); if (!r) die("out of memory");
+    memcpy(r, s, n); r[n] = 0; return r;
+}
+
+/* Parse the text after "#define". */
+static void macro_define(const char *p, const char *end)
+{
+    while (p < end && isspace((unsigned char)*p)) p++;
+    if (p >= end || !id_start(*p)) die("#define needs a name");
+    const char *ns = p;
+    while (p < end && id_char(*p)) p++;
+    size_t nlen = (size_t)(p - ns);
+
+    struct Macro *m = calloc(1, sizeof *m);
+    if (!m) die("out of memory");
+    m->name = dupn(ns, nlen);
+
+    if (p < end && *p == '(') {          /* function-like: no space before ( */
+        p++;
+        for (;;) {
+            while (p < end && isspace((unsigned char)*p)) p++;
+            if (p < end && *p == ')') { p++; break; }
+            if (p >= end || !id_start(*p)) die("bad parameter list in #define %s", m->name);
+            const char *ps = p;
+            while (p < end && id_char(*p)) p++;
+            m->params = realloc(m->params, (size_t)(m->nparams + 1) * sizeof *m->params);
+            if (!m->params) die("out of memory");
+            m->params[m->nparams++] = dupn(ps, (size_t)(p - ps));
+            while (p < end && isspace((unsigned char)*p)) p++;
+            if (p < end && *p == ',') { p++; continue; }
+            if (p < end && *p == ')') { p++; break; }
+            die("bad parameter list in #define %s", m->name);
+        }
+    }
+    while (p < end && isspace((unsigned char)*p)) p++;
+    m->body = dupn(p, (size_t)(end - p));
+
+    macro_undef(m->name, strlen(m->name));
+    m->next = g_macros; g_macros = m;
+}
+
+static void pp_expand(const char *in, struct Buf *out, int depth);
+
+/* Substitute actual arguments into a function-like macro body. */
+static char *macro_subst(struct Macro *m, char **args, int nargs)
+{
+    struct Buf b = {0,0,0};
+    const char *p = m->body;
+    while (*p) {
+        if (*p == '"' || *p == '\'') {           /* literals pass through */
+            char q = *p; buf_ch(&b, *p++);
+            while (*p && *p != q) { if (*p == '\\' && p[1]) buf_ch(&b, *p++); buf_ch(&b, *p++); }
+            if (*p) buf_ch(&b, *p++);
+            continue;
+        }
+        if (id_start(*p)) {
+            const char *s = p;
+            while (id_char(*p)) p++;
+            size_t n = (size_t)(p - s);
+            int hit = -1;
+            for (int i = 0; i < m->nparams; i++)
+                if (strlen(m->params[i]) == n && !strncmp(m->params[i], s, n)) { hit = i; break; }
+            if (hit >= 0 && hit < nargs) buf_add(&b, args[hit], strlen(args[hit]));
+            else                          buf_add(&b, s, n);
+            continue;
+        }
+        buf_ch(&b, *p++);
+    }
+    return b.p ? b.p : dupn("", 0);
+}
+
+/* Expand macros in `in`, appending to `out`. */
+static void pp_expand(const char *in, struct Buf *out, int depth)
+{
+    if (depth > PP_MAXDEPTH) die("macro expansion nested too deeply");
+    while (*in) {
+        if (*in == '"' || *in == '\'') {         /* never expand inside literals */
+            char q = *in; buf_ch(out, *in++);
+            while (*in && *in != q) { if (*in == '\\' && in[1]) buf_ch(out, *in++); buf_ch(out, *in++); }
+            if (*in) buf_ch(out, *in++);
+            continue;
+        }
+        if (!id_start(*in)) { buf_ch(out, *in++); continue; }
+
+        const char *s = in;
+        while (id_char(*in)) in++;
+        size_t n = (size_t)(in - s);
+        struct Macro *m = macro_find(s, n);
+        if (!m) { buf_add(out, s, n); continue; }
+
+        if (!m->params) { pp_expand(m->body, out, depth + 1); continue; }
+
+        const char *save = in;
+        while (*in && isspace((unsigned char)*in)) in++;
+        if (*in != '(') { buf_add(out, s, n); in = save; continue; }
+        in++;
+
+        char **args = 0; int nargs = 0, par = 0;
+        struct Buf cur = {0,0,0};
+        for (;;) {
+            if (!*in) die("unterminated argument list for %s", m->name);
+            if (*in == '(') { par++; buf_ch(&cur, *in++); continue; }
+            if (*in == ')' && par) { par--; buf_ch(&cur, *in++); continue; }
+            if ((*in == ',' && !par) || (*in == ')' && !par)) {
+                char *a = cur.p ? cur.p : dupn("", 0);
+                /* trim */
+                char *t = a; while (*t && isspace((unsigned char)*t)) t++;
+                size_t al = strlen(t); while (al && isspace((unsigned char)t[al-1])) al--;
+                args = realloc(args, (size_t)(nargs + 1) * sizeof *args);
+                if (!args) die("out of memory");
+                args[nargs++] = dupn(t, al);
+                free(a); cur.p = 0; cur.len = cur.cap = 0;
+                int done = (*in == ')');
+                in++;
+                if (done) break;
+                continue;
+            }
+            buf_ch(&cur, *in++);
+        }
+        if (nargs != m->nparams)
+            die("%s expects %d argument%s, got %d", m->name, m->nparams,
+                m->nparams == 1 ? "" : "s", nargs);
+        char *sub = macro_subst(m, args, nargs);
+        pp_expand(sub, out, depth + 1);
+        free(sub);
+        for (int i = 0; i < nargs; i++) free(args[i]);
+        free(args);
+    }
+}
+
+static char *read_whole(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
+    char *b = malloc((size_t)n + 1);
+    if (!b) { fclose(f); die("out of memory"); }
+    if (fread(b, 1, (size_t)n, f) != (size_t)n) { fclose(f); free(b); return 0; }
+    b[n] = 0; fclose(f);
+    return b;
+}
+
+static void pp_run(const char *src, const char *srcpath, struct Buf *out, int incdepth);
+
+/* Replace comments with a single space before any directive or macro work, the
+ * way a real cpp does. Newlines are preserved so reported line numbers stay
+ * right, and string/char literals are left alone. Without this, a comment in a
+ * macro body would be pasted into every expansion -- and a comma inside one
+ * would split an argument list. */
+static char *strip_comments(const char *in)
+{
+    struct Buf b = {0,0,0};
+    while (*in) {
+        if (*in == '"' || *in == '\'') {
+            char q = *in; buf_ch(&b, *in++);
+            while (*in && *in != q) {
+                if (*in == '\\' && in[1]) buf_ch(&b, *in++);
+                buf_ch(&b, *in++);
+            }
+            if (*in) buf_ch(&b, *in++);
+            continue;
+        }
+        if (in[0] == '/' && in[1] == '*') {
+            in += 2; buf_ch(&b, ' ');
+            while (*in && !(in[0] == '*' && in[1] == '/')) {
+                if (*in == '\n') buf_ch(&b, '\n');
+                in++;
+            }
+            if (*in) in += 2;
+            continue;
+        }
+        if (in[0] == '/' && in[1] == '/') {
+            while (*in && *in != '\n') in++;
+            continue;
+        }
+        buf_ch(&b, *in++);
+    }
+    return b.p ? b.p : dupn("", 0);
+}
+
+/* Resolve and splice an #include. */
+static void pp_include(const char *spec, size_t len, const char *srcpath,
+                       struct Buf *out, int incdepth)
+{
+    if (len < 2) die("bad include directive");
+    char open = spec[0], close = spec[len - 1];
+    if (!((open == '<' && close == '>') || (open == '"' && close == '"')))
+        die("bad include directive");
+    char name[256];
+    size_t nl = len - 2;
+    if (nl >= sizeof name) die("include path too long");
+    memcpy(name, spec + 1, nl); name[nl] = 0;
+
+    if (!strcmp(name, "stdio.h")) { g_use_stdio = 1; return; }
+
+    char cand[1024]; char *text = 0;
+    /* 1. beside the including file */
+    const char *slash = strrchr(srcpath, '/');
+    if (slash) {
+        snprintf(cand, sizeof cand, "%.*s/%s", (int)(slash - srcpath), srcpath, name);
+        text = read_whole(cand);
+    }
+    if (!text) { snprintf(cand, sizeof cand, "%s", name); text = read_whole(cand); }
+    /* 2. the compiler's own include dir */
+    if (!text && g_incdir[0]) {
+        snprintf(cand, sizeof cand, "%s/%s", g_incdir, name);
+        text = read_whole(cand);
+    }
+    if (!text) die("cannot find include file '%s'", name);
+    if (incdepth >= PP_MAXINC) die("#include nested too deeply");
+    pp_run(text, cand, out, incdepth + 1);
+    free(text);
+}
+
+/* One preprocessing pass over a whole translation unit. */
+static void pp_run(const char *raw, const char *srcpath, struct Buf *out, int incdepth)
+{
+    int skip[32]; int sp = 0; int skipping = 0;
+    char *owned = strip_comments(raw);
+    const char *src = owned;
+
     while (*src) {
         const char *line = src;
-        while (*src && *src != '\n')
-            src++;
+        while (*src && *src != '\n') src++;
         const char *end = src;
         const char *p = line;
-        while (p < end && isspace((unsigned char)*p))
-            p++;
+        while (p < end && isspace((unsigned char)*p)) p++;
+
         if (p < end && *p == '#') {
             p++;
-            while (p < end && isspace((unsigned char)*p))
-                p++;
-            if (end - p >= 7 && !strncmp(p, "include", 7)) {
-                p += 7;
-                while (p < end && isspace((unsigned char)*p))
-                    p++;
-                if ((end - p == 9 && !strncmp(p, "<stdio.h>", 9)) ||
-                    (end - p == 9 && !strncmp(p, "\"stdio.h\"", 9))) {
-                    g_use_stdio = 1;
-                } else {
-                    g_errpos = line;
-                    die("unsupported include directive");
-                }
+            while (p < end && isspace((unsigned char)*p)) p++;
+            const char *ds = p;
+            while (p < end && isalpha((unsigned char)*p)) p++;
+            size_t dl = (size_t)(p - ds);
+            while (p < end && isspace((unsigned char)*p)) p++;
+
+            #define DIR(w) (dl == strlen(w) && !strncmp(ds, w, dl))
+            g_errpos = line;
+
+            if (DIR("ifdef") || DIR("ifndef")) {
+                const char *ns = p; while (p < end && id_char(*p)) p++;
+                int def = macro_find(ns, (size_t)(p - ns)) != 0;
+                int take = DIR("ifdef") ? def : !def;
+                if (sp >= 32) die("#if nesting too deep");
+                skip[sp++] = skipping;
+                if (!skipping) skipping = !take;
+            } else if (DIR("else")) {
+                if (!sp) die("#else without #if");
+                if (!skip[sp - 1]) skipping = !skipping;
+            } else if (DIR("endif")) {
+                if (!sp) die("#endif without #if");
+                skipping = skip[--sp];
+            } else if (skipping) {
+                /* inside a false branch: ignore every other directive */
+            } else if (DIR("define")) {
+                macro_define(p, end);
+            } else if (DIR("undef")) {
+                const char *ns = p; while (p < end && id_char(*p)) p++;
+                macro_undef(ns, (size_t)(p - ns));
+            } else if (DIR("include")) {
+                pp_include(p, (size_t)(end - p), srcpath, out, incdepth);
             } else {
-                g_errpos = line;
                 die("unsupported preprocessor directive");
             }
+            #undef DIR
+        } else if (!skipping) {
+            char *l = dupn(line, (size_t)(end - line));
+            g_errpos = line;
+            pp_expand(l, out, 0);
+            free(l);
+            buf_ch(out, '\n');
         } else {
-            size_t n = (size_t)(end - line);
-            memcpy(out + oi, line, n);
-            oi += n;
-            if (*src == '\n')
-                out[oi++] = '\n';
+            buf_ch(out, '\n');           /* keep line numbering honest */
         }
-        if (*src == '\n')
-            src++;
+        if (*src == '\n') src++;
     }
-    out[oi] = 0;
-    return out;
+    if (sp) { g_errpos = src; die("unterminated #ifdef/#ifndef"); }
+    free(owned);
+}
+
+static char *preprocess_source(const char *src)
+{
+    struct Buf out = {0,0,0};
+    g_use_stdio = 0;
+    pp_run(src, g_file, &out, 0);
+    if (!out.p) out.p = dupn("", 0);
+    return out.p;
 }
 
 static Token lex(void) {
@@ -272,8 +578,27 @@ static Type *elem_of(Type *t) { return t->base; }
 typedef struct Sym {
     char *name; Type *type;
     int is_global; int off;   /* local: frame offset; global: uses label _name */
+    /* Device constant: set when the variable is declared with an _open_*()
+     * initialiser, cleared if it is ever assigned to afterwards. The PER unit
+     * name is an instruction immediate, so _read/_write/_order/_close need the
+     * value at compile time; this is what lets them accept the natural
+     *     int rdr = _open_reader();  _read(rdr, ...);
+     * rather than forcing the call to be written inline. */
+    int dev_valid; int dev_unit;
     struct Sym *next;
 } Sym;
+
+/* The device openers, shared by the declaration folder and gen_builtin_call. */
+static const struct { const char *name; int unit; } GE_DEVS[] = {
+    { "_open_reader",        0x00 },   /* integrated card reader, read unchanged */
+    { "_open_reader_bypass", 0xA0 },   /* card reader, by-pass (column binary)   */
+};
+static int ge_dev_unit(const char *name)
+{
+    for (unsigned i = 0; i < sizeof GE_DEVS / sizeof GE_DEVS[0]; i++)
+        if (!strcmp(name, GE_DEVS[i].name)) return GE_DEVS[i].unit;
+    return -1;
+}
 
 enum {
     E_NUM, E_VAR, E_STR, E_CALL, E_BIN, E_ASSIGN, E_INDEX,
@@ -295,9 +620,79 @@ typedef struct Node {
 } Node;
 static Node *newn(int k) { Node *n = calloc(1, sizeof *n); n->kind = k; return n; }
 
+/* Fold an integer constant expression.
+ *
+ * Needed because the order-block bytes are DATA: Z, X and a transfer length are
+ * emitted into the block at assembly time, so they must be known at compile
+ * time. <ge.h> writes them as expressions -- GE_CPER | GE_EPER -- which the
+ * parser turns into an E_BIN tree, so a literal-only test would reject the
+ * header's own macros. Returns 1 and sets *v when the whole tree is constant. */
+static int const_fold(Node *n, long *v)
+{
+    long a, b;
+    if (!n) return 0;
+    switch (n->kind) {
+    case E_NUM: *v = n->num; return 1;
+    case E_NEG: if (!const_fold(n->a, &a)) return 0; *v = -a; return 1;
+    case E_NOT: if (!const_fold(n->a, &a)) return 0; *v = !a; return 1;
+    case E_CVT: return const_fold(n->a, v);
+    case E_BIN:
+        if (!const_fold(n->a, &a) || !const_fold(n->b, &b)) return 0;
+        switch (n->op) {
+        case T_PLUS:  *v = a + b;  return 1;
+        case T_MINUS: *v = a - b;  return 1;
+        case T_STAR:  *v = a * b;  return 1;
+        case T_SLASH: if (!b) return 0; *v = a / b; return 1;
+        case T_PCT:   if (!b) return 0; *v = a % b; return 1;
+        case T_OR:    *v = a | b;  return 1;
+        case T_AMP:   *v = a & b;  return 1;
+        case T_XOR:   *v = a ^ b;  return 1;
+        case T_SHL:   *v = a << b; return 1;
+        case T_SHR:   *v = a >> b; return 1;
+        default: return 0;
+        }
+    default: return 0;
+    }
+}
+
 /* string literals collected for the .data section */
 typedef struct Str { char *bytes; int len; int label; struct Str *next; } Str;
 static Str *g_strs; static int g_strn;
+
+/* PER order blocks collected for the .data section.
+ *
+ * The machine reaches a peripheral with `PER <unit>, <addr-of-order-block>`;
+ * the block is ordinary data (CPU[4] 5.8.2/5.8.3.1):
+ *
+ *     2-byte form : Z X            command / status / availability
+ *     6-byte form : Z X L L I I    data transfer
+ *
+ * LL is a length-1 field, so a full 80-column card read carries LL=0x4F. The
+ * subtraction happens once, in ord_new(), and nowhere else. */
+typedef struct Ord {
+    int  z, x;
+    int  xfer;                 /* 6-byte transfer form?                 */
+    long ll;                   /* length-1, valid when xfer             */
+    char *buf;                 /* buffer symbol, valid when xfer        */
+    int  label;
+    struct Ord *next;
+} Ord;
+static Ord *g_ords; static int g_ordn;
+
+static int ord_new(int z, int x, int xfer, long nbytes, const char *buf)
+{
+    Ord *o = calloc(1, sizeof *o);
+    if (!o) die("out of memory");
+    o->z = z & 0xFF; o->x = x & 0xFF; o->xfer = xfer;
+    if (xfer) {
+        if (nbytes < 1)    die("transfer length must be at least 1 byte");
+        if (nbytes > 4096) die("transfer length %ld exceeds 4096 bytes", nbytes);
+        o->ll  = nbytes - 1;             /* the only place the -1 is applied */
+        o->buf = strdup(buf);
+    }
+    o->label = g_ordn++; o->next = g_ords; g_ords = o;
+    return o->label;
+}
 
 /* ------------------------------------------------------------------ */
 /* parser                                                              */
@@ -420,6 +815,7 @@ static Node *parse_assign(void) {
     if (accept(T_ASSIGN)) {
         Node *rhs = parse_assign();
         Node *n = newn(E_ASSIGN); n->a = lhs; n->b = rhs; n->type = lhs->type;
+        if (lhs->kind == E_VAR && lhs->sym) lhs->sym->dev_valid = 0;
         return n;
     }
     return lhs;
@@ -444,7 +840,13 @@ static Node *parse_local_decl(void) {
         l_locals_size += ty_size(t);
         s->next = l_locals; l_locals = s;
         Node *d = newn(S_DECL); d->sym = s;
-        if (accept(T_ASSIGN)) d->a = parse_assign();   /* initializer */
+        if (accept(T_ASSIGN)) {
+            d->a = parse_assign();                     /* initializer */
+            if (d->a && d->a->kind == E_CALL && d->a->name) {
+                int u = ge_dev_unit(d->a->name);
+                if (u >= 0) { s->dev_valid = 1; s->dev_unit = u; }
+            }
+        }
         *tail = d; tail = &d->next;
     } while (accept(T_COMMA));
     expect(T_SEMI, "';'");
@@ -691,6 +1093,26 @@ static void emit_word_imm(int dst, int value)
     EM("MVI 0x%02X, %d(5)\n", value & 0xff, dst + 1);
 }
 
+/* Materialise the latched qualitative result (0..3) into a frame temporary.
+ * The CC is not directly readable, so branch it out: mask 0x80=cc0, 0x40=cc1,
+ * 0x20=cc2, 0x10=cc3 (signals.h verified_condition / ISA.md 5.1). Must run
+ * immediately after the instruction that set it. */
+static void emit_qr(int dst)
+{
+    int L1 = lbl(), L2 = lbl(), L3 = lbl(), Ldone = lbl();
+    EM("JC 0x40, L%d\n", L1);
+    EM("JC 0x20, L%d\n", L2);
+    EM("JC 0x10, L%d\n", L3);
+    emit_word_imm(dst, 0);                     /* cc0 */
+    EM("JC 0xF0, L%d\n", Ldone);
+    fprintf(out, "L%d:\n", L1); emit_word_imm(dst, 1);
+    EM("JC 0xF0, L%d\n", Ldone);
+    fprintf(out, "L%d:\n", L2); emit_word_imm(dst, 2);
+    EM("JC 0xF0, L%d\n", Ldone);
+    fprintf(out, "L%d:\n", L3); emit_word_imm(dst, 3);
+    fprintf(out, "L%d:\n", Ldone);
+}
+
 static void emit_call0(const char *fn)
 {
     EM("JRT 0xF0, %s\n", fn);
@@ -714,6 +1136,81 @@ static int gen_builtin_call(Node *n, int dst)
      * (they ride on real CPU instructions only), so they are handled before the
      * stdio gate below and work without #include <stdio.h>. gec has no `long`
      * or `bool` type, so counts and returns are plain `int`. */
+    /* ---- peripheral access -------------------------------------------------
+     * The machine reaches a peripheral with `PER <unit>, <order block>`, where
+     * the unit name is an IMMEDIATE inside the instruction. It therefore cannot
+     * come from a variable, which is why the device openers below fold to a
+     * constant and why the operations insist on getting one. */
+    {
+        int u = ge_dev_unit(n->name);
+        if (u >= 0) {
+            if (n->nargs != 0) die("%s() takes no arguments", n->name);
+            emit_word_imm(dst, u);               /* compile-time; emits no I/O */
+            return 1;
+        }
+    }
+
+    if (!strcmp(n->name, "_read")  || !strcmp(n->name, "_write") ||
+        !strcmp(n->name, "_order") || !strcmp(n->name, "_close")) {
+
+        int is_close = !strcmp(n->name, "_close");
+        int is_order = !strcmp(n->name, "_order");
+        int want = is_close ? 1 : 3;
+        if (n->nargs != want)
+            die("%s() expects %d argument%s", n->name, want, want == 1 ? "" : "s");
+
+        int unit; long cv;
+        Node *dv = n->args[0];
+        if (const_fold(dv, &cv))
+            unit = (int)(cv & 0xFF);
+        else if (dv->kind == E_CALL && dv->name && ge_dev_unit(dv->name) >= 0)
+            unit = ge_dev_unit(dv->name);
+        else if (dv->kind == E_VAR && dv->sym && dv->sym->dev_valid)
+            unit = dv->sym->dev_unit;
+        else
+            die("%s(): the device must come from an _open_*() call -- the PER "
+                "unit name is an instruction immediate, so it cannot be a "
+                "computed value or a variable that was reassigned", n->name);
+
+        if (is_close) {                   /* nothing to emit; symmetry only */
+            emit_word_imm(dst, 0);
+            return 1;
+        }
+
+        if (is_order) {
+            long z, x;
+            if (!const_fold(n->args[1], &z) || !const_fold(n->args[2], &x))
+                die("_order(): Z and X must be constant expressions -- they are "
+                    "the order block's own bytes, emitted as data");
+            int lbl = ord_new((int)z, (int)x, 0, 0, 0);
+            EM("PER 0x%02X, __ord%d\n", unit, lbl);
+            /* The qualitative result is only meaningful when the order carries
+             * the EPER bit; materialise it either way and let the caller judge. */
+            emit_qr(dst);
+            return 1;
+        }
+
+        /* _read / _write: the buffer must be a named object we can address, and
+         * the length must be constant because it is encoded in the block. */
+        Node *b = n->args[1];
+        if (b->kind == E_ADDR) b = b->a;
+        if (b->kind != E_VAR || !b->sym || !b->sym->is_global)
+            die("%s(): the buffer must be a global array or variable (the order "
+                "block holds its absolute address)", n->name);
+        long nbytes;
+        if (!const_fold(n->args[2], &nbytes))
+            die("%s(): the length must be a constant expression (it is encoded "
+                "in the order block as length-1)", n->name);
+
+        int x = !strcmp(n->name, "_read") ? 0x40 : 0x41;
+        char bufsym[128];
+        snprintf(bufsym, sizeof bufsym, "_%s", b->sym->name);
+        int lbl = ord_new(0x00, x, 1, nbytes, bufsym);
+        EM("PER 0x%02X, __ord%d\n", unit, lbl);
+        emit_word_imm(dst, (int)nbytes);
+        return 1;
+    }
+
     if (!strcmp(n->name, "lon")) {            /* light the OPER. CALL lamp     */
         EM("LON\n");                          /* 02 80: CI87 sets ALAM         */
         emit_word_imm(dst, 0);
@@ -1420,6 +1917,13 @@ static void gen_data(FILE *o) {
         for (int i = 0; i <= s->len; i++) fprintf(o, "%s0x%02X", i ? ", " : "", (unsigned char)s->bytes[i]);
         fprintf(o, "\n");
     }
+    for (Ord *d = g_ords; d; d = d->next) {
+        if (d->xfer)
+            fprintf(o, "__ord%d:\tDB 0x%02X, 0x%02X\n\tDW %ld\n\tDW %s\n",
+                    d->label, d->z, d->x, d->ll, d->buf);
+        else
+            fprintf(o, "__ord%d:\tDB 0x%02X, 0x%02X\n", d->label, d->z, d->x);
+    }
     if (g_use_stdio) {
         fprintf(o,
             "__io_per_out_char:\tDB 0x80, 0x85, 0x00, 0x01, 0x00, 0x00\n"
@@ -1482,9 +1986,10 @@ static int run_gasm(const char *gasm, const char *asmpath,
 
 int main(int argc, char **argv) {
     const char *inpath = 0, *outpath = 0;
-    int sflag = 0, bootflag = 0, bootgeflag = 0, cardflag = 0;
+    int sflag = 0, bootflag = 0, bootgeflag = 0, cardflag = 0, eflag = 0;
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-o") && i + 1 < argc) outpath = argv[++i];
+        else if (!strcmp(argv[i], "-E")) eflag = 1;  /* preprocess only: .c -> .c */
         else if (!strcmp(argv[i], "-S")) sflag = 1;
         else if (!strcmp(argv[i], "--boot")) bootflag = 1;
         else if (!strcmp(argv[i], "--bootge")) bootgeflag = 1;
@@ -1498,7 +2003,7 @@ int main(int argc, char **argv) {
     }
     if (!inpath) {
         fprintf(stderr,
-            "usage: gec input.c [-c] [--boot|--card] [-o out]\n"
+            "usage: gec input.c [-E] [-c] [--boot|--card] [-o out]\n"
             "  default : compile, assemble and link a card deck (a.cap),\n"
             "            carried by the ORIGINAL IPL scatter loader. Run it\n"
             "            with 'ge out.cap', or 'arm out.cap' on the real\n"
@@ -1520,7 +2025,15 @@ int main(int argc, char **argv) {
                         "exclusive\n");
         return 1;
     }
-    if (!outpath) outpath = sflag ? "a.s" : "a.cap";
+    if (!outpath) outpath = eflag ? "a.i" : sflag ? "a.s" : "a.cap";
+
+    /* <gec-binary-dir>/include is searched after the source's own directory. */
+    {
+        const char *slash = strrchr(argv[0], '/');
+        if (slash) snprintf(g_incdir, sizeof g_incdir, "%.*s/include",
+                            (int)(slash - argv[0]), argv[0]);
+        else       snprintf(g_incdir, sizeof g_incdir, "include");
+    }
 
     g_file = inpath;
     FILE *in = fopen(inpath, "rb");
@@ -1529,6 +2042,15 @@ int main(int argc, char **argv) {
     char *raw = malloc(sz + 1); fread(raw, 1, sz, in); raw[sz] = 0; fclose(in);
     char *src = preprocess_source(raw);
     free(raw);
+
+    if (eflag) {                     /* -E: emit the expanded C and stop */
+        FILE *e = strcmp(outpath, "-") ? fopen(outpath, "w") : stdout;
+        if (!e) { perror(outpath); return 1; }
+        fputs(src, e);
+        if (e != stdout) fclose(e);
+        return 0;
+    }
+
     g_src = src; lp = src;
 
     parse_program();
