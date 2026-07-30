@@ -41,12 +41,14 @@ tests/tests: $(TESTS) libge.a
 -include $(OBJS:%.o=%.d)
 -include $(TESTS:%.o=%.d)
 
-# Build the assembler (gasm) and disassembler (gdis) toolchain.
+# Build the whole toolchain: assembler, disassembler, C compiler, deck tools.
+# `cc` is built last because runrv links libge.a, which `ge` above produces.
 .PHONY: tools
 tools:
 	$(MAKE) -C assembler gasm
 	$(MAKE) -C disassembler gdis
 	$(MAKE) -C tools capcat
+	$(MAKE) -C cc
 
 .PHONY: check
 .PHONY: native-reset
@@ -114,6 +116,7 @@ clean:
 	$(MAKE) -C assembler clean
 	$(MAKE) -C disassembler clean
 	$(MAKE) -C tools clean
+	$(MAKE) -C cc clean
 	# NB: do NOT recurse into console/wasm clean here — the wasm build's own
 	# libge.a step calls `make -C ../.. clean`, so recursing would delete the
 	# console/wasm/main.o it just built and break `make wasm`. Clean the wasm
