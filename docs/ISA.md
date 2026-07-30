@@ -489,13 +489,19 @@ So the aux char selects *which CC values* cause the jump. `JC ,0xF0` → mask
 | **JS1** | `53` / `80` | Jump if console **sense switch 1** set (`ge->JS1`). | — | ✅ |
 | **JS2** | `53` / `40` | Jump if console **sense switch 2** set (`ge->JS2`). | — | ✅ |
 | **JIE** | `53` / `20` | Jump "if end"(?) — decoded; condition source not yet confirmed. | — | ○ |
-| **JRT** | `41` | Jump-and-return / return (subroutine linkage). | — | ✗ |
+| **JRT** | `41` | Jump-and-return: jumps and deposits the address of the next instruction into change register 7 (`mem[0x00FE..0x00FF]`). The link is written even when the conditional form does not take the jump. | — | ✅ |
 
 > ⚠️ `JU`/`JCC` share the mask path with `JC` in the current code (mask read from
 > the aux char `L1`); the comment in `opcodes.h:40` notes JU as "mask 0xF0" —
 > i.e. the *family* low-nibble distinguishes the variants. Exact mask source per
-> variant: medium confidence. `JRT` (`0x41`) has an assigned opcode but **no
-> decode path** (`jc_js1_js2_jie` does not list it) — reserved/unimplemented.
+> variant: medium confidence. `JRT` is covered by `jc_js1_js2_jie` and takes a mask
+> like the others, with the link deposit handled in EA/EB.
+>
+> **Subroutine linkage in practice.** Because the link lands in a memory cell
+> rather than on a stack, the decks return by writing it into the operand field of
+> the routine's own closing jump — so a callee's first instruction is normally
+> `MVC 2, <that field>, 0x00FE`, and the jump shows an unpatched placeholder in a
+> static listing. Recognising that prologue is how you find subroutine entries.
 
 ### 6.3 Register & address — PM format (4 bytes)
 
@@ -663,7 +669,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 |---|---|---|
 | Address bit 15 | **honored**: absolute(0)/modified(1) flag (CPU[4] §2.5). gemu resolves the EA in operand fetch — absolute verbatim, modified via the indexing micro-cycle `ED\|EC → EF\|EE` (flow chart dwg 14023130), for single- and two-address ops. `gasm`/`gdis` encode/decode `disp(N)` with bit 15. | implemented; flow chart 14023130 |
 | ENS/INS/LON/LOFF/LOLL | sub-function meanings unverified | interrupt + console-indicator manual pages; APS manual |
-| JRT (`0x41`) | opcode assigned, no decode | branch/linkage section of manual; APS manual |
+
 | LPSR (`0x9D`) | opcode assigned, no decode | PSW / status-register section |
 | CI vs CMI | both map to `alu_ci`; signed-vs-logical distinction? | §5.5.5.1 page image |
 | JU/JCC mask source | shared mask path with JC | §fo.56/57 page image |
@@ -849,10 +855,13 @@ takes it as a raw `aux` byte (see §6.11 for the bit meanings).
 > 30004122 o/A fo.72-73; see `docs/peripherals.md`.
 | `RDC`  | `RDC aux, addr`  | `90` | 4 | Read card (PER-family, decimal-deck variant). | ✅ |
 | `LPSR` | `LPSR aux, addr` | `9D` | 4 | Load program status register. | ✗ |
-| `JRT`  | `JRT aux, addr`  | `41` | 4 | Jump-and-return / linkage. | ✗ |
+| `JRT`  | `JRT aux, addr`  | `41` | 4 | Jump-and-return; link -> change register 7. | ✅ |
 
-> `LPSR` and `JRT` have assigned opcodes but **no decode path** in the current
-> emulator: they assemble but will not execute end-to-end.
+> `LPSR` has an assigned opcode but **no decode path** in the current emulator: it
+> assembles but will not execute end-to-end. `JRT` **is** implemented
+> (`msl-commands.c:208`, `msl-states.c` fo.33 beta sheet); it is the call
+> instruction the diagnostic decks are built on — `disc-monitor` alone has 122 call
+> sites.
 
 ### A.3.6 SS single-length — SS format (6 bytes): `len, A1, A2`
 

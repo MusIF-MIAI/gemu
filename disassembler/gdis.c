@@ -49,6 +49,10 @@ typedef enum {
     D_REG,      /* PM: LR/...   -> "mn N, addr"                         */
     D_IMM,      /* PM: MVI/...  -> "mn K, addr"                         */
     D_PER,      /* PM: PER/...  -> "mn aux, addr"                       */
+    D_JRT,      /* PM: JRT      -> like D_BRANCH, but also deposits the
+                 * return link in reg7 (mem 254/255).  Its target IS a
+                 * branch target, so it must be labelled: subroutine
+                 * entries are only reachable through JRT in these decks. */
     D_SS1,      /* SS, 6 bytes: "mn len, A1, A2"                        */
     D_SS2       /* SS, 6 bytes: "mn l1, l2, A1, A2"                     */
 } dfmt_t;
@@ -62,7 +66,7 @@ static const struct dmnem DTAB[] = {
     { 0x43, "JC",   D_BRANCH, 4 },
     { 0x40, "JCC",  D_BRANCH, 4 },
     { 0x47, "JU",   D_JU,     4 },
-    { 0x41, "JRT",  D_PER,    4 },   /* reserved (no decode path)        */
+    { 0x41, "JRT",  D_JRT,    4 },   /* jump + link -> reg7 (mem 254/255) */
     /* PM register / address */
     { 0xBC, "LR",   D_REG, 4 },
     { 0xB4, "STR",  D_REG, 4 },
@@ -149,6 +153,72 @@ static void put(long addr, uint8_t b)
     image[addr] = b; present[addr] = 1;
     if (img_min < 0 || addr < img_min) img_min = addr;
     if (addr + 1 > img_max) img_max = addr + 1;
+}
+
+/* describe_order() renders the PER/PERI order block an instruction points at.
+ *
+ * Layout, CPU[4] sec.5.8.2/5.8.3.1 (drawing 30004122 o/A, fo.72-73):
+ *
+ *     6-byte form : Z X L L I I    -> a data TRANSFER (length, buffer)
+ *     2-byte form : Z X            -> a command / status / test order
+ *
+ * Z is a COMBINABLE MASK of the operation types from cp04 sec.5.10.1, with the
+ * channel in the low three bits:
+ *
+ *     0x80 CPER send command      0x40 EPER check unit condition
+ *     0x20 SPER unload channel    0x10 LPER test availability
+ *     0x08 TPER start transfer
+ *
+ * The EPER bit is the one that matters when reading code: an order carrying it
+ * returns a qualitative result, so the instruction after it is normally a JC.
+ * Deck evidence (i5i-semi-manual-test + i5i-auto-kontroll-test): 100 of 100
+ * EPER-bit orders are followed by a CC test, and none of the plain-CPER orders
+ * is.  LL is a length-1 field, so a card read shows LL=0x4F = 80 bytes.
+ *
+ * Which form applies cannot be told from Z (the confirmed card-read transfer has
+ * Z=0x00, with the documented TPER bit clear), so the 6-byte reading is only
+ * offered when the length and buffer look plausible. */
+/* Addresses that some PER/PERI/RDC points at, collected in pass 1.  Two orders
+ * referenced 2 bytes apart cannot both be 6-byte blocks, which is how the form
+ * is decided -- Z cannot decide it (the confirmed card-read transfer has
+ * Z=0x00, with the documented TPER bit clear). */
+static uint8_t ord_target[65536];
+
+static void describe_order(long addr, char *buf, size_t n)
+{
+    buf[0] = 0;
+    if (addr < 0 || addr + 1 > 0xFFFF) return;
+    if (!present[addr] || !present[addr + 1]) return;
+
+    unsigned z = image[addr], x = image[addr + 1];
+    char roles[64];
+    roles[0] = 0;
+    static const struct { unsigned bit; const char *nm; } ZB[] = {
+        { 0x80, "CPER" }, { 0x40, "EPER" }, { 0x20, "SPER" },
+        { 0x10, "LPER" }, { 0x08, "TPER" },
+    };
+    for (unsigned i = 0; i < sizeof ZB / sizeof ZB[0]; i++)
+        if (z & ZB[i].bit) {
+            if (roles[0]) strncat(roles, "|", sizeof roles - strlen(roles) - 1);
+            strncat(roles, ZB[i].nm, sizeof roles - strlen(roles) - 1);
+        }
+    if (!roles[0]) snprintf(roles, sizeof roles, "no type bit");
+
+    /* A neighbouring order 2 bytes on proves this block is the 2-byte form. */
+    int two_byte = (addr + 2 <= 0xFFFF) && ord_target[(uint16_t)(addr + 2)];
+
+    /* Try the 6-byte transfer reading only if it is self-consistent. */
+    if (!two_byte &&
+        present[addr + 2] && present[addr + 3] && present[addr + 4] && present[addr + 5]) {
+        long ll = ((long)image[addr + 2] << 8) | image[addr + 3];
+        long ii = ((long)image[addr + 4] << 8) | image[addr + 5];
+        if (ll > 0 && ll < 4096 && ii != 0)
+            snprintf(buf, n, "Z=%02X[%s,ch%u] X=%02X  %ld bytes -> 0x%04lX",
+                     z, roles, z & 7, x, ll + 1, ii);
+    }
+    if (!buf[0])
+        snprintf(buf, n, "Z=%02X[%s,ch%u] X=%02X%s", z, roles, z & 7, x,
+                 (z & 0x40) ? "  (result tested)" : "");
 }
 
 /* labels[] marks addresses that are branch targets (so we print L_xxxx:).
@@ -296,7 +366,7 @@ static int load_cap(const char *path, enum transcode_mode mode, int loose,
     if (!d) { fprintf(stderr, "gdis: cannot parse .cap '%s'\n", path); return -1; }
 
     int nc = cap_num_cards(d);
-    int loaded = 0, skipped = 0;
+    int loaded = 0, skipped = 0, matched = 0;
 
     /* Decide which prefix gates payload cards (unless --loose). */
     uint8_t want[8];
@@ -335,6 +405,7 @@ static int load_cap(const char *path, enum transcode_mode mode, int loose,
         int paylen = ll + 1;
         int fits = (11 + ll < n) && (addr + ll <= 0xFFFF);
 
+        if (match) matched++;
         int accept = loose ? fits : (match && fits);
         if (!accept) {
             if (verbose)
@@ -350,6 +421,23 @@ static int load_cap(const char *path, enum transcode_mode mode, int loose,
                     i, addr, addr + paylen - 1, paylen);
         loaded++;
     }
+
+    /* A deck whose program-ID prefix matches far more cards than actually pass
+     * validation is not being read correctly: the bytes after the prefix are not
+     * behaving like the LL/addr record header.  Two decks in the MusIF
+     * collection do this (gun-1600-isolation-test: 104 of 563; dsc-isolation-test:
+     * 552 of 1229), and the resulting listing is misparse artefacts, not code.
+     * Say so loudly -- silently dropping three quarters of a deck reads as
+     * success. */
+    if (have_prefix && matched > 0 && loaded < matched - matched / 10)
+        fprintf(stderr,
+                "gdis: WARNING: %d cards carry the program-ID prefix but only %d "
+                "pass record validation (%d rejected).\n"
+                "gdis:          A well-formed deck loads all of them and has one "
+                "dominant LL.\n"
+                "gdis:          The addresses below are probably misparse "
+                "artefacts -- check with --cards.\n",
+                matched, loaded, matched - loaded);
 
     fprintf(stderr, "gdis: %s: %d cards, %d records loaded, %d skipped; "
             "image 0x%04lX..0x%04lX (%ld bytes)\n",
@@ -545,9 +633,25 @@ static int decode_at(long addr, int pass, FILE *out)
             if (pass == 2) { fmt_addr(field, a1, sizeof a1);
                 fprintf(out, "        %-6s 0x%02X, %s\n", m->name, aux, a1); }
             return 4;
+        case D_JRT:
+            /* JRT both jumps and links.  Marking the target is what makes
+             * subroutine entries visible; without it every callee in these
+             * decks stays anonymous. */
+            if (pass == 1) mark_label(field);
+            else {
+                fmt_addr(field, a1, sizeof a1);
+                fprintf(out, "        %-6s 0x%02X, %s   ; call, link -> reg7\n",
+                        m->name, aux & 0xF0, a1);
+            }
+            return 4;
         case D_PER:
+            if (pass == 1) ord_target[field] = 1;
             if (pass == 2) { fmt_addr(field, a1, sizeof a1);
-                fprintf(out, "        %-6s 0x%02X, %s\n", m->name, aux, a1); }
+                char ob[96];
+                describe_order(field, ob, sizeof ob);
+                if (ob[0]) fprintf(out, "        %-6s 0x%02X, %s   ; %s\n", m->name, aux, a1, ob);
+                else       fprintf(out, "        %-6s 0x%02X, %s\n", m->name, aux, a1);
+            }
             return 4;
         default: goto db1;
         }

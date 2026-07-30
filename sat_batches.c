@@ -45,7 +45,8 @@ static const struct sat_source src_printer_mech[] = {
 };
 
 /* Printer Mechanic Test startup: the deck issues PER 0x00,0x0126, whose order
- * block is {00,40,00,4F,06,70} — a 79-byte "read unchanged" into 0x0670. In the
+ * block is {00,40,00,4F,06,70}. LL is a length-1 field, so 0x4F reads 80 bytes —
+ * exactly one 80-column card — "unchanged" into 0x0670. In the
  * real SAT stack that record comes from the required center card, which the
  * operator places behind the program deck. So punch one: a row-0 hole is 0x01
  * under the raw ("read unchanged") reader, a blank column is 0x00.
