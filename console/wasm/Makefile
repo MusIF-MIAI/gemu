@@ -1,21 +1,16 @@
 CC=emcc
 AR=emar
 
-# FS + FORCE_FILESYSTEM let the page write an uploaded .cap deck into the
-# in-memory filesystem (MEMFS) so the card-reader bootstrap can read it.
+# FS + FORCE_FILESYSTEM let the page write a chosen .cap deck into the in-memory
+# filesystem (MEMFS) so the card-reader bootstrap can read it. That file is the
+# page's only input: the deck comes from the operator's own disk, exactly as
+# `ge deck.cap` takes it from the command line, so nothing is vendored here.
 CFLAGS=-I../.. -sEXPORTED_RUNTIME_METHODS=callMain,FS,ccall -sFORCE_FILESYSTEM=1
 
 LIBGE=../../libge.a
 
-SAT_DIR=Site_Acceptance_Test
-
-main: main.o $(LIBGE) | sync-sat
+main: main.o $(LIBGE)
 	$(CC) $(CFLAGS) -o $@.mjs $^ $(LIBGE)
-
-.PHONY: sync-sat
-sync-sat:
-	mkdir -p $(SAT_DIR)
-	cp ../../Site_Acceptance_Test/*.cap $(SAT_DIR)/
 
 .PHONY: $(LIBGE)
 $(LIBGE):
@@ -25,7 +20,7 @@ $(LIBGE):
 .PHONY: clean
 clean:
 	rm -f main.o main.js main.wasm main.mjs
-	rm -rf $(SAT_DIR)
+	rm -rf Site_Acceptance_Test
 
 # Containerised build (no local emscripten needed). Works with podman or docker;
 # override with CONTAINER=docker / a different WASM_IMAGE if desired.

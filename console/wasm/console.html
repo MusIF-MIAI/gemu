@@ -612,6 +612,10 @@ padding: 1px;
   height: 15em;
   user-select: none;
   outline: none;
+  /* the engraved indices run out past the viewBox to meet the label ring's
+     own lines (.dial .line, which start 8em out), so they must not be
+     clipped at the dial edge -- the index is one line, not two */
+  overflow: visible;
 }
 
 /* the pointer swings to the new position rather than jumping to it */
@@ -753,9 +757,6 @@ padding: 1px;
   gap: 1em;
   align-items: stretch;
 }
-.sim-span-2 {
-  grid-column: 1 / -1;
-}
 .sim-pane {
   background:
     linear-gradient(180deg, rgba(64, 43, 26, 0.92), rgba(39, 26, 17, 0.94));
@@ -815,7 +816,9 @@ padding: 1px;
   position: relative;
   min-height: 11.5em;
   margin-top: 0.8em;
-  padding: 1em 1em 1.2em;
+  /* top padding clears the tray's own guide rail (::before at 0.7em) so the
+   * caption does not print across it */
+  padding: 2.1em 1em 1.2em;
   border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(31, 24, 18, 0.68), rgba(15, 11, 8, 0.88)),
@@ -881,16 +884,6 @@ padding: 1px;
     radial-gradient(circle, rgba(62,45,21,0.42) 1px, transparent 2px) 0 0 / 18px 6px repeat-x,
     radial-gradient(circle, rgba(62,45,21,0.18) 1px, transparent 2px) 9px 8px / 18px 6px repeat-x;
   opacity: 0.65;
-}
-.card-slice.loader-band {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.4), transparent 18%),
-    linear-gradient(180deg, #f0dfb0 0%, #d7b97a 100%);
-}
-.card-slice.sequencer-band {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.4), transparent 18%),
-    linear-gradient(180deg, #ebd8b5 0%, #cfa772 100%);
 }
 .pile-caption {
   margin-top: 0.55em;
@@ -1000,10 +993,6 @@ padding: 1px;
   #sim_workbench {
     grid-template-columns: 1fr;
   }
-
-  .sim-span-2 {
-    grid-column: auto;
-  }
 }
 </style>
 
@@ -1023,85 +1012,231 @@ padding: 1px;
                 <div class=knob>
                   <!-- Register selector.
                        The GE-120's selector is not a knob: it is a moulded black
-                       pointer shaped like a raven's beak, broad at the hub and
-                       tapering to a hooked point, turning over 14 engraved
-                       positions 18 degrees apart with NORM at twelve o'clock
-                       (V4 at -162, FO at +72). The label ring around it is laid
-                       out to the same geometry; see .dial_label above. -->
+                       pointer, broad at the hub and tapering to a point, turning
+                       over 14 engraved positions 18 degrees apart with NORM at
+                       twelve o'clock (V4 at -162, FO at +72). The moulding is
+                       beaked, but the beak is in Z: the hook rises out of the
+                       panel and hangs over the tip, so from directly above --
+                       which is the only view this panel has -- the outline is
+                       symmetric about the pointing axis, a long nose one side of
+                       the hub and a shorter, squared-off counterweight the other
+                       -- straight sides converging on a flat back edge, the
+                       corners barely broken, the way it came out of the mould.
+                       The plastic is polished, so it carries a specular crest.
+                       The face it turns on is the panel colour, not a bezel.
+                       The label ring around it is laid out to the same geometry;
+                       see .dial_label above. -->
                   <svg id=rs_knob version="1.1" viewBox="-16 -16 32 32">
                     <defs>
-                        <radialGradient id="rs-bezel" cx="50%" cy="34%" r="78%">
-                            <stop offset="0%"   stop-color="#2e2e31"/>
-                            <stop offset="68%"  stop-color="#1a1a1d"/>
-                            <stop offset="100%" stop-color="#0d0d0f"/>
-                        </radialGradient>
-                        <!-- black plastic, lit from the upper left like the panel -->
-                        <linearGradient id="rs-beak" x1="0.1" y1="0" x2="0.9" y2="1">
-                            <stop offset="0%"   stop-color="#6a6a70"/>
-                            <stop offset="22%"  stop-color="#333338"/>
-                            <stop offset="60%"  stop-color="#161619"/>
-                            <stop offset="100%" stop-color="#050506"/>
+                        <!-- The pointer is one shape, drawn once and reused for
+                             body, shading, rim and gloss so every layer keeps
+                             the same symmetric silhouette. Two broad ends on a
+                             slim middle: the nose swells to 3.05 out at -5 and
+                             tapers to the tip, the moulding pinches to 1.5 where
+                             it crosses the hub, and the counterweight then
+                             FLARES from that waist out to a flat squared back
+                             3.5 wide -- narrow at the centre, widest at the
+                             back, and the back the widest part of the whole
+                             moulding, not the other way about. -->
+                        <path id="rs_shape"
+                              d="M 0 -14.2
+                                 C 1.10 -11.4, 2.35 -8.2, 2.85 -5.2
+                                 C 3.05 -3.7, 2.70 -1.8, 1.62 -0.6
+                                 C 1.50 -0.2, 1.50 0.7, 1.58 1.2
+                                 L 3.86 11.85
+                                 Q 3.94 12.2, 3.50 12.2
+                                 L -3.50 12.2
+                                 Q -3.94 12.2, -3.86 11.85
+                                 L -1.58 1.2
+                                 C -1.50 0.7, -1.50 -0.2, -1.62 -0.6
+                                 C -2.70 -1.8, -3.05 -3.7, -2.85 -5.2
+                                 C -2.35 -8.2, -1.10 -11.4, 0 -14.2 Z"/>
+                        <clipPath id="rs-clip"><use href="#rs_shape"/></clipPath>
+
+                        <!-- across the moulding: a crown of black plastic, dark
+                             at both edges, so the shape reads domed either side -->
+                        <linearGradient id="rs-body" gradientUnits="userSpaceOnUse"
+                                        x1="-3.5" y1="0" x2="3.5" y2="0">
+                            <stop offset="0%"   stop-color="#020203"/>
+                            <stop offset="24%"  stop-color="#0c0c0f"/>
+                            <stop offset="50%"  stop-color="#26262c"/>
+                            <stop offset="76%"  stop-color="#0c0c0f"/>
+                            <stop offset="100%" stop-color="#020203"/>
                         </linearGradient>
-                        <radialGradient id="rs-hub" fx="36%" fy="28%" r="72%">
-                            <stop offset="0%"   stop-color="#9a9aa0"/>
-                            <stop offset="48%"  stop-color="#45454a"/>
-                            <stop offset="100%" stop-color="#111113"/>
+                        <!-- along it: the nose and the tail fall away from the
+                             light and go to black -->
+                        <linearGradient id="rs-axial" gradientUnits="userSpaceOnUse"
+                                        x1="0" y1="-14.2" x2="0" y2="12.3">
+                            <stop offset="0%"   stop-color="#000" stop-opacity="0.78"/>
+                            <stop offset="22%"  stop-color="#000" stop-opacity="0.12"/>
+                            <stop offset="42%"  stop-color="#000" stop-opacity="0"/>
+                            <stop offset="64%"  stop-color="#000" stop-opacity="0.14"/>
+                            <stop offset="100%" stop-color="#000" stop-opacity="0.62"/>
+                        </linearGradient>
+                        <!-- the specular crest: what tells you it is polished -->
+                        <linearGradient id="rs-spec" gradientUnits="userSpaceOnUse"
+                                        x1="0" y1="-12" x2="0" y2="10">
+                            <stop offset="0%"   stop-color="#fff" stop-opacity="0"/>
+                            <stop offset="14%"  stop-color="#fff" stop-opacity="0.26"/>
+                            <stop offset="32%"  stop-color="#fff" stop-opacity="0.52"/>
+                            <stop offset="52%"  stop-color="#fff" stop-opacity="0.16"/>
+                            <stop offset="72%"  stop-color="#fff" stop-opacity="0.06"/>
+                            <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                        </linearGradient>
+                        <!-- both edges catch the panel lamps, equally -->
+                        <linearGradient id="rs-rim" gradientUnits="userSpaceOnUse"
+                                        x1="0" y1="-14.2" x2="0" y2="12.3">
+                            <stop offset="0%"   stop-color="#fff" stop-opacity="0.10"/>
+                            <stop offset="26%"  stop-color="#fff" stop-opacity="0.28"/>
+                            <stop offset="55%"  stop-color="#fff" stop-opacity="0.10"/>
+                            <stop offset="80%"  stop-color="#fff" stop-opacity="0.22"/>
+                            <stop offset="100%" stop-color="#fff" stop-opacity="0.10"/>
+                        </linearGradient>
+                        <radialGradient id="rs-tailspot" gradientUnits="userSpaceOnUse"
+                                        cx="0" cy="9.0" r="3.4">
+                            <stop offset="0%"   stop-color="#fff" stop-opacity="0.20"/>
+                            <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
                         </radialGradient>
+                        <!-- the boss is brass, but brass under panel light and
+                             sixty years of handling: warm, not bright -->
+                        <radialGradient id="rs-boss" fx="34%" fy="26%" r="74%">
+                            <stop offset="0%"   stop-color="#b09761"/>
+                            <stop offset="42%"  stop-color="#6a5a35"/>
+                            <stop offset="78%"  stop-color="#3a301c"/>
+                            <stop offset="100%" stop-color="#15110a"/>
+                        </radialGradient>
+                        <radialGradient id="rs-boss-in" fx="38%" fy="30%" r="72%">
+                            <stop offset="0%"   stop-color="#6a5a35"/>
+                            <stop offset="100%" stop-color="#231d10"/>
+                        </radialGradient>
+                        <filter id="rs-soft" x="-60%" y="-60%" width="220%" height="220%">
+                            <feGaussianBlur stdDeviation="0.42"/>
+                        </filter>
+                        <filter id="rs-hairline" x="-60%" y="-60%" width="220%" height="220%">
+                            <feGaussianBlur stdDeviation="0.14"/>
+                        </filter>
+                        <!-- straight down, so the shadow does not lean the shape -->
                         <filter id="rs-shadow" x="-60%" y="-60%" width="220%" height="220%">
-                            <feDropShadow dx="0.5" dy="1.3" stdDeviation="0.65"
+                            <feDropShadow dx="0" dy="1.2" stdDeviation="0.7"
                                           flood-opacity="0.85" flood-color="#000"/>
                         </filter>
                     </defs>
 
-                    <circle cx="0" cy="0" r="15.2" fill="url(#rs-bezel)"
-                            stroke="#0a0a0c" stroke-width="0.5"/>
+                    <!-- The face is the panel: same #111 the console body is
+                         painted, so the dial is a hole in the panel and not a
+                         disc laid on it. -->
+                    <circle cx="0" cy="0" r="15.2" fill="#111111"/>
 
-                    <!-- one engraved index per selector position -->
-                    <g stroke="rgba(255,255,255,0.14)" stroke-width="0.35" stroke-linecap="round">
-                        <line x1="-4.05" y1="12.46" x2="-4.51" y2="13.89"/>
-                        <line x1="-7.70" y1="10.60" x2="-8.58" y2="11.81"/>
-                        <line x1="-10.60" y1="7.70" x2="-11.81" y2="8.58"/>
-                        <line x1="-12.46" y1="4.05" x2="-13.89" y2="4.51"/>
-                        <line x1="-13.10" y1="-0.00" x2="-14.60" y2="-0.00"/>
-                        <line x1="-12.46" y1="-4.05" x2="-13.89" y2="-4.51"/>
-                        <line x1="-10.60" y1="-7.70" x2="-11.81" y2="-8.58"/>
-                        <line x1="-7.70" y1="-10.60" x2="-8.58" y2="-11.81"/>
-                        <line x1="-4.05" y1="-12.46" x2="-4.51" y2="-13.89"/>
-                        <line x1="0.00" y1="-13.10" x2="0.00" y2="-14.60"/>
-                        <line x1="4.05" y1="-12.46" x2="4.51" y2="-13.89"/>
-                        <line x1="7.70" y1="-10.60" x2="8.58" y2="-11.81"/>
-                        <line x1="10.60" y1="-7.70" x2="11.81" y2="-8.58"/>
-                        <line x1="12.46" y1="-4.05" x2="13.89" y2="-4.51"/>
+                    <!-- One engraved index per selector position. Each one is
+                         the inner end of the radial line that carries on out to
+                         its label: same white, same 1px, laid on the same ray,
+                         and run half a unit past r = 17.07 so it laps the label
+                         ring's own line (.dial .line, r = 8em..10em, which is
+                         17.07..21.33 here at 4px to the unit) rather than
+                         stopping short of it and leaving a seam. The 0.12
+                         offset across the ray is the half of that 1px border
+                         the CSS lines sit below their own ray. Inner end at
+                         14.9 clears the pointer tip at 14.2. -->
+                    <g stroke="#ffffff" stroke-width="0.25">
+                        <line x1="-4.72" y1="14.13" x2="-5.56" y2="16.70"/>
+                        <line x1="-8.86" y1="11.98" x2="-10.45" y2="14.17"/>
+                        <line x1="-12.13" y1="8.66" x2="-14.31" y2="10.24"/>
+                        <line x1="-14.21" y1="4.49" x2="-16.78" y2="5.32"/>
+                        <line x1="-14.90" y1="-0.12" x2="-17.60" y2="-0.12"/>
+                        <line x1="-14.13" y1="-4.72" x2="-16.70" y2="-5.56"/>
+                        <line x1="-11.98" y1="-8.86" x2="-14.17" y2="-10.45"/>
+                        <line x1="-8.66" y1="-12.13" x2="-10.24" y2="-14.31"/>
+                        <line x1="-4.49" y1="-14.21" x2="-5.32" y2="-16.78"/>
+                        <line x1="0.12" y1="-14.90" x2="0.12" y2="-17.60"/>
+                        <line x1="4.72" y1="-14.13" x2="5.56" y2="-16.70"/>
+                        <line x1="8.86" y1="-11.98" x2="10.45" y2="-14.17"/>
+                        <line x1="12.13" y1="-8.66" x2="14.31" y2="-10.24"/>
+                        <line x1="14.21" y1="-4.49" x2="16.78" y2="-5.32"/>
+                    </g>
+                    <!-- every index on the real panel ends in a small round
+                         terminal at its inner end; the line grows out of the dot -->
+                    <g fill="#ffffff">
+                        <circle cx="-4.72" cy="14.13" r="0.45"/>
+                        <circle cx="-8.86" cy="11.98" r="0.45"/>
+                        <circle cx="-12.13" cy="8.66" r="0.45"/>
+                        <circle cx="-14.21" cy="4.49" r="0.45"/>
+                        <circle cx="-14.90" cy="-0.12" r="0.45"/>
+                        <circle cx="-14.13" cy="-4.72" r="0.45"/>
+                        <circle cx="-11.98" cy="-8.86" r="0.45"/>
+                        <circle cx="-8.66" cy="-12.13" r="0.45"/>
+                        <circle cx="-4.49" cy="-14.21" r="0.45"/>
+                        <circle cx="0.12" cy="-14.90" r="0.45"/>
+                        <circle cx="4.72" cy="-14.13" r="0.45"/>
+                        <circle cx="8.86" cy="-11.98" r="0.45"/>
+                        <circle cx="12.13" cy="-8.66" r="0.45"/>
+                        <circle cx="14.21" cy="-4.49" r="0.45"/>
                     </g>
 
+                    <!-- The hub is not part of the pointer. It is a round brass
+                         boss set into the panel, sitting LOWER than the
+                         moulding: the arm crosses over it on its thin waist and
+                         the boss shows either side. So it is drawn here, before
+                         the pointer, and the pointer's own shadow falls across
+                         it -- which is what says which of the two is on top. -->
+                    <circle cx="0" cy="0" r="3.45" fill="url(#rs-boss)"
+                            stroke="#100d07" stroke-width="0.22"/>
+                    <circle cx="0" cy="0" r="1.75" fill="url(#rs-boss-in)"
+                            stroke="#0d0b06" stroke-width="0.18"/>
+                    <path d="M -2.35 -1.7 A 2.95 2.95 0 0 1 1.2 -2.7"
+                          fill="none" stroke="#e6cf92" stroke-opacity="0.45"
+                          stroke-width="0.3" stroke-linecap="round"
+                          filter="url(#rs-hairline)"/>
+
+                    <!-- The shadow hangs off an outer group, which does not turn, so
+                         the light stays where the panel's light is instead of
+                         swinging round with the pointer. -->
+                    <g filter="url(#rs-shadow)">
                     <!-- The pointer. Rotated with the SVG transform ATTRIBUTE, whose
                          rotate(a) turns about the user space origin (the dial
                          centre) with no dependence on transform box or origin. -->
-                    <g id=rs_pointer transform="rotate(0)" filter="url(#rs-shadow)">
-                        <!-- counterweight stub behind the hub -->
-                        <path d="M -1.5 3.1 C -1.35 5.6, -0.75 7.2, 0 7.7
-                                 C 0.75 7.2, 1.35 5.6, 1.5 3.1 Z"
-                              fill="url(#rs-beak)" stroke="#000" stroke-width="0.16"/>
-                        <!-- The beak. What makes it a beak and not a leaf is that the
-                             two edges disagree: the culmen bulges out, the gonys runs
-                             back hollow, and they meet in a point. The point is on
-                             axis so it reads true against the engraved position. -->
-                        <path d="M 0 -13.9
-                                 C 1.6 -11.0, 3.0 -7.2, 3.3 -2.6
-                                 C 3.5 0.6, 2.4 3.1, 0.5 3.9
-                                 C 0.15 4.05, -0.15 4.05, -0.5 3.9
-                                 C -2.0 3.1, -2.9 0.6, -2.6 -2.6
-                                 C -1.4 -6.6, -0.5 -10.4, 0 -13.9 Z"
-                              fill="url(#rs-beak)" stroke="#000" stroke-width="0.22"/>
-                        <!-- the rim the panel lamps catch along the culmen -->
-                        <path d="M 0.2 -13.4 C 1.6 -10.8, 2.7 -7.6, 3.15 -4.4"
-                              fill="none" stroke="rgba(255,255,255,0.34)"
-                              stroke-width="0.26" stroke-linecap="round"/>
+                    <g id=rs_pointer transform="rotate(0)">
+                        <!-- the moulding itself: nose on axis so it reads true
+                             against the engraved position, counterweight lobe
+                             opposite, both mirrored about the pointing axis -->
+                        <use href="#rs_shape" fill="url(#rs-body)"
+                             stroke="#000" stroke-width="0.28"/>
+                        <use href="#rs_shape" fill="url(#rs-axial)"/>
+                        <!-- gloss, clipped to the moulding so nothing spills -->
+                        <g clip-path="url(#rs-clip)">
+                            <!-- broad sheen down the crest, drawn in through the
+                                 waist with the moulding so the thin middle does
+                                 not light up like the broad ends -->
+                            <path d="M 0 -12.2
+                                     C 0.95 -8.8, 1.4 -5.6, 1.35 -3.4
+                                     C 1.3 -1.8, 0.8 -0.7, 0.55 0.2
+                                     C 0.7 1.6, 1.05 4.4, 1.35 7.6
+                                     C 1.5 9.2, 1.6 10.4, 1.5 11.4
+                                     C 0.6 11.65, -0.6 11.65, -1.5 11.4
+                                     C -1.6 10.4, -1.5 9.2, -1.35 7.6
+                                     C -1.05 4.4, -0.7 1.6, -0.55 0.2
+                                     C -0.8 -0.7, -1.3 -1.8, -1.35 -3.4
+                                     C -1.4 -5.6, -0.95 -8.8, 0 -12.2 Z"
+                                  fill="url(#rs-spec)" filter="url(#rs-soft)"/>
+                            <!-- the hard highlight riding on top of it -->
+                            <path d="M 0 -11.0
+                                     C 0.33 -8.4, 0.46 -5.4, 0.44 -3.4
+                                     C 0.42 -2.0, 0.30 -1.0, 0.22 -0.2
+                                     C 0.26 0.8, 0.36 1.8, 0.42 2.6
+                                     C 0.44 3.0, 0.30 3.5, 0 3.7
+                                     C -0.30 3.5, -0.44 3.0, -0.42 2.6
+                                     C -0.36 1.8, -0.26 0.8, -0.22 -0.2
+                                     C -0.30 -1.0, -0.42 -2.0, -0.44 -3.4
+                                     C -0.46 -5.4, -0.33 -8.4, 0 -11.0 Z"
+                                  fill="#fff" opacity="0.36" filter="url(#rs-hairline)"/>
+                            <!-- the broad flat back of the counterweight holds a spot -->
+                            <circle cx="0" cy="9.0" r="3.4" fill="url(#rs-tailspot)"/>
+                            <!-- both edges lit alike: a polished contour, not a
+                                 lit side and a dark one -->
+                            <use href="#rs_shape" fill="none" stroke="url(#rs-rim)"
+                                 stroke-width="0.5"/>
+                        </g>
                     </g>
-
-                    <circle cx="0" cy="0" r="2.2" fill="url(#rs-hub)"
-                            stroke="#0c0c0e" stroke-width="0.35"/>
-                    <circle cx="0" cy="0" r="0.62" fill="#0a0a0b"/>
+                    </g>
                   </svg>
                   <div class=dial>
                     <div class=dial_label><div class=line></div><div class=dial_label_text onclick="document.set_dial(this)" id=rs_V4>V4</div></div>
@@ -1226,8 +1361,8 @@ padding: 1px;
 <section id=simpanel class=tool-card>
     <div id=sim_header>
         <div>
-            <h2>Program Loader Workbench</h2>
-            <p>Compose the documented Site Acceptance Test batches, or put your own deck in the hopper. A real GE-120 has no file dialog, so this panel stands in for the operator carrying cards to the reader &mdash; nothing more. The run itself still begins on the real console with <b>CLEAR -&gt; LOAD -&gt; START</b>.</p>
+            <h2>Reader Hopper</h2>
+            <p>A program reaches the machine on cards and no other way. Pick a <b>.cap</b> deck from your disk and it goes in the hopper &mdash; the same deck, mounted the same way, as <code>ge deck.cap</code> on the command line. A real GE-120 has no file dialog, so this panel stands in for the operator carrying cards to the reader; the run itself still begins on the real console with <b>CLEAR -&gt; LOAD -&gt; START</b>.</p>
         </div>
         <label class=sim-check>speed
             <select id=speed_sel>
@@ -1240,21 +1375,13 @@ padding: 1px;
     </div>
     <div id=sim_workbench>
         <section class="sim-pane">
-            <h3>Built-in SAT Batches</h3>
-            <label for=batch_sel>Documented batch</label>
-            <select id=batch_sel></select>
-            <button id=batch_prepare_button disabled>Compose Batch</button>
-            <div class=sim-status id=batch_status>Choose a preset to load the documented deck stack into the workbench.</div>
-            <div class=sim-hint id=sim_hint>Batch cards are preserved in the repository and composed with the same SAT rules native `ge --sat ...` uses.</div>
+            <h3>Deck</h3>
+            <label for=deck_file>Choose a `.cap` deck</label>
+            <input type=file id=deck_file accept=".cap" disabled>
+            <div class=sim-status id=deck_status>Reader hopper empty.</div>
+            <div class=sim-hint id=deck_hint>Cards are the only input. Build a deck with `gasm -o prog.cap prog.s` or `gec -o prog.cap prog.c`, or use one of the captured `.cap` decks from the repository.</div>
         </section>
         <section class="sim-pane">
-            <h3>Your Own Deck</h3>
-            <label for=custom_file>Choose a `.cap` deck</label>
-            <input type=file id=custom_file accept=".cap">
-            <button id=custom_stage_button disabled>Put In Hopper</button>
-            <div class=sim-status id=custom_status>Reader hopper empty.</div>
-        </section>
-        <section class="sim-pane sim-span-2">
             <h3>Reader Hopper View</h3>
             <div class=loader-tray>
                 <div class=tray-head>Cards waiting at the reader throat</div>
@@ -1527,146 +1654,119 @@ import { default as GE_Module } from './main.mjs'
 
 var module;
 
-const SAT_BATCHES = [
-    {
-        id: "cpu-functional",
-        title: "1. CPU Functional Test",
-        launch: "reader",
-        note: "The full CPU functional deck, fed card by card.",
-        cards: [
-            { label: "CPU functional", file: "funktionalcpu.cap", detail: "row-8 loader + 113 cards", style: "loader-band" },
-        ],
-    },
-    {
-        id: "card-reader-a",
-        title: "2. Card Reader Test",
-        launch: "reader",
-        note: "The captured channel-A reader test deck.",
-        cards: [
-            { label: "Reading test A", file: "reading-test-chain-01a.cap", detail: "captured test deck", style: "" },
-        ],
-    },
-    {
-        id: "printer-mechanical",
-        title: "3. Printer Test",
-        launch: "reader",
-        note: "The printer mechanical deck, with the center card behind it.",
-        cards: [
-            { label: "Printer mechanical", file: "printermechanicaltest.cap", detail: "captured test deck", style: "" },
-        ],
-    },
-    {
-        id: "control-program-cr",
-        title: "CR Control Program",
-        launch: "reader",
-        note: "Prepared with the serial Hollerith loader card kept at the front.",
-        cards: [
-            { label: "Control Program CR", file: "control-program-cr.cap", detail: "title+summary removed, row-8 loader kept", style: "loader-band" },
-        ],
-    },
-    {
-        id: "ls600-controller-sat",
-        title: "LS600 Controller SAT",
-        launch: "reader",
-        note: "Sequencer Program followed by LS600 Controller Test.",
-        cards: [
-            { label: "Sequencer program", file: "sat-ls600.cap", detail: "SAT loader + sequencer", style: "sequencer-band" },
-            { label: "Controller test", file: "ls600-controller-test.cap", detail: "diagnostic payload deck", style: "" },
-        ],
-    },
-    {
-        id: "ls600-transcoder-sat",
-        title: "LS600 Transcoder SAT",
-        launch: "reader",
-        note: "Sequencer Program followed by LS600 Transcoder Test.",
-        cards: [
-            { label: "Sequencer program", file: "sat-ls600.cap", detail: "SAT loader + sequencer", style: "sequencer-band" },
-            { label: "Transcoder test", file: "ls600-transcoder-test.cap", detail: "diagnostic payload deck", style: "" },
-        ],
-    },
-    {
-        id: "ls600-doe-sat",
-        title: "LS600 D.O.E. SAT",
-        launch: "reader",
-        note: "Sequencer Program followed by the LS600 D.O.E. deck.",
-        cards: [
-            { label: "Sequencer program", file: "sat-ls600.cap", detail: "SAT loader + sequencer", style: "sequencer-band" },
-            { label: "D.O.E. test", file: "ls600-doe.cap", detail: "diagnostic payload deck", style: "" },
-        ],
-    },
-];
+/* ---- the reader hopper ------------------------------------------------- *
+ * The page has exactly one way in, because the machine has one: a .cap card
+ * deck, chosen from the operator's own disk, written into the emscripten
+ * filesystem and handed to the card reader on connector 2. That is the same
+ * mount the command line performs for `ge deck.cap` -- no composition, no
+ * staging, no second format. Choosing the file IS putting the cards in the
+ * hopper; the load itself is still CLEAR -> LOAD -> START on the real keys. */
 
-const batch_sel = document.getElementById("batch_sel");
-const batch_prepare_button = document.getElementById("batch_prepare_button");
-const batch_status = document.getElementById("batch_status");
-const sim_hint = document.getElementById("sim_hint");
 const tray_visual = document.getElementById("tray_visual");
-const custom_file = document.getElementById("custom_file");
-const custom_stage_button = document.getElementById("custom_stage_button");
-const custom_status = document.getElementById("custom_status");
+const deck_file   = document.getElementById("deck_file");
+const deck_status = document.getElementById("deck_status");
 
-const satFileCache = new Set();
-let custom_bytes = null;
+let hopper = null;      /* { name, cards, left } while a deck is mounted */
 
-function pileMarkup(batch) {
+/* Draw the pile as the cards that are still waiting: a stack whose height
+ * follows what is left, so it visibly drains as the machine reads. */
+function drawHopper() {
     tray_visual.textContent = "";
-    for (const [idx, deck] of batch.cards.entries()) {
-        const pile = document.createElement("div");
-        pile.className = "card-pile";
-
-        const stack = document.createElement("div");
-        stack.className = "card-stack";
-
-        for (let i = 0; i < 6; i++) {
-            const slice = document.createElement("div");
-            slice.className = `card-slice ${deck.style || ""}`.trim();
-            slice.style.left = `${i * 5}px`;
-            slice.style.top = `${Math.max(0, 22 - i * 3)}px`;
-            slice.style.transform = `rotate(${(idx * 0.6) - 0.8 + i * 0.12}deg)`;
-            stack.appendChild(slice);
-        }
-
-        const cap = document.createElement("div");
-        cap.className = "pile-caption";
-        cap.innerHTML = `<b>${deck.label}</b><span>${deck.detail}</span>`;
-
-        pile.appendChild(stack);
-        pile.appendChild(cap);
-        tray_visual.appendChild(pile);
+    if (!hopper) {
+        const empty = document.createElement("div");
+        empty.className = "pile-caption";
+        empty.innerHTML = `<span></span>`;
+        empty.querySelector("span").textContent =
+            "Empty. Choose a .cap deck to put cards in the hopper.";
+        tray_visual.appendChild(empty);
+        return;
     }
-}
 
-function selectedBatch() {
-    return SAT_BATCHES.find(b => b.id === batch_sel.value) || SAT_BATCHES[0];
-}
+    const pile = document.createElement("div");
+    pile.className = "card-pile";
 
-function syncBatchView() {
-    const batch = selectedBatch();
-    pileMarkup(batch);
-    sim_hint.textContent = `${batch.note} Use CLEAR -> LOAD1 -> LOAD -> START; the IPL reads the first card and that card reads the rest.`;
-}
+    const stack = document.createElement("div");
+    stack.className = "card-stack";
 
-async function ensureSatFiles(batch) {
-    if (!module) return;
-    try { module.FS.mkdir("/sat"); } catch (_) {}
-
-    for (const deck of batch.cards) {
-        if (satFileCache.has(deck.file))
-            continue;
-        const resp = await fetch(`./Site_Acceptance_Test/${deck.file}`);
-        if (!resp.ok)
-            throw new Error(`missing ${deck.file}`);
-        const bytes = new Uint8Array(await resp.arrayBuffer());
-        module.FS.writeFile(`/sat/${deck.file}`, bytes);
-        satFileCache.add(deck.file);
+    const slices = hopper.left <= 0 ? 0 : Math.max(1, Math.min(6, Math.ceil(hopper.left / 4)));
+    for (let i = 0; i < slices; i++) {
+        const slice = document.createElement("div");
+        slice.className = "card-slice";
+        slice.style.left = `${i * 5}px`;
+        slice.style.top = `${Math.max(0, 22 - i * 3)}px`;
+        slice.style.transform = `rotate(${-0.8 + i * 0.12}deg)`;
+        stack.appendChild(slice);
     }
+
+    const cap = document.createElement("div");
+    cap.className = "pile-caption";
+    const detail = hopper.left > 0
+        ? `${hopper.left} of ${hopper.cards} cards still to feed`
+        : `all ${hopper.cards} cards read`;
+    cap.innerHTML = `<b></b><span></span>`;
+    cap.querySelector("b").textContent = hopper.name;
+    cap.querySelector("span").textContent = detail;
+
+    pile.appendChild(stack);
+    pile.appendChild(cap);
+    tray_visual.appendChild(pile);
 }
 
-batch_sel.innerHTML = SAT_BATCHES
-    .map(batch => `<option value="${batch.id}">${batch.title}</option>`)
-    .join("");
-syncBatchView();
-batch_sel.addEventListener("change", syncBatchView);
+/* The reader feeds cards while the machine runs, so keep the pile honest. */
+setInterval(() => {
+    if (!module || !hopper) return;
+    const left = module._deck_cards_left();
+    if (left >= 0 && left !== hopper.left) {
+        hopper.left = left;
+        drawHopper();
+    }
+}, 500);
+
+async function mountDeck(file) {
+    if (!module || !file) return;
+
+    if (!/\.cap$/i.test(file.name)) {
+        deck_status.textContent =
+            `${file.name} is not a .cap deck. A program reaches the machine only on ` +
+            `cards; build a deck with \`gasm -o prog.cap prog.s\`.`;
+        return;
+    }
+
+    let bytes;
+    try {
+        bytes = new Uint8Array(await file.arrayBuffer());
+        module.FS.writeFile('/deck.cap', bytes);
+    } catch (err) {
+        deck_status.textContent = "Could not read that file: " + err;
+        return;
+    }
+
+    /* mount_deck(binary=0 -> Hollerith, first_card=0): the reader finds the
+     * loader card itself, exactly as the CLI positional .cap path does. */
+    const rc = module._mount_deck(0, 0);
+    if (rc !== 0) {
+        hopper = null;
+        drawHopper();
+        deck_status.textContent =
+            `Could not read ${file.name} as a card deck (rc=${rc}). ` +
+            `The file must be a .cap capture.`;
+        return;
+    }
+
+    hopper = {
+        name:  file.name,
+        cards: module._deck_cards(),
+        left:  module._deck_cards_left(),
+    };
+    drawHopper();
+    deck_status.textContent =
+        `${file.name}: ${hopper.cards} cards in the hopper (${(bytes.length / 1024).toFixed(1)} KiB).\n` +
+        `Now on the console: CLEAR -> LOAD -> START.`;
+}
+
+deck_file.addEventListener("change", e => mountDeck(e.target.files[0]));
+drawHopper();
+
 
 power_on_button  .addEventListener("click", e => {
     if (!module) return;
@@ -1716,59 +1816,6 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 
 /* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
-
-batch_prepare_button.addEventListener("click", async () => {
-    if (!module) return;
-    const batch = selectedBatch();
-    batch_status.textContent = `Fetching ${batch.cards.length} deck pile(s)...`;
-    try {
-        await ensureSatFiles(batch);
-        const rc = module.ccall("prepare_sat_batch", "number", ["string"], [batch.id]);
-        if (rc === 0) {
-            batch_status.textContent = `Prepared ${batch.title}.\nCards are in the reader hopper.\nNow on the console: CLEAR -> LOAD -> START.`;
-        } else {
-            batch_status.textContent = `Could not prepare ${batch.title} (rc=${rc}).`;
-        }
-    } catch (err) {
-        batch_status.textContent = `Could not fetch SAT media: ${err}`;
-    }
-});
-
-custom_file.addEventListener("change", async e => {
-    const f = e.target.files[0];
-    if (!f) {
-        custom_bytes = null;
-        custom_status.textContent = "Reader hopper empty.";
-        return;
-    }
-    if (!/\.cap$/i.test(f.name)) {
-        custom_bytes = null;
-        custom_status.textContent = `${f.name} is not a .cap deck. Programs reach the machine on cards; build a deck with \`gasm -o prog.cap prog.s\`.`;
-        return;
-    }
-    custom_bytes = new Uint8Array(await f.arrayBuffer());
-    custom_status.textContent = `Selected ${f.name} (${custom_bytes.length} bytes).`;
-});
-
-custom_stage_button.addEventListener("click", () => {
-    if (!module || !custom_bytes) return;
-
-    try {
-        module.FS.writeFile('/deck.cap', custom_bytes);
-    } catch (err) {
-        custom_status.textContent = "FS error: " + err;
-        return;
-    }
-
-    /* mount_deck(binary=0 -> Hollerith, first_card=0): the reader finds the
-     * loader card itself, exactly as the CLI --deck path does. */
-    const rc = module._mount_deck(0, 0);
-    if (rc === 0) {
-        custom_status.textContent = "Cards are in the reader hopper.\nNow: CLEAR -> LOAD1 -> LOAD -> START.";
-    } else {
-        custom_status.textContent = "Could not read that deck (rc=" + rc + ").";
-    }
-});
 
 document.set_lamp = function(lamp, val) {
     if (!module) return;
@@ -1918,8 +1965,7 @@ document.set_dial = function(e) {
 GE_Module({ print: () => {}, printErr: () => {} })
     .then(m => {
         module = m
-        batch_prepare_button.disabled = false
-        custom_stage_button.disabled = false
+        deck_file.disabled = false     /* the hopper only opens once the machine is up */
         module._set_load_unit(load1)   /* sync the LOAD selector lamp to the default */
         module._set_speed(parseFloat(speed_sel.value))   /* default: nominal real time */
     })

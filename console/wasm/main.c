@@ -14,7 +14,6 @@
 #include "../../disasm.h"
 #include "../../cap.h"
 #include "../../peripherical.h"
-#include "../../sat_batches.h"
 #include "../../transcode.h"
 #include "../../bit.h"
 
@@ -286,13 +285,15 @@ void EMSCRIPTEN_KEEPALIVE press_start() {
         send_console();
         return;
     }
-    /* START always runs the machine (NORM). The deck is already resident and
-     * entered by LOAD, so START just releases the CPU. Clearing `halted` lets a
-     * START after a HLT resume — and because LOAD (not START) loads the image,
-     * anything the operator forced into memory after LOAD survives the run. */
-    ge->ALTO = 0;
-    running_loop = 1;
-    ge_start(ge);
+
+    /* At NORM, START runs the machine: the deck is already resident and entered
+     * by LOAD, so this just releases the CPU, and clearing ALTO lets a START
+     * after a HLT resume. Off NORM it is one maintenance cycle and the machine
+     * stays stopped -- ge_console_start does it and says which happened, so the
+     * animation loop is only released for a real run (see console.c: releasing
+     * it for a storage key-in filled core with the keyed byte). */
+    if (ge_console_start(ge))
+        running_loop = 1;
     send_console();
 }
 
@@ -325,28 +326,11 @@ int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
     return rc;
 }
 
-int EMSCRIPTEN_KEEPALIVE prepare_sat_batch(const char *id) {
-    const struct sat_batch_info *info;
-    char note[256];
-
-    if (!id)
-        return -1;
-
-    info = sat_batch_find(id);
-    if (!info)
-        return -1;
-
-    reset_sim_bindings();
-
-    ge_load_1(ge);
-    if (sat_batch_prepare_deck("/sat", id, "/deck.cap", note, sizeof(note)) != 0)
-        return -1;
-    if (cardreader_register(ge, "/deck.cap", TC_NORMAL) != 0)
-        return -1;
-
-    send_console();
-    return 0;
-}
+/* What the operator can see by looking at the hopper: the size of the deck
+ * that was put in it, and how many cards are still waiting at the throat. -1
+ * means there is no reader on the connector. */
+int EMSCRIPTEN_KEEPALIVE deck_cards()      { return cardreader_deck_cards(ge); }
+int EMSCRIPTEN_KEEPALIVE deck_cards_left() { return cardreader_cards_left(ge); }
 
 void EMSCRIPTEN_KEEPALIVE set_switches(int flags, int am) {
     struct ge_console_switches switches;
@@ -399,11 +383,17 @@ void em_main_loop() {
     last_now_ms = now;
 
     /* Powered off: don't run cycles and don't build a backlog of "owed" time,
-     * so resuming starts fresh instead of fast-forwarding. We do NOT stop on
-     * ge_halted(ge): a real GE-120's delay line keeps running through a HLT (the
-     * CPU is frozen via ALTO, but the panel stays live), which is what lets
-     * console forcing/display work after a halt. */
-    if (!ge->powered || !running_loop) {
+     * so resuming starts fresh instead of fast-forwarding.
+     *
+     * POWERED is the only condition. We do NOT stop on ge_halted(ge), and we do
+     * not wait for a program to be running: a powered GE-120's delay line turns
+     * whatever the CPU is doing, and the Logic Sequence Matrix it clocks goes on
+     * running the DISPLAY sequence -- which is what puts the rotary-selected
+     * register on the lamps and what makes the console work on a machine with
+     * nothing in the reader at all. Gating this on `running_loop` left the panel
+     * frozen until a deck was started: register forcing "worked" in the model
+     * and nothing moved on the glass, because the emulator was not turning. */
+    if (!ge->powered) {
         cycle_budget = 0.0;
         return;
     }
