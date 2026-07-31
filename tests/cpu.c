@@ -812,4 +812,24 @@ UTEST(console_fidelity, inv_add_follows_the_cycle_it_reports)
     ASSERT_FALSE(ge_halted(&g));   /* INAR: it never stopped */
     ASSERT_GT(on, 1);              /* and the lamp blinked, both ways */
     ASSERT_GT(off, 1);
+
+    /* MEM CHECK does not blink with it: the machine is reading core it has
+     * written nothing to, and gemu's array is clean because a real machine's
+     * core is (it retains what the last program left, check bit and all). The
+     * machine that is genuinely powered up over never-written core is the
+     * other case, and it stands MEM CHECK on for as long as it runs -- which
+     * is what Electric Dreams shows, and what mem_check_blank models. */
+    ASSERT_EQ((int)g.mem_check, 0);
+
+    struct ge b;
+    ge_init(&b);
+    b.mem_check_blank = 1;
+    ge_clear(&b);
+    ge_set_console_switches(&b, &s);
+    ge_start(&b);
+    for (long i = 0; i < 200000; i++)
+        ge_run_cycle(&b);
+
+    ASSERT_FALSE(ge_halted(&b));   /* still INAR, still running */
+    ASSERT_EQ((int)b.mem_check, 1);
 }

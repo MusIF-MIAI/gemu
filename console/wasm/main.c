@@ -14,6 +14,7 @@
 #include "../../disasm.h"
 #include "../../cap.h"
 #include "../../peripherical.h"
+#include "../../signals.h"
 #include "../../transcode.h"
 #include "../../bit.h"
 
@@ -22,11 +23,14 @@ struct ge* ge = &ge130;
 
 int running_loop = 0;
 
-/* Run-speed pacing. The GE-120 elementary (memory) cycle is a nominal 4 us
- * (CPU[4]: "memory cycle of nominal 2/4/6 us for 130/120/115/3"), and one
- * ge_run_cycle is one such cycle — so nominal real time is 250 cycles/ms.
- * run_speed scales that: 1.0 = nominal wall-clock real time. */
-#define GE120_CYCLE_US 4.0
+/* Run-speed pacing. One ge_run_cycle is one elementary (memory) cycle, and how
+ * long that takes is the machine's own business: the E03 strap picks it, 2/4/6
+ * us for the UCE 468/467/466 (cp06 ch.002 TAB.1, ge_cycle_period_ns). This
+ * machine is a 468, so nominal real time is 500 cycles/ms -- the panel used to
+ * assume the 4 us of a 467 and ran the whole machine at half speed, which is
+ * exactly the factor of two Dan measured against the iron. run_speed scales
+ * it: 1.0 = nominal wall-clock real time. */
+#define CYCLES_PER_MS(ge) (1000000.0 / (double)ge_cycle_period_ns(ge))
 static double run_speed    = 1.0;
 static double last_now_ms  = 0.0;
 static double cycle_budget = 0.0;
@@ -103,101 +107,125 @@ void EMSCRIPTEN_KEEPALIVE printer_key(int c) {
     printer_feed_key(ge, (uint8_t)c);
 }
 
+/* Only the lamps that CHANGED cross into JS.
+ *
+ * The panel has about 150 of them and send_console runs every frame; pushing
+ * all of them meant 150 EM_JS calls, 150 string decodes and 150 DOM lookups
+ * per frame whatever the machine was doing, which is the sort of overhead that
+ * decides whether the page keeps up with a 2 us machine. Steady state is now
+ * nearly silent: a lamp is written when it moves. The order of the LAMP() calls
+ * below is the index, so it must not be reordered without invalidating the
+ * cache, which `lamps_dirty` does anyway whenever the page asks for a repaint. */
+static uint8_t lamp_prev[192];
+static int lamps_dirty = 1;
+
+void EMSCRIPTEN_KEEPALIVE refresh_lamps(void);
+
 void send_console() {
     struct ge_console console = { 0 };
     int powered = ge->powered != 0;
     int running = powered && running_loop;
+    int lamp_i = 0;
 
     ge_fill_console_data(ge, &console);
 
-    set_lamp("RO_0", BIT(console.lamps.RO, 0));
-    set_lamp("RO_1", BIT(console.lamps.RO, 1));
-    set_lamp("RO_2", BIT(console.lamps.RO, 2));
-    set_lamp("RO_3", BIT(console.lamps.RO, 3));
-    set_lamp("RO_4", BIT(console.lamps.RO, 4));
-    set_lamp("RO_5", BIT(console.lamps.RO, 5));
-    set_lamp("RO_6", BIT(console.lamps.RO, 6));
-    set_lamp("RO_7", BIT(console.lamps.RO, 7));
-    set_lamp("RO_8", BIT(console.lamps.RO, 8));
+#define LAMP(name, val) do {                                       \
+        uint8_t v_ = (val) ? 1 : 0;                                \
+        if (lamps_dirty || lamp_prev[lamp_i] != v_) {              \
+            set_lamp(name, v_);                                    \
+            lamp_prev[lamp_i] = v_;                                \
+        }                                                          \
+        lamp_i++;                                                  \
+    } while (0)
 
-    set_lamp("SO_0", BIT(console.lamps.SO, 0));
-    set_lamp("SO_1", BIT(console.lamps.SO, 1));
-    set_lamp("SO_2", BIT(console.lamps.SO, 2));
-    set_lamp("SO_3", BIT(console.lamps.SO, 3));
-    set_lamp("SO_4", BIT(console.lamps.SO, 4));
-    set_lamp("SO_5", BIT(console.lamps.SO, 5));
-    set_lamp("SO_6", BIT(console.lamps.SO, 6));
-    set_lamp("SO_7", BIT(console.lamps.SO, 7));
+    LAMP("RO_0", BIT(console.lamps.RO, 0));
+    LAMP("RO_1", BIT(console.lamps.RO, 1));
+    LAMP("RO_2", BIT(console.lamps.RO, 2));
+    LAMP("RO_3", BIT(console.lamps.RO, 3));
+    LAMP("RO_4", BIT(console.lamps.RO, 4));
+    LAMP("RO_5", BIT(console.lamps.RO, 5));
+    LAMP("RO_6", BIT(console.lamps.RO, 6));
+    LAMP("RO_7", BIT(console.lamps.RO, 7));
+    LAMP("RO_8", BIT(console.lamps.RO, 8));
 
-    set_lamp("FA_0", BIT(console.lamps.FA, 0));
-    set_lamp("FA_1", BIT(console.lamps.FA, 1));
-    set_lamp("FA_2", BIT(console.lamps.FA, 2));
-    set_lamp("FA_3", BIT(console.lamps.FA, 3));
+    LAMP("SO_0", BIT(console.lamps.SO, 0));
+    LAMP("SO_1", BIT(console.lamps.SO, 1));
+    LAMP("SO_2", BIT(console.lamps.SO, 2));
+    LAMP("SO_3", BIT(console.lamps.SO, 3));
+    LAMP("SO_4", BIT(console.lamps.SO, 4));
+    LAMP("SO_5", BIT(console.lamps.SO, 5));
+    LAMP("SO_6", BIT(console.lamps.SO, 6));
+    LAMP("SO_7", BIT(console.lamps.SO, 7));
 
-    set_lamp("SA_0", BIT(console.lamps.SA, 0));
-    set_lamp("SA_1", BIT(console.lamps.SA, 1));
-    set_lamp("SA_2", BIT(console.lamps.SA, 2));
-    set_lamp("SA_3", BIT(console.lamps.SA, 3));
-    set_lamp("SA_4", BIT(console.lamps.SA, 4));
-    set_lamp("SA_5", BIT(console.lamps.SA, 5));
-    set_lamp("SA_6", BIT(console.lamps.SA, 6));
-    set_lamp("SA_7", BIT(console.lamps.SA, 7));
+    LAMP("FA_0", BIT(console.lamps.FA, 0));
+    LAMP("FA_1", BIT(console.lamps.FA, 1));
+    LAMP("FA_2", BIT(console.lamps.FA, 2));
+    LAMP("FA_3", BIT(console.lamps.FA, 3));
 
-    set_lamp("B_0", BIT(console.lamps.B, 0));
-    set_lamp("B_1", BIT(console.lamps.B, 1));
-    set_lamp("B_2", BIT(console.lamps.B, 2));
-    set_lamp("B_3", BIT(console.lamps.B, 3));
+    LAMP("SA_0", BIT(console.lamps.SA, 0));
+    LAMP("SA_1", BIT(console.lamps.SA, 1));
+    LAMP("SA_2", BIT(console.lamps.SA, 2));
+    LAMP("SA_3", BIT(console.lamps.SA, 3));
+    LAMP("SA_4", BIT(console.lamps.SA, 4));
+    LAMP("SA_5", BIT(console.lamps.SA, 5));
+    LAMP("SA_6", BIT(console.lamps.SA, 6));
+    LAMP("SA_7", BIT(console.lamps.SA, 7));
 
-    set_lamp("ADD_0", BIT(console.lamps.ADD_reg,  0));
-    set_lamp("ADD_1", BIT(console.lamps.ADD_reg,  1));
-    set_lamp("ADD_2", BIT(console.lamps.ADD_reg,  2));
-    set_lamp("ADD_3", BIT(console.lamps.ADD_reg,  3));
-    set_lamp("ADD_4", BIT(console.lamps.ADD_reg,  4));
-    set_lamp("ADD_5", BIT(console.lamps.ADD_reg,  5));
-    set_lamp("ADD_6", BIT(console.lamps.ADD_reg,  6));
-    set_lamp("ADD_7", BIT(console.lamps.ADD_reg,  7));
-    set_lamp("ADD_8", BIT(console.lamps.ADD_reg,  8));
-    set_lamp("ADD_9", BIT(console.lamps.ADD_reg,  9));
-    set_lamp("ADD_A", BIT(console.lamps.ADD_reg, 10));
-    set_lamp("ADD_B", BIT(console.lamps.ADD_reg, 11));
-    set_lamp("ADD_C", BIT(console.lamps.ADD_reg, 12));
-    set_lamp("ADD_D", BIT(console.lamps.ADD_reg, 13));
-    set_lamp("ADD_E", BIT(console.lamps.ADD_reg, 14));
-    set_lamp("ADD_F", BIT(console.lamps.ADD_reg, 15));
+    LAMP("B_0", BIT(console.lamps.B, 0));
+    LAMP("B_1", BIT(console.lamps.B, 1));
+    LAMP("B_2", BIT(console.lamps.B, 2));
+    LAMP("B_3", BIT(console.lamps.B, 3));
 
-    set_lamp("OP_0", BIT(console.lamps.OP_reg, 0));
-    set_lamp("OP_1", BIT(console.lamps.OP_reg, 1));
-    set_lamp("OP_2", BIT(console.lamps.OP_reg, 2));
-    set_lamp("OP_3", BIT(console.lamps.OP_reg, 3));
-    set_lamp("OP_4", BIT(console.lamps.OP_reg, 4));
-    set_lamp("OP_5", BIT(console.lamps.OP_reg, 5));
-    set_lamp("OP_6", BIT(console.lamps.OP_reg, 6));
-    set_lamp("OP_7", BIT(console.lamps.OP_reg, 7));
+    LAMP("ADD_0", BIT(console.lamps.ADD_reg,  0));
+    LAMP("ADD_1", BIT(console.lamps.ADD_reg,  1));
+    LAMP("ADD_2", BIT(console.lamps.ADD_reg,  2));
+    LAMP("ADD_3", BIT(console.lamps.ADD_reg,  3));
+    LAMP("ADD_4", BIT(console.lamps.ADD_reg,  4));
+    LAMP("ADD_5", BIT(console.lamps.ADD_reg,  5));
+    LAMP("ADD_6", BIT(console.lamps.ADD_reg,  6));
+    LAMP("ADD_7", BIT(console.lamps.ADD_reg,  7));
+    LAMP("ADD_8", BIT(console.lamps.ADD_reg,  8));
+    LAMP("ADD_9", BIT(console.lamps.ADD_reg,  9));
+    LAMP("ADD_A", BIT(console.lamps.ADD_reg, 10));
+    LAMP("ADD_B", BIT(console.lamps.ADD_reg, 11));
+    LAMP("ADD_C", BIT(console.lamps.ADD_reg, 12));
+    LAMP("ADD_D", BIT(console.lamps.ADD_reg, 13));
+    LAMP("ADD_E", BIT(console.lamps.ADD_reg, 14));
+    LAMP("ADD_F", BIT(console.lamps.ADD_reg, 15));
 
-    set_lamp("UR",  console.lamps.UR);
-    set_lamp("C3",  console.lamps.C3);
-    set_lamp("C2",  console.lamps.C2);
-    set_lamp("C1",  console.lamps.C1);
-    set_lamp("I",   console.lamps.I );
-    set_lamp("JE",  console.lamps.JE);
-    set_lamp("IM",  console.lamps.IM);
-    set_lamp("NZ",  console.lamps.NZ);
-    set_lamp("OF",  console.lamps.OF);
+    LAMP("OP_0", BIT(console.lamps.OP_reg, 0));
+    LAMP("OP_1", BIT(console.lamps.OP_reg, 1));
+    LAMP("OP_2", BIT(console.lamps.OP_reg, 2));
+    LAMP("OP_3", BIT(console.lamps.OP_reg, 3));
+    LAMP("OP_4", BIT(console.lamps.OP_reg, 4));
+    LAMP("OP_5", BIT(console.lamps.OP_reg, 5));
+    LAMP("OP_6", BIT(console.lamps.OP_reg, 6));
+    LAMP("OP_7", BIT(console.lamps.OP_reg, 7));
 
-    set_lamp("DC_ALERT",       console.lamps.DC_ALERT      );
-    set_lamp("POWER_OFF",      !powered                    );
-    set_lamp("STAND_BY",       powered && !running         );
-    set_lamp("POWER_ON",       powered                     );
-    set_lamp("MAINTENANCE_ON", console.lamps.MAINTENANCE_ON);
-    set_lamp("MEM_CHECK",      console.lamps.MEM_CHECK     );
-    set_lamp("INV_ADD",        console.lamps.INV_ADD       );
-    set_lamp("SWITCH_1",       console.lamps.SWITCH_1      );
-    set_lamp("SWITCH_2",       console.lamps.SWITCH_2      );
-    set_lamp("STEP_BY_STEP",   console.lamps.STEP_BY_STEP  );
-    set_lamp("HALT",           console.lamps.HALT          );
-    set_lamp("LOAD_1",         console.lamps.LOAD_1        );
-    set_lamp("LOAD_2",         console.lamps.LOAD_2        );
-    set_lamp("OPERATOR_CALL",  console.lamps.OPERATOR_CALL );
+    LAMP("UR",  console.lamps.UR);
+    LAMP("C3",  console.lamps.C3);
+    LAMP("C2",  console.lamps.C2);
+    LAMP("C1",  console.lamps.C1);
+    LAMP("I",   console.lamps.I );
+    LAMP("JE",  console.lamps.JE);
+    LAMP("IM",  console.lamps.IM);
+    LAMP("NZ",  console.lamps.NZ);
+    LAMP("OF",  console.lamps.OF);
+
+    LAMP("DC_ALERT",       console.lamps.DC_ALERT      );
+    LAMP("POWER_OFF",      !powered                    );
+    LAMP("STAND_BY",       powered && !running         );
+    LAMP("POWER_ON",       powered                     );
+    LAMP("MAINTENANCE_ON", console.lamps.MAINTENANCE_ON);
+    LAMP("MEM_CHECK",      console.lamps.MEM_CHECK     );
+    LAMP("INV_ADD",        console.lamps.INV_ADD       );
+    LAMP("SWITCH_1",       console.lamps.SWITCH_1      );
+    LAMP("SWITCH_2",       console.lamps.SWITCH_2      );
+    LAMP("STEP_BY_STEP",   console.lamps.STEP_BY_STEP  );
+    LAMP("HALT",           console.lamps.HALT          );
+    LAMP("LOAD_1",         console.lamps.LOAD_1        );
+    LAMP("LOAD_2",         console.lamps.LOAD_2        );
+    LAMP("OPERATOR_CALL",  console.lamps.OPERATOR_CALL );
 
     /* gdb-style disassembly window centred on the instruction-start PC
      * (latched in the alpha fetch), so the highlight stays on the instruction
@@ -207,6 +235,9 @@ void send_console() {
      * and, while following, scrolls it into view). Rebuild the full-space
      * listing only occasionally (~2 Hz) since it covers the whole program and
      * is large; the JS skips the DOM rebuild when the text is unchanged. */
+    lamps_dirty = 0;
+#undef LAMP
+
     disasm_set_pc(ge->instr_pc);
     {
         static unsigned dcount = 0;
@@ -237,11 +268,14 @@ void EMSCRIPTEN_KEEPALIVE press_power_off() { wasm_set_power(0); }
  * test the same lamps the same way. */
 void EMSCRIPTEN_KEEPALIVE set_lamps_check(int held) {
     ge->lamps_test = held ? 1 : 0;
+    lamps_dirty = 1;            /* every lamp changes, both ways */
     send_console();
 }
 
-/* Push the real lamp states again. */
-void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { send_console(); }
+/* Push the real lamp states again -- every one of them, whether it moved or
+ * not: the caller is asking because something outside the model touched the
+ * glass (the LAMPS CHECK bulb test paints the whole panel from JS). */
+void EMSCRIPTEN_KEEPALIVE refresh_lamps()   { lamps_dirty = 1; send_console(); }
 /* The page's only way in is the reader hopper: it writes the chosen deck to
  * /deck.cap and calls mount_deck(). There is no path from a file straight into
  * memory, because the machine has no such door. */
@@ -402,9 +436,10 @@ void em_main_loop() {
     if (elapsed > 100.0)
         elapsed = 100.0;
 
-    /* Nominal real time: 1000/4 = 250 cycles per ms, scaled by run_speed. The
-     * fractional remainder is carried in cycle_budget so timing doesn't drift. */
-    cycle_budget += elapsed * (1000.0 / GE120_CYCLE_US) * run_speed;
+    /* Nominal real time for the strapped cycle period (500 cycles/ms on this
+     * 2 us machine), scaled by run_speed. The fractional remainder is carried
+     * in cycle_budget so the timing does not drift. */
+    cycle_budget += elapsed * CYCLES_PER_MS(ge) * run_speed;
 
     long n = (long)cycle_budget;
     cycle_budget -= (double)n;

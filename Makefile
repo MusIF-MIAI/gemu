@@ -1,5 +1,11 @@
 OBJS=msl.o ge.o pulse.o msl-timings.o console.o console_socket.o peripherical.o log.o reader.o cap.o transcode.o cardreader.o printer.o connector34.o disk.o tape.o channel.o gecode.o disasm.o sat_batches.o alu_cc.o alu_bin.o alu_logic.o alu_dec.o alu_reg.o
-CFLAGS+=-MD -MP
+# -O2 because the emulator has real work to do: one ge_run_cycle is one 2 us
+# elementary cycle on this machine, so keeping up with the iron means 500,000
+# of them a second. Unoptimised, the native build managed 405,000 and the wasm
+# panel about 140,000 -- the browser console ran at a quarter of the machine's
+# speed and had no way to say so. Nothing here needs -O0 to be debuggable; add
+# `CFLAGS=-O0 -g` on the command line when it does.
+CFLAGS+=-O2 -MD -MP
 CC=gcc
 TESTS=$(patsubst %.c,%.o,$(wildcard tests/*.c))
 

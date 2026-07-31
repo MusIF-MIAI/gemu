@@ -1817,17 +1817,24 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 /* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
 
+/* Lamp elements, looked up once. This is called from the emulator for every
+ * lamp that moves, on every frame, so the id lookup was the most-executed line
+ * on the page. */
+const _lampEls = new Map();
+
 document.set_lamp = function(lamp, val) {
     if (!module) return;
     if (lampCheckActive) return;   /* don't fight the bulb test while it's held */
 
-    const e = document.getElementById('l_' + lamp);
+    let e = _lampEls.get(lamp);
+    if (e === undefined) {
+        e = document.getElementById('l_' + lamp);
+        _lampEls.set(lamp, e);
+    }
     if (!e) return;
-    
+
     if (val) e.classList.add("on")
     else     e.classList.remove("on")
-
-    if (val) console.log()
 }
 
 /* live disassembly: each line is "<marker><AAAA>: <hex>  <asm>"; the line whose

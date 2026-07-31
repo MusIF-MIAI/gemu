@@ -186,10 +186,21 @@ static void on_TO50(struct ge *ge) {
             ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n",
                    ge->rVO, ge->rRO);
 
-            /* Parity check: only for locations that have been written.
-             * Cleared/uninitialised locations are not checked to avoid
-             * false MEM CHECK on startup. */
-            if (ge->mem_written[ge->rVO]) {
+            /* Parity check. A location this machine has written carries a
+             * check bit gemu generated, and comparing it is the whole point.
+             *
+             * A location it has NOT written is a question about the iron, not
+             * about the model: core retains, so on a real machine every cell
+             * holds something with the check bit whatever wrote it last left
+             * behind, and reads clean. gemu's array starts virgin -- data 0
+             * with check bit 0, which is an even count and therefore a parity
+             * ERROR -- so checking it would report a fault the machine does
+             * not have. Hence the exemption, and hence `mem_check_blank` for
+             * the machine that really is in that state: powered up with core
+             * never written, MEM CHECK stands on for as long as it runs
+             * through it, which is what Electric Dreams shows with nothing
+             * loaded. See ge.h. */
+            if (ge->mem_written[ge->rVO] || ge->mem_check_blank) {
                 if (odd_parity(ge->mem[ge->rVO]) != ge->mem_parity[ge->rVO]) {
                     mem_fault(ge, &ge->mem_check);
                     ge_log(LOG_STATES,

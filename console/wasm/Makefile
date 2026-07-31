@@ -5,7 +5,13 @@ AR=emar
 # filesystem (MEMFS) so the card-reader bootstrap can read it. That file is the
 # page's only input: the deck comes from the operator's own disk, exactly as
 # `ge deck.cap` takes it from the command line, so nothing is vendored here.
-CFLAGS=-I../.. -sEXPORTED_RUNTIME_METHODS=callMain,FS,ccall -sFORCE_FILESYSTEM=1
+#
+# -O2 is not optional here: the panel paces itself to the machine's own 2 us
+# elementary cycle, which is 500,000 ge_run_cycle a second, and an unoptimised
+# build managed about 140,000 -- the console ran at a quarter speed. emcc must
+# see it at BOTH compile and link (the link step is where the wasm is
+# optimised), and libge.a picks it up from the top-level CFLAGS.
+CFLAGS=-O2 -I../.. -sEXPORTED_RUNTIME_METHODS=callMain,FS,ccall -sFORCE_FILESYSTEM=1
 
 LIBGE=../../libge.a
 

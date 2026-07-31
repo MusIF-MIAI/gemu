@@ -200,10 +200,21 @@ In position 8, `AM08` forces the memory check bit (even if incorrect) when the
 > with the stop inhibited. Nothing loaded, `INAR` in, `START`: the machine
 > walks zeroes up through core and **INV ADD** comes on as the addresser passes
 > the installed 32K, then goes out as it wraps to `0x0000`, blinking once per
-> lap (~0.2 s each way at nominal speed). With `INAR` out the machine stops ON
-> the faulting cycle, so the lamp stands there lit until `CLEAR` — the same
+> lap (~0.1 s each way on this 2 µs machine). With `INAR` out the machine stops
+> ON the faulting cycle, so the lamp stands there lit until `CLEAR` — the same
 > behaviour seen from the other side. Observed on the restored machine,
 > 2026-07-31; test `console_fidelity.inv_add_follows_the_cycle_it_reports`.
+>
+> **MEM CHECK** stands on throughout that same run on the iron, and does not by
+> default in gemu. The difference is what "core it has not written" means: core
+> retains, so on a machine in service every cell holds something with the check
+> bit its last write left, and reads clean — which is the default, and what
+> lets a deck read scratch it has not filled yet. A machine powered up over
+> core that has never been written has no valid check bit anywhere, and running
+> it through blank core stands MEM CHECK on. Set `ge->mem_check_blank` for
+> that machine. It is a property of the iron in front of you, not a rule:
+> with it set, `funktionalcpu.cap` stops at cycle 57660 on a MEM CHECK at
+> `0x00E8`, a scratch cell the deck reads before writing.
 >
 > **Position 9 is the read-out.** `RO` is cleared at `TO20` of every cycle
 > (fo.142), so anything on those lamps is put there by the cycle you are
@@ -273,7 +284,7 @@ ge_run_cycle(&g);                      /* advance the delay-line clock  */
 |-----------|--------------|-------|
 | **CLI (headless)** | `./ge deck.cap` (`--deck` is an alias) | Drives CLEAR→LOAD1→LOAD→START for you and runs to HLT; `--trace` for logs. A `.cap` deck is the only input it takes. |
 | **ncurses TUI** | `./ge --tui` | Implies `--console`; spawns `console/curses/console.py` against the `/tmp/gemu.console` socket. |
-| **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `press_power_off`, `set_switches(flags, am)`, `set_register_selector(s)`, `set_switch_1_2(s1, s2)` (the program-readable switches → `JS1`/`JS2`), `set_load_unit(load1)` (LOAD1/LOAD2 selector), `set_speed(mult)` (run-speed multiplier), `mount_deck` (deck loader) with `deck_cards`/`deck_cards_left` (what is in the hopper), `refresh_lamps` (after LAMPS CHECK). The page's only input is a `.cap` deck chosen from the operator's disk — picking the file mounts it, exactly as the CLI mounts a positional `.cap`; nothing is vendored beside the page and there is no second format. The run loop is `requestAnimationFrame`-driven and **paces the cycle count to nominal GE-120 wall-clock time** (one `ge_run_cycle` = one 4 µs elementary cycle → 250 cycles/ms; CPU[4] "memory cycle of nominal 2/4/6 µs for 130/120/115/3"), with a simulator-toolbar speed selector (default real time). For instruction-level inspection use PAPA single-step instead. A live gdb-style disassembly window (shared `disasm.c`, driven from `opcodes.h`) tracks the program counter — `AAAA: <bytes>  MNEM ops`, current instruction highlighted. |
+| **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `press_power_off`, `set_switches(flags, am)`, `set_register_selector(s)`, `set_switch_1_2(s1, s2)` (the program-readable switches → `JS1`/`JS2`), `set_load_unit(load1)` (LOAD1/LOAD2 selector), `set_speed(mult)` (run-speed multiplier), `mount_deck` (deck loader) with `deck_cards`/`deck_cards_left` (what is in the hopper), `refresh_lamps` (after LAMPS CHECK). The page's only input is a `.cap` deck chosen from the operator's disk — picking the file mounts it, exactly as the CLI mounts a positional `.cap`; nothing is vendored beside the page and there is no second format. The run loop is `requestAnimationFrame`-driven and **paces the cycle count to nominal GE-120 wall-clock time**, taking the elementary-cycle period from the machine's own straps — `ge_cycle_period_ns`, the E03 row of cp06 ch.002 TAB.1: 2/4/6 µs for a UCE 468/467/466. This machine is a 468, so real time is **500 cycles/ms**; the panel used to assume 4 µs and ran everything at half the iron's speed. A simulator-toolbar selector scales it (default real time). For instruction-level inspection use PAPA single-step instead. A live gdb-style disassembly window (shared `disasm.c`, driven from `opcodes.h`) tracks the program counter — `AAAA: <bytes>  MNEM ops`, current instruction highlighted. |
 
 The WebAssembly `set_switches` packs the maintenance switches into a flags word:
 

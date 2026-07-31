@@ -700,6 +700,25 @@ struct ge {
     /** 1 once a location has been written; prevents false MEM CHECK on cleared memory */
     uint8_t mem_written[MEM_SIZE];
 
+    /**
+     * Read never-written core as a parity error (default 0).
+     *
+     * Core retains, so on a machine that has been in service every cell holds
+     * something with a valid check bit and reads clean — which is what the
+     * default models, and what lets a deck read scratch it has not written
+     * yet. A machine powered up with core that has never been written is in
+     * the other state: there is no valid check bit anywhere, and running it
+     * through blank core stands MEM CHECK on. That is what the restored
+     * machine shows with nothing loaded (2026-07-31, alongside the INV ADD
+     * blink), and setting this reproduces it.
+     *
+     * It is a property of the machine in front of you, not a rule: with it
+     * set, `funktionalcpu.cap` stops at cycle 57660 on a MEM CHECK at 0x00E8,
+     * a scratch cell the deck reads before writing — which on the iron holds
+     * the last program's leftovers, with their check bit.
+     */
+    uint8_t mem_check_blank;
+
     /** Installed memory size; 0 is treated as MEM_SIZE (full address space) */
     uint32_t mem_size;
 
