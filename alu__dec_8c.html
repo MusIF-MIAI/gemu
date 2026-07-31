@@ -68,18 +68,18 @@ Functions</h2></td></tr>
 <tr class="memitem:a76b9b9b6606effc06908ff90d8c1c99c" id="r_a76b9b9b6606effc06908ff90d8c1c99c"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a76b9b9b6606effc06908ff90d8c1c99c">dec_get_digit</a> (const uint8_t *mem, uint16_t packed_addr, int packed_bytes, int digit_idx)</td></tr>
 <tr class="memdesc:a76b9b9b6606effc06908ff90d8c1c99c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extract a single decimal digit from a packed field.  <br /></td></tr>
 <tr class="separator:a76b9b9b6606effc06908ff90d8c1c99c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4be9077a928a1cdb2d7035ea3865b186" id="r_a4be9077a928a1cdb2d7035ea3865b186"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a4be9077a928a1cdb2d7035ea3865b186">dec_set_digit</a> (uint8_t *mem, uint16_t packed_addr, int packed_bytes, int digit_idx, uint8_t digit)</td></tr>
-<tr class="memdesc:a4be9077a928a1cdb2d7035ea3865b186"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a single digit in a packed field (same indexing as dec_get_digit).  <br /></td></tr>
-<tr class="separator:a4be9077a928a1cdb2d7035ea3865b186"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4986d40ca66922a37d9b352b63656e34" id="r_a4986d40ca66922a37d9b352b63656e34"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a4986d40ca66922a37d9b352b63656e34">dec_set_digit</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t packed_addr, int packed_bytes, int digit_idx, uint8_t digit)</td></tr>
+<tr class="memdesc:a4986d40ca66922a37d9b352b63656e34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a single digit in a packed field (same indexing as dec_get_digit).  <br /></td></tr>
+<tr class="separator:a4986d40ca66922a37d9b352b63656e34"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7af36e20903a5c69d7173929040df533" id="r_a7af36e20903a5c69d7173929040df533"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a7af36e20903a5c69d7173929040df533">dec_get_sign</a> (const uint8_t *mem, uint16_t packed_addr)</td></tr>
 <tr class="memdesc:a7af36e20903a5c69d7173929040df533"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the sign nibble of a packed field.  <br /></td></tr>
 <tr class="separator:a7af36e20903a5c69d7173929040df533"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51930040e2e302410a183bafd81f4034" id="r_a51930040e2e302410a183bafd81f4034"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a51930040e2e302410a183bafd81f4034">dec_set_sign</a> (uint8_t *mem, uint16_t packed_addr, uint8_t sign)</td></tr>
-<tr class="memdesc:a51930040e2e302410a183bafd81f4034"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the sign nibble of a packed field.  <br /></td></tr>
-<tr class="separator:a51930040e2e302410a183bafd81f4034"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5aeb1f5e1e489fe1875d2c4a4620e149" id="r_a5aeb1f5e1e489fe1875d2c4a4620e149"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a5aeb1f5e1e489fe1875d2c4a4620e149">dec_zero_digits</a> (uint8_t *mem, uint16_t packed_addr, int packed_bytes)</td></tr>
-<tr class="memdesc:a5aeb1f5e1e489fe1875d2c4a4620e149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear all digits (not sign) in a packed field to zero.  <br /></td></tr>
-<tr class="separator:a5aeb1f5e1e489fe1875d2c4a4620e149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75b679a94bdaf0a648038d4e709ba449" id="r_a75b679a94bdaf0a648038d4e709ba449"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a75b679a94bdaf0a648038d4e709ba449">dec_set_sign</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t packed_addr, uint8_t sign)</td></tr>
+<tr class="memdesc:a75b679a94bdaf0a648038d4e709ba449"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the sign nibble of a packed field.  <br /></td></tr>
+<tr class="separator:a75b679a94bdaf0a648038d4e709ba449"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d3cfd876129979d7de1152191e72184" id="r_a3d3cfd876129979d7de1152191e72184"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a3d3cfd876129979d7de1152191e72184">dec_zero_digits</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t packed_addr, int packed_bytes)</td></tr>
+<tr class="memdesc:a3d3cfd876129979d7de1152191e72184"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear all digits (not sign) in a packed field to zero.  <br /></td></tr>
+<tr class="separator:a3d3cfd876129979d7de1152191e72184"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a220e0959ab2f9f835769d3091abe78b7" id="r_a220e0959ab2f9f835769d3091abe78b7"><td class="memItemLeft" align="right" valign="top">static uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a220e0959ab2f9f835769d3091abe78b7">dec_result_cc</a> (int is_zero, uint8_t result_sign)</td></tr>
 <tr class="memdesc:a220e0959ab2f9f835769d3091abe78b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the CC value from a sign and whether the result is zero.  <br /></td></tr>
 <tr class="separator:a220e0959ab2f9f835769d3091abe78b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -98,9 +98,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ab29f0ac7bc02b899a35a2bac8d5ba56e" id="r_ab29f0ac7bc02b899a35a2bac8d5ba56e"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#ab29f0ac7bc02b899a35a2bac8d5ba56e">dec_read_digits</a> (const uint8_t *mem, uint16_t packed_addr, int packed_bytes, uint8_t *digits, int n_digits)</td></tr>
 <tr class="memdesc:ab29f0ac7bc02b899a35a2bac8d5ba56e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a packed field into a digit array (right-to-left, [0]=rightmost digit).  <br /></td></tr>
 <tr class="separator:ab29f0ac7bc02b899a35a2bac8d5ba56e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf603098bcec90ddfca09c9212249461" id="r_abf603098bcec90ddfca09c9212249461"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#abf603098bcec90ddfca09c9212249461">dec_write_digits</a> (uint8_t *mem, uint16_t packed_addr, int packed_bytes, const uint8_t *digits, int n_digits)</td></tr>
-<tr class="memdesc:abf603098bcec90ddfca09c9212249461"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a digit array back into a packed field.  <br /></td></tr>
-<tr class="separator:abf603098bcec90ddfca09c9212249461"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a319f5fb564b53ddf9e37dfba76665337" id="r_a319f5fb564b53ddf9e37dfba76665337"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#a319f5fb564b53ddf9e37dfba76665337">dec_write_digits</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t packed_addr, int packed_bytes, const uint8_t *digits, int n_digits)</td></tr>
+<tr class="memdesc:a319f5fb564b53ddf9e37dfba76665337"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a digit array back into a packed field.  <br /></td></tr>
+<tr class="separator:a319f5fb564b53ddf9e37dfba76665337"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad87be868e6b97223dd09d3c3be71ddda" id="r_ad87be868e6b97223dd09d3c3be71ddda"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__dec_8c.html#ad87be868e6b97223dd09d3c3be71ddda">alu_ap</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)</td></tr>
 <tr class="memdesc:ad87be868e6b97223dd09d3c3be71ddda"><td class="mdescLeft">&#160;</td><td class="mdescRight">AP 0xEA Add Packed: op1 = op1 + op2; CC set.  <br /></td></tr>
 <tr class="separator:ad87be868e6b97223dd09d3c3be71ddda"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -194,7 +194,7 @@ Functions</h2></td></tr>
 
 <p>AP 0xEA Add Packed: op1 = op1 + op2; CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00253">253</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00255">255</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -245,7 +245,7 @@ Functions</h2></td></tr>
 <p>CMP 0xE9 Compare Packed (algebraic, no operand change); CC set. </p>
 <p>Overflow if L1 &lt; L2. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00559">559</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00561">561</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -296,7 +296,7 @@ Functions</h2></td></tr>
 <p>DP 0xED Divide Packed: op1[left L1-L2 chars] = quotient, op1[right L2+1 chars] = remainder; CC set. </p>
 <p>Overflow if: L1 &lt;= L2, L2 &gt; 7, divisor == 0, or result doesn't fit. On overflow, operation is NOT performed. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00459">459</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00461">461</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -341,7 +341,7 @@ Functions</h2></td></tr>
 <p>EDT 0xDE Edit packed source into pattern at op1. </p>
 <p>pattern: address of leftmost byte of pattern; plen = pattern length (bytes). src: address of RIGHTMOST byte of packed source field. Pattern control chars: 0x20 = SST (digit substitute + zero suppress), 0x21 = TSZ (digit substitute, ends zero suppress), 0x22 = RSZ (reset zero suppress start), other = insertion char (kept as-is). First byte of pattern is the fill character. CC: 1 0 = zero suppression still active (result = 0); 1 1 = active off. (manual §5.5.3.6 / §5.5.3.7 CC table; note "not possible" for 0/1.) </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00868">868</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00870">870</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -392,7 +392,7 @@ Functions</h2></td></tr>
 <p>MP 0xEC Multiply Packed: op1 = op1 * op2; CC set. </p>
 <p>Constraints: blen &lt;= 8, blen &lt; alen; op1 must have ≥blen+1 leading zero digits; otherwise overflow (CC=0, operation not performed). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00358">358</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00360">360</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -442,7 +442,7 @@ Functions</h2></td></tr>
 
 <p>MVP 0xE8 Move Packed: op1 = op2 (sign preserved from op2); CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00614">614</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00616">616</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -492,7 +492,7 @@ Functions</h2></td></tr>
 
 <p>PK 0xDA Pack: zoned op2 → packed op1 (no sign processing). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00682">682</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00684">684</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -543,7 +543,7 @@ Functions</h2></td></tr>
 <p>PKS 0xEE Pack with Sign: zoned op2 → packed op1; sign from zone of rightmost source byte (zone 0xA → negative, else positive). </p>
 <p>CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00761">761</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00763">763</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -593,7 +593,7 @@ Functions</h2></td></tr>
 
 <p>SP 0xEB Subtract Packed: op1 = op1 - op2; CC set. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00324">324</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00326">326</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -643,7 +643,7 @@ Functions</h2></td></tr>
 
 <p>UPK 0xD8 Unpack: packed op2 → zoned op1 (no sign processing; zone of each result byte is taken from the pre-existing zone in ge-&gt;mem). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00728">728</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00730">730</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -694,7 +694,7 @@ Functions</h2></td></tr>
 <p>UPKS 0xEF Unpack with Sign: packed op2 → zoned op1; zone always 0x4. </p>
 <p>CC set (reflects sign/value of packed source). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00804">804</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00806">806</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -747,7 +747,7 @@ Functions</h2></td></tr>
 <p>BCD add two digit arrays (right-to-left, big-endian [0]=rightmost). </p>
 <p>a_digits / b_digits: arrays of decimal digits (0-9), length = n_digits. Returns carry out (0 or 1). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00170">170</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00172">172</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -794,7 +794,7 @@ Functions</h2></td></tr>
 <p>Compare two unsigned BCD digit arrays (big-endian: [n-1]=most-significant). </p>
 <p>Returns &gt;0 if a&gt;b, 0 if equal, &lt;0 if a&lt;b. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00207">207</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00209">209</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -834,7 +834,7 @@ Functions</h2></td></tr>
 
 <p>Returns 1 if digit array is all zeros. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00219">219</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00221">221</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -887,7 +887,7 @@ Functions</h2></td></tr>
 <p>BCD subtract b from a (right-to-left). </p>
 <p>Assumes a &gt;= b (unsigned). Returns 0 (no borrow should remain if a &gt;= b). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00186">186</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00188">188</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -981,7 +981,7 @@ Functions</h2></td></tr>
 
 <p>Get the sign nibble of a packed field. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00132">132</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00133">133</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -1039,7 +1039,7 @@ Functions</h2></td></tr>
 
 <p>Read a packed field into a digit array (right-to-left, [0]=rightmost digit). </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00230">230</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00232">232</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -1080,12 +1080,12 @@ Functions</h2></td></tr>
 <p>Compute the CC value from a sign and whether the result is zero. </p>
 <p>CC=1 neg, CC=2 zero, CC=3 pos — matching manual FA04/FA05 table. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00158">158</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00160">160</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
-<a id="a4be9077a928a1cdb2d7035ea3865b186" name="a4be9077a928a1cdb2d7035ea3865b186"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4be9077a928a1cdb2d7035ea3865b186">&#9670;&#160;</a></span>dec_set_digit()</h2>
+<a id="a4986d40ca66922a37d9b352b63656e34" name="a4986d40ca66922a37d9b352b63656e34"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4986d40ca66922a37d9b352b63656e34">&#9670;&#160;</a></span>dec_set_digit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1096,8 +1096,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">static void dec_set_digit </td>
           <td>(</td>
-          <td class="paramtype">uint8_t *&#160;</td>
-          <td class="paramname"><em>mem</em>, </td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1142,8 +1142,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a51930040e2e302410a183bafd81f4034" name="a51930040e2e302410a183bafd81f4034"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51930040e2e302410a183bafd81f4034">&#9670;&#160;</a></span>dec_set_sign()</h2>
+<a id="a75b679a94bdaf0a648038d4e709ba449" name="a75b679a94bdaf0a648038d4e709ba449"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a75b679a94bdaf0a648038d4e709ba449">&#9670;&#160;</a></span>dec_set_sign()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1154,8 +1154,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">static void dec_set_sign </td>
           <td>(</td>
-          <td class="paramtype">uint8_t *&#160;</td>
-          <td class="paramname"><em>mem</em>, </td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1184,7 +1184,7 @@ Functions</h2></td></tr>
 
 <p>Set the sign nibble of a packed field. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00138">138</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00139">139</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -1218,8 +1218,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="abf603098bcec90ddfca09c9212249461" name="abf603098bcec90ddfca09c9212249461"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf603098bcec90ddfca09c9212249461">&#9670;&#160;</a></span>dec_write_digits()</h2>
+<a id="a319f5fb564b53ddf9e37dfba76665337" name="a319f5fb564b53ddf9e37dfba76665337"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a319f5fb564b53ddf9e37dfba76665337">&#9670;&#160;</a></span>dec_write_digits()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1230,8 +1230,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">static void dec_write_digits </td>
           <td>(</td>
-          <td class="paramtype">uint8_t *&#160;</td>
-          <td class="paramname"><em>mem</em>, </td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1273,12 +1273,12 @@ Functions</h2></td></tr>
 <p>Write a digit array back into a packed field. </p>
 <p>Sign is NOT written by this function. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00241">241</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00243">243</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
-<a id="a5aeb1f5e1e489fe1875d2c4a4620e149" name="a5aeb1f5e1e489fe1875d2c4a4620e149"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5aeb1f5e1e489fe1875d2c4a4620e149">&#9670;&#160;</a></span>dec_zero_digits()</h2>
+<a id="a3d3cfd876129979d7de1152191e72184" name="a3d3cfd876129979d7de1152191e72184"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d3cfd876129979d7de1152191e72184">&#9670;&#160;</a></span>dec_zero_digits()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1289,8 +1289,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">static void dec_zero_digits </td>
           <td>(</td>
-          <td class="paramtype">uint8_t *&#160;</td>
-          <td class="paramname"><em>mem</em>, </td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1319,7 +1319,7 @@ Functions</h2></td></tr>
 
 <p>Clear all digits (not sign) in a packed field to zero. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00146">146</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00148">148</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>
@@ -1370,7 +1370,7 @@ Functions</h2></td></tr>
 <p>Arithmetic unit in decimal mode &ndash; one byte (two BCD digits), or one digit when CI50 restricts the unit to its low zone. </p>
 <p><code>carry</code> is URPE in and out. See the comment on the definition for why subtract shares the binary line. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00937">937</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__dec_8c_source.html#l00939">939</a> of file <a class="el" href="alu__dec_8c_source.html">alu_dec.c</a>.</p>
 
 </div>
 </div>

@@ -149,7 +149,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_ci – Compare Immediate (CMI, §5.5.5.1) </p>
 <p>Compares the byte mem[@addr] (unsigned) with the immediate @imm (unsigned). Sets CC: cc = 1 mem[@addr] &lt; @imm cc = 2 mem[@addr] == @imm cc = 3 mem[@addr] &gt; @imm </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00180">180</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00183">183</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -194,7 +194,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_cmc – Compare Characters (CMC, §5.5.3.2) </p>
 <p>Compares the @len-byte field at <em>with</em> the @len-byte field at <b></b>, byte by byte, left to right, treating each byte as an unsigned integer. Stops as soon as a difference is found. Neither field is modified. Sets CC: cc = 1 mem[a..] &lt; mem[b..] cc = 2 fields are equal cc = 3 mem[a..] &gt; mem[b..] </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00153">153</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00156">156</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -362,7 +362,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_ni – AND Immediate (NI, §5.6.3.2) </p>
 <p>mem[@addr] &amp;= @imm. "Qualitative result: it is not interested." — CC is not altered. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00108">108</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00111">111</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -407,7 +407,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_oc – OR Characters (OC, §5.5.3.8) </p>
 <p>Bitwise OR of @len bytes at <em>with</em> @len bytes at <b></b>; result into <em></em>. "Qualitative result: it is not interested." — CC is not altered. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00073">73</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00074">74</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -443,7 +443,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00118">118</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00121">121</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -488,7 +488,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_tl – Translate (TL, §5.5.3.3, "TR" in manual) </p>
 <p>For each of the @len bytes b at mem[<em></em>.. <em></em>+len-1], replaces it with mem[@table + b]. The @table base address must be a multiple of 256 (per manual). Operates left to right. The table is not altered. "Qualitative result: it is not interested." — CC is not altered. </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00203">203</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00206">206</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -527,7 +527,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_tm – Test under Mask (TM, §5.6.3.4) </p>
 <p>Performs bitwise AND of mem[@addr] and @mask but does NOT write the result to memory. Sets CC: cc = 2 result is 0x00 (all selected bits are zero) cc = 3 result is non-zero (at least one selected bit is set) </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00226">226</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00229">229</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -572,7 +572,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_xc – Exclusive-OR Characters (XC, §5.5.3.7) </p>
 <p>Bitwise XOR of @len bytes at <em>with</em> @len bytes at <b></b>; result into <em></em>. Sets CC: cc = 2 if all bytes of the result are 0x00 cc = 3 if any byte of the result is non-zero </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00085">85</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00087">87</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -611,7 +611,7 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>alu_xi – Exclusive-OR Immediate (XI, §5.6.3.3) </p>
 <p>mem[@addr] ^= @imm. Sets CC: cc = 2 if result is 0x00 cc = 3 if result is non-zero </p>
 
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00136">136</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00139">139</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>

@@ -102,7 +102,7 @@
 <div class="line">......             .data  (initialised globals)</div>
 <div class="line">......             .bss   (zeroed globals)</div>
 <div class="line">0x6000 .. 0x7FFF   stack  (R6 starts at 0x6000, grows up)     [abi]</div>
-</div><!-- fragment --><p>The split between <code>.bss</code>/heap and the stack base (<code>0x6000</code>) is a linker constant (<code>crt0</code>), adjustable per program. Programs that the integrated card reader bootstraps load <code>.text</code> at <code>0x0100</code> (the <code>DUMP1</code> convention, ISA §4.1); unit unit tests that place a fragment by hand (<code>ge_load_image</code>) load at <code>0x0000</code>.</p>
+</div><!-- fragment --><p>The stack window is the top 8K of a <b>32K</b> machine — this machine's capacity straps (E05 PONT2N + F05 PONT2P, TAB.1's UCE 464 row; <code><a class="el" href="ge_8c.html">ge.c</a></code>, <code><a class="el" href="hardware-options_8md.html">docs/hardware-options.md</a></code>). That matters because gemu enforces the strapped bound: cp06 ch.080 never starts a memory cycle for an address past the installed capacity, it raises INV ADD. On a machine strapped smaller — 8/12/16K are all printed rows — the stack base has to come down with it (e.g. <code>0x3000</code> on a 16K build) or every push writes into nothing. The split between <code>.bss</code>/heap and the stack base is a linker constant (<code>crt0</code>), adjustable per program. Programs that the integrated card reader bootstraps load <code>.text</code> at <code>0x0100</code> (the <code>DUMP1</code> convention, ISA §4.1); unit unit tests that place a fragment by hand (<code>ge_load_image</code>) load at <code>0x0000</code>.</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md11"></a>
 2. Registers (the eight change registers)</h1>
@@ -246,7 +246,7 @@
 <li>No floating point.</li>
 <li>No <code>goto</code> into blocks, no VLAs, no <code>alloca</code>.</li>
 <li><code>long long</code>/64-bit and full <code>long</code> arithmetic rely on <code>AB/SB</code> width (≤16 bytes, free) but mul/div on widths &gt;2 bytes are not yet in the helper set.</li>
-<li>Recursion works (frames + R7 spill); deep recursion is bounded by the <code>0x6000–0x7FFF</code> stack window (8 KiB).</li>
+<li>Recursion works (frames + R7 spill); deep recursion is bounded by the <code>0x6000–0x7FFF</code> stack window (8 KiB), and by the machine's strapped capacity.</li>
 <li>Single translation unit at first (no separate-compilation linker yet); <code>crt0</code><ul>
 <li>program assembled together by <code>gasm</code>.</li>
 </ul>
