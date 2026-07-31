@@ -303,7 +303,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00853">853</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00872">872</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -550,7 +550,7 @@ Functions</h2></td></tr>
 <p>ALTO is the hardware stop flip-flop (cpu fo.97/98): it gates RIA0, so while it is set the CPU is attributed no work cycles. The delay line keeps turning and the channels keep running &ndash; a halted GE-120 still drives its panel &ndash; so a front end that models the whole machine (the wasm console) should keep cycling and simply watch this; a batch front end that only cares about the program uses it to end the run.</p>
 <p>There used to be a separate <code>halted</code> field alongside it. It was redundant and disagreed with ALTO in both directions: set at init while ALTO was clear, cleared by <a class="el" href="ge_8h.html#a1f6200d4aba7d2a22bd703cf46fa9570" title="Emulate the press of the &quot;clear&quot; button in the console.">ge_clear()</a> while ALTO was set, and &ndash; the actual bug &ndash; left clear by every operator stop (ACOV/ACON, PAPA, PATE), so the CLI run loop kept spinning against a frozen CPU. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00910">910</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00929">929</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -923,7 +923,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00302">302</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00328">328</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>

@@ -306,6 +306,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a385112e23e49b45d8feb9c06e9c43b13" id="r_a385112e23e49b45d8feb9c06e9c43b13"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a385112e23e49b45d8feb9c06e9c43b13">mem_written</a> [<a class="el" href="ge_8h.html#a2dcf8c45f945dd0c4301a94700f2112c">MEM_SIZE</a>]</td></tr>
 <tr class="memdesc:a385112e23e49b45d8feb9c06e9c43b13"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 once a location has been written; prevents false MEM CHECK on cleared memory  <br /></td></tr>
 <tr class="separator:a385112e23e49b45d8feb9c06e9c43b13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fa46fecf1a1a281077d58f5cd280ba7" id="r_a4fa46fecf1a1a281077d58f5cd280ba7"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a4fa46fecf1a1a281077d58f5cd280ba7">mem_check_blank</a></td></tr>
+<tr class="memdesc:a4fa46fecf1a1a281077d58f5cd280ba7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read never-written core as a parity error (default 0).  <br /></td></tr>
+<tr class="separator:a4fa46fecf1a1a281077d58f5cd280ba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f6a3b0b58cbdacf4ce9a0c9b3d64794" id="r_a3f6a3b0b58cbdacf4ce9a0c9b3d64794"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structge.html#a3f6a3b0b58cbdacf4ce9a0c9b3d64794">mem_size</a></td></tr>
 <tr class="memdesc:a3f6a3b0b58cbdacf4ce9a0c9b3d64794"><td class="mdescLeft">&#160;</td><td class="mdescRight">Installed memory size; 0 is treated as MEM_SIZE (full address space)  <br /></td></tr>
 <tr class="separator:a3f6a3b0b58cbdacf4ce9a0c9b3d64794"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -547,7 +550,7 @@ Data Fields</h2></td></tr>
 <p>Integrated channel 2 (CAN2) line bundle — shared by the integrated reader (input), the printer/typewriter (output), and the keyboard. </p>
 <p>Generalises the integrated_reader/connector lines; see <a class="el" href="channel_8h.html">channel.h</a>. Phase 3 wires the rSI transfer micro-states to these lines; until then it is scaffolding and the legacy integrated_reader/integrated_printer paths remain authoritative. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00775">775</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00794">794</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -581,7 +584,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00719">719</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00738">738</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -693,7 +696,7 @@ Data Fields</h2></td></tr>
 <p>Channel-1 peripheral status override for error injection. </p>
 <p>0 = report the default "operation OK" status (0x40); non-zero = report this status byte instead, so a test/harness can inject a peripheral error/abnormal condition (e.g. 0x42 sets RO1 -&gt; the EPER "examine" decode sees an error). Read by CE_chan1_status (<a class="el" href="msl-commands_8c.html">msl-commands.c</a>). </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00717">717</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00736">736</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -762,7 +765,7 @@ Data Fields</h2></td></tr>
 
 <p>The I/O interface for the integrated reader (RI) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00725">725</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00744">744</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -780,7 +783,7 @@ Data Fields</h2></td></tr>
 
 <p>Invalid-address fault flag: set when rVO &gt;= installed memory size. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00710">710</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00729">729</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -925,7 +928,27 @@ Data Fields</h2></td></tr>
 
 <p>Parity fault flag: set when a READ finds a parity mismatch on a previously-written location. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00707">707</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00726">726</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+
+</div>
+</div>
+<a id="a4fa46fecf1a1a281077d58f5cd280ba7" name="a4fa46fecf1a1a281077d58f5cd280ba7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fa46fecf1a1a281077d58f5cd280ba7">&#9670;&#160;</a></span>mem_check_blank</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t mem_check_blank</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read never-written core as a parity error (default 0). </p>
+<p>Core retains, so on a machine that has been in service every cell holds something with a valid check bit and reads clean — which is what the default models, and what lets a deck read scratch it has not written yet. A machine powered up with core that has never been written is in the other state: there is no valid check bit anywhere, and running it through blank core stands MEM CHECK on. That is what the restored machine shows with nothing loaded (2026-07-31, alongside the INV ADD blink), and setting this reproduces it.</p>
+<p>It is a property of the machine in front of you, not a rule: with it set, <code>funktionalcpu.cap</code> stops at cycle 57660 on a MEM CHECK at 0x00E8, a scratch cell the deck reads before writing — which on the iron holds the last program's leftovers, with their check bit. </p>
+
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00720">720</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -961,7 +984,7 @@ Data Fields</h2></td></tr>
 
 <p>Installed memory size; 0 is treated as MEM_SIZE (full address space) </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00704">704</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00723">723</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -1161,7 +1184,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00777">777</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00796">796</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -2017,7 +2040,7 @@ LOGIC": RET21 = /((RES2A·T0107)+(T010C·RET2A)), RET2A = /RET21, RET26 = /RET2A
 
 <p>The I/O interface for the ST3 connector. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00761">761</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00780">780</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -2035,7 +2058,7 @@ LOGIC": RET21 = /((RES2A·T0107)+(T010C·RET2A)), RET2A = /RET21, RET26 = /RET2A
 
 <p>The I/O interface for the ST4 connector. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00766">766</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00785">785</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -2054,7 +2077,7 @@ LOGIC": RET21 = /((RES2A·T0107)+(T010C·RET2A)), RET2A = /RET21, RET26 = /RET2A
 <p>Shared core for Standard-GE-100 controllers on connectors 3/4 (disk/tape). </p>
 <p>Owned by <a class="el" href="connector34_8c.html">connector34.c</a>; NULL until <a class="el" href="connector34_8c.html#a18845c7d1f8ab1538bba40b979180346">connector34_init()</a>. Opaque here to avoid a header dependency — see <a class="el" href="connector34_8h.html">connector34.h</a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00784">784</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00803">803</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -2092,7 +2115,7 @@ LOGIC": RET21 = /((RES2A·T0107)+(T010C·RET2A)), RET2A = /RET21, RET26 = /RET2A
 <p>Workaround for pulse TO50. </p>
 <p>Currently we first run the common machine logic, then the MSL states. However in certain cases (e.g. display state 00) the common TO50 implementation is conditioned on the activation of the MSL TO50... So, until we figure out a better way of factoring the MSL, let's store here the conditions for the common machine TO50, and delay its excecution to a fake TO50-1 clock pulse. </p>
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00797">797</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00816">816</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>
@@ -2108,7 +2131,7 @@ LOGIC": RET21 = /((RES2A·T0107)+(T010C·RET2A)), RET2A = /RET21, RET26 = /RET2A
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00720">720</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ge_8h_source.html#l00739">739</a> of file <a class="el" href="ge_8h_source.html">ge.h</a>.</p>
 
 </div>
 </div>

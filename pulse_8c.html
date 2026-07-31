@@ -77,7 +77,7 @@ Functions</h2></td></tr>
 <tr class="memitem:a9d2cf882fb501105a86142eee8f5051b" id="r_a9d2cf882fb501105a86142eee8f5051b"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pulse_8c.html#a9d2cf882fb501105a86142eee8f5051b">mem_addr_installed</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t addr)</td></tr>
 <tr class="separator:a9d2cf882fb501105a86142eee8f5051b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ca1abade64cc8d741b6c01d54a7c1de" id="r_a0ca1abade64cc8d741b6c01d54a7c1de"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pulse_8c.html#a0ca1abade64cc8d741b6c01d54a7c1de">mem_fault</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint8_t *lamp)</td></tr>
-<tr class="memdesc:a0ca1abade64cc8d741b6c01d54a7c1de"><td class="mdescLeft">&#160;</td><td class="mdescRight">The error stop.  <br /></td></tr>
+<tr class="memdesc:a0ca1abade64cc8d741b6c01d54a7c1de"><td class="mdescLeft">&#160;</td><td class="mdescRight">The fault lamps, and the error stop.  <br /></td></tr>
 <tr class="separator:a0ca1abade64cc8d741b6c01d54a7c1de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adeeac70f5dedd94a53e0d628acc050d0" id="r_adeeac70f5dedd94a53e0d628acc050d0"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pulse_8c.html#adeeac70f5dedd94a53e0d628acc050d0">on_TO00</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>)</td></tr>
 <tr class="separator:adeeac70f5dedd94a53e0d628acc050d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -225,12 +225,14 @@ straps". </p>
 </table>
 </div><div class="memdoc">
 
-<p>The error stop. </p>
+<p>The fault lamps, and the error stop. </p>
 <p>A memory fault does not just light a lamp: it stops the subsystem, which is why CLEAR is "required after MEM CHECK" (CPU[4] §3.3) and why the maintenance panel has a switch to turn the stop off &ndash; INAR, "inhibits the error stop on
 a memory check error or on addressing a non-existent address" (§4.2, fo.35). The lamp is raised either way; only the stop is inhibited.</p>
-<p>This is what ends a console storage key-in. With the rotary at position 8 and neither PAPA nor the step switch inserted, nothing stops the machine at the end of a cycle (fo.98's ALSOA=0 exempts position 8 along with NORM), so it goes on storing the AM switches at V1 and advancing V1 &ndash; through the whole of core, exactly as the machine at Electric Dreams does &ndash; until the address walks off the installed memory and INV ADD sets ALTO. Insert PAPA and each START stores one byte instead. </p>
+<p>This is what ends a console storage key-in. With the rotary at position 8 and neither PAPA nor the step switch inserted, nothing stops the machine at the end of a cycle (fo.98's ALSOA=0 exempts position 8 along with NORM), so it goes on storing the AM switches at V1 and advancing V1 &ndash; through the whole of core, exactly as the machine at Electric Dreams does &ndash; until the address walks off the installed memory and INV ADD sets ALTO. Insert PAPA and each START stores one byte instead.</p>
+<p>The LAMP is a condition, not a latch: it reports the memory cycle you are looking at, and a good cycle puts it out again. That is only visible with the stop inhibited &ndash; INAR in, nothing loaded, START: the machine walks zeroes up through core, and INV ADD comes on as the addresser passes the installed memory and goes off again as it wraps to 0, blinking once per lap. Observed on the restored machine, 2026-07-31. With INAR out the machine stops ON the faulting cycle, so the lamp stands there lit, which is the other half of the same behaviour &ndash; and why CLEAR is "required after MEM
+CHECK": what CLEAR releases is the stop. </p>
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00068">68</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00078">78</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -289,7 +291,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00268">268</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00294">294</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -317,7 +319,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00274">274</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00300">300</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -345,7 +347,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00275">275</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00301">301</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -373,7 +375,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00075">75</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00085">85</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -401,7 +403,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00115">115</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00125">125</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -429,7 +431,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00125">125</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00135">135</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -457,7 +459,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00126">126</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00136">136</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -485,7 +487,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00128">128</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00138">138</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -513,7 +515,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00133">133</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00143">143</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -541,7 +543,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00144">144</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00154">154</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -569,7 +571,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00145">145</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00155">155</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -597,7 +599,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00147">147</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00157">157</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -625,7 +627,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00157">157</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00167">167</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -653,7 +655,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00195">195</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00219">219</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -681,7 +683,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00208">208</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00232">232</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -709,7 +711,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00209">209</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00233">233</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -737,7 +739,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00211">211</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00235">235</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -765,7 +767,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00250">250</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00276">276</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -793,7 +795,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00255">255</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00281">281</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -821,7 +823,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00257">257</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00283">283</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -849,7 +851,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00262">262</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00288">288</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -869,7 +871,7 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00302">302</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00328">328</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
@@ -916,29 +918,29 @@ a memory check error or on addressing a non-existent address" (§4.2, fo.35). Th
 <div class="line">    <a class="code hl_function" href="pulse_8c.html#a50942ea1a612823c3f7c8f44f3493610">on_TI06</a>,</div>
 <div class="line">    <a class="code hl_function" href="pulse_8c.html#a333843034135db75de1d462d65a2f849">on_TI10</a>,</div>
 <div class="line">}</div>
-<div class="ttc" id="apulse_8c_html_a071484c2ba19959c2c49ab561742fd35"><div class="ttname"><a href="pulse_8c.html#a071484c2ba19959c2c49ab561742fd35">on_TO70</a></div><div class="ttdeci">static void on_TO70(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00250">pulse.c:250</a></div></div>
-<div class="ttc" id="apulse_8c_html_a0f791722483b461a80616618ab976315"><div class="ttname"><a href="pulse_8c.html#a0f791722483b461a80616618ab976315">on_TO90</a></div><div class="ttdeci">static void on_TO90(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00262">pulse.c:262</a></div></div>
-<div class="ttc" id="apulse_8c_html_a1c15a514e24937986f7812df09931257"><div class="ttname"><a href="pulse_8c.html#a1c15a514e24937986f7812df09931257">on_TO89</a></div><div class="ttdeci">static void on_TO89(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00257">pulse.c:257</a></div></div>
-<div class="ttc" id="apulse_8c_html_a256f67f85aa7953c9562e981cbdc100d"><div class="ttname"><a href="pulse_8c.html#a256f67f85aa7953c9562e981cbdc100d">on_TO50</a></div><div class="ttdeci">static void on_TO50(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00157">pulse.c:157</a></div></div>
-<div class="ttc" id="apulse_8c_html_a295d364ed739851f405ba6b639ef160b"><div class="ttname"><a href="pulse_8c.html#a295d364ed739851f405ba6b639ef160b">on_TO20</a></div><div class="ttdeci">static void on_TO20(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00133">pulse.c:133</a></div></div>
-<div class="ttc" id="apulse_8c_html_a333843034135db75de1d462d65a2f849"><div class="ttname"><a href="pulse_8c.html#a333843034135db75de1d462d65a2f849">on_TI10</a></div><div class="ttdeci">static void on_TI10(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00275">pulse.c:275</a></div></div>
-<div class="ttc" id="apulse_8c_html_a400ac0834e09cbffe89fee4c792f4eee"><div class="ttname"><a href="pulse_8c.html#a400ac0834e09cbffe89fee4c792f4eee">on_TO10</a></div><div class="ttdeci">static void on_TO10(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00115">pulse.c:115</a></div></div>
-<div class="ttc" id="apulse_8c_html_a4954a292855668dfe641b21129b676f9"><div class="ttname"><a href="pulse_8c.html#a4954a292855668dfe641b21129b676f9">on_TO50_1</a></div><div class="ttdeci">static void on_TO50_1(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00195">pulse.c:195</a></div></div>
-<div class="ttc" id="apulse_8c_html_a50942ea1a612823c3f7c8f44f3493610"><div class="ttname"><a href="pulse_8c.html#a50942ea1a612823c3f7c8f44f3493610">on_TI06</a></div><div class="ttdeci">static void on_TI06(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00274">pulse.c:274</a></div></div>
-<div class="ttc" id="apulse_8c_html_a5bc4ff9ee4c5019ca8e1c340930e2845"><div class="ttname"><a href="pulse_8c.html#a5bc4ff9ee4c5019ca8e1c340930e2845">on_TO19</a></div><div class="ttdeci">static void on_TO19(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00128">pulse.c:128</a></div></div>
-<div class="ttc" id="apulse_8c_html_a6ef2b53fe4688f3c35dcb83b0f667251"><div class="ttname"><a href="pulse_8c.html#a6ef2b53fe4688f3c35dcb83b0f667251">on_TO11</a></div><div class="ttdeci">static void on_TO11(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00125">pulse.c:125</a></div></div>
-<div class="ttc" id="apulse_8c_html_a764ce719dfb6c53eb131439d3c2f5724"><div class="ttname"><a href="pulse_8c.html#a764ce719dfb6c53eb131439d3c2f5724">on_TI05</a></div><div class="ttdeci">static void on_TI05(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00268">pulse.c:268</a></div></div>
-<div class="ttc" id="apulse_8c_html_a7deefc288e5a4666b210c5f02886975d"><div class="ttname"><a href="pulse_8c.html#a7deefc288e5a4666b210c5f02886975d">on_TO65</a></div><div class="ttdeci">static void on_TO65(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00211">pulse.c:211</a></div></div>
-<div class="ttc" id="apulse_8c_html_a8074aa7a84ce6d5d37fa12407543a185"><div class="ttname"><a href="pulse_8c.html#a8074aa7a84ce6d5d37fa12407543a185">on_TO40</a></div><div class="ttdeci">static void on_TO40(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00147">pulse.c:147</a></div></div>
-<div class="ttc" id="apulse_8c_html_a98176f1e9665ff579ec7d06a542d5a03"><div class="ttname"><a href="pulse_8c.html#a98176f1e9665ff579ec7d06a542d5a03">on_TO80</a></div><div class="ttdeci">static void on_TO80(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00255">pulse.c:255</a></div></div>
-<div class="ttc" id="apulse_8c_html_a9d0df30b8b5fea568ad28cb39ec94abf"><div class="ttname"><a href="pulse_8c.html#a9d0df30b8b5fea568ad28cb39ec94abf">on_TO60</a></div><div class="ttdeci">static void on_TO60(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00208">pulse.c:208</a></div></div>
-<div class="ttc" id="apulse_8c_html_aa4c68793281b2196404ff94f12d1a68b"><div class="ttname"><a href="pulse_8c.html#aa4c68793281b2196404ff94f12d1a68b">on_TO25</a></div><div class="ttdeci">static void on_TO25(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00144">pulse.c:144</a></div></div>
-<div class="ttc" id="apulse_8c_html_aae38222819c4040b721b4488f70efe4f"><div class="ttname"><a href="pulse_8c.html#aae38222819c4040b721b4488f70efe4f">on_TO30</a></div><div class="ttdeci">static void on_TO30(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00145">pulse.c:145</a></div></div>
-<div class="ttc" id="apulse_8c_html_ac427db57fbd98579cfe571f6639e3968"><div class="ttname"><a href="pulse_8c.html#ac427db57fbd98579cfe571f6639e3968">on_TO64</a></div><div class="ttdeci">static void on_TO64(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00209">pulse.c:209</a></div></div>
-<div class="ttc" id="apulse_8c_html_adeeac70f5dedd94a53e0d628acc050d0"><div class="ttname"><a href="pulse_8c.html#adeeac70f5dedd94a53e0d628acc050d0">on_TO00</a></div><div class="ttdeci">static void on_TO00(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00075">pulse.c:75</a></div></div>
-<div class="ttc" id="apulse_8c_html_af4171f3e466120f38110dfcc5ab10f5f"><div class="ttname"><a href="pulse_8c.html#af4171f3e466120f38110dfcc5ab10f5f">on_TO15</a></div><div class="ttdeci">static void on_TO15(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00126">pulse.c:126</a></div></div>
+<div class="ttc" id="apulse_8c_html_a071484c2ba19959c2c49ab561742fd35"><div class="ttname"><a href="pulse_8c.html#a071484c2ba19959c2c49ab561742fd35">on_TO70</a></div><div class="ttdeci">static void on_TO70(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00276">pulse.c:276</a></div></div>
+<div class="ttc" id="apulse_8c_html_a0f791722483b461a80616618ab976315"><div class="ttname"><a href="pulse_8c.html#a0f791722483b461a80616618ab976315">on_TO90</a></div><div class="ttdeci">static void on_TO90(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00288">pulse.c:288</a></div></div>
+<div class="ttc" id="apulse_8c_html_a1c15a514e24937986f7812df09931257"><div class="ttname"><a href="pulse_8c.html#a1c15a514e24937986f7812df09931257">on_TO89</a></div><div class="ttdeci">static void on_TO89(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00283">pulse.c:283</a></div></div>
+<div class="ttc" id="apulse_8c_html_a256f67f85aa7953c9562e981cbdc100d"><div class="ttname"><a href="pulse_8c.html#a256f67f85aa7953c9562e981cbdc100d">on_TO50</a></div><div class="ttdeci">static void on_TO50(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00167">pulse.c:167</a></div></div>
+<div class="ttc" id="apulse_8c_html_a295d364ed739851f405ba6b639ef160b"><div class="ttname"><a href="pulse_8c.html#a295d364ed739851f405ba6b639ef160b">on_TO20</a></div><div class="ttdeci">static void on_TO20(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00143">pulse.c:143</a></div></div>
+<div class="ttc" id="apulse_8c_html_a333843034135db75de1d462d65a2f849"><div class="ttname"><a href="pulse_8c.html#a333843034135db75de1d462d65a2f849">on_TI10</a></div><div class="ttdeci">static void on_TI10(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00301">pulse.c:301</a></div></div>
+<div class="ttc" id="apulse_8c_html_a400ac0834e09cbffe89fee4c792f4eee"><div class="ttname"><a href="pulse_8c.html#a400ac0834e09cbffe89fee4c792f4eee">on_TO10</a></div><div class="ttdeci">static void on_TO10(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00125">pulse.c:125</a></div></div>
+<div class="ttc" id="apulse_8c_html_a4954a292855668dfe641b21129b676f9"><div class="ttname"><a href="pulse_8c.html#a4954a292855668dfe641b21129b676f9">on_TO50_1</a></div><div class="ttdeci">static void on_TO50_1(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00219">pulse.c:219</a></div></div>
+<div class="ttc" id="apulse_8c_html_a50942ea1a612823c3f7c8f44f3493610"><div class="ttname"><a href="pulse_8c.html#a50942ea1a612823c3f7c8f44f3493610">on_TI06</a></div><div class="ttdeci">static void on_TI06(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00300">pulse.c:300</a></div></div>
+<div class="ttc" id="apulse_8c_html_a5bc4ff9ee4c5019ca8e1c340930e2845"><div class="ttname"><a href="pulse_8c.html#a5bc4ff9ee4c5019ca8e1c340930e2845">on_TO19</a></div><div class="ttdeci">static void on_TO19(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00138">pulse.c:138</a></div></div>
+<div class="ttc" id="apulse_8c_html_a6ef2b53fe4688f3c35dcb83b0f667251"><div class="ttname"><a href="pulse_8c.html#a6ef2b53fe4688f3c35dcb83b0f667251">on_TO11</a></div><div class="ttdeci">static void on_TO11(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00135">pulse.c:135</a></div></div>
+<div class="ttc" id="apulse_8c_html_a764ce719dfb6c53eb131439d3c2f5724"><div class="ttname"><a href="pulse_8c.html#a764ce719dfb6c53eb131439d3c2f5724">on_TI05</a></div><div class="ttdeci">static void on_TI05(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00294">pulse.c:294</a></div></div>
+<div class="ttc" id="apulse_8c_html_a7deefc288e5a4666b210c5f02886975d"><div class="ttname"><a href="pulse_8c.html#a7deefc288e5a4666b210c5f02886975d">on_TO65</a></div><div class="ttdeci">static void on_TO65(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00235">pulse.c:235</a></div></div>
+<div class="ttc" id="apulse_8c_html_a8074aa7a84ce6d5d37fa12407543a185"><div class="ttname"><a href="pulse_8c.html#a8074aa7a84ce6d5d37fa12407543a185">on_TO40</a></div><div class="ttdeci">static void on_TO40(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00157">pulse.c:157</a></div></div>
+<div class="ttc" id="apulse_8c_html_a98176f1e9665ff579ec7d06a542d5a03"><div class="ttname"><a href="pulse_8c.html#a98176f1e9665ff579ec7d06a542d5a03">on_TO80</a></div><div class="ttdeci">static void on_TO80(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00281">pulse.c:281</a></div></div>
+<div class="ttc" id="apulse_8c_html_a9d0df30b8b5fea568ad28cb39ec94abf"><div class="ttname"><a href="pulse_8c.html#a9d0df30b8b5fea568ad28cb39ec94abf">on_TO60</a></div><div class="ttdeci">static void on_TO60(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00232">pulse.c:232</a></div></div>
+<div class="ttc" id="apulse_8c_html_aa4c68793281b2196404ff94f12d1a68b"><div class="ttname"><a href="pulse_8c.html#aa4c68793281b2196404ff94f12d1a68b">on_TO25</a></div><div class="ttdeci">static void on_TO25(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00154">pulse.c:154</a></div></div>
+<div class="ttc" id="apulse_8c_html_aae38222819c4040b721b4488f70efe4f"><div class="ttname"><a href="pulse_8c.html#aae38222819c4040b721b4488f70efe4f">on_TO30</a></div><div class="ttdeci">static void on_TO30(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00155">pulse.c:155</a></div></div>
+<div class="ttc" id="apulse_8c_html_ac427db57fbd98579cfe571f6639e3968"><div class="ttname"><a href="pulse_8c.html#ac427db57fbd98579cfe571f6639e3968">on_TO64</a></div><div class="ttdeci">static void on_TO64(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00233">pulse.c:233</a></div></div>
+<div class="ttc" id="apulse_8c_html_adeeac70f5dedd94a53e0d628acc050d0"><div class="ttname"><a href="pulse_8c.html#adeeac70f5dedd94a53e0d628acc050d0">on_TO00</a></div><div class="ttdeci">static void on_TO00(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00085">pulse.c:85</a></div></div>
+<div class="ttc" id="apulse_8c_html_af4171f3e466120f38110dfcc5ab10f5f"><div class="ttname"><a href="pulse_8c.html#af4171f3e466120f38110dfcc5ab10f5f">on_TO15</a></div><div class="ttdeci">static void on_TO15(struct ge *ge)</div><div class="ttdef"><b>Definition</b> <a href="pulse_8c_source.html#l00136">pulse.c:136</a></div></div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00277">277</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pulse_8c_source.html#l00303">303</a> of file <a class="el" href="pulse_8c_source.html">pulse.c</a>.</p>
 
 </div>
 </div>
