@@ -908,3 +908,91 @@ UTEST(cardreader, scatter_load_funktionalcpu)
     ASSERT_EQ((int)img[0x0102], 0x17);
     ASSERT_EQ((int)img[0x0103], 0x2A);
 }
+
+/* --------------------------------------------------------------------------
+ * Test: the CPU->reader command lines are strobes, not levels.
+ *
+ * TU00N (command clock), COCON (mode-select clock) and TU03N (feed) are raised
+ * by the CE commands late in a cycle and must be down again after the reader
+ * has seen them -- on_clock, at TO00 of the next cycle. A strobe left standing
+ * is a stuck pin: it is what anyone reading a trace (or the Pico, sampling the
+ * same wires at the COCA slots) would call a fault.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, command_strobes_do_not_stand)
+{
+    static const char cap_path[] = "/tmp/gemu_test_strobe.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+    ge_start(&g);
+
+    /* REGEN went up with the CLEAR above; one cycle and the reader has it. */
+    ASSERT_EQ(ge_run_cycle(&g), 0);
+    ASSERT_EQ((int)g.integrated_reader.regen, 0);
+
+    /* A mode-selecting read command: RE + TU00N, and COCON with it. */
+    g.rRE = 0x20;                                  /* read binary / by-pass */
+    reader_send_tu00(&g);
+    ASSERT_EQ((int)g.integrated_reader.tu00, 1);
+    ASSERT_EQ((int)g.integrated_reader.cocon, 1);
+    ASSERT_EQ((int)g.integrated_reader.active_valid, 1);   /* the mode is latched */
+
+    ASSERT_EQ(ge_run_cycle(&g), 0);
+    ASSERT_EQ((int)g.integrated_reader.tu00, 0);
+    ASSERT_EQ((int)g.integrated_reader.cocon, 0);
+    ASSERT_EQ((int)g.integrated_reader.active_valid, 1);   /* but the mode stands */
+
+    /* And the same for the feed, which the reader consumes as it drops it. */
+    reader_send_tu10(&g);
+    ASSERT_EQ((int)g.integrated_reader.tu03, 1);
+    ASSERT_EQ(ge_run_cycle(&g), 0);
+    ASSERT_EQ((int)g.integrated_reader.tu03, 0);
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test: what is in the hopper, as the panel reports it.
+ *
+ * cardreader_deck_cards is the deck as captured; cardreader_cards_left counts
+ * down as the reader feeds, and both say -1 with no reader on the connector.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, hopper_reports_what_is_left)
+{
+    static const char cap_path[] = "/tmp/gemu_test_hopper.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    ASSERT_EQ(cardreader_deck_cards(&g), -1);      /* nothing on the connector */
+    ASSERT_EQ(cardreader_cards_left(&g), -1);
+
+    ge_load_1(&g);
+    ge_load(&g);
+    ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+
+    ASSERT_EQ(cardreader_deck_cards(&g), 1);
+    ASSERT_EQ(cardreader_cards_left(&g), 1);       /* still waiting at the throat */
+
+    ge_start(&g);
+    for (int i = 0; i < 2048; i++) {
+        ASSERT_EQ(ge_run_cycle(&g), 0);
+        if (g.rSO == 0xe3) break;
+    }
+
+    ASSERT_EQ(cardreader_deck_cards(&g), 1);       /* the deck does not shrink */
+    ASSERT_EQ(cardreader_cards_left(&g), 0);       /* the hopper does */
+
+    ge_deinit(&g);
+}

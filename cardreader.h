@@ -71,4 +71,15 @@ int cardreader_register_from(struct ge *ge, const char *cap_path,
 int cardreader_register_packed(struct ge *ge, const char *cap_path,
                                enum transcode_mode mode);
 
+/*
+ * What is in the hopper - the operator's view of the reader, for panels and
+ * traces. `cardreader_deck_cards` is the size of the mounted deck (empty cards
+ * included, as the capture holds them); `cardreader_cards_left` is how many
+ * non-empty cards are still waiting at the throat, not counting the one that
+ * has already left the hopper for the station. Both return -1 when no reader is
+ * on the connector.
+ */
+int cardreader_deck_cards(struct ge *ge);
+int cardreader_cards_left(struct ge *ge);
+
 #endif /* CARDREADER_H */

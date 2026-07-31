@@ -371,9 +371,22 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
      * for as long as this peripheral is registered. */
     r->lesab = 1;
 
-    /* TU03N, read as the previous cycle's pulse (CE09 fires at TI10, late). */
+    /* The CPU->reader lines are STROBES, and a strobe that is never taken down
+     * is a stuck pin: whoever reads the trace (or the Pico, sampling the same
+     * wires) sees a command clock that has been standing since the first order.
+     * Each one is read here as the previous cycle's pulse -- reader.c raises
+     * them from the CE commands late in the cycle (CE09/CE10 at TI10), this
+     * runs at TO00 of the next -- and dropped again.
+     *
+     * TU03N is the card feed and the one with a job to do; TU00N (command
+     * clock), COCON (mode-select clock) and REGEN (general clear) are latched
+     * on the reader side by reader.c / ge_clear the moment they arrive, so here
+     * they only have to stop standing. */
     feed = r->tu03;
-    r->tu03 = 0;
+    r->tu03  = 0;
+    r->tu00  = 0;
+    r->cocon = 0;
+    r->regen = 0;
     if (feed)
         ctx->n_feeds++;
 
@@ -559,6 +572,47 @@ static int cardreader_deinit(struct ge *ge, void *opaque)
 
 static int cr_register(struct ge *ge, const char *cap_path,
                        enum transcode_mode mode, int first_card, int pack);
+
+/* The reader peripheral on this machine, found by its clock callback -- the
+ * peripheral list carries no unit type, and this is the one node that can be
+ * a card reader. NULL when nothing is on the connector. */
+static struct cardreader_ctx *cr_find(struct ge *ge)
+{
+    struct ge_peri *p;
+
+    for (p = ge ? ge->peri : NULL; p != NULL; p = p->next)
+        if (p->on_clock == cardreader_on_clock)
+            return (struct cardreader_ctx *)p->ctx;
+    return NULL;
+}
+
+int cardreader_deck_cards(struct ge *ge)
+{
+    struct cardreader_ctx *ctx = cr_find(ge);
+
+    if (!ctx || !ctx->deck)
+        return -1;
+    return cap_num_cards(ctx->deck);
+}
+
+int cardreader_cards_left(struct ge *ge)
+{
+    struct cardreader_ctx *ctx = cr_find(ge);
+    int left = 0;
+
+    if (!ctx || !ctx->deck)
+        return -1;
+    if (ctx->state == CR_DONE)
+        return 0;
+    for (int i = ctx->card_idx; i < cap_num_cards(ctx->deck); i++)
+        if (cap_card_ncols(ctx->deck, i) > 0)
+            left++;
+    /* The card under the station has left the hopper: it is being read, or has
+     * been. Only a card still waiting at the throat counts. */
+    if (left > 0 && (ctx->state == CR_PRESENTING || ctx->state == CR_CARD_DONE))
+        left--;
+    return left;
+}
 
 int cardreader_register(struct ge *ge, const char *cap_path,
                         enum transcode_mode mode)
