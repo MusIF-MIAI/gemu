@@ -19,6 +19,59 @@ static inline uint8_t odd_parity(uint8_t data)
     return (__builtin_popcount(data) & 1) ? 0 : 1;
 }
 
+/**
+ * Does the machine have core at this address?
+ *
+ * The answer is the backplane's, not a setting: cp06 ch.080 MEMORY STARTING
+ * LOGIC watches address bits 12-14 against the ch.001 capacity straps, and an
+ * address past the installed capacity simply never starts a memory cycle
+ * (ge_mem_in_bounds, signals.h). This machine is strapped 32K (E05 PONT2N +
+ * F05 PONT2P, TAB.1's UCE 464 row), so all of 0x0000-0x7FFF is there.
+ *
+ * The 32K ceiling itself is not one of those gates: ch.080 only decodes bits
+ * 12-14, because on the largest machine there is no bit 15 of memory to decode
+ * -- 32K IS the top of the ch.001 table and of the physical build (two MEM470
+ * boxes, 16K positions each). An address with bit 15 set can still be computed,
+ * by a change register plus displacement, and it addresses core that no build
+ * has; it gets the same INV ADD as any other absent address.
+ *
+ * `mem_size` stays as the harness override for tests that want a specific
+ * capacity without restrapping the machine; 0 (the default) means "ask the
+ * straps".
+ */
+#define GE_MAX_CORE 0x8000u   /* 32K: the largest build ch.001 defines */
+
+static inline int mem_addr_installed(struct ge *ge, uint16_t addr)
+{
+    if (ge->mem_size)
+        return addr < ge->mem_size;
+    return addr < GE_MAX_CORE && ge_mem_in_bounds(ge, addr);
+}
+
+/**
+ * The error stop.
+ *
+ * A memory fault does not just light a lamp: it stops the subsystem, which is
+ * why CLEAR is "required after MEM CHECK" (CPU[4] §3.3) and why the maintenance
+ * panel has a switch to turn the stop off -- INAR, "inhibits the error stop on
+ * a memory check error or on addressing a non-existent address" (§4.2, fo.35).
+ * The lamp is raised either way; only the stop is inhibited.
+ *
+ * This is what ends a console storage key-in. With the rotary at position 8 and
+ * neither PAPA nor the step switch inserted, nothing stops the machine at the
+ * end of a cycle (fo.98's ALSOA=0 exempts position 8 along with NORM), so it
+ * goes on storing the AM switches at V1 and advancing V1 -- through the whole
+ * of core, exactly as the machine at Electric Dreams does -- until the address
+ * walks off the installed memory and INV ADD sets ALTO. Insert PAPA and each
+ * START stores one byte instead.
+ */
+static inline void mem_fault(struct ge *ge, uint8_t *lamp)
+{
+    *lamp = 1;
+    if (!ge->console_switches.INAR)
+        ge->ALTO = 1;
+}
+
 static void on_TO00(struct ge *ge) {
     /* cpu fo. 115 */
     ge->RIA0 = ge->RC00 && !ge->ALTO;
@@ -112,13 +165,11 @@ static void on_TO50(struct ge *ge) {
      * it didn't work to implement the state CC for PERI.
      * reading here  seems to work in all known cases */
     if (ge->memory_command == MC_READ) {
-        uint32_t size = ge->mem_size ? ge->mem_size : MEM_SIZE;
-
-        if (ge->rVO >= size) {
+        if (!mem_addr_installed(ge, ge->rVO)) {
             /* Address outside installed memory: raise INV ADD fault */
-            ge->inv_add = 1;
-            ge_log(LOG_STATES, "memory read: INV ADD rVO=%x >= size=%x\n",
-                   ge->rVO, size);
+            mem_fault(ge, &ge->inv_add);
+            ge_log(LOG_STATES, "memory read: INV ADD rVO=%x (bound %uK)\n",
+                   ge->rVO, ge_memory_capacity_k(ge));
         } else {
             ge->rRO = ge->mem[ge->rVO];
             ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n",
@@ -129,7 +180,7 @@ static void on_TO50(struct ge *ge) {
              * false MEM CHECK on startup. */
             if (ge->mem_written[ge->rVO]) {
                 if (odd_parity(ge->mem[ge->rVO]) != ge->mem_parity[ge->rVO]) {
-                    ge->mem_check = 1;
+                    mem_fault(ge, &ge->mem_check);
                     ge_log(LOG_STATES,
                            "memory read: MEM CHECK parity error at %x\n",
                            ge->rVO);
@@ -163,13 +214,11 @@ static void on_TO65(struct ge *ge) {
      * and the "test k" fails if it's in TO50. */
 
     if (ge->memory_command == MC_WRITE) {
-        uint32_t size = ge->mem_size ? ge->mem_size : MEM_SIZE;
-
-        if (ge->rVO >= size) {
+        if (!mem_addr_installed(ge, ge->rVO)) {
             /* Address outside installed memory: raise INV ADD fault, skip store */
-            ge->inv_add = 1;
-            ge_log(LOG_STATES, "memory write: INV ADD rVO=%x >= size=%x\n",
-                   ge->rVO, size);
+            mem_fault(ge, &ge->inv_add);
+            ge_log(LOG_STATES, "memory write: INV ADD rVO=%x (bound %uK)\n",
+                   ge->rVO, ge_memory_capacity_k(ge));
         } else {
             uint8_t parity = odd_parity(ge->rRO);
 

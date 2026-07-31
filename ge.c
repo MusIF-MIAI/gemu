@@ -32,20 +32,23 @@ void ge_init(struct ge *ge)
      * the pure-N strapping below stands.  Final electrical seal: pin 1<->4
      * beeps (2N) and pin 1<->3 does not.  docs/hardware-options.md.)
      *
-     * Card 05 follows the same both-are-PONT2N identification, which lands
-     * OFF the ch.001 table: the five printed rows stop at {N,P} = 32K and
-     * never define {N,N}.  Under the card-pin mechanism (PONT2N shorts pins
-     * {1,4}, PONT2P shorts {1,3} -- signals.h) the N+N levels come out
-     * (VAMA2,VEMB6,VAMC2) = (1,0,0): no printed row, and the capacity is
-     * reported as off-table rather than guessed.  What the memory bound
-     * logic does with (1,0,0) is an open question for the ch.077 consumers
-     * or for a memtest on the machine.  See docs/hardware-options.md. */
+     * Card 05, the memory-capacity pair, is the machine's OWNER's reading
+     * (2026-07-31): the boards say **32K**, which is TAB.1's printed
+     * {E05, F05} = {PONT2N, PONT2P} row -- UCE 464, (VAMA2,VEMB6,VAMC2) =
+     * (0,0,0) -- and it agrees with the physical build (2x MEM470 mounted,
+     * Q30/Q31 read amplifiers populated: docs/hardware-options.md).  It
+     * supersedes the 2026-07-21 photo reading of BOTH 05 cards as PONT2N,
+     * which landed off the ch.001 table at (1,0,0) and bounded the machine
+     * at 16K -- a bound that made every deck stop short of the memory it
+     * has, and that no printed row defines.  If a card is ever re-buzzed and
+     * F05 really is a 2N, flip it back here and the ch.080 gates will bound
+     * the machine again without anything else changing. */
     ge->options.E03 = PONT_2N;   /* UCE 468: 2 usec, MAX                     */
     ge->options.F03 = PONT_2N;   /* interruption enabled on connector 3      */
     ge->options.F04 = PONT_NONE; /* empty = the interrupts-enabled variant   */
     ge->options.E04 = PONT_NONE; /* loading enabled on connectors 2 and 3    */
-    ge->options.E05 = PONT_2N;   /* both 05 cards PONT2N: off-table combo    */
-    ge->options.F05 = PONT_2N;   /* -> (VAMA2,VEMB6,VAMC2) = (1,0,0)         */
+    ge->options.E05 = PONT_2N;   /* UCE 464: 32K core, TAB.1's {N,P} row     */
+    ge->options.F05 = PONT_2P;   /* -> (VAMA2,VEMB6,VAMC2) = (0,0,0)         */
 
     ge->ALTO = 1;      /* stopped until CLEAR + START */
     ge->powered = 1;
@@ -171,7 +174,51 @@ void ge_clear(struct ge *ge)
     ge->integrated_reader.mode_mi01 = 0;
     ge->integrated_reader.mode_mi02 = 0;
     ge->integrated_reader.active_valid = 0;
+    ge->integrated_reader.luren = 0;   /* transcoder/jam error: an error condition */
     ge->PEC1_pending = 0;
+
+    /* "Clears all error conditions" (CPU[4] §3.3). These are the two the
+     * operator panel shows, and the reason the manual says CLEAR is *required*
+     * after MEM CHECK: the fault latches are what stops the subsystem, and
+     * nothing else in the machine takes them down. MEM CHECK is the parity
+     * fault (pulse.c on_TO50), INV ADD the address-past-installed-core fault
+     * (both memory phases) -- neither is a momentary condition, so leaving them
+     * standing across a CLEAR left the panel lit for a fault the operator had
+     * already acknowledged. */
+    ge->mem_check = 0;
+    ge->inv_add   = 0;
+
+    /* The condition flip-flops are part of the preset state: FI carries the
+     * 2-bit condition code the jumps test (alu_cc.c) and FA its console-visible
+     * copy, and a machine just cleared must not answer a JC with the last
+     * program's result. The program addresser (PO) is deliberately NOT touched:
+     * the first START after CLEAR "runs the program" (CPU[4] §3.3), which needs
+     * the address it is parked on -- and the display/forcing sequences the
+     * engineer uses between CLEAR and START read and write exactly these. */
+    ge->ffFI = 0;
+    ge->ffFA = 0;
+    ge->JE   = 0;
+
+    /* And the defined state the sequencer is preset TO is the display state.
+     *
+     * This is the one that bites the operator. A HLT parks the machine
+     * mid-phase -- SO = e0 with the halted instruction still in FO -- and
+     * without this the stale phase survives the CLEAR: the next START finishes
+     * the OLD instruction, consuming whatever the operator has just forced into
+     * PO as its operand address, and the program runs from two bytes past
+     * wherever it was told to start. Changing PO from the console then does
+     * nothing, which is not what the panel is for (CPU[4] §4.2's rotary table
+     * exists to key PO and run from it).
+     *
+     * 00 is where a stopped GE-120 sits: the display sequence, which is what
+     * puts the registers on the panel lamps. Its chart ends in CU07 -> 0x80,
+     * Initialisation, and 0x80 goes to c8 with AINI set (LOAD pressed) or to
+     * the alpha phase without it -- so one START after a CLEAR either runs the
+     * load or fetches the next instruction AT PO, which is exactly what §3.3
+     * says the first START after CLEAR does. */
+    ge->rSO = 0x00;
+    ge->rSA = 0x00;
+    ge->future_state = 0x00;
 
     /* CLEAR does NOT clear core. It "presets CPU + peripherals to a defined
      * state" (CPU[4] §3.3) -- flip-flops, not memory. The change registers live

@@ -1570,16 +1570,23 @@ static void emit_runtime(FILE *o) {
         /* Code + globals live above 0x1000. With bit-15 absolute/modified
          * addressing honored (gemu indexing micro-cycle), absolute code/data
          * references are used verbatim and no longer alias the reloaded base
-         * registers (R5/R6 = 0x6000) — so the layout is no longer confined to
-         * low memory. Frame/stack live at 0x6000 via disp(5)/disp(6) (modified). */
+         * registers — so the layout is no longer confined to low memory.
+         * Frame/stack live at 0x6000 via disp(5)/disp(6) (modified).
+         *
+         * 0x6000 is inside this machine's core: the capacity straps say 32K
+         * (E05 PONT2N + F05 PONT2P, TAB.1's UCE 464 row -- ge.c), so
+         * 0x6000-0x7FFF is the top 8K of installed memory. On a machine
+         * strapped smaller the stack has to come down with it, or every push
+         * writes into nothing and raises INV ADD: gemu enforces the strapped
+         * bound (cp06 ch.080, docs/hardware-options.md). */
         "       ORG 0x1100\n"
         "__start:\n"
-        /* Do NOT trust the R6 = 0x6000 "reset identity": that is a gemu
+        /* Do NOT trust a "reset identity" for R6: that is a gemu
          * model convention (ge_clear). On the real machine the change
          * registers are core cells (0xF0-0xFE) and core RETAINS -- CLEAR
          * initializes nothing, so R6 holds whatever the machine last left
          * there (bench: a stack at 0x0600). Load it explicitly. */
-        "\tLA 6, 0x6000\n"              /* SP base */
+        "\tLA 6, 0x6000\n"              /* SP base, top 8K of the strapped 32K */
         "\tLA 5, 0x000(6)\n"            /* FP = SP */
         "\tMVI 0, __one\n\tMVI 1, __one+1\n"
         "\tMVI 0, __zero\n\tMVI 0, __zero+1\n"

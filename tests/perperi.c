@@ -36,6 +36,12 @@ UTEST(peri, per_peri) {
     
     ge_init(&g);
 
+    /* The order block's I1/I2 are filler bytes (0xee/0xff) chosen to be
+     * recognisable in the registers, so the transfer lands at 0xeeff -- past
+     * the 16K this machine's capacity straps install. This test is about the
+     * PER data path, not the memory bound: give it the whole address space. */
+    g.mem_size = MEM_SIZE;
+
     g.mem[0x00] = PER_OPCODE;
     g.mem[0x01] = up_name;
     g.mem[0x02] = addr_hi;

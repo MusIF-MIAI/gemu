@@ -298,7 +298,7 @@ UTEST(signals, s42_diag_overrides_the_version_strap)
  * 0618035V is electrically the same strap under a different code.  (The F03
  * card is currently mislaid -- located in a 2018 photo -- and is modelled as
  * fitted, per the machine's intended configuration.) */
-UTEST(signals, default_straps_are_a_uce468_with_off_table_capacity)
+UTEST(signals, default_straps_are_a_uce468_with_32k)
 {
     struct ge g;
     ge_init(&g);
@@ -306,18 +306,19 @@ UTEST(signals, default_straps_are_a_uce468_with_off_table_capacity)
     ASSERT_EQ(ge_cpu_version_uce(&g), 468);
     ASSERT_EQ(ge_cycle_period_ns(&g), 2000);
 
-    /* Card 05 carries PONT2N in BOTH positions on this machine (confirmed
-     * physically: every in-machine strap card is the same 2N) -- a strap
-     * combination the ch.001 table never defines.  Under the pin mechanism
-     * (N shorts pins {1,4}, P shorts {1,3}) that reads (VAMA2, VEMB6,
-     * VAMC2) = (1, 0, 0), and the ch.080 MEMORY STARTING LOGIC arms only
-     * its bit14 term for it: the machine bounds at 16K. */
-    ASSERT_TRUE(VAMA2(&g));
+    /* Card 05 is the memory-capacity pair and this machine's is the printed
+     * {E05, F05} = {PONT2N, PONT2P} row -- UCE 464, 32K -- which is what its
+     * owner reads off the boards and what the physical build says (two MEM470
+     * boxes, Q30/Q31 populated).  Under the pin mechanism (N shorts pins
+     * {1,4}, P shorts {1,3}) that is (VAMA2, VEMB6, VAMC2) = (0, 0, 0), and
+     * the ch.080 MEMORY STARTING LOGIC arms none of its terms: every address
+     * in the 32K space cycles memory. */
+    ASSERT_FALSE(VAMA2(&g));
     ASSERT_FALSE(VEMB6(&g));
     ASSERT_FALSE(VAMC2(&g));
-    ASSERT_EQ(ge_memory_capacity_k(&g), 16);
+    ASSERT_EQ(ge_memory_capacity_k(&g), 32);
     ASSERT_TRUE(ge_mem_in_bounds(&g, 0x3fff));
-    ASSERT_FALSE(ge_mem_in_bounds(&g, 0x4000));
+    ASSERT_TRUE(ge_mem_in_bounds(&g, 0x7fff));
 
     /* ch.002 TAB.1, the UCE 468 rows */
     ASSERT_FALSE(FEL06(&g));

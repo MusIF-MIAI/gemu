@@ -31,8 +31,11 @@ So the UCE numbering runs on two independent axes: **460-464 is the memory
 capacity** (ch.001) and **466-468 is the processor version** (ch.002). A
 machine is one of each.
 
-gemu currently allocates a flat 64K (`MEM_SIZE` in ge.h), above every
-documented capacity, and does not model the selection.
+gemu allocates a flat 64K array (`MEM_SIZE` in ge.h) but no longer *uses* it
+all: since 2026-07-31 the memory phases honour the selection, so the machine
+has core exactly where its straps say and nowhere else. This machine is
+strapped **32K** — the UCE 464 row — and an address past that raises INV ADD
+instead of reading or writing. See the note at the end of this file.
 
 ## Where to look on the machine
 
@@ -313,7 +316,26 @@ sheet: row QR carries EIGHT identical `02J` AMPL2A boards at positions
 TEME2A `70Y` at 20 and GEMA2A `27D` at 13 matching cp08's factory row Q
 exactly.  **The machine is a 32K physical build**, bounded to 16K by the
 strap: one PONT2P in F05 (bridge at hole 2 instead of hole 20, dwg
-015 433 91 p254) restores the printed {N,P} = 32K row.  The INIB2A inhibit
+015 433 91 p254) restores the printed {N,P} = 32K row.
+
+**gemu is strapped 32K and enforces the bound** (2026-07-31): `ge_init` sets
+E05 = PONT2N + F05 = PONT2P, the printed {N,P} = UCE 464 row, which is the
+owner's reading of the boards and agrees with the physical build above; and
+the memory phases now ask `ge_mem_in_bounds()` instead of assuming the whole
+address space, so an address past the strapped capacity raises INV ADD and
+never cycles memory, exactly as ch.080 has it.  32K itself is the ceiling the
+gates cannot express -- they only decode bits 12-14, because 32K is the top of
+the ch.001 table -- so `pulse.c` adds it: an address with bit 15 set, which a
+change register plus displacement can still compute, addresses core no build
+has and gets the same INV ADD.
+
+This is what `funktionalcpu.cap` needed.  Strapped at the off-table
+{N,N} = 16K reading, the deck stopped in the memory test at the manual's own
+`0x1466` "error 8-24K" halt with INV ADD lit -- the right answer for a 16K
+machine, and the wrong machine.  At 32K it runs the 0x4000 and 0x6000 memory
+tests through to `report_and_end`.  `ge->mem_size` stays as a harness override
+for tests that want a specific capacity without restrapping; 0 (the default)
+means "ask the straps".  The INIB2A inhibit
 boards are the `29W` cards in row ST (cod 0610029); cp01 p323 s.2.3.17.3
 discriminates them from AMPL2A at sight.
 

@@ -66,8 +66,15 @@ frame/stack via `disp(5)`/`disp(6)` against the reprogrammed base registers —
 0x6000 .. 0x7FFF   stack  (R6 starts at 0x6000, grows up)     [abi]
 ```
 
-The split between `.bss`/heap and the stack base (`0x6000`) is a linker constant
-(`crt0`), adjustable per program. Programs that the integrated card reader
+The stack window is the top 8K of a **32K** machine — this machine's capacity
+straps (E05 PONT2N + F05 PONT2P, TAB.1's UCE 464 row; `ge.c`,
+`docs/hardware-options.md`). That matters because gemu enforces the strapped
+bound: cp06 ch.080 never starts a memory cycle for an address past the
+installed capacity, it raises INV ADD. On a machine strapped smaller — 8/12/16K
+are all printed rows — the stack base has to come down with it (e.g. `0x3000`
+on a 16K build) or every push writes into nothing. The split between
+`.bss`/heap and the stack base is a linker constant (`crt0`), adjustable per
+program. Programs that the integrated card reader
 bootstraps load `.text` at `0x0100` (the `DUMP1` convention, ISA §4.1); unit
 unit tests that place a fragment by hand (`ge_load_image`) load at `0x0000`.
 
@@ -271,7 +278,7 @@ holds `42`.
 - `long long`/64-bit and full `long` arithmetic rely on `AB/SB` width (≤16
   bytes, free) but mul/div on widths >2 bytes are not yet in the helper set.
 - Recursion works (frames + R7 spill); deep recursion is bounded by the
-  `0x6000–0x7FFF` stack window (8 KiB).
+  `0x6000–0x7FFF` stack window (8 KiB), and by the machine's strapped capacity.
 - Single translation unit at first (no separate-compilation linker yet); `crt0`
   + program assembled together by `gasm`.
 - **Addressing:** the emulator honors the architectural bit-15 absolute/modified

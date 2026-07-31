@@ -67,7 +67,7 @@ need to be brought into line (the "fix in" column says where).
 | 9 | **MVQ/CMQ field length = `alen`** (high-nibble length code +1), not the full `LL` byte. | fixed | asm: these are effectively two-length even though only one matters |
 | 10 | **SR/SL (Search)**: result address → **change register 7** (`mem[0xFE..0xFF]`); CC: **F105 = found(1)/not-found(0)**. **SL is the mirror of SR**: its address is the field's RIGHTMOST byte, it scans right-to-left, result = match-1 (SR: leftmost, →, match+1). | fixed | doc the result-register + CC |
 | 11 | **MP/DP overflow side-effects**: MP overflows when the multiplier field > 8 bytes OR ≥ the result field, and on overflow **clears the V2 (second-operand) field**; AP on overflow **writes the truncated low-order result**. CC overflow = `(F104,F105)=(0,0)`. | fixed | — |
-| 12 | **Indexed addressing `0xNNN(R)`** = `change_register[R] + displacement` (bit-15 = 1 modifier). The core-memory test (step `0x62`+) fills/verifies a range using an indexed SS destination (`MVC 256, 0x000(0), 0x1500`). **OPEN gemu bug**: the indexed SS *destination* doesn't resolve to `cr[R]+disp` (writes don't land), so the memory test fails — the next thing to fix. | OPEN | verify disasm/asm indexed-operand encoding (`disp(R)`, bit-15) |
+| 12 | **Indexed addressing `0xNNN(R)`** = `change_register[R] + displacement` (bit-15 = 1 modifier). The core-memory test (step `0x62`+) fills/verifies a range using an indexed SS destination (`MVC 256, 0x000(0), 0x1500`). | fixed | Indexed SS *destinations* land: `MVC 1, 0x000(1), src` writes at `cr[1]+0` and `MVC 1, 0x010(2), src` at `cr[2]+0x10`, checked on a `gasm --card` deck through the reader. |
 
 CC condition-code NOTE tables (from the microcode), for the jump-condition logic
 (`JC/JRT` mask bits M7..M4 vs FA04/FA05): **AD-AB**: F104=overflow, F105=nonzero.
@@ -75,10 +75,31 @@ CC condition-code NOTE tables (from the microcode), for the jump-condition logic
 `(0,0)`=overflow for MP-DP, "impossible" for SD-SB). **CMC/CMI**: `(0,1)`=1ˢᵗ<2ⁿᵈ,
 `(1,0)`=equal, `(1,1)`=1ˢᵗ>2ⁿᵈ.
 
-> **Self-test status**: steps `0x01`..`0x60` (the full instruction set) pass; the deck
-> then enters the core-memory test (step `0x62`, `L_1600`) which is blocked on the
-> indexed-SS-destination bug (#12). See `disassembler/funktionalcpu.sym` for the
-> per-step op map and `project_funktional_selftest_decimal` in the agent memory.
+> **Self-test status** (2026-07-31, `ge Site_Acceptance_Test/funktionalcpu.cap`,
+> machine strapped 32K): the deck loads through the reader, the instruction
+> self-test walks its steps, and the **core-memory tests run through to
+> `report_and_end`** — `memtest_4000` and `memtest_6000` both execute, no INV
+> ADD. The deck then goes round again (`report_and_end` restarts unless its
+> result table matches, and `JS1` re-runs continuously by design), and the
+> **second lap halts at `0x1427`** with step code `0x27` in `mem[0x0010]` and
+> the operator-call lamp lit.
+>
+> The reason is one open question, and it is not the loader:
+> **MP overflow clears the multiplier field** (`alu_dec.c`, ISA note #11), so
+> step `0x27`'s vector at `0x05A5` is zeroed by its own first pass. On the
+> second lap the same MP reads a zero multiplier, gets cc=2 instead of the
+> overflow it wants, and jumps to `error_halt`. Whether the iron really clears
+> V2 on an MP overflow — or whether the deck restores the vector another way —
+> needs the manual or the machine.
+>
+> Two things that used to be blamed for this and are settled: the memory bound
+> (the machine is 32K, E05 PONT2N + F05 PONT2P; at the earlier 16K reading the
+> deck stopped at the manual's own `0x1466` "error 8–24K" halt, correctly, on
+> the wrong machine), and the option image `mem[0x0E00]`, which arrives as
+> `0x20` from the deck; with `0x00` forced, the deck stops at `idle_halt`
+> (`0x175A`) exactly as documented.
+>
+> See `disassembler/funktionalcpu.sym` for the per-step op map.
 
 ---
 
