@@ -1332,18 +1332,57 @@ static const struct msl_timing_chart exec_60[] = {
 
 static uint8_t state_00_TO10_CO10(struct ge *ge) { return AF32(ge) || AF42(ge); }
 static uint8_t state_00_TO10_CO11(struct ge *ge) { return AF31(ge) || AF41(ge) || AF51(ge); }
-static uint8_t state_00_TO30_CI15(struct ge *ge) { return !AF20(ge) && !AF40(ge); }
-static uint8_t state_00_TO50_CI33(struct ge *ge) { return !AF20(ge) && !AF21(ge) && !AF40(ge); }
+/* CI33 (RO <- NO21) puts the low half of the displayed register on the RO lamps
+ * -- for every position except the three length ones, which reach the knot at
+ * TO30 instead, and except V1-LETT.
+ *
+ * V1-LETT is position 9, the memory READ: it fetches mem[V1] into RO, advances
+ * V1, and "the byte read shows on the RO lamps" (CPU[4] §4.2, fo.35-37; the
+ * rotary table in docs/console.md). A display cycle that reloaded RO from the
+ * address knot would wipe that byte before the operator could read it -- and
+ * does, now that the panel runs continuously as the iron's does: the byte
+ * appears for one cycle and is replaced by the low half of the freshly
+ * advanced V1. The position exists to show memory, so the display leaves RO
+ * alone while it is selected. (Same family of misreading as CI15 above.) */
+static uint8_t state_00_TO50_CI33(struct ge *ge)
+{
+    return !AF20(ge) && !AF21(ge) && !AF40(ge) && !AF51(ge);
+}
 
 /* Flow chart 14023130A "DISPLAY SEQUENCE" (CPU[7] render-pg 24). Verified
- * row-by-row; the chart's `V3->BO [AF36]` is a scan artifact for `[AF30]`. */
+ * row-by-row; the chart's `V3->BO [AF36]` is a scan artifact for `[AF30]`.
+ *
+ * The sequence has two halves and each rotary position belongs to exactly one:
+ * TO10 routes the selected ADDRESS register into the NO knot (CO10..CO14), and
+ * TO30 routes the selected LENGTH register there instead (CI15 = L1, CI17 = L3,
+ * CI21 = R1/L2). TO50's CI33 (RO <- NO21) then completes the address half, and
+ * its printed condition is the proof of the split: it fires for everything
+ * EXCEPT L3, L1 and R1/L2 -- the three length positions.
+ *
+ * CI15 used to carry `!AF20 && !AF40` here, the complement of L3 and R1/L2 with
+ * the L1 term dropped, which made it fire for every address position too and
+ * overwrite the register TO10 had just routed. A chart row that unconditionally
+ * destroys the row above it is a misreading, and this one had teeth: with the
+ * rotary at NORM the knot reached state 80 holding L1, whose `CO00 PO <- NI`
+ * then wrote it into the program addresser. An operator who keyed a start
+ * address into PO and pressed START ran from the last program's L1 instead --
+ * i.e. "you cannot change PO from the console", which you certainly can on the
+ * real machine. Conditioned on AF21 (the L1 position) it matches CI33's own
+ * exclusion list and the address positions survive. */
 static const struct msl_timing_chart state_00[] = {
     { TO10, CO10, state_00_TO10_CO10 }, /* RS_NORM or RS_PO */
     { TO10, CO11, state_00_TO10_CO11 }, /* RS_V1 or RS_V1_SCR or RS_V1_LETT */
     { TO10, CO12, AF50 },               /* RS_V2 */
     { TO10, CO13, AF30 },               /* RS_V3 */
     { TO10, CO14, AF10 },               /* RS_V4 */
-    { TO30, CI15, state_00_TO30_CI15 }, /* not RS_L3 and not RS_R1_L2 */
+    /* V1-LETT reads. Position 9 shows the byte AT V1 on the RO lamps, and the
+     * display cycle is a memory cycle like any other, so it fetches it: the
+     * lamps then hold mem[V1] for as long as the position is selected, and
+     * each START advances V1 to the next byte (the forcing chart's own
+     * `TO25 CO30 [AF51]` row, which is where the advance happens). Without
+     * this the byte the operator asked for lives exactly one cycle. */
+    { TO25, CO30, AF51 },               /* RS_V1_LETT: read mem[V1] */
+    { TO30, CI15, AF21 },               /* RS_L1 */
     { TO30, CI17, AF20 },               /* RES_L3 */
     { TO30, CI21, AF40 },               /* RS_R1_R2 */
     { TO30, CI16, AF40 },               /* RS_V1_SCR */

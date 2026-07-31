@@ -188,4 +188,19 @@ void ge_fill_console_data(struct ge*, struct ge_console*);
 void ge_set_console_switches(struct ge*, struct ge_console_switches*);
 void ge_set_console_rotary(struct ge *, enum ge_console_rotary);
 
+/*
+ * ge_console_start - the START key, as a console presses it.
+ *
+ * Releases the machine. What stops it again is the machine's own business: a
+ * HLT, the end-of-cycle stop that makes a register forcing one cycle long, an
+ * error stop, or nothing at all in the case of the storage key-in, which runs
+ * through core until INV ADD ends it (console.c has the detail).
+ *
+ * Returns 1 if this was a program run (rotary at NORM), 0 for a maintenance
+ * operation. Either way the caller must go on turning the machine: the delay
+ * line of a powered GE-120 does not stop, and the display sequence it clocks is
+ * what keeps the panel lamps alive.
+ */
+int ge_console_start(struct ge *ge);
+
 #endif

@@ -103,7 +103,7 @@ the same place, and nothing in the CPU is disturbed. Test
 
 | Control | Type | Behaviour (CPU[4] §3.3, fo.31–33) |
 |---------|------|-----------------------------------|
-| **CLEAR** | key | Stops everything in the subsystem, clears all error conditions, presets CPU + peripherals to a defined state. Required after `MEM CHECK` and after power-on. No lamp. |
+| **CLEAR** | key | Stops everything in the subsystem, clears all error conditions, presets CPU + peripherals to a defined state. Required after `MEM CHECK` and after power-on. No lamp. In gemu: `AINI`/`ALAM`/`PODI`/`ADIR`, `ALTO` set, `RC00`-`RC03`, the reader's command/mode latches and `LUREN`, the **fault latches MEM CHECK and INV ADD**, the `FI`/`FA` condition flip-flops, and the **sequencer, preset to the display state** (§4.2). Not core, and not `PO` — the first `START` after `CLEAR` runs the program from where its addresser is parked. |
 | **LOAD 1 / LOAD 2** | switch | Selects one of two peripheral units enabled at install time for program loading (Conn.2/3, Conn.4/3, or Conn.2/4 — CPU[4] fo.43). |
 | **LOAD** | key | *Arms* the bootstrap and does nothing else: it sets the `AINI` flip-flop. No card moves, no lamp lights. The next `START` is what reads. |
 | **START** (HALT) | key | Starts operation. The white **HALT** lamp shows the machine is stopped. First `START` after `CLEAR`: runs the program if no other switch is set; runs the **load** if `LOAD` was pressed. |
@@ -170,8 +170,8 @@ running delay line. Pressing **START** instead runs a *forcing cycle*, writing t
 | 5 | `RS_V2` | V2 | AM → V2 |
 | 6 | `RS_L1` | L1 | AM → L1 |
 | 7 | `RS_V1` | V1 | AM → V1 |
-| 8 | `RS_V1_SCR` | V1 | AM → **storage** from address V1 onward (memory key-in) |
-| 9 | `RS_V1_LETT` | V1 | **reads** memory at V1, **+1** into V1; the byte read shows on the **RO** lamps |
+| 8 | `RS_V1_SCR` | V1 | AM → **storage** from address V1 onward (memory key-in) — see the note below: this one does **not** stop after a cycle |
+| 9 | `RS_V1_LETT` | mem[V1] on **RO** | **reads** memory at V1 and steps V1 by 1; the lamps show the byte at V1 for as long as the position is selected |
 | 10 | `RS_NORM` | PO | *(normal operating position — no forcing)* |
 | 11 | `RS_PO` | PO | AM → PO |
 | 12 | `RS_FI_UR` | *(none)* | AM → FI register and URPE |
@@ -180,6 +180,51 @@ running delay line. Pressing **START** instead runs a *forcing cycle*, writing t
 
 In position 8, `AM08` forces the memory check bit (even if incorrect) when the
 `INCE` switch is inserted.
+
+> **The storage key-in does not stop, and that is not a bug.** fo.98's
+> end-of-cycle stop (`ALSOA=0`) exempts position 8 along with `NORM`, so with
+> neither `PAPA` nor a step switch inserted a `START` at position 8 keys the
+> `AM` switches into address after address, straight through core, until the
+> addresser walks off the installed memory and **INV ADD** stops the machine.
+> That is what the machine at Electric Dreams does. Insert `PAPA` and each
+> `START` stores one byte, leaving V1 advanced for the next.
+>
+> The stop is the point: a memory fault does not merely light a lamp, it stops
+> the subsystem — which is why `CLEAR` is *required* after `MEM CHECK` (§3.3)
+> and why `INAR` exists to inhibit it. gemu raises the lamp either way and sets
+> `ALTO` unless `INAR` is inserted (`pulse.c mem_fault`). Test
+> `console_fidelity.storage_key_in_runs_until_the_error_stop`.
+>
+> **Position 9 is the read-out.** `RO` is cleared at `TO20` of every cycle
+> (fo.142), so anything on those lamps is put there by the cycle you are
+> looking at: with the rotary at `V1-LETT` the display sequence fetches
+> `mem[V1]` and the byte stands on the `RO` lamps for as long as the position
+> is selected; each `START` steps V1 to the next byte. (gemu's display chart
+> gained that read, and `CI33` — which would otherwise reload `RO` with the low
+> half of the address — is excluded for this position; `msl-states.c`
+> `state_00`. Whether the iron instead freezes the byte just read is the one
+> part of this that wants a bench check.)
+
+> **Keying a start address into PO** (position 11) is the ordinary way to run a
+> program that is already in core, and it has to survive the return to `NORM`:
+>
+>     CLEAR -> rotary PO -> AM = address, INAR in -> START (forcing cycle)
+>            -> rotary NORM, INAR out -> START (runs from it)
+>
+> gemu got this wrong in two places until 2026-07-31, and the symptom was the
+> plain one — the machine ran from somewhere else. First, a `HLT` parks the
+> sequencer mid-phase with the halted instruction still in `FO`, and `ge_clear`
+> did not preset it: the next `START` finished the OLD instruction and ate the
+> forced address as its operand. `CLEAR` now presets the sequencer to the
+> display state (`00`), which is where a stopped machine sits and which walks
+> `00 -> 80 -> alpha`, i.e. straight into a fetch at `PO`. Second, the display
+> sequence's own `CI15` row (`NO <- L1`) was firing for every rotary position
+> and overwriting the `PO` that `TO10` had just routed into the knot;
+> Initialisation's `CO00` (`PO <- NI`) then wrote that back into the program
+> addresser, so the machine started from the last program's `L1`. Conditioning
+> `CI15` on the `L1` position — which is what `CI33`'s own exclusion list says
+> — leaves the address positions alone. Test
+> `console_fidelity.po_can_be_forced_and_run_from`.
 
 ### 4.3 Maintenance switches (CPU[4] §4.2, fo.35–36)
 
@@ -191,7 +236,7 @@ In position 8, `AM08` forces the memory check bit (even if incorrect) when the
 | **ACOV** | `ACOV` | Stops the machine when a jump condition **is verified** at the end of reading a jump instruction. |
 | **ACON** | `ACON` | Stops the machine when a jump condition is **not verified**. |
 | **STOC** | `STOC` | Lets STEP-BY-STEP stop the CPU **even if** the program inhibited step-by-step (via `INS`). |
-| **INAR** | `INAR` | **Inhibits the error stop** on a memory check error or on addressing a non-existent address. Used during console forcing so a key-in to unwritten memory does not trip `MEM CHECK`/`INV ADD`. |
+| **INAR** | `INAR` | **Inhibits the error stop** on a memory check error or on addressing a non-existent address — the lamp still lights, the machine does not stop (`pulse.c mem_fault`). Without it, a fault sets `ALTO`: that is what ends a runaway storage key-in, and what makes `CLEAR` "required after MEM CHECK". |
 | **INCE** | `INCE` | Inhibits check-bit correction for characters from external units. During a console storage forcing it stores `AM08` as the (possibly wrong) odd-parity bit, suppressing parity generation for `AM07`–`AM00`. |
 | **SITE** | `SITE` | The CPU no longer waits for availability / triggers from external units — the program evolves as if peripherals are always ready. |
 | **LAMPS** | — | 3-position: `OFF` (all maintenance lamps off) / `ON` (lamps powered) / `DIAG` (lamps + diagnostic mode + `MAINT ON`). |
@@ -218,7 +263,7 @@ ge_run_cycle(&g);                      /* advance the delay-line clock  */
 |-----------|--------------|-------|
 | **CLI (headless)** | `./ge deck.cap` (`--deck` is an alias) | Drives CLEAR→LOAD1→LOAD→START for you and runs to HLT; `--trace` for logs. A `.cap` deck is the only input it takes. |
 | **ncurses TUI** | `./ge --tui` | Implies `--console`; spawns `console/curses/console.py` against the `/tmp/gemu.console` socket. |
-| **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `press_power_off`, `set_switches(flags, am)`, `set_register_selector(s)`, `set_switch_1_2(s1, s2)` (the program-readable switches → `JS1`/`JS2`), `set_load_unit(load1)` (LOAD1/LOAD2 selector), `set_speed(mult)` (run-speed multiplier), `mount_deck` (deck loader), `refresh_lamps` (after LAMPS CHECK). The run loop is `requestAnimationFrame`-driven and **paces the cycle count to nominal GE-120 wall-clock time** (one `ge_run_cycle` = one 4 µs elementary cycle → 250 cycles/ms; CPU[4] "memory cycle of nominal 2/4/6 µs for 130/120/115/3"), with a simulator-toolbar speed selector (default real time). For instruction-level inspection use PAPA single-step instead. A live gdb-style disassembly window (shared `disasm.c`, driven from `opcodes.h`) tracks the program counter — `AAAA: <bytes>  MNEM ops`, current instruction highlighted. |
+| **WebAssembly** | `make wasm && make wasm-run` | Browser panel; exports `press_clear/press_load/press_start`, `press_power_off`, `set_switches(flags, am)`, `set_register_selector(s)`, `set_switch_1_2(s1, s2)` (the program-readable switches → `JS1`/`JS2`), `set_load_unit(load1)` (LOAD1/LOAD2 selector), `set_speed(mult)` (run-speed multiplier), `mount_deck` (deck loader) with `deck_cards`/`deck_cards_left` (what is in the hopper), `refresh_lamps` (after LAMPS CHECK). The page's only input is a `.cap` deck chosen from the operator's disk — picking the file mounts it, exactly as the CLI mounts a positional `.cap`; nothing is vendored beside the page and there is no second format. The run loop is `requestAnimationFrame`-driven and **paces the cycle count to nominal GE-120 wall-clock time** (one `ge_run_cycle` = one 4 µs elementary cycle → 250 cycles/ms; CPU[4] "memory cycle of nominal 2/4/6 µs for 130/120/115/3"), with a simulator-toolbar speed selector (default real time). For instruction-level inspection use PAPA single-step instead. A live gdb-style disassembly window (shared `disasm.c`, driven from `opcodes.h`) tracks the program counter — `AAAA: <bytes>  MNEM ops`, current instruction highlighted. |
 
 The WebAssembly `set_switches` packs the maintenance switches into a flags word:
 

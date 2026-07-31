@@ -130,7 +130,10 @@ static void console_press_buttons(struct ge *ge, uint16_t buttons)
     if (edge & (1u << BTN_HALT_START)) {
         if (ge->ALTO) {
             ge_log(LOG_CONSOLE, "console: START\n");
-            ge_start(ge);
+            /* Off NORM this performs the one maintenance cycle the key is worth
+             * and leaves the machine stopped; the caller's run loop must not
+             * turn it further (console.c). */
+            ge_console_start(ge);
         } else {
             ge_log(LOG_CONSOLE, "console: HALT\n");
             ge->ALTO = 1;

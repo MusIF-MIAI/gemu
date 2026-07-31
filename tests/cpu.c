@@ -1,6 +1,7 @@
 #include "utest.h"
 #include "../ge.h"
 #include "../log.h"
+#include "../signals.h"   /* ge_mem_in_bounds / ge_memory_capacity_k (ch.080) */
 
 #include <string.h>
 
@@ -507,3 +508,268 @@ UTEST(console_fidelity, ince_forces_check_bit)
     ASSERT_EQ((int)c.lamps.MEM_CHECK, 1);   /* wrong check bit detected on read */
 }
 
+
+/*
+ * CLEAR clears the error conditions.
+ *
+ * "Stops everything in the subsystem, clears all error conditions, presets CPU
+ * + peripherals to a defined state. Required after MEM CHECK and after
+ * power-on." (CPU[4] §3.3, fo.31-33.) The two fault latches the panel shows are
+ * MEM CHECK (parity) and INV ADD (address past installed core); nothing else in
+ * the machine takes them down, so before this they stayed lit for a fault the
+ * operator had already acknowledged with the key the manual names.
+ */
+UTEST(console_fidelity, clear_clears_the_fault_lamps)
+{
+    struct ge g;
+    struct ge_console c;
+
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    /* Raise both faults the way the machine raises them, then look. */
+    g.mem_check = 1;
+    g.inv_add   = 1;
+    g.ALAM      = 1;    /* operator call, the third lamp CLEAR takes down */
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MEM_CHECK, 1);
+    ASSERT_EQ((int)c.lamps.INV_ADD, 1);
+    ASSERT_EQ((int)c.lamps.OPERATOR_CALL, 1);
+
+    ge_clear(&g);
+
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.MEM_CHECK, 0);
+    ASSERT_EQ((int)c.lamps.INV_ADD, 0);
+    ASSERT_EQ((int)c.lamps.OPERATOR_CALL, 0);
+    ASSERT_EQ((int)c.lamps.HALT, 1);        /* and the machine is stopped */
+}
+
+/*
+ * The machine has core where its straps say it has core.
+ *
+ * cp06 ch.080 MEMORY STARTING LOGIC: an address past the installed capacity
+ * never starts a memory cycle. This machine's straps (E05 PONT2N + F05 PONT2P)
+ * are the printed UCE 464 row: 32K, so 0x7FFF is there and 0x8000 -- which a
+ * change register plus displacement can still address -- is not.
+ */
+UTEST(console_fidelity, memory_bound_follows_the_straps)
+{
+    struct ge g;
+
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    ASSERT_EQ((int)ge_memory_capacity_k(&g), 32);
+    ASSERT_TRUE(ge_mem_in_bounds(&g, 0x3FFF));
+    ASSERT_TRUE(ge_mem_in_bounds(&g, 0x7FFF));   /* the 32K row has it all */
+
+    /* MVI 0xAA, 0x4000: inside 32K, so it lands and no fault is raised. */
+    g.mem[0] = 0x92;            /* MVI */
+    g.mem[1] = 0xAA;            /* immediate */
+    g.mem[2] = 0x40;            /* address hi */
+    g.mem[3] = 0x00;            /* address lo */
+    g.mem[4] = 0x0A;            /* HLT */
+    ge_start(&g);
+    for (int i = 0; i < 200 && !ge_halted(&g); i++)
+        ge_run_cycle(&g);
+
+    ASSERT_EQ((int)g.mem[0x4000], 0xAA);
+    ASSERT_EQ((int)g.inv_add, 0);
+
+    /* ... and 0x8000 is past the largest build ch.001 defines. An instruction
+     * cannot name it directly -- bit 15 of an address field is the modifier
+     * flag -- so reach it the way a program would: change register 1 = 0x8000
+     * and a modified field 0x9000 (bit15 | reg 1 | disp 0). The write is
+     * dropped and INV ADD comes up. */
+    ge_init(&g);
+    ge_clear(&g);
+    g.mem[0x00F2] = 0x80;       /* change register 1 = 0x8000 */
+    g.mem[0x00F3] = 0x00;
+    g.mem[0] = 0x92;            /* MVI 0xAA, 0x000(1) */
+    g.mem[1] = 0xAA;
+    g.mem[2] = 0x90;
+    g.mem[3] = 0x00;
+    g.mem[4] = 0x0A;            /* HLT */
+    ge_start(&g);
+    for (int i = 0; i < 200 && !ge_halted(&g); i++)
+        ge_run_cycle(&g);
+
+    ASSERT_EQ((int)g.mem[0x8000], 0x00);
+    ASSERT_EQ((int)g.inv_add, 1);
+}
+
+/*
+ * The operator can change PO from the console and run from it.
+ *
+ * The procedure is the panel's own (CPU[4] §4.2's rotary table): CLEAR, turn
+ * the register selector to PO, key the address into the AM toggles with INAR
+ * inserted, START to perform the forcing cycle, back to NORM, START to run.
+ *
+ * Two things used to defeat it. A HLT parks the sequencer mid-phase with the
+ * halted instruction still in FO, and CLEAR did not preset it, so the next
+ * START finished the OLD instruction and consumed the forced address as its
+ * operand. And the display sequence's CI15 row (NO <- L1) fired for every
+ * rotary position, overwriting the PO that TO10 had just routed into the knot,
+ * which state 80's `CO00 PO <- NI` then wrote back into the program addresser:
+ * the machine ran from the last program's L1. See msl-states.c state_00.
+ */
+UTEST(console_fidelity, po_can_be_forced_and_run_from)
+{
+    struct ge g;
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    /* MVI 0xAA, 0x0200 ; HLT  at 0x0000 */
+    g.mem[0] = 0x92; g.mem[1] = 0xAA; g.mem[2] = 0x02; g.mem[3] = 0x00;
+    g.mem[4] = 0x0A;
+
+    ge_start(&g);
+    for (int i = 0; i < 200 && !ge_halted(&g); i++)
+        ge_run_cycle(&g);
+    ASSERT_EQ((int)g.mem[0x0200], 0xAA);      /* it ran once */
+    ASSERT_EQ((int)g.rPO, 0x0004);            /* and stopped on the HLT */
+
+    g.mem[0x0200] = 0x00;                     /* wipe the evidence */
+
+    /* CLEAR, then force PO back to 0x0000 from the panel. */
+    ge_clear(&g);
+    ge_set_console_rotary(&g, RS_PO);
+    s.AM   = 0x0000;
+    s.INAR = 1;
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ge_start(&g);                             /* START = one forcing cycle */
+    ge_run_cycle(&g);
+    ASSERT_EQ((int)g.rPO, 0x0000);            /* the address is keyed in */
+
+    /* Back to NORM and run: the machine must start at what was forced. */
+    s.INAR = 0;
+    ge_set_console_rotary(&g, RS_NORM);
+    ge_set_console_switches(&g, &s);
+    ge_start(&g);
+    for (int i = 0; i < 400 && !ge_halted(&g); i++)
+        ge_run_cycle(&g);
+
+    ASSERT_EQ((int)g.mem[0x0200], 0xAA);      /* it ran again, from 0x0000 */
+    ASSERT_EQ((int)g.rPO, 0x0004);
+}
+
+/*
+ * The storage key-in runs through core until the error stop ends it.
+ *
+ * Rotary position 8 (V1-SCR) stores the AM switches at V1 and advances V1.
+ * fo.98's end-of-cycle stop exempts position 8 along with NORM, so with neither
+ * PAPA nor a step switch inserted the machine does NOT stop after one store: it
+ * goes on keying the same byte into address after address, through the whole of
+ * core, until the addresser walks off the installed memory and INV ADD stops it
+ * -- ALTO set, INV ADD lit. That is what the machine at Electric Dreams does,
+ * and it is why INAR exists: it inhibits that stop (CPU[4] §4.2, fo.35).
+ */
+UTEST(console_fidelity, storage_key_in_runs_until_the_error_stop)
+{
+    struct ge g;
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+
+    /* V1 = 0x0002 -- a register forcing, which IS one cycle: the end-of-cycle
+     * stop applies to every off-NORM position except the key-in. */
+    ge_set_console_rotary(&g, RS_V1);
+    s.AM = 0x0002;
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ASSERT_EQ(ge_console_start(&g), 0);
+    ge_run_cycle(&g);
+    ASSERT_TRUE(ge_halted(&g));
+    ASSERT_EQ((int)g.rV1, 0x0002);
+
+    /* V1-SCR = 0x03, and let the machine run as a front end would. */
+    ge_set_console_rotary(&g, RS_V1_SCR);
+    s.AM = 0x0003;
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ge_console_start(&g);
+
+    int cycles = 0;
+    while (!ge_halted(&g) && cycles < 200000) {
+        ge_run_cycle(&g);
+        cycles++;
+    }
+
+    ASSERT_TRUE(ge_halted(&g));                  /* it stopped by itself */
+    ASSERT_EQ((int)g.inv_add, 1);                /* on INV ADD */
+    ASSERT_EQ((int)g.mem[0x0002], 0x03);         /* having keyed from V1 up */
+    ASSERT_EQ((int)g.mem[0x1000], 0x03);
+    ASSERT_EQ((int)g.mem[0x7FFF], 0x03);         /* to the top of the 32K */
+    ASSERT_GE((int)g.rV1, 0x8000);               /* and off the end */
+
+    /* PAPA is what makes it one byte per press: with it inserted the machine
+     * stops at the end of the microsequence like any other forcing. */
+    ge_init(&g);
+    ge_clear(&g);
+    memset(&s, 0, sizeof(s));
+    s.PAPA = 1;
+    ge_set_console_rotary(&g, RS_V1);
+    s.AM = 0x0002;
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ge_console_start(&g);
+    ge_run_cycle(&g);
+
+    ge_set_console_rotary(&g, RS_V1_SCR);
+    s.AM = 0x0003;
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ge_console_start(&g);
+    for (int i = 0; i < 64 && !ge_halted(&g); i++)
+        ge_run_cycle(&g);
+
+    ASSERT_TRUE(ge_halted(&g));
+    ASSERT_EQ((int)g.mem[0x0002], 0x03);
+    ASSERT_EQ((int)g.mem[0x0003], 0x00);         /* exactly one store */
+    ASSERT_EQ((int)g.inv_add, 0);
+
+    /* Read it back. Position 9 is a read-out: with the rotary there the RO
+     * lamps show the byte AT V1 for as long as the panel runs -- the display
+     * cycle fetches it, which is the only way anything stays on those lamps
+     * (RO is cleared at TO20 of every cycle, fo.142) -- and each START steps
+     * V1 on to the next byte. */
+    ge_set_console_rotary(&g, RS_V1);
+    s.AM = 0x0002;
+    ge_set_console_switches(&g, &s);
+    ge_run_cycle(&g);
+    ge_console_start(&g);
+    ge_run_cycle(&g);
+
+    ge_set_console_rotary(&g, RS_V1_LETT);
+    ge_set_console_switches(&g, &s);
+    for (int i = 0; i < 4; i++)
+        ge_run_cycle(&g);
+
+    struct ge_console c = { 0 };
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.RO, 0x03);            /* "3" on the lamps ... */
+    ASSERT_EQ((int)g.rV1, 0x0002);               /* ... and V1 has not moved */
+
+    for (int i = 0; i < 40; i++)                 /* it stays there */
+        ge_run_cycle(&g);
+    ge_fill_console_data(&g, &c);
+    ASSERT_EQ((int)c.lamps.RO, 0x03);
+
+    ge_console_start(&g);                        /* START steps to the next */
+    for (int i = 0; i < 40 && !ge_halted(&g); i++)
+        ge_run_cycle(&g);
+    ASSERT_EQ((int)g.rV1, 0x0003);
+
+    /* And at NORM the same key means run, and says so. */
+    ge_set_console_rotary(&g, RS_NORM);
+    ASSERT_EQ(ge_console_start(&g), 1);
+}

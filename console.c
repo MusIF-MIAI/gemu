@@ -114,3 +114,30 @@ void ge_set_console_rotary(struct ge *ge, enum ge_console_rotary rs)
     ge_log(LOG_CONSOLE, "setting rotary %d\n", rs);
     ge->register_selector = rs;
 }
+
+/*
+ * START, as a console presses it. See console.h.
+ *
+ * It releases the machine, and what stops it again is the machine's business,
+ * not the console's:
+ *
+ *   - at NORM the program runs until a HLT, a step switch, or a fault;
+ *   - off NORM the end-of-cycle stop (fo.98) fires after ONE maintenance cycle,
+ *     so a register forcing is a single cycle and the machine parks again;
+ *   - EXCEPT at position 8, the storage key-in, which fo.98 exempts along with
+ *     NORM. There the machine goes on storing the AM switches at V1 and
+ *     advancing V1 through the whole of core -- that is what the real machine
+ *     does -- until PAPA stops it at the next microsequence, or the address
+ *     walks off the installed memory and the INV ADD error stop ends it
+ *     (pulse.c mem_fault). Inserting PAPA is what makes it one byte per press.
+ *
+ * The return value tells a front end whether this was a program run (1) or a
+ * maintenance operation (0); both need the caller to keep turning the machine,
+ * because a powered GE-120's delay line does not stop.
+ */
+int ge_console_start(struct ge *ge)
+{
+    ge->ALTO = 0;
+    ge_start(ge);
+    return ge->register_selector == RS_NORM;
+}
