@@ -773,3 +773,43 @@ UTEST(console_fidelity, storage_key_in_runs_until_the_error_stop)
     ge_set_console_rotary(&g, RS_NORM);
     ASSERT_EQ(ge_console_start(&g), 1);
 }
+
+/*
+ * The fault lamps are conditions, not latches.
+ *
+ * With the error stop inhibited the machine runs on through a fault, and the
+ * lamp reports the memory cycle you are looking at: nothing loaded, INAR in,
+ * START, and the addresser walks zeroes up through core -- INV ADD comes on as
+ * it passes the installed 32K and goes out again as it wraps to 0, once per
+ * lap. That blink is what the restored machine does (2026-07-31). With INAR
+ * out the machine stops ON the faulting cycle instead, so the lamp stands
+ * there lit until CLEAR, which is the same behaviour seen from the other side.
+ */
+UTEST(console_fidelity, inv_add_follows_the_cycle_it_reports)
+{
+    struct ge g;
+    struct ge_console_switches s = { 0 };
+
+    ge_init(&g);
+    ge_log_set_active_types(0);
+    ge_clear(&g);
+    s.INAR = 1;
+    ge_set_console_switches(&g, &s);
+    ge_start(&g);
+
+    int on = 0, off = 0, last = -1;
+    for (long i = 0; i < 400000; i++) {
+        ge_run_cycle(&g);
+        if (g.inv_add != last) {
+            if (last >= 0) {
+                if (g.inv_add) on++;
+                else off++;
+            }
+            last = g.inv_add;
+        }
+    }
+
+    ASSERT_FALSE(ge_halted(&g));   /* INAR: it never stopped */
+    ASSERT_GT(on, 1);              /* and the lamp blinked, both ways */
+    ASSERT_GT(off, 1);
+}

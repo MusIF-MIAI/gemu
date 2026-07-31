@@ -195,6 +195,16 @@ In position 8, `AM08` forces the memory check bit (even if incorrect) when the
 > `ALTO` unless `INAR` is inserted (`pulse.c mem_fault`). Test
 > `console_fidelity.storage_key_in_runs_until_the_error_stop`.
 >
+> **The fault lamps are conditions, not latches.** Each reports the memory
+> cycle it belongs to, and a good cycle puts it out again — which you only see
+> with the stop inhibited. Nothing loaded, `INAR` in, `START`: the machine
+> walks zeroes up through core and **INV ADD** comes on as the addresser passes
+> the installed 32K, then goes out as it wraps to `0x0000`, blinking once per
+> lap (~0.2 s each way at nominal speed). With `INAR` out the machine stops ON
+> the faulting cycle, so the lamp stands there lit until `CLEAR` — the same
+> behaviour seen from the other side. Observed on the restored machine,
+> 2026-07-31; test `console_fidelity.inv_add_follows_the_cycle_it_reports`.
+>
 > **Position 9 is the read-out.** `RO` is cleared at `TO20` of every cycle
 > (fo.142), so anything on those lamps is put there by the cycle you are
 > looking at: with the rotary at `V1-LETT` the display sequence fetches

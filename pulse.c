@@ -49,7 +49,7 @@ static inline int mem_addr_installed(struct ge *ge, uint16_t addr)
 }
 
 /**
- * The error stop.
+ * The fault lamps, and the error stop.
  *
  * A memory fault does not just light a lamp: it stops the subsystem, which is
  * why CLEAR is "required after MEM CHECK" (CPU[4] §3.3) and why the maintenance
@@ -64,6 +64,16 @@ static inline int mem_addr_installed(struct ge *ge, uint16_t addr)
  * of core, exactly as the machine at Electric Dreams does -- until the address
  * walks off the installed memory and INV ADD sets ALTO. Insert PAPA and each
  * START stores one byte instead.
+ *
+ * The LAMP is a condition, not a latch: it reports the memory cycle you are
+ * looking at, and a good cycle puts it out again. That is only visible with
+ * the stop inhibited -- INAR in, nothing loaded, START: the machine walks
+ * zeroes up through core, and INV ADD comes on as the addresser passes the
+ * installed memory and goes off again as it wraps to 0, blinking once per lap.
+ * Observed on the restored machine, 2026-07-31. With INAR out the machine
+ * stops ON the faulting cycle, so the lamp stands there lit, which is the
+ * other half of the same behaviour -- and why CLEAR is "required after MEM
+ * CHECK": what CLEAR releases is the stop.
  */
 static inline void mem_fault(struct ge *ge, uint8_t *lamp)
 {
@@ -171,6 +181,7 @@ static void on_TO50(struct ge *ge) {
             ge_log(LOG_STATES, "memory read: INV ADD rVO=%x (bound %uK)\n",
                    ge->rVO, ge_memory_capacity_k(ge));
         } else {
+            ge->inv_add = 0;              /* the address is there: condition gone */
             ge->rRO = ge->mem[ge->rVO];
             ge_log(LOG_STATES, "memory read: RO = mem[VO] = mem[%x] = %x\n",
                    ge->rVO, ge->rRO);
@@ -184,6 +195,8 @@ static void on_TO50(struct ge *ge) {
                     ge_log(LOG_STATES,
                            "memory read: MEM CHECK parity error at %x\n",
                            ge->rVO);
+                } else {
+                    ge->mem_check = 0;    /* checked, and good */
                 }
             }
         }
@@ -220,6 +233,8 @@ static void on_TO65(struct ge *ge) {
             ge_log(LOG_STATES, "memory write: INV ADD rVO=%x (bound %uK)\n",
                    ge->rVO, ge_memory_capacity_k(ge));
         } else {
+            ge->inv_add = 0;              /* the address is there: condition gone */
+
             uint8_t parity = odd_parity(ge->rRO);
 
             /* Console check-bit forcing: during a storage forcing from the
