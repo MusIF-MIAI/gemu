@@ -62,7 +62,8 @@ void alu_nc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)
 {
     uint8_t i;
     for (i = 0; i < len; i++)
-        ge->mem[(uint16_t)(a + i)] &= ge->mem[(uint16_t)(b + i)];
+        ge_mem_store8(ge, (uint16_t)(a + i),
+                      ge->mem[(uint16_t)(a + i)] & ge->mem[(uint16_t)(b + i)]);
     /* "Qualitative result: it is not interested." — CC not altered */
 }
 
@@ -74,7 +75,8 @@ void alu_oc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)
 {
     uint8_t i;
     for (i = 0; i < len; i++)
-        ge->mem[(uint16_t)(a + i)] |= ge->mem[(uint16_t)(b + i)];
+        ge_mem_store8(ge, (uint16_t)(a + i),
+                      ge->mem[(uint16_t)(a + i)] | ge->mem[(uint16_t)(b + i)]);
     /* "Qualitative result: it is not interested." — CC not altered */
 }
 
@@ -88,7 +90,8 @@ void alu_xc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)
     uint8_t all_zero = 1;
 
     for (i = 0; i < len; i++) {
-        ge->mem[(uint16_t)(a + i)] ^= ge->mem[(uint16_t)(b + i)];
+        ge_mem_store8(ge, (uint16_t)(a + i),
+                      ge->mem[(uint16_t)(a + i)] ^ ge->mem[(uint16_t)(b + i)]);
         if (ge->mem[(uint16_t)(a + i)] != 0)
             all_zero = 0;
     }

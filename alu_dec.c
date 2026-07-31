@@ -105,7 +105,7 @@ static uint8_t dec_get_digit(const uint8_t *mem, uint16_t packed_addr,
 }
 
 /** Set a single digit in a packed field (same indexing as dec_get_digit). */
-static void dec_set_digit(uint8_t *mem, uint16_t packed_addr,
+static void dec_set_digit(struct ge *ge, uint16_t packed_addr,
                           int packed_bytes, int digit_idx, uint8_t digit)
 {
     int total_digits = 2 * packed_bytes - 1;
@@ -122,10 +122,11 @@ static void dec_set_digit(uint8_t *mem, uint16_t packed_addr,
     }
 
     uint16_t addr = (uint16_t)(packed_addr - byte_off);
+    uint8_t  cur  = ge->mem[addr];
     if (hi)
-        mem[addr] = (uint8_t)((mem[addr] & 0x0F) | ((digit & 0xF) << 4));
+        ge_mem_store8(ge, addr, (uint8_t)((cur & 0x0F) | ((digit & 0xF) << 4)));
     else
-        mem[addr] = (uint8_t)((mem[addr] & 0xF0) | (digit & 0xF));
+        ge_mem_store8(ge, addr, (uint8_t)((cur & 0xF0) | (digit & 0xF)));
 }
 
 /** Get the sign nibble of a packed field. */
@@ -135,20 +136,21 @@ static uint8_t dec_get_sign(const uint8_t *mem, uint16_t packed_addr)
 }
 
 /** Set the sign nibble of a packed field. */
-static void dec_set_sign(uint8_t *mem, uint16_t packed_addr, uint8_t sign)
+static void dec_set_sign(struct ge *ge, uint16_t packed_addr, uint8_t sign)
 {
-    mem[packed_addr] = (uint8_t)((mem[packed_addr] & 0xF0) | (sign & 0x0F));
+    ge_mem_store8(ge, packed_addr,
+                  (uint8_t)((ge->mem[packed_addr] & 0xF0) | (sign & 0x0F)));
 }
 
 /**
  * Clear all digits (not sign) in a packed field to zero.
  */
-static void dec_zero_digits(uint8_t *mem, uint16_t packed_addr, int packed_bytes)
+static void dec_zero_digits(struct ge *ge, uint16_t packed_addr, int packed_bytes)
 {
     /* rightmost byte: clear high nibble only (preserve sign in low nibble) */
-    mem[packed_addr] &= 0x0F;
+    ge_mem_store8(ge, packed_addr, (uint8_t)(ge->mem[packed_addr] & 0x0F));
     for (int i = 1; i < packed_bytes; i++)
-        mem[(uint16_t)(packed_addr - i)] = 0x00;
+        ge_mem_store8(ge, (uint16_t)(packed_addr - i), 0x00);
 }
 
 /**
@@ -238,12 +240,12 @@ static void dec_read_digits(const uint8_t *mem, uint16_t packed_addr,
  * Write a digit array back into a packed field.
  * Sign is NOT written by this function.
  */
-static void dec_write_digits(uint8_t *mem, uint16_t packed_addr,
+static void dec_write_digits(struct ge *ge, uint16_t packed_addr,
                              int packed_bytes, const uint8_t *digits, int n_digits)
 {
-    dec_zero_digits(mem, packed_addr, packed_bytes);
+    dec_zero_digits(ge, packed_addr, packed_bytes);
     for (int i = 0; i < n_digits && i < (2 * packed_bytes - 1); i++)
-        dec_set_digit(mem, packed_addr, packed_bytes, i, digits[i]);
+        dec_set_digit(ge, packed_addr, packed_bytes, i, digits[i]);
 }
 
 /* -------------------------------------------------------------------------
@@ -307,13 +309,13 @@ void alu_ap(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
          * 0x65; step 0x46: 902+136 -> 1038 truncated to 038, sign 5 kept ->
          * 0x0385). Report cc=0 (the MP-DP/AP NOTE overflow slot). */
         (void)result_sign;
-        dec_write_digits(ge->mem, a, ab, r_d, an);
+        dec_write_digits(ge, a, ab, r_d, an);
         alu_set_cc(ge, ALU_CC_OVF);
         return;
     }
 
-    dec_write_digits(ge->mem, a, ab, r_d, an);
-    dec_set_sign(ge->mem, a, result_sign);
+    dec_write_digits(ge, a, ab, r_d, an);
+    dec_set_sign(ge, a, result_sign);
     alu_set_cc(ge, dec_result_cc(bcd_is_zero(r_d, an), result_sign));
 }
 
@@ -338,9 +340,9 @@ void alu_sp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     else
         flipped = 0xD;  /* was positive → treat as negative */
 
-    dec_set_sign(ge->mem, b, flipped);
+    dec_set_sign(ge, b, flipped);
     alu_ap(ge, a, alen, b, blen);
-    dec_set_sign(ge->mem, b, orig_sign);  /* restore operand 2 */
+    dec_set_sign(ge, b, orig_sign);  /* restore operand 2 */
 }
 
 /* -------------------------------------------------------------------------
@@ -422,8 +424,8 @@ void alu_mp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     int b_neg = dec_sign_is_neg(b_sign);
     uint8_t result_sign = (a_neg != b_neg) ? 0xD : 0xC;
 
-    dec_write_digits(ge->mem, a, ab, r_d, an);
-    dec_set_sign(ge->mem, a, result_sign);
+    dec_write_digits(ge, a, ab, r_d, an);
+    dec_set_sign(ge, a, result_sign);
     alu_set_cc(ge, dec_result_cc(bcd_is_zero(r_d, an), result_sign));
     return;
 
@@ -538,15 +540,15 @@ void alu_dp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
      *    is a - bb since remainder occupies bb bytes at the right)
      */
     uint16_t q_addr = (uint16_t)(a - bb);
-    dec_zero_digits(ge->mem, q_addr, q_bytes);
-    dec_write_digits(ge->mem, q_addr, q_bytes, q_lsf, qn);
-    dec_set_sign(ge->mem, q_addr, q_sign);
+    dec_zero_digits(ge, q_addr, q_bytes);
+    dec_write_digits(ge, q_addr, q_bytes, q_lsf, qn);
+    dec_set_sign(ge, q_addr, q_sign);
 
     /* Write remainder into rightmost bb bytes of op1 */
     uint16_t r_addr = a;
-    dec_zero_digits(ge->mem, r_addr, bb);
-    dec_write_digits(ge->mem, r_addr, bb, r_lsf, bn);
-    dec_set_sign(ge->mem, r_addr, r_sign);
+    dec_zero_digits(ge, r_addr, bb);
+    dec_write_digits(ge, r_addr, bb, r_lsf, bn);
+    dec_set_sign(ge, r_addr, r_sign);
 
     /* CC reflects quotient (most significant result) */
     alu_set_cc(ge, dec_result_cc(bcd_is_zero(q_lsf, qn), q_sign));
@@ -625,18 +627,18 @@ void alu_mvp(struct ge *ge, uint16_t a, uint8_t alen, uint16_t b, uint8_t blen)
     /* Overflow if L1 < L2 — but operation IS performed with incomplete result */
     int overflow = (alen < blen);
 
-    dec_zero_digits(ge->mem, a, ab);
+    dec_zero_digits(ge, a, ab);
 
     /* Copy as many digits as fit in op1; if bn > an the excess (left) are dropped */
     int copy_n = (bn < an) ? bn : an;
     for (int i = 0; i < copy_n; i++)
-        dec_set_digit(ge->mem, a, ab, i, b_d[i]);
+        dec_set_digit(ge, a, ab, i, b_d[i]);
 
     /* MVP moves the source sign nibble VERBATIM (it is a move, not an
      * arithmetic op) — deck step 0x4D moves source sign 0xA and expects 0xA,
      * not a normalized 0xC. */
     uint8_t result_sign = b_sign;
-    dec_set_sign(ge->mem, a, result_sign);
+    dec_set_sign(ge, a, result_sign);
 
     if (overflow) {
         alu_set_cc(ge, ALU_CC_OVF);
@@ -776,10 +778,10 @@ void alu_pks(struct ge *ge, uint16_t dst, uint8_t dlen, uint16_t src, uint8_t sl
         } else {
             digit = 0;
         }
-        dec_set_digit(ge->mem, dst, db, d, digit);
+        dec_set_digit(ge, dst, db, d, digit);
     }
 
-    dec_set_sign(ge->mem, dst, result_sign);
+    dec_set_sign(ge, dst, result_sign);
 
     /* CC: check if all digits are zero */
     uint8_t r_d[33] = {0};
