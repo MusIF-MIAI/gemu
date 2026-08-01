@@ -88,12 +88,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a1ac4f5839613939647852e122de25b1a" id="r_a1ac4f5839613939647852e122de25b1a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__logic_8h.html#a1ac4f5839613939647852e122de25b1a">alu_cmc</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t a, uint16_t b, uint8_t len)</td></tr>
 <tr class="memdesc:a1ac4f5839613939647852e122de25b1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">alu_cmc – Compare Characters (CMC, §5.5.3.2)  <br /></td></tr>
 <tr class="separator:a1ac4f5839613939647852e122de25b1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41cca2880f8d1cc15d141cf7282c9da2" id="r_a41cca2880f8d1cc15d141cf7282c9da2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__logic_8h.html#a41cca2880f8d1cc15d141cf7282c9da2">alu_ci</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t addr, uint8_t imm)</td></tr>
-<tr class="memdesc:a41cca2880f8d1cc15d141cf7282c9da2"><td class="mdescLeft">&#160;</td><td class="mdescRight">alu_ci – Compare Immediate (CMI, §5.5.5.1)  <br /></td></tr>
-<tr class="separator:a41cca2880f8d1cc15d141cf7282c9da2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0657a63c36821b4b917b365d92d837be" id="r_a0657a63c36821b4b917b365d92d837be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__logic_8h.html#a0657a63c36821b4b917b365d92d837be">alu_tl</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t a, uint8_t len, uint16_t table)</td></tr>
-<tr class="memdesc:a0657a63c36821b4b917b365d92d837be"><td class="mdescLeft">&#160;</td><td class="mdescRight">alu_tl – Translate (TL, §5.5.3.3, "TR" in manual)  <br /></td></tr>
-<tr class="separator:a0657a63c36821b4b917b365d92d837be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa7ba081f54da00fd68d430d6a8a7cad" id="r_aaa7ba081f54da00fd68d430d6a8a7cad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__logic_8h.html#aaa7ba081f54da00fd68d430d6a8a7cad">alu_cmi</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t addr, uint8_t imm)</td></tr>
+<tr class="memdesc:aaa7ba081f54da00fd68d430d6a8a7cad"><td class="mdescLeft">&#160;</td><td class="mdescRight">alu_cmi – Compare Immediate (CMI, opcode 0x95, §5.5.5.1)  <br /></td></tr>
+<tr class="separator:aaa7ba081f54da00fd68d430d6a8a7cad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a101ec2deef51fe5f16e5397e71ba85fd" id="r_a101ec2deef51fe5f16e5397e71ba85fd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__logic_8h.html#a101ec2deef51fe5f16e5397e71ba85fd">alu_tr</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t a, uint8_t len, uint16_t table)</td></tr>
+<tr class="memdesc:a101ec2deef51fe5f16e5397e71ba85fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">alu_tr – Translate (TR, opcode 0xDC, §5.5.3.3)  <br /></td></tr>
+<tr class="separator:a101ec2deef51fe5f16e5397e71ba85fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed05d44de28b45d0b5fd2ec38b09fd3d" id="r_aed05d44de28b45d0b5fd2ec38b09fd3d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="alu__logic_8h.html#aed05d44de28b45d0b5fd2ec38b09fd3d">alu_tm</a> (struct <a class="el" href="structge.html">ge</a> *<a class="el" href="structge.html">ge</a>, uint16_t addr, uint8_t mask)</td></tr>
 <tr class="memdesc:aed05d44de28b45d0b5fd2ec38b09fd3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">alu_tm – Test under Mask (TM, §5.6.3.4)  <br /></td></tr>
 <tr class="separator:aed05d44de28b45d0b5fd2ec38b09fd3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -101,58 +101,19 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>GE-120/130 ALU logical and string-move primitives. </p>
 <p>Implements the "SS-format" (Storage-to-Storage) logical group and the single-operand immediate logical/test instructions described in the GE-130 Programmed Description Specification, chapter 5:</p>
-<p>§5.5.3.1 MVC – Move Characters (opcode 0xD2) §5.5.3.2 CMC – Compare Characters (opcode 0xD5) §5.5.3.3 TL – Translate (opcode 0xDC, "TR" in manual) §5.5.3.7 XC – Exclusive-OR Characters (opcode 0xD7) §5.5.3.8 OC – OR Characters (opcode 0xD6) §5.5.3.9 NC – AND Characters (opcode 0xD4) §5.5.5.1 CMI – Compare Immediate (opcode 0x96, called "CI" here) §5.5.5.2 MVI – Move Immediate (opcode 0x92) §5.6.3.1 OI – OR Immediate (no CC – "it is not interested") §5.6.3.2 NI – AND Immediate (opcode 0x94, no CC) §5.6.3.3 XI – Exclusive-OR Immediate (opcode 0x97) §5.6.3.4 TM – Test under Mask (opcode 0x91)</p>
+<p>§5.5.3.1 MVC – Move Characters (opcode 0xD2) §5.5.3.2 CMC – Compare Characters (opcode 0xD5) §5.5.3.3 TR – Translate (opcode 0xDC) §5.5.3.7 XC – Exclusive-OR Characters (opcode 0xD7) §5.5.3.8 OC – OR Characters (opcode 0xD6) §5.5.3.9 NC – AND Characters (opcode 0xD4) §5.5.5.1 CMI – Compare Immediate (opcode 0x95) §5.5.5.2 MVI – Move Immediate (opcode 0x92) §5.6.3.1 OI – OR Immediate (no CC – "it is not interested") §5.6.3.2 NI – AND Immediate (opcode 0x94, no CC) §5.6.3.3 XI – Exclusive-OR Immediate (opcode 0x97) §5.6.3.4 TM – Test under Mask (opcode 0x91)</p>
 <p>All SS helpers accept the starting address of each field (most-significant / leftmost byte) and the number of bytes to process. They operate on ge-&gt;mem[] directly, left-to-right, one byte at a time, exactly as the manual specifies.</p>
 <hr  />
  <h2><a class="anchor" id="autotoc_md1"></a>
 Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>The machine encodes the 2-bit CC as: cc = (FA04 &lt;&lt; 1) | FA05 so the numeric cc values written by these helpers are:</p>
-<p>CMC / CI (compare): cc = 1 first operand (or mem[addr]) is LESS than second (or K) cc = 2 operands are EQUAL cc = 3 first operand (or mem[addr]) is GREATER than second (or K) (cc = 0 is "not possible" per the manual)</p>
+<p>CMC / CMI (compare): cc = 1 first operand (or mem[addr]) is LESS than second (or K) cc = 2 operands are EQUAL cc = 3 first operand (or mem[addr]) is GREATER than second (or K) (cc = 0 is "not possible" per the manual)</p>
 <p>XC / XI (exclusive-OR): cc = 2 result is all-zero cc = 3 result is non-zero</p>
 <p>TM (test-under-mask): cc = 2 all selected bits are zero cc = 3 at least one selected bit is set</p>
-<p>MVC, MVI, OC, NC, NI, TL: "qualitative result is not interested" (no CC written; caller should treat the CC as undefined after these). </p>
+<p>MVC, MVI, OC, NC, NI, TR: "qualitative result is not interested" (no CC written; caller should treat the CC as undefined after these). </p>
 
 <p class="definition">Definition in file <a class="el" href="alu__logic_8h_source.html">alu_logic.h</a>.</p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a41cca2880f8d1cc15d141cf7282c9da2" name="a41cca2880f8d1cc15d141cf7282c9da2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a41cca2880f8d1cc15d141cf7282c9da2">&#9670;&#160;</a></span>alu_ci()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void alu_ci </td>
-          <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
-          <td class="paramname"><em>ge</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint16_t&#160;</td>
-          <td class="paramname"><em>addr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint8_t&#160;</td>
-          <td class="paramname"><em>imm</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>alu_ci – Compare Immediate (CMI, §5.5.5.1) </p>
-<p>Compares the byte mem[@addr] (unsigned) with the immediate @imm (unsigned). Sets CC: cc = 1 mem[@addr] &lt; @imm cc = 2 mem[@addr] == @imm cc = 3 mem[@addr] &gt; @imm </p>
-
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00183">183</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
-
-</div>
-</div>
 <a id="a1ac4f5839613939647852e122de25b1a" name="a1ac4f5839613939647852e122de25b1a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1ac4f5839613939647852e122de25b1a">&#9670;&#160;</a></span>alu_cmc()</h2>
 
@@ -195,6 +156,45 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>Compares the @len-byte field at <em>with</em> the @len-byte field at <b></b>, byte by byte, left to right, treating each byte as an unsigned integer. Stops as soon as a difference is found. Neither field is modified. Sets CC: cc = 1 mem[a..] &lt; mem[b..] cc = 2 fields are equal cc = 3 mem[a..] &gt; mem[b..] </p>
 
 <p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00156">156</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+
+</div>
+</div>
+<a id="aaa7ba081f54da00fd68d430d6a8a7cad" name="aaa7ba081f54da00fd68d430d6a8a7cad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa7ba081f54da00fd68d430d6a8a7cad">&#9670;&#160;</a></span>alu_cmi()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void alu_cmi </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>imm</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>alu_cmi – Compare Immediate (CMI, opcode 0x95, §5.5.5.1) </p>
+<p>Compares the byte mem[@addr] (unsigned) with the immediate @imm (unsigned). Sets CC: cc = 1 mem[@addr] &lt; @imm cc = 2 mem[@addr] == @imm cc = 3 mem[@addr] &gt; @imm </p>
+
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00183">183</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>
@@ -447,51 +447,6 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 
 </div>
 </div>
-<a id="a0657a63c36821b4b917b365d92d837be" name="a0657a63c36821b4b917b365d92d837be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0657a63c36821b4b917b365d92d837be">&#9670;&#160;</a></span>alu_tl()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void alu_tl </td>
-          <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
-          <td class="paramname"><em>ge</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint16_t&#160;</td>
-          <td class="paramname"><em>a</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint8_t&#160;</td>
-          <td class="paramname"><em>len</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint16_t&#160;</td>
-          <td class="paramname"><em>table</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>alu_tl – Translate (TL, §5.5.3.3, "TR" in manual) </p>
-<p>For each of the @len bytes b at mem[<em></em>.. <em></em>+len-1], replaces it with mem[@table + b]. The @table base address must be a multiple of 256 (per manual). Operates left to right. The table is not altered. "Qualitative result: it is not interested." — CC is not altered. </p>
-
-<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00206">206</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
-
-</div>
-</div>
 <a id="aed05d44de28b45d0b5fd2ec38b09fd3d" name="aed05d44de28b45d0b5fd2ec38b09fd3d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aed05d44de28b45d0b5fd2ec38b09fd3d">&#9670;&#160;</a></span>alu_tm()</h2>
 
@@ -528,6 +483,51 @@ Condition-code conventions (from manual FA04/FA05 tables, §5.5.3.2 etc.)</h2>
 <p>Performs bitwise AND of mem[@addr] and @mask but does NOT write the result to memory. Sets CC: cc = 2 result is 0x00 (all selected bits are zero) cc = 3 result is non-zero (at least one selected bit is set) </p>
 
 <p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00229">229</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
+
+</div>
+</div>
+<a id="a101ec2deef51fe5f16e5397e71ba85fd" name="a101ec2deef51fe5f16e5397e71ba85fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a101ec2deef51fe5f16e5397e71ba85fd">&#9670;&#160;</a></span>alu_tr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void alu_tr </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="structge.html">ge</a> *&#160;</td>
+          <td class="paramname"><em>ge</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>a</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>table</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>alu_tr – Translate (TR, opcode 0xDC, §5.5.3.3) </p>
+<p>For each of the @len bytes b at mem[<em></em>.. <em></em>+len-1], replaces it with mem[@table + b]. The @table base address must be a multiple of 256 (per manual). Operates left to right. The table is not altered. "Qualitative result: it is not interested." — CC is not altered. </p>
+
+<p class="definition">Definition at line <a class="el" href="alu__logic_8c_source.html#l00206">206</a> of file <a class="el" href="alu__logic_8c_source.html">alu_logic.c</a>.</p>
 
 </div>
 </div>

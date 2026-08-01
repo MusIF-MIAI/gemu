@@ -44,9 +44,9 @@
   <div class="headertitle"><div class="title">Backplane straps and maintenance options</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md80"></a> Source: cp06 <b>CHAPTER 002, "VARIANTI E OPZIONI / CHANGE AND OPTION"</b>, drawing <b>140 130 65 6</b>, UCE 460. PDF page 79 of <code>GE 120 CENTRAL PROCESSOR [6].pdf</code>.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md81"></a> Source: cp06 <b>CHAPTER 002, "VARIANTI E OPZIONI / CHANGE AND OPTION"</b>, drawing <b>140 130 65 6</b>, UCE 460. PDF page 79 of <code>GE 120 CENTRAL PROCESSOR [6].pdf</code>.</p>
 <p>The GE-120 is configured by plugging small jumper cards into three backplane connector positions, plus one switch on the maintenance panel. Everything below is on that one sheet.</p>
-<h1><a class="anchor" id="autotoc_md81"></a>
+<h1><a class="anchor" id="autotoc_md82"></a>
 Memory capacity is a separate sheet</h1>
 <p>cp06 <b>CHAPTER 001, "SELEZIONE CAPACITA' MEMORIA / MEMORY CAPABILITY
 SELECTION"</b>, dwg 14013 065 6, PDF page 78 &ndash; the sheet immediately before ch.002. Same mechanism, two more connector positions, <b>E05</b> and <b>F05</b>:</p>
@@ -67,7 +67,7 @@ SELECTION"</b>, dwg 14013 065 6, PDF page 78 &ndash; the sheet immediately befor
 <p>The connector blocks: E05 carries <code>VAMC2</code> on pin 4 and <code>VAMA2</code> on pin 3; F05 carries <code>VAMA2</code> on pin 3 and <code>VEMB6</code> on pin 1. The same S42 "LAMPS" note applies &ndash; <code>VAMA1</code>/<code>VAMB1</code>/<code>VAMC1</code> follow <code>VAMA2</code>/<code>VEMB6</code>/<code>VAMC2</code> unless S42 is in DIAG, when they become 1 / 0 / 1.</p>
 <p>So the UCE numbering runs on two independent axes: <b>460-464 is the memory capacity</b> (ch.001) and <b>466-468 is the processor version</b> (ch.002). A machine is one of each.</p>
 <p>gemu allocates a flat 64K array (<code>MEM_SIZE</code> in <a class="el" href="ge_8h.html">ge.h</a>) but no longer <em>uses</em> it all: since 2026-07-31 the memory phases honour the selection, so the machine has core exactly where its straps say and nowhere else. This machine is strapped <b>32K</b> — the UCE 464 row — and an address past that raises INV ADD instead of reading or writing. See the note at the end of this file.</p>
-<h1><a class="anchor" id="autotoc_md82"></a>
+<h1><a class="anchor" id="autotoc_md83"></a>
 Where to look on the machine</h1>
 <p>Three <b>option connector positions</b> in the backplane, drawn on ch.002 as the four <code>COIN</code> blocks and labelled by position:</p>
 <table class="markdownTable">
@@ -85,7 +85,7 @@ Where to look on the machine</h1>
 <p>&zwj;<b>Correction, 2026-07-21.</b> Earlier revisions of this file (and of <a class="el" href="signals_8h.html" title="Signals.">signals.h</a>/ge.c) named a third type, "PONT2H". It does not exist: every "PONT2H" was a misread of <b>PONT2N</b> in the 1968 typewriter face of ch.001/ch.002, re-read at 400 dpi after the physical cards were identified at Electric Dreams: <b>0618034Z reads PONT2N on the board</b>, and <b>0618035V is electrically a PONT2N as well</b> (different part code, same strap function). The identification question this file used to pose &ndash; "is 0618034Z a PONT2P or a PONT2H?" &ndash; was therefore answered <em>neither</em>. </p>
 </blockquote>
 <p>One <b>maintenance panel switch</b>: **<code>S42</code>, labelled "LAMPS"**, whose <code>DIAG</code> position overrides part of the strapping (see the note below).</p>
-<h1><a class="anchor" id="autotoc_md83"></a>
+<h1><a class="anchor" id="autotoc_md84"></a>
 TAB. 1 — machine version (E03 / F04)</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -102,7 +102,7 @@ TAB. 1 — machine version (E03 / F04)</h1>
 <td class="markdownTableBodyNone">UCE 468   </td><td class="markdownTableBodyNone">2 µsec   </td><td class="markdownTableBodyNone">MAX   </td><td class="markdownTableBodyNone">yes   </td><td class="markdownTableBodyNone">PONT2N   </td><td class="markdownTableBodyNone">/   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone">1   </td></tr>
 </table>
 <p>So **<code>FUL4G</code> reads "this machine has the MAX instruction set"** — it is 0 only on the slow 6 µsec UCE 466.</p>
-<h1><a class="anchor" id="autotoc_md84"></a>
+<h1><a class="anchor" id="autotoc_md85"></a>
 TAB. 2 — interruption-enabled connectors (F03)</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -114,7 +114,7 @@ TAB. 2 — interruption-enabled connectors (F03)</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">4   </td><td class="markdownTableBodyNone">PONT2P   </td><td class="markdownTableBodyNone">no   </td><td class="markdownTableBodyNone">yes   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md85"></a>
+<h1><a class="anchor" id="autotoc_md86"></a>
 TAB. 3 — load-enabled connectors (E04)</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -126,14 +126,14 @@ TAB. 3 — load-enabled connectors (E04)</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">4 and 3   </td><td class="markdownTableBodyNone">PONT2P   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone">1   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md86"></a>
+<h1><a class="anchor" id="autotoc_md87"></a>
 The S42 "LAMPS" note</h1>
 <p>Printed on ch.002 in both languages:</p>
 <blockquote class="doxtable">
 <p>&zwj;THE LEVEL OF THE SIGNALS FUL01 - FUL11 - FUL4F IS THE SAME OF THE SIGNALS FEL06 - FEL16 - FUL4G (RESPECTIVELY), WHEN THE SWITCH "LAMPS" (S42 IN THE MAINTENANCE PANEL) IS <b>NOT</b> IN THE POSITION "DIAG". AT THE CONTRARY, WHEN S42 IS IN THE POSITION "DIAG" THE LEVEL OF THE ABOVE MENTIONED SIGNALS BECOMES: FUL01=0 ; FUL11=0 ; FUL4F=1 </p>
 </blockquote>
 <p>So each of these has two forms: a <code>G</code>/<code>06</code>/<code>16</code> form driven by the straps, and an <code>F</code>/<code>01</code>/<code>11</code> form that the DIAG switch can force. **<code>FUL4F</code> is the one the timing charts cite as <code>{FUL4}</code>.**</p>
-<h1><a class="anchor" id="autotoc_md87"></a>
+<h1><a class="anchor" id="autotoc_md88"></a>
 Why this matters to the timing charts</h1>
 <p>The LA, LPSR and register beta sheets carry a row <code>CI89 SET ALTO {FUL4}</code>, and <code>CI89</code> sets the hardware stop flip-flop. Reading that with the table above: those instructions <b>halt the machine when FUL4 is asserted</b>, and FUL4 is asserted either on a MAX-performance machine or with the maintenance switch in DIAG.</p>
 <p>That is worth flagging as an open question rather than a settled reading, because the obvious interpretation runs the wrong way: a MAX machine is the one that <em>should</em> support these instructions. Two possibilities:</p>
@@ -143,7 +143,7 @@ Why this matters to the timing charts</h1>
 </ul>
 <p>Resolving it needs the LA/LPSR beta sheets re-read at the CI89 row for an overbar. Until then gemu carries the option model but not the row.</p>
 <p>Sharpened by the 2026-07-21 identification: on a UCE 468 the strap levels are FEL06/FEL16/FUL4G = 0/0/1 and the DIAG override forces 0/0/1 &ndash; <b>identical</b>, so S42 is a no-op for these signals on this machine and <code>FUL4</code> is asserted unconditionally. There is no switch position in which a verbatim <code>CI89 SET ALTO {FUL4}</code> would NOT halt this machine, which leans further toward the overbar reading.</p>
-<h1><a class="anchor" id="autotoc_md88"></a>
+<h1><a class="anchor" id="autotoc_md89"></a>
 The machine at Electric Dreams</h1>
 <p>Its card layout is public: <a href="https://docs.google.com/spreadsheets/d/19S23bxF4Ik-H6zl61luwYC_t-KFmUUzMeeC4uNQSRVo/">https://docs.google.com/spreadsheets/d/19S23bxF4Ik-H6zl61luwYC_t-KFmUUzMeeC4uNQSRVo/</a> sheet "Posizione schede su armadio CPU". Rows are listed in pairs (AB, CD, EF, ...), so the option positions are all on the <b>EF</b> line: </p><pre class="fragment">card 05:  0618034Z | 0618035V      &lt;- row E | row F
 card 04:  (empty)
@@ -158,14 +158,14 @@ card 06 and up: 47F 47F 47F 47F 11T 32H ... 44T 44T ...
 <li><b>F03 populated</b> -&gt; TAB.2: interruption enabled on ONE connector (3 with PONT2N, 4 with PONT2P), not both.</li>
 </ul>
 <p>That F04 reading corrected a bug here: FUL4G had been derived as <code>F04 == PONT2P</code>, which reads TAB.1 off the "no interrupts" rows only and gets an empty F04 backwards. It is low for exactly one strap, F04 = PONT2N.</p>
-<h2><a class="anchor" id="autotoc_md89"></a>
+<h2><a class="anchor" id="autotoc_md90"></a>
 Physical identification, 2026-07-21 (settles E03/F03)</h2>
 <p>Read off the machine: <b>E03 carries 0618034Z, which is printed PONT2N</b>, and <b>F03 carries 0618035V, which is electrically a PONT2N too</b> despite the different part code (identified by its trace pattern against the confirmed 2N). Against the tables:</p>
 <ul>
 <li><b>E03 = PONT2N -&gt; UCE 468</b>: 2 usec, MAX instruction set. gemu's assumed model was right, but for the wrong reason &ndash; it had 34Z down as "PONT2H", a card type that does not exist (see the correction above).</li>
 <li><b>F03 = PONT2N -&gt; interruption enabled on connector 3 only</b> (INES3 = 1, INES4 = 0). gemu had modelled connector 4; fixed in <a class="el" href="ge_8c.html">ge.c</a>.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md90"></a>
+<h2><a class="anchor" id="autotoc_md91"></a>
 The card-05 pair: an off-table combination</h2>
 <p>Both part numbers being PONT2N applies at card 05 too (E05 = 34Z, F05 = 35V), so the machine's capacity straps are <b>E05 = N, F05 = N &ndash; a combination the ch.001 table never defines</b>. The five printed rows are <code>/ /</code> (8K), <code>N /</code> (12K), <code>/ N</code> (16K), <code>P N</code> (24K), <code>N P</code> (32K).</p>
 <p><b>RESOLVED (2026-07-21): the per-pin reading wins.</b> Requiring one fixed shorted-pin set per card type to reproduce every printed row of TAB.1, TAB.2, TAB.3 and the ch.001 table simultaneously over-determines the answer: </p><pre class="fragment">PONT2N shorts pins {1, 4}          PONT2P shorts pins {1, 3}
@@ -176,7 +176,7 @@ The card-05 pair: an off-table combination</h2>
 <p><b>The memory bound is now gate-derived, not inferred</b>: cp06 ch.080 "MEMORY
 STARTING LOGIC / LOGICA PARTENZA MEMORIA" (p156) is the functional consumer of the VAM signals &ndash; the (309/318/321-x) fan-outs are only termination divider networks, and (077-x) is the diagnostic option. Four NANDs watch address bits 12-14 against VAMA1/VAMB1/VAMC1 and inhibit VAMEA, the memory START, so an out-of-bounds address never begins a cycle. The terms reproduce all five printed rows and define every off-table combination; for this machine's (1,0,0) only the bit14 term is armed: <b>the machine bounds at exactly 16K</b>. DIAG forces (1,0,1) = the same 16K bound regardless of straps &ndash; the diagnostic option's ceiling comes from these same gates. Transcribed as <code><a class="el" href="group__msldetail.html#ga814b0e4bee95f87b1c1d29ad68836ae3" title="Installed memory, in K.">ge_mem_in_bounds()</a></code> / <code><a class="el" href="group__msldetail.html#ga0a7ee8767f43c28729df756f50b2109d">ge_memory_capacity_k()</a></code>.</p>
 <p><b>The three spare cards complete the upgrade story.</b> Photographed spares: two boards stamped <code>18036</code> with 5 staples each, one <code>18034</code> with a single staple. A pre-upgrade machine of E03=P, F03=P, F05=N, E05=empty (= UCE 467, 4 usec, interrupts on connector 4, 16K) upgraded toward 468 / connector 3 / 32K pulls exactly two P cards (E03, F03) and one N card (F05) &ndash; matching the spares two-and-one &ndash; and requires fitting a P in F05, where a new-style N went in instead: the single wrong card that leaves the machine at 16K of its intended 32K. Under this story the staple counts are revision differences only (old N = 1 staple, old P = 5, new N = 4).</p>
-<h2><a class="anchor" id="autotoc_md91"></a>
+<h2><a class="anchor" id="autotoc_md92"></a>
 THE CATALOG SHEET (found 2026-07-22) – dwg 015 433 91, cp10F</h2>
 <p>The strap cards are documented in <code>GE 120 CENTRAL PROCESSOR [10F].pdf</code>, drawing <b>015 433 91 "PIASTRINE ST S.C.L.1 / PONT A,B,C,D,E,0F,0G,0H,0L,
 2,4,8,0M,2N,2P,2Q"</b>:</p>
@@ -185,7 +185,7 @@ THE CATALOG SHEET (found 2026-07-22) – dwg 015 433 91, cp10F</h2>
 <li><b>PDF p253 (drawing pag.2): Rete equivalente</b> &ndash; the connector-pin networks: <b>PONT 2N shorts pins {1,2,4,7} to 17; PONT 2P shorts {1,2,3,7} to 17.</b> This is the catalog confirmation of the derived mechanism: the N-vs-P difference is exactly pin 4 vs pin 3; pins 2, 7 and the bus 17 are common to both, invisible to the option tables because nothing in E03..F05 hangs on them.</li>
 </ul>
 <p>Consequences: the in-machine 4-bridge cards match the catalog 2N recipe in COUNT and in pattern (holes 20-21 = the adjacent pair, 3 and 25 the two singles), which retires the {1,3,4}-union hypothesis &ndash; a doctored card would not match the 4-bridge recipe.</p>
-<h2><a class="anchor" id="autotoc_md92"></a>
+<h2><a class="anchor" id="autotoc_md93"></a>
 The old configuration decoded (2026-07-22): 2x PONT 2 + 2x PONT B</h2>
 <p>Field-confirmed: before the 4x PONT2N, the four option sockets held two PONT 2 and two PONT B. Their catalog networks (dwg 015 433 91 p253): </p><pre class="fragment">PONT B:  7-17 only                    PONT 2:  {1,2}-8  3-7  9-16  {4,15}-17
 </pre><p> Neither connects pin 1 (ground) to pin 3 or pin 4, the option sockets' signal pins &ndash; so IN THESE SOCKETS both cards are electrically EMPTY: placeholder/dust-cover cards that tie commons. The old configuration was therefore, placement-independently, the all-empty decode: FEL06=FEL16=1 (6 usec timing), FUL4G=1 (F04 empty: MAX ops enabled &ndash; an off-table CPU row), INES3=INES4=1 (interrupts on both connectors), (VAMA2,VEMB6,VAMC2) = (1,1,1) = the 8K row. The machine ran in base mode: 6 usec, 8K, interrupts everywhere.</p>
@@ -194,7 +194,7 @@ The old configuration decoded (2026-07-22): 2x PONT 2 + 2x PONT B</h2>
 <p><b>The machine has 2x MEM470 mounted</b>, and cp04 s.8.3's build table puts two boxes only on the 24K and 32K builds (one MEM470 = one 128x128 matrix = 16K positions; 8/12/16K ship with a single box). The 24K-vs-32K fork is closed by the read-amplifier population rule (cp01 PDF p308: Q28/Q29 on 24K and 32K, <b>Q30/Q31 only on 32K</b>) read against the machine's own layout sheet: row QR carries EIGHT identical <code>02J</code> AMPL2A boards at positions 24-31 &ndash; Q30 and Q31 included &ndash; with the column calibration verified by TEME2A <code>70Y</code> at 20 and GEMA2A <code>27D</code> at 13 matching cp08's factory row Q exactly. <b>The machine is a 32K physical build</b>, bounded to 16K by the strap: one PONT2P in F05 (bridge at hole 2 instead of hole 20, dwg 015 433 91 p254) restores the printed {N,P} = 32K row.</p>
 <p><b>gemu is strapped 32K and enforces the bound</b> (2026-07-31): <code>ge_init</code> sets E05 = PONT2N + F05 = PONT2P, the printed {N,P} = UCE 464 row, which is the owner's reading of the boards and agrees with the physical build above; and the memory phases now ask <code><a class="el" href="group__msldetail.html#ga814b0e4bee95f87b1c1d29ad68836ae3" title="Installed memory, in K.">ge_mem_in_bounds()</a></code> instead of assuming the whole address space, so an address past the strapped capacity raises INV ADD and never cycles memory, exactly as ch.080 has it. 32K itself is the ceiling the gates cannot express &ndash; they only decode bits 12-14, because 32K is the top of the ch.001 table &ndash; so <code><a class="el" href="pulse_8c.html">pulse.c</a></code> adds it: an address with bit 15 set, which a change register plus displacement can still compute, addresses core no build has and gets the same INV ADD.</p>
 <p>This is what <code>funktionalcpu.cap</code> needed. Strapped at the off-table {N,N} = 16K reading, the deck stopped in the memory test at the manual's own <code>0x1466</code> "error 8-24K" halt with INV ADD lit &ndash; the right answer for a 16K machine, and the wrong machine. At 32K it runs the 0x4000 and 0x6000 memory tests through to <code>report_and_end</code>. <code>ge-&gt;mem_size</code> stays as a harness override for tests that want a specific capacity without restrapping; 0 (the default) means "ask the straps". The INIB2A inhibit boards are the <code>29W</code> cards in row ST (cod 0610029); cp01 p323 s.2.3.17.3 discriminates them from AMPL2A at sight.</p>
-<h2><a class="anchor" id="autotoc_md93"></a>
+<h2><a class="anchor" id="autotoc_md94"></a>
 The physical card (photographed 2026-07-21)</h2>
 <p>One of the machine's strap cards, in hand: an orange single-sided board in a blue carrier, 17-pin gold edge connector &ndash; matching cp08's PIEDINI DEL CONNETTORE 01-17 &ndash; date-stamped 19 APR 1971. Three findings:</p>
 <ul>
@@ -202,7 +202,7 @@ The physical card (photographed 2026-07-21)</h2>
 <li><b>The strap type is set at jumpering time, not in the etch</b>: the board is a generic PONT2 with three full-width rows of plated holes, and the type is selected by where bare-wire staples are soldered ("PONT 2N" is handwritten on this one). Four staples visible: two adjacent at the left and one at the right bridging the top row to the middle row, one at the lower right bridging middle to bottom. <b>The two photographed cards carry this same staple pattern</b>, which is the electrical identification: same jumpering = same strap type, regardless of the stamp. (The second photo also shows the connector housing's molded pin numbering along the 17-pin edge &ndash; the reference for a buzz-out.)</li>
 <li><b>The card in hand can settle the N+N capacity question</b>: buzz the 17 edge pins pairwise with a tester to get the card's short map, then apply it to the ch.001 connector assignments (E05: VAMC2 pin 4, VAMA2 pin 3; F05: VAMA2 pin 3, VEMB6 pin 1). Whether a PONT2N shorts pin 3 decides between the (0,0,0) = 32K reading and the (1,0,0) = off-table reading above. A photo of the trace side would serve equally.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md94"></a>
+<h2><a class="anchor" id="autotoc_md95"></a>
 F03 found and restuffed – and the rival reading that now matters most</h2>
 <p>The F03 card was found and is back (2026-07-21). All four option sockets &ndash; E03, F03, E05, F05 &ndash; hold the same <b>4-bridge</b> card type, under two part stamps (18034/18035), all hand-annotated PONT2N.</p>
 <p><b>The annotation may be stale.</b> Bridges can only be ADDED to a board, and a pristine old-revision PONT2N with a single bridge exists in the spares &ndash; so a 4-bridge card could be that card plus three later bridges, i.e. NOT a pure N. The concrete rival: **{1,3,4} = N+P union, a "universal" strap card**. A uniform fleet of union cards fits every socket without tracking N-vs-P (which would explain why all four sockets hold the identical type), and reads:</p>
@@ -217,10 +217,10 @@ F03 found and restuffed – and the rival reading that now matters most</h2>
                            interrupts, no blunder -- and gemu's straps
                            must be updated
 </pre><p> One measurement &ndash; pin 3 to pin 1 on any in-machine card &ndash; splits the tree. gemu models the pure-N reading until then.</p>
-<h2><a class="anchor" id="autotoc_md95"></a>
+<h2><a class="anchor" id="autotoc_md96"></a>
 Not to be confused with the 44-tango</h2>
 <p>The 44-tango (<code>0610044T</code>) is the commonest logic card in the CPU &ndash; rows E and F alone hold about a dozen from card 18 upward, including E36 and E37 &ndash; and it is a LOSE23/LOSE2S logic board, not a PONT jumper. The option positions are at the other end of the row, cards 03 to 05.</p>
-<h1><a class="anchor" id="autotoc_md96"></a>
+<h1><a class="anchor" id="autotoc_md97"></a>
 In gemu</h1>
 <p><code>struct <a class="el" href="structge__options.html">ge_options</a></code> in <code><a class="el" href="ge_8h.html">ge.h</a></code> holds <code>E04</code>, <code>F03</code>, <code>F04</code> (as <code>enum ge_pont</code>) and <code>S42_diag</code>. <code><a class="el" href="signals_8h.html" title="Signals.">signals.h</a></code> derives <code>FUL26</code>, <code>FUL36</code>, <code>FUL4G</code>, <code>FUL4F</code> from them, with <code>FUL2</code>/<code>FUL3</code>/<code>FUL4</code> as the names the charts use. The default &ndash; all connectors empty, S42 not in DIAG &ndash; is the E04-empty row of TAB.3, which is what the initial-load tests assume. </p>
 </div></div><!-- contents -->
