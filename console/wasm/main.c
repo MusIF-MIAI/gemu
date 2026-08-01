@@ -479,6 +479,10 @@ void EMSCRIPTEN_KEEPALIVE press_start() {
  *              0 for a plain deck).
  * Returns 0 on success, -1 if the deck cannot be opened/parsed.
  */
+static int mounted_binary;      /* how the deck in /deck.cap was mounted, so */
+static int mounted_first_card;  /* REWIND can put the same one back           */
+static int deck_mounted;
+
 int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
     int rc;
 
@@ -486,12 +490,36 @@ int EMSCRIPTEN_KEEPALIVE mount_deck(int binary, int first_card) {
     ge_load_1(ge);   /* select connector 2 (LOAD1), matching the reader */
     rc = cardreader_register_from(ge, "/deck.cap",
                                   binary ? TC_BINARY : TC_NORMAL, first_card);
+    if (rc == 0) {
+        mounted_binary = binary;
+        mounted_first_card = first_card;
+        deck_mounted = 1;
+    }
     send_console();
     return rc;
 }
 
+/*
+ * REWIND - take the deck out of the stacker and put it back in the hopper.
+ *
+ * The operator's own move, and the only one this panel cannot do by mounting a
+ * file again: the cards that have been read are sitting in the stacker, and a
+ * second run needs them back in the hopper in order. There is no key for it on
+ * the GE-120 because there is nothing to press -- you pick the stack up with
+ * your hands -- so this is the panel standing in for that, like the file
+ * dialog above it.
+ *
+ * Core is not touched. What the last run left in memory is still there, which
+ * is what makes a re-read interesting: LOAD reads card one over the top of it.
+ */
+int EMSCRIPTEN_KEEPALIVE rewind_deck() {
+    if (!deck_mounted)
+        return -1;
+    return mount_deck(mounted_binary, mounted_first_card);
+}
+
 /* What the operator can see by looking at the hopper: the size of the deck
- * that was put in it, and how many cards are still waiting at the throat. -1
+ * that was put in it, and how many cards are still in it. -1
  * means there is no reader on the connector. */
 int EMSCRIPTEN_KEEPALIVE deck_cards()      { return cardreader_deck_cards(ge); }
 int EMSCRIPTEN_KEEPALIVE deck_cards_left() { return cardreader_cards_left(ge); }

@@ -126,7 +126,7 @@ the same place, and nothing in the CPU is disturbed. Test
 
 | Control | Type | Behaviour (CPU[4] §3.3, fo.31–33) |
 |---------|------|-----------------------------------|
-| **CLEAR** | key | Stops everything in the subsystem, clears all error conditions, presets CPU + peripherals to a defined state. Required after `MEM CHECK` and after power-on. No lamp. In gemu: `AINI`/`ALAM`/`PODI`/`ADIR`, `ALTO` set, `RC00`-`RC03`, the reader's command/mode latches and `LUREN`, the **fault latches MEM CHECK and INV ADD**, the `FI`/`FA` condition flip-flops, and the **sequencer, preset to the display state** (§4.2). Not core, and not `PO` — the first `START` after `CLEAR` runs the program from where its addresser is parked. |
+| **CLEAR** | key | Stops everything in the subsystem, clears all error conditions, presets CPU + peripherals to a defined state. Required after `MEM CHECK` and after power-on. No lamp. In gemu: `AINI`/`ALAM`/`PODI`/`ADIR`, `ALTO` set, `RC00`-`RC03`, the reader's command/mode latches and `LUREN`, the **fault latches MEM CHECK and INV ADD**, the `FI`/`FA` condition flip-flops, the channel end/error latches (`RIG1`, `RACI`, `RECE`, …), the working registers `V1`-`V4` / `L1`-`L3` / `FO` / `RO` / `BO`, **`PO`**, and the **sequencer, preset to the display state** (§4.2). Not core. Resuming a halted program is `START` on its own, which touches none of that; `CLEAR` is how you say start over. |
 | **LOAD 1 / LOAD 2** | switch | Selects one of two peripheral units enabled at install time for program loading (Conn.2/3, Conn.4/3, or Conn.2/4 — CPU[4] fo.43). |
 | **LOAD** | key | *Arms* the bootstrap and does nothing else: it sets the `AINI` flip-flop. No card moves, no lamp lights. The next `START` is what reads. |
 | **START** (HALT) | key | Starts operation. The white **HALT** lamp shows the machine is stopped. First `START` after `CLEAR`: runs the program if no other switch is set; runs the **load** if `LOAD` was pressed. |
@@ -254,6 +254,9 @@ In position 8, `AM08` forces the memory check bit (even if incorrect) when the
 >
 >     CLEAR -> rotary PO -> AM = address, INAR in -> START (forcing cycle)
 >            -> rotary NORM, INAR out -> START (runs from it)
+>
+> Note the order: the address is keyed **after** the `CLEAR`, because `CLEAR`
+> zeroes `PO` along with the rest of the preset state (§3).
 >
 > gemu got this wrong in two places until 2026-07-31, and the symptom was the
 > plain one — the machine ran from somewhere else. First, a `HLT` parks the
