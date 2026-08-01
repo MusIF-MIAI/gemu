@@ -261,8 +261,8 @@ static void EXEC_SS(struct ge *ge)
         case CMC_OPCODE:
             alu_cmc(ge, dst, src, len);
             break;
-        case TL_OPCODE:
-            alu_tl(ge, dst, len, src);
+        case TR_OPCODE:
+            alu_tr(ge, dst, len, src);
             break;
         case UPK_OPCODE:
             alu_upk(ge, dst, len-1, src, len-1);

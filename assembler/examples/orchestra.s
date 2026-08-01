@@ -83,7 +83,7 @@ brass:  CMC  1, cnt, zero        ; sec 1: packed-decimal AP
 
 organ:  CMC  1, cnt, zero        ; sec 2: TL translate (rotates bufa)
         JC   0x20, adv
-        TL   64, bufa, table
+        TR   64, bufa, table
         SB   1,1, cnt, one+1
         JU   organ
 

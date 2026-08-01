@@ -8,11 +8,11 @@
  *
  *   §5.5.3.1  MVC  – Move Characters          (opcode 0xD2)
  *   §5.5.3.2  CMC  – Compare Characters       (opcode 0xD5)
- *   §5.5.3.3  TL   – Translate                (opcode 0xDC, "TR" in manual)
+ *   §5.5.3.3  TR   – Translate                (opcode 0xDC)
  *   §5.5.3.7  XC   – Exclusive-OR Characters  (opcode 0xD7)
  *   §5.5.3.8  OC   – OR Characters            (opcode 0xD6)
  *   §5.5.3.9  NC   – AND Characters           (opcode 0xD4)
- *   §5.5.5.1  CMI  – Compare Immediate        (opcode 0x96, called "CI" here)
+ *   §5.5.5.1  CMI  – Compare Immediate        (opcode 0x95)
  *   §5.5.5.2  MVI  – Move Immediate           (opcode 0x92)
  *   §5.6.3.1  OI   – OR Immediate             (no CC – "it is not interested")
  *   §5.6.3.2  NI   – AND Immediate            (opcode 0x94, no CC)
@@ -31,7 +31,7 @@
  * The machine encodes the 2-bit CC as:  cc = (FA04 << 1) | FA05
  * so the numeric cc values written by these helpers are:
  *
- *   CMC / CI (compare):
+ *   CMC / CMI (compare):
  *     cc = 1  first operand (or mem[addr]) is LESS than second (or K)
  *     cc = 2  operands are EQUAL
  *     cc = 3  first operand (or mem[addr]) is GREATER than second (or K)
@@ -45,7 +45,7 @@
  *     cc = 2  all selected bits are zero
  *     cc = 3  at least one selected bit is set
  *
- *   MVC, MVI, OC, NC, NI, TL: "qualitative result is not interested" (no CC
+ *   MVC, MVI, OC, NC, NI, TR: "qualitative result is not interested" (no CC
  *   written; caller should treat the CC as undefined after these).
  */
 
@@ -134,7 +134,7 @@ void alu_xi(struct ge *ge, uint16_t addr, uint8_t imm);
 void alu_cmc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len);
 
 /**
- * alu_ci – Compare Immediate (CMI, §5.5.5.1)
+ * alu_cmi – Compare Immediate (CMI, opcode 0x95, §5.5.5.1)
  *
  * Compares the byte mem[@addr] (unsigned) with the immediate @imm (unsigned).
  * Sets CC:
@@ -142,17 +142,17 @@ void alu_cmc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len);
  *   cc = 2  mem[@addr] == @imm
  *   cc = 3  mem[@addr] > @imm
  */
-void alu_ci(struct ge *ge, uint16_t addr, uint8_t imm);
+void alu_cmi(struct ge *ge, uint16_t addr, uint8_t imm);
 
 /**
- * alu_tl – Translate (TL, §5.5.3.3, "TR" in manual)
+ * alu_tr – Translate (TR, opcode 0xDC, §5.5.3.3)
  *
  * For each of the @len bytes b at mem[@a .. @a+len-1], replaces it with
  * mem[@table + b].  The @table base address must be a multiple of 256
  * (per manual).  Operates left to right.  The table is not altered.
  * "Qualitative result: it is not interested." — CC is not altered.
  */
-void alu_tl(struct ge *ge, uint16_t a, uint8_t len, uint16_t table);
+void alu_tr(struct ge *ge, uint16_t a, uint8_t len, uint16_t table);
 
 /**
  * alu_tm – Test under Mask (TM, §5.6.3.4)

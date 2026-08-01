@@ -277,7 +277,7 @@ UTEST(alu_logic_edge, tl_increment_table)
     g.mem[0x0301] = 0x7F;
     g.mem[0x0302] = 0xFF;
 
-    alu_tl(&g, 0x0300, 3, table);
+    alu_tr(&g, 0x0300, 3, table);
 
     ASSERT_EQ(g.mem[0x0300], (uint8_t)0x01); /* 0x00+1 = 0x01 */
     ASSERT_EQ(g.mem[0x0301], (uint8_t)0x80); /* 0x7F+1 = 0x80 */
@@ -354,19 +354,19 @@ UTEST(alu_logic_edge, ci_mem_unchanged_all_branches)
 
     /* less */
     g.mem[0x600] = 0x10;
-    alu_ci(&g, 0x600, 0x20);
+    alu_cmi(&g, 0x600, 0x20);
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);
     ASSERT_EQ(g.mem[0x600], (uint8_t)0x10); /* unchanged */
 
     /* equal */
     g.mem[0x601] = 0x55;
-    alu_ci(&g, 0x601, 0x55);
+    alu_cmi(&g, 0x601, 0x55);
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)2);
     ASSERT_EQ(g.mem[0x601], (uint8_t)0x55); /* unchanged */
 
     /* greater */
     g.mem[0x602] = 0xF0;
-    alu_ci(&g, 0x602, 0x20);
+    alu_cmi(&g, 0x602, 0x20);
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)3);
     ASSERT_EQ(g.mem[0x602], (uint8_t)0xF0); /* unchanged */
 }

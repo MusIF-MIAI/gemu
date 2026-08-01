@@ -182,7 +182,7 @@ UTEST(exec, xi_xors_immediate)
 /* CI (0x96) is OR Immediate (deck step 0x32): mem |= K. */
 UTEST(exec, ci_or_immediate)
 {
-    uint8_t prog[] = { CI_OPCODE, 0xAA, 0x00, 0x50 };
+    uint8_t prog[] = { OI_OPCODE, 0xAA, 0x00, 0x50 };
     struct ge g; setup(&g, prog, sizeof(prog));
     g.mem[0x50] = 0x55;
     run_one(&g);

@@ -120,7 +120,7 @@ static const struct mnem MNEMS[] = {
     { "MVI", 0x92, 0x00, F_IMM, 4 },
     { "NI",  0x94, 0x00, F_IMM, 4 },
     { "CMI", 0x95, 0x00, F_IMM, 4 },
-    { "CI",  0x96, 0x00, F_IMM, 4 },
+    { "OI",  0x96, 0x00, F_IMM, 4 },
     { "XI",  0x97, 0x00, F_IMM, 4 },
     { "TM",  0x91, 0x00, F_IMM, 4 },
 
@@ -137,7 +137,7 @@ static const struct mnem MNEMS[] = {
     { "CMC", 0xD5, 0x00, F_SS1, 6 },
     { "OC",  0xD6, 0x00, F_SS1, 6 },
     { "XC",  0xD7, 0x00, F_SS1, 6 },
-    { "TL",  0xDC, 0x00, F_SS1, 6 },
+    { "TR",  0xDC, 0x00, F_SS1, 6 },
     { "MVQ", 0xF8, 0x00, F_SS1, 6 },
     { "CMQ", 0xF9, 0x00, F_SS1, 6 },
     { "EDT", 0xDE, 0x00, F_SS1, 6 },

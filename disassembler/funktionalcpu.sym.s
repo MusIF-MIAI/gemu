@@ -88,12 +88,12 @@ chk_jrt_retaddr:          ; subroutine: verify JRT deposited the right return ad
         JRT    0xD0, oper_checkpoint
         MVI    0x10, step_code
         MVI    0x01, 0x04CC
-        TL     1, 0x04CC, xlate_table
+        TR     1, 0x04CC, xlate_table
         CMI    0x51, 0x04CC
         JRT    0xD0, oper_checkpoint
         MVI    0x11, step_code
         MVC    3, 0x04CD, 0x04D4
-        TL     3, 0x04CD, xlate_table
+        TR     3, 0x04CD, xlate_table
         CMC    3, 0x04CD, 0x04D1
         JRT    0xD0, oper_checkpoint
         MVI    0x12, step_code
@@ -892,7 +892,7 @@ step_0x2B_dp:          ; DP (Divide) block (0x2B..); quotient->A1, JRT 0x70 want
         MVI    0x32, step_code
 step_0x32_ci:          ; logical-immediate block start (steps 0x32..0x36).
         MVC    2, 0x0610, 0x0614
-        CI     0xAA, 0x0610
+        OI     0xAA, 0x0610
         CMC    2, 0x0610, 0x0612
         JRT    0xD0, oper_checkpoint
         JC     0x00, cold_start

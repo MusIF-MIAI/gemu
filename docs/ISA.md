@@ -56,7 +56,7 @@ need to be brought into line (the "fix in" column says where).
 
 | # | Finding | gemu | Fix in disasm/asm/compiler |
 |---|---------|------|----------------------------|
-| 1 | **CI (`0x96`) = OR Immediate** (`mem |= K`), NOT Compare. The compare-immediate op is **CMI (`0x95`)**. (NI `0x94`=AND, XI `0x97`=XOR, CI `0x96`=OR.) | fixed | disasm/asm should name `0x96`=CI/OI as a *logical-OR* (it modifies memory), distinct from CMI `0x95` |
+| 1 | **OI (`0x96`) = Or Immediate** (`mem |= K`), NOT Compare. The compare-immediate op is **CMI (`0x95`)**. (NI `0x94`=AND, XI `0x97`=XOR, OI `0x96`=OR.) | fixed | Named `OI` throughout since 2026-08-01, which is the manual's name (cp04 p21/p65); gemu called it `CI` and carried a dead compare-immediate helper under that name. |
 | 2 | **STR opcode = `0xB4`**, not `0x84`. `0x84` never appears in the deck. | fixed | opcodes/disasm/asm tables: STR = `0xB4` |
 | 3 | **Register-op aux char = `1XXX0000`**: register N = **bits 4-6** (not the low nibble). e.g. `LR` aux `0xE0` → register 6, aux `0xC0` → register 4. | fixed | disasm/asm: decode/encode the register from bits 4-6; assembler must emit `1<<7 | (N<<4)` |
 | 4 | **Register-op MEMORY operand is addressed by its RIGHTMOST byte**: the 16-bit value occupies `mem[addr-1 .. addr]` (read/written downward), NOT `[addr .. addr+1]`. (Change-register *storage* at `240+2N` is still high-byte-first.) Applies to LR/STR/AMR/SMR/CMR. | fixed | asm/compiler: operand address means the low byte; disasm note |
@@ -138,7 +138,7 @@ that card does next, including reading the rest of the deck, it does itself.
 
 | Format | Layout | Used by |
 |---|---|---|
-| **Character / byte** | one 8-bit byte | MVC, CMC, NC/OC/XC, TL, immediate ops |
+| **Character / byte** | one 8-bit byte | MVC, CMC, NC/OC/XC, TR, immediate ops |
 | **Binary integer** | 1–N bytes, big-endian, two's-complement on negative | AB, SB |
 | **Zoned (unpacked) decimal** | one digit per byte: high nibble = *zone*, low nibble = BCD digit | AD, SD, MVQ, CMQ, PK/UPK source/dest |
 | **Packed decimal** | two BCD digits per byte; **rightmost byte** = one digit (high nibble) + **sign** (low nibble) | AP, SP, MP, DP, CMP, MVP, PKS/UPKS |
@@ -552,10 +552,10 @@ then dispatches the manual `60|62`, `50|52`, and `40|42` executive charts.
 | **MVI** | `92` | Move Immediate: `mem[EA] ← K`. | — | ✅ |
 | **NI** | `94` | AND Immediate: `mem[EA] &= K`. | — | ✅ |
 | **XI** | `97` | XOR Immediate: `mem[EA] ^= K`; CC=2 if 0 else 3. | set | ✅ |
-| **CI** (=OI) | `96` | **OR Immediate**: `mem[EA] |= K`; CC=2 if 0 else 3. *(deck-validated, §0.5 #1 — was wrongly modelled as Compare.)* | set | ✅ |
+| **OI** | `96` | **OR Immediate**: `mem[EA] |= K`; CC=2 if 0 else 3. *(deck-validated, §0.5 #1 — was wrongly modelled as Compare.)* | set | ✅ |
 | **CMI** | `95` | Compare Immediate: `mem[EA]` vs `K`; CC=1/2/3 (`<`/`=`/`>`); no write. | set | ✅ |
 
-> Resolved (§0.5 #1, deck step 0x32): `0x96` (CI) is the **OR-immediate** op (the
+> Resolved (§0.5 #1, deck step 0x32): `0x96` (OI) is the **OR-immediate** op (the
 > APS "OI"), it MODIFIES memory; the compare-immediate op is **CMI `0x95`**. The
 > older "both route to alu_ci" note is obsolete. Both now use the charted
 > memory/UA path: CI selects OR with `CI45+CI46+CI47`; CMI selects complement-add
@@ -573,7 +573,7 @@ Dispatched by `EXEC_SS` (`msl-commands.c:210`).
 | **NC** | `D4` | AND Characters: A1 ← A1 & A2. | — | ✅ |
 | **OC** | `D6` | OR Characters: A1 ← A1 \| A2. | — | ✅ |
 | **XC** | `D7` | XOR Characters: A1 ← A1 ^ A2; CC=2 if all-zero else 3. | set | ✅ |
-| **TL** | `DC` | Translate: each byte `b` of A1 ← `mem[A2 + b]` (A2 = 256-aligned table). Manual "TR". | — | ✅ |
+| **TR** | `DC` | Translate: each byte `b` of A1 ← `mem[A2 + b]` (A2 = 256-aligned table). | — | ✅ |
 
 ### 6.6 Binary arithmetic — SS format (6 bytes)
 
@@ -692,7 +692,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 | ENS/INS/LON/LOFF/LOLL | sub-function meanings unverified | interrupt + console-indicator manual pages; APS manual |
 
 | LPSR (`0x9D`) | opcode assigned, no decode | PSW / status-register section |
-| CI vs CMI | both map to `alu_ci`; signed-vs-logical distinction? | §5.5.5.1 page image |
+| ~~CI vs CMI~~ | closed: `0x96` is OI (or), `0x95` is CMI (compare); the compare helper is `alu_cmi` and nothing shares it | — |
 | JU/JCC mask source | shared mask path with JC | §fo.56/57 page image |
 | AD/SD CC tables | OCR-inferred | §5.5.1.1 / §5.5.1.2 page images |
 | MVQ zones | "zones not processed" interpretation | §3.084/3.098 + hardware trace |
@@ -710,7 +710,7 @@ it). External mnemonic/directive authority: the GE **APS** manual (EDV-AFL 03).
 | `07` | NOP2 | P | `92` | MVI | PM | `D9` | SR | SS |
 | `0A` | HLT | P | `94` | NI | PM | `DA` | PK | SS |
 | `40` | JCC | PM | `95` | CMI | PM | `DB` | SL | SS |
-| `41` | JRT | PM | `96` | CI | PM | `DC` | TL | SS |
+| `41` | JRT | PM | `96` | OI | PM | `DC` | TR | SS |
 | `43` | JC | PM | `97` | XI | PM | `DE` | EDT | SS |
 | `47` | JU | PM | `9C` | PERI | PM | `E8` | MVP | SS |
 | `53` | JS1/JS2/JIE | PM | `9D` | LPSR | PM | `E9` | CMP | SS |
@@ -853,7 +853,7 @@ follow §5.1 (cc1 `<`, cc2 `=`, cc3 `>`, cc0 overflow/special):
 | `MVI` | `MVI K, addr` | `92` | 4 | `mem[addr] ← K`. | ✅ |
 | `NI`  | `NI K, addr`  | `94` | 4 | `mem[addr] &= K`. | ✅ |
 | `XI`  | `XI K, addr`  | `97` | 4 | `mem[addr] ^= K`; set CC. | ✅ |
-| `CI`  | `CI K, addr`  | `96` | 4 | **OR-immediate** `mem[addr] |= K` (=APS `OI`); CC 2/3. | ✅ |
+| `OI`  | `OI K, addr`  | `96` | 4 | **Or Immediate** `mem[addr] |= K`; CC 2/3. | ✅ |
 | `CMI` | `CMI K, addr` | `95` | 4 | compare `mem[addr]` with `K`; set CC 1/2/3; no write. | ✅ |
 | `TM`  | `TM K, addr`  | `91` | 4 | test `mem[addr] & K`; set CC (no write). | ✅ |
 
@@ -895,7 +895,7 @@ takes it as a raw `aux` byte (see §6.11 for the bit meanings).
 | `CMC` | `CMC len, A1, A2` | `D5` | 6 | Compare characters; set CC. | ✅ |
 | `OC`  | `OC len, A1, A2`  | `D6` | 6 | `A1 ← A1 \| A2`. | ✅ |
 | `XC`  | `XC len, A1, A2`  | `D7` | 6 | `A1 ← A1 ^ A2`; set CC. | ✅ |
-| `TL`  | `TL len, A1, A2`  | `DC` | 6 | Translate A1 through table at A2. | ✅ |
+| `TR`  | `TR len, A1, A2`  | `DC` | 6 | Translate A1 through table at A2. | ✅ |
 | `MVQ` | `MVQ len, A1, A2` | `F8` | 6 | Move digit quartets; set CC. | ✅ |
 | `CMQ` | `CMQ len, A1, A2` | `F9` | 6 | Compare digit quartets; set CC. | ✅ |
 | `EDT` | `EDT len, A1, A2` | `DE` | 6 | Edit packed A2 into pattern at A1; set CC. | ✅ |
@@ -974,7 +974,7 @@ cross-checks gasm's `MNEMS` / `opcodes.h` against the documented GE mnemonics.
 **Confirmed faithful** — the core data/control ISA matches the manual exactly:
 - P (function only): `ENS INS LOFF LON NOP2 HLT`
 - index-register + address: `LA LR AMR SMR CMR STR`
-- SS single-length: `MVC CMC OC XC UPK SR PK SL EDT` (+ `NC`, `TL` — see below)
+- SS single-length: `MVC CMC OC XC UPK SR PK SL EDT` (+ `NC`, `TR` — see below)
 - SS two-length: `MVP CMP AP SP MP PKS MVQ CMQ AD SD AB SB`
 
 **Canonical-name divergences (gasm uses convenient aliases; not wrong, just not
@@ -987,20 +987,15 @@ the GE names):**
 - `TR` (GE) = `TL` (gasm/gemu) — Translate; already noted in `alu_logic.h`.
 - `DVP` (GE, Divide Packed) = `DP` (gasm/gemu).
 
-**Genuinely missing / suspect (flagged, not changed):**
-- **`OI`** (OR Immediate) is a real GE primary instruction. APS p.84 ("Type 3
-  Instructions") enumerates **exactly six** immediate ops: **MVI, CMI, NI, OI,
-  XI, TM** ("OI" is OCR'd "01"). gemu/`opcodes.h` instead has **MVI, CMI, NI,
-  CI, XI, TM** — i.e. it carries **`CI` (`0x96`) where the documented set has
-  `OI`**, and lacks OI entirely. So `CI`/`0x96` is the suspect member and OI is
-  the genuinely-missing one. The used immediate opcodes are `0x91 TM, 0x92 MVI,
-  0x94 NI, 0x95 CMI, 0x96 CI, 0x97 XI`, leaving **`0x93` free** — the likely OI
-  slot, but its byte must be confirmed from the APS/PDS internal-format page
-  before adding (not guessed). OR-Immediate semantics are certain (`mem |= K`,
-  no CC — the OR analogue of `NI`).
-- This **supersedes** the open `CI`-vs-`CMI` question: the documented immediate
-  compare is `CMI`; `CI`/`0x96` is not in the APS Type-3 set and is the entry to
-  re-examine.
+**Closed 2026-08-01: `OI` was never missing — it was `0x96`, under the wrong
+name.** APS p.84 ("Type 3 Instructions") enumerates exactly six immediate ops —
+**MVI, CMI, NI, OI, XI, TM** — and cp04 p21 names `0x96` **OI, Or Immediate**
+(prose p65, flow chart cp07 p31, timing cp07 p120-121). gemu called it `CI` and
+kept a dead compare-immediate helper under that name, which is where the
+"suspect member, missing OI" reading came from; the *behaviour* was OR all
+along, through the UA, and is deck-validated at step 0x32. The six immediate
+opcodes are therefore `0x91 TM, 0x92 MVI, 0x94 NI, 0x95 CMI, 0x96 OI,
+0x97 XI`, complete, with `0x93` free and unexplained.
 - **`MC` vs `NC`**: APS prints `MC` in the SS single-length group where gemu has
   `NC` (AND characters). Likely an OCR N/M misread, but unconfirmed.
 - **`LOLL`** (`0x02`/`0x91`) is **not** in the APS first group (`ENS INS LOFF LON

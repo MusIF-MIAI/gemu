@@ -78,7 +78,7 @@ static const struct dmnem DTAB[] = {
     { 0x92, "MVI",  D_IMM, 4 },
     { 0x94, "NI",   D_IMM, 4 },
     { 0x95, "CMI",  D_IMM, 4 },
-    { 0x96, "CI",   D_IMM, 4 },
+    { 0x96, "OI",   D_IMM, 4 },
     { 0x97, "XI",   D_IMM, 4 },
     { 0x91, "TM",   D_IMM, 4 },
     /* PM peripheral / misc */
@@ -92,7 +92,7 @@ static const struct dmnem DTAB[] = {
     { 0xD5, "CMC",  D_SS1, 6 },
     { 0xD6, "OC",   D_SS1, 6 },
     { 0xD7, "XC",   D_SS1, 6 },
-    { 0xDC, "TL",   D_SS1, 6 },
+    { 0xDC, "TR",   D_SS1, 6 },
     { 0xF8, "MVQ",  D_SS1, 6 },
     { 0xF9, "CMQ",  D_SS1, 6 },
     { 0xDE, "EDT",  D_SS1, 6 },

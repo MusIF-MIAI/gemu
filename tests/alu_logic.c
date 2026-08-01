@@ -310,7 +310,7 @@ UTEST(logic, ci_equal)
     ge_init(&g);
 
     g.mem[0x100] = 0x55;
-    alu_ci(&g, 0x100, 0x55);
+    alu_cmi(&g, 0x100, 0x55);
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)2);
 }
 
@@ -320,7 +320,7 @@ UTEST(logic, ci_less)
     ge_init(&g);
 
     g.mem[0x100] = 0x10;
-    alu_ci(&g, 0x100, 0x20); /* mem < imm */
+    alu_cmi(&g, 0x100, 0x20); /* mem < imm */
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)1);
 }
 
@@ -330,7 +330,7 @@ UTEST(logic, ci_greater)
     ge_init(&g);
 
     g.mem[0x100] = 0xF0;
-    alu_ci(&g, 0x100, 0x20); /* mem > imm */
+    alu_cmi(&g, 0x100, 0x20); /* mem > imm */
     ASSERT_EQ(alu_get_cc(&g), (uint8_t)3);
 }
 
@@ -369,7 +369,7 @@ UTEST(logic, tl_basic)
     g.mem[0x202] = 0x43;
     g.mem[0x203] = 0x00;
 
-    alu_tl(&g, 0x200, 4, table);
+    alu_tr(&g, 0x200, 4, table);
 
     ASSERT_EQ(g.mem[0x200], (uint8_t)0x61);
     ASSERT_EQ(g.mem[0x201], (uint8_t)0x62);

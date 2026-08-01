@@ -44,7 +44,7 @@
 #define MVI_OPCODE  0x92
 #define NI_OPCODE   0x94
 #define CMI_OPCODE  0x95
-#define CI_OPCODE   0x96
+#define OI_OPCODE   0x96
 #define XI_OPCODE   0x97
 #define PERI_OPCODE 0x9c
 #define LPSR_OPCODE 0x9d
@@ -67,7 +67,7 @@
 #define SR_OPCODE   0xd9
 #define PK_OPCODE   0xdA
 #define SL_OPCODE   0xdb
-#define TL_OPCODE   0xdc
+#define TR_OPCODE   0xdc
 #define EDT_OPCODE  0xde
 #define MVP_OPCODE  0xe8
 #define CMP_OPCODE  0xe9

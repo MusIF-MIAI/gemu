@@ -54,12 +54,12 @@ whole ISA, each op against a hand-built vector in 0x04B0–0x06xx.)
 | 03 | `JRT` (return addr) | 14–16 | `AD` (add decimal) | 25–2A | `MP` (mult. packed) |
 | 05–06 | `CMI` | 17–18 | `AB` (add binary) | 2B–30 | `DP` (div. packed) |
 | 07 | `MVI` | 19 | `SD` (sub decimal) | 31 | `NI` |
-| 08–0A | `CMC` | 1A | `SB` (sub binary) | 32 | `CI` |
+| 08–0A | `CMC` | 1A | `SB` (sub binary) | 32 | `OI` |
 | 0B–0C | `MVC` | 1B | `MVQ` | 33 | `XI` |
 | 0D | `OC` (or) | 1C | `CMQ` | 34–36 | `TM` |
 | 0E | `XC` (xor) | 1D–1E | `UPK` (unpack) | 37 | `LR` |
 | 0F | `NC` (and) | 1F–21 | `SR` (shift right) | 38 | `CMR`/`AMR`/`SMR` |
-| 10–11 | `TL` (translate) | 22 | `SL` (shift left) | | |
+| 10–11 | `TR` (translate) | 22 | `SL` (shift left) | | |
 | 12 | `PK` (pack) | 23 | `EDT` (edit) | | |
 
 Memory-test step codes: **61/64/65** = 0x1000 range, **66/67/68** = 0x4000 range,

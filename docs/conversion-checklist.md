@@ -115,7 +115,7 @@ check.
 - [ ] MVP/CMP/AP/SP (fo.96-105) — AP/SP has the recomplement tail.
 - [ ] MP/DP (fo.106-118) — 4-state codes, largest family.
 - [ ] PK/UPK/PKS/UPKS (fo.118-126).
-- [ ] TL/EDT (fo.130-132).
+- [ ] TR/EDT (fo.130-132).
 - [ ] **TR** (fo.134-136) — absent from `opcodes.h` entirely; needs the opcode
       added before the states.
 
@@ -125,5 +125,5 @@ check.
   verbatim it halts a MAX machine at `PO=09b8`. Unresolved; not committed.
 - `beta_unclaimed` cannot retire until CU10/CU12 partial commands are
   transcribed.
-- `CI` → `OI` rename to match the manual's naming.
+- ~~`CI` → `OI` rename to match the manual's naming.~~ Done 2026-08-01, with `TL` → `TR`.
 - 32K memory capacity is reported at startup but not enforced.

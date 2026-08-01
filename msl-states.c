@@ -180,7 +180,7 @@ static uint8_t is_ss_data_op(struct ge *ge) {
         case XC_OPCODE:
         case UPK_OPCODE:
         case PK_OPCODE:
-        case TL_OPCODE:
+        case TR_OPCODE:
         case EDT_OPCODE:
         case MVP_OPCODE:
         case CMP_OPCODE:
@@ -634,12 +634,12 @@ static uint8_t is_jrt(struct ge *ge) {
  * After operand fetch these arrive in beta with V1=address, L1=immediate. */
 static uint8_t is_mvi(struct ge *ge) { return ge->rFO == MVI_OPCODE; }
 static uint8_t is_ni (struct ge *ge) { return ge->rFO == NI_OPCODE;  }
-static uint8_t is_ci (struct ge *ge) { return ge->rFO == CI_OPCODE;  }
+static uint8_t is_oi (struct ge *ge) { return ge->rFO == OI_OPCODE;  }
 static uint8_t is_cmi(struct ge *ge) { return ge->rFO == CMI_OPCODE; }
 static uint8_t is_xi (struct ge *ge) { return ge->rFO == XI_OPCODE;  }
 static uint8_t is_tm (struct ge *ge) { return ge->rFO == TM_OPCODE;  }
 static uint8_t pm_imm_exec(struct ge *ge) {
-    return is_mvi(ge) || is_ni(ge) || is_ci(ge) || is_cmi(ge) || is_xi(ge) || is_tm(ge);
+    return is_mvi(ge) || is_ni(ge) || is_oi(ge) || is_cmi(ge) || is_xi(ge) || is_tm(ge);
 }
 
 /* PM register ops (change registers, memory-mapped at 240+N*2): arrive in
@@ -764,7 +764,7 @@ static uint8_t beta_register_arithmetic(struct ge *ge) {
 }
 
 static uint8_t beta_immediate_logic(struct ge *ge) {
-    return is_ni(ge) || is_ci(ge) || is_xi(ge) || is_tm(ge);
+    return is_ni(ge) || is_oi(ge) || is_xi(ge) || is_tm(ge);
 }
 
 static uint8_t beta_immediate_shift(struct ge *ge) {
@@ -772,16 +772,16 @@ static uint8_t beta_immediate_shift(struct ge *ge) {
 }
 
 static uint8_t immediate_and_mode(struct ge *ge) {
-    return is_ni(ge) || is_ci(ge) || is_tm(ge);
+    return is_ni(ge) || is_oi(ge) || is_tm(ge);
 }
 
 static uint8_t immediate_xor_or_mode(struct ge *ge) {
-    return is_xi(ge) || is_ci(ge);
+    return is_xi(ge) || is_oi(ge);
 }
 
 static uint8_t immediate_writes_memory(struct ge *ge) { return !is_tm(ge); }
 static uint8_t immediate_sets_cc(struct ge *ge) {
-    return is_ci(ge) || is_xi(ge) || is_tm(ge);
+    return is_oi(ge) || is_xi(ge) || is_tm(ge);
 }
 static uint8_t immediate_nonzero_cc(struct ge *ge) {
     return immediate_sets_cc(ge) && (ge->rRO & 0xff) != 0;

@@ -115,7 +115,7 @@ void alu_ni(struct ge *ge, uint16_t addr, uint8_t imm)
 }
 
 /* ------------------------------------------------------------------ */
-/* OI / CI – OR Immediate (opcode 0x96; "CI" in this deck's mnemonics) */
+/* OI – Or Immediate (opcode 0x96, cp04 p21/p65)                       */
 /* ------------------------------------------------------------------ */
 
 void alu_oi(struct ge *ge, uint16_t addr, uint8_t imm)
@@ -127,7 +127,7 @@ void alu_oi(struct ge *ge, uint16_t addr, uint8_t imm)
      * Qualitative result (FA04/FA05), symmetric to XI:
      *   FA04=1, FA05=0 -> cc=2: result == 0
      *   FA04=1, FA05=1 -> cc=3: result != 0
-     * Validated against funktionalcpu step 0x32 (CI 0xAA on 0x55 -> 0xFF).
+     * Validated against funktionalcpu step 0x32 (OI 0xAA on 0x55 -> 0xFF).
      */
     alu_set_cc(ge, (result == 0) ? 2 : 3);
 }
@@ -177,10 +177,10 @@ void alu_cmc(struct ge *ge, uint16_t a, uint16_t b, uint8_t len)
 }
 
 /* ------------------------------------------------------------------ */
-/* CI – Compare Immediate (CMI in manual, §5.5.5.1)                   */
+/* CMI – Compare Immediate (opcode 0x95, §5.5.5.1)                    */
 /* ------------------------------------------------------------------ */
 
-void alu_ci(struct ge *ge, uint16_t addr, uint8_t imm)
+void alu_cmi(struct ge *ge, uint16_t addr, uint8_t imm)
 {
     uint8_t mem_byte = ge->mem[addr];
 
@@ -200,10 +200,10 @@ void alu_ci(struct ge *ge, uint16_t addr, uint8_t imm)
 }
 
 /* ------------------------------------------------------------------ */
-/* TL – Translate (TR in manual, §5.5.3.3)                            */
+/* TR – Translate (opcode 0xDC, cp04 p22/p46, §5.5.3.3)               */
 /* ------------------------------------------------------------------ */
 
-void alu_tl(struct ge *ge, uint16_t a, uint8_t len, uint16_t table)
+void alu_tr(struct ge *ge, uint16_t a, uint8_t len, uint16_t table)
 {
     uint8_t i;
 
