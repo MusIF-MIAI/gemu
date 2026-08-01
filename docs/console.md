@@ -85,7 +85,30 @@ The **BO** bus drives the rotary-selected register onto the display while the
 machine is stopped (see §5). gemu surfaces it as `ADD_reg` (`ge->rBO`), `OP_reg`
 (`ge->rFO`) and `RO`.
 
-### 2.3 LAMPS CHECK
+### 2.3 The lamps are incandescent
+
+A panel bulb is a filament with thermal inertia, and at 500,000 elementary
+cycles a second most of what the register lamps do is far faster than that
+filament can follow. It does not flicker: it sits at whatever temperature the
+duty cycle holds it at. On the machine you read the difference straight off the
+row — a bit that is steadily set burns **bright orange**, a bit that is
+toggling glows **dull red**, and a bit that is clear is dark glass.
+
+A panel repainted at 60 Hz cannot see that by sampling once a frame: it would
+catch one arbitrary cycle in eight thousand and blink nonsense. So the emulator
+measures the duty cycle — sampling the lamps as it turns, at a prime stride so
+nothing beats with a periodic bit — and integrates it into a per-lamp filament
+temperature with a first-order lag (heating quicker than cooling, as in a bulb:
+the filament is driven up and radiates down). What crosses into the page is
+that temperature, 0..255; the page owns what a filament at that temperature
+looks like, and hands the holder styling a face colour and a glow through the
+`--lamp-face` / `--lamp-glow` / `--lamp-heat` custom properties.
+
+Measured on `funktionalcpu.cap` mid-run, the `SO` row reads
+`62 115 103 33 21 206 255 148` — one bit hard on, one nearly dark, the rest
+sitting where their duty cycles hold them. `console/wasm/main.c`.
+
+### 2.4 LAMPS CHECK
 
 A momentary key that lights every console lamp for a bulb test (CPU[4] §3.2). It
 must not be pressed during machine operation. On the panel it shares a button

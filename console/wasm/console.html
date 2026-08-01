@@ -236,8 +236,9 @@ body {
   position: relative;
   width: 2em;
   background-color: #333;
-  padding-top: 1.2em;
-  padding-bottom: 0.5em;
+  padding-top: 0.7em;
+  padding-bottom: 0;  /* the moulding runs off the bottom of the row */
+  --door-w: 1.25em;   /* the pillars nearly touch, as they do on the strip */
 }
 
 #main_leds .led-spacer {
@@ -257,15 +258,34 @@ body {
   margin-bottom: 2em;
 }
 
-/* -- fancyswitch2 -- */
+/* -- fancyswitch2: the AM and maintenance toggles --------------------------
+ *
+ * These are the old chrome bat-handle toggles, two-state, and there are
+ * three parts to one, from the panel upwards:
+ *
+ *   the WASHER  a flat ring lying on the black panel, a little wider than
+ *               the crown, turned with concentric grooves;
+ *   the CROWN   a domed chrome collar standing proud on top of it, which
+ *               the lever comes out of;
+ *   the LEVER   an upside-down teardrop -- bulbous at the free end, tapering
+ *               into the crown -- polished, so it carries one hard highlight
+ *               down its side. It points down when off and up when on, and
+ *               it drops its own shadow on the panel either way.
+ *
+ * The checkbox is still the whole of the state; all of this hangs off
+ * :checked and nothing here touches the wiring.
+ */
 
 .fancyswitch2 {
-	display: inline-block;
-	margin: 2em 2em;
+	display: block;
 	position: relative;
-	border-radius: 3.5em;
-	box-shadow: 0 0 0.5em rgba(255,255,255,0.2);
-  font-size: 0.22em;
+	width: 15.8em;
+	height: 19em;
+	margin: 0.8em auto 0.4em;
+	/* scale off the photograph: the washers are 0.83 of the pitch between
+	 * switches, so a bank of these very nearly touches, and the panel is
+	 * a thin black line between them rather than a field they sit in */
+	font-size: 0.22em;
 }
 
 .fancyswitch2 label {
@@ -278,6 +298,7 @@ body {
 	top: 0;
 	left: 0;
 	z-index: 10;
+	cursor: pointer;
 }
 
 .fancyswitch2 input {
@@ -286,193 +307,247 @@ body {
 
 .fancyswitch2 span {
 	display: block;
+	position: absolute;
 	transition: top 0.05s;
 }
 
-.fancyswitch2-border1 {
-	border: 0.1em solid #000;
-	border-radius: 3.5em;
-	box-shadow: 0 0.2em rgba(255, 255, 255, 0.2);
-}
-
-.fancyswitch2-border2 {
-	width: 6.6em;
-	height: 12.6em;
-	position: relative;
-	border: 0.1em solid #323232;
-	background-image: linear-gradient(to right, #2D2D2D, #4B4B4B, #2D2D2D);
-	border-radius: 3.4em;
-}
-
-.fancyswitch2-border2:before,
-.fancyswitch2-border2:after {
-	content: '';
-	display: block;
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 0;
-	opacity: .3;
-	border-radius: 3.4em;
-}
-
-.fancyswitch2-border2:before {
-	background: linear-gradient(#000, rgba(0,0,0,0));
-}
-
-.fancyswitch2-border2:after {
-	background: linear-gradient(rgba(0,0,0,0), #000);
-}
-
-.fancyswitch2-top {
-	width: 100%;
-	height: 84%;
-	position: absolute;
-	top: 8%;
-	left: 0;
+/* the washer: flat on the panel, so it gets a tight shadow and no dome.
+ * The concentric bands are the turned grooves catching the room light. */
+.fsw-washer {
+	width: 13.2em;
+	height: 13.2em;
+	left: 1.3em;
+	top: 2.9em;
 	z-index: 1;
-	background-image: linear-gradient(to right, #2D2D2D, #4B4B4B, #2D2D2D);
-	border-radius: 3.4em;
-}
-
-.fancyswitch2-shadow {
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 2;
-	border-radius: 3.4em;
-	box-shadow: 0 0 2em black inset;
-}
-
-.fancyswitch2-handle-left,
-.fancyswitch2-handle-right {
-	content: '';
-	display: block;
-	width: 3.6em;
-	height: 0;
-	position: absolute;
-	top: 6.6em;
-	z-index: 2;
-	border-bottom: 4.5em solid #111;
-	border-left: 0.7em solid transparent;
-	border-right: 0.7em solid transparent;
-	border-radius: 0;
-}
-
-.fancyswitch2-handle-left {
-	left: 0.8em;
-}
-
-.fancyswitch2-handle-right {
-	right: 0.8em;
-}
-
-.fancyswitch2-handle {
-	width: 3.6em;
-	height: 4.5em;
-	position: absolute;
-	top: 6.6em;
-	left: 1.5em;
-	z-index: 3;
-	background: #333;
-	background-image: linear-gradient(to right, #111, #777 40%, #888, #777 60%, #111);
-	border-radius: 0;
-}
-
-.fancyswitch2-handle-top {
-	width: 5em;
-	height: 5em;
-	position: absolute;
-	top: 8.5em;
-	left: 0.8em;
-	z-index: 4;
-	background-color: #555;
-	background-image: linear-gradient(to right, #5F5F5F, #878787);
-	border-top: 0.2em solid #AEB2B3;
-	border-radius: 2.5em;
-}
-
-.fancyswitch2-handle-bottom {
-	width: 3.6em;
-	height: 3.6em;
-	position: absolute;
-	top: 4.7em;
-	left: 1.5em;
-	z-index: 3;
-	background: #333;
-	background-image: linear-gradient(to right, #111, #777 40%, #888, #777 60%, #111);
-	border-top: 0.2em solid #141414;
-	border-radius: 1.8em;
-}
-
-.fancyswitch2-handle-base {
-	width: 4.2em;
-	height: 4.2em;
-	position: absolute;
-	top: 3.8em;
-	left: 1.2em;
-	z-index: 2;
-	border-top: 0.2em solid rgba(255,255,255,0.35);
-	border-radius: 2.1em;
-	box-shadow: 0 0 0.5em rgba(0,0,0,0.8) inset;
-}
-/* Switch on */
-
-.fancyswitch2 input:checked~.fancyswitch2-handle-left, .fancyswitch2 input:checked~.fancyswitch2-handle-right {
-	top: 1.5em;
-	border-bottom: 0;
-	border-top: 4.5em solid #111;
-}
-
-.fancyswitch2 input:checked~.fancyswitch2-handle {
-	top: 1.5em;
-}
-
-.fancyswitch2 input:checked~.fancyswitch2-handle-top  {
-	top: -1em;
-	border-top: 0;
-	border-bottom: 0.2em solid #AEB2B3;
-}
-
-.fancyswitch2 input:checked~.fancyswitch2-handle-bottom {
-	top: 4.2em;
-	border-top: 0;
-	border-bottom: 0.2em solid #141414;
-}
-
-.fancyswitch2 input:checked~.fancyswitch2-handle-base {
-	top: 4.5em;
-	border-top: 0;
-	border-bottom: 0.2em solid rgba(255,255,255,0.35);
-}
-
-.led_dot {
-    margin-left: auto;
-    margin-right: auto;
-
-    height: 1em;
-	width: 1em;
-
-	display: block;
 	border-radius: 50%;
-
-      border-radius: 50%;
-
-    box-shadow: 0px 0px 15px rgba(90, 90, 90, 0.6) inset;
-    /* unlit: the dark amber of a cold incandescent behind its lens */
-    background-color: #3a2a06;
+	background:
+		radial-gradient(ellipse 64% 50% at 32% 24%,
+			rgba(255,255,255,0.34), rgba(255,255,255,0) 74%),
+		radial-gradient(circle at 50% 50%,
+			#23262a 0%, #23262a 31%,
+			#0e1012 34%, #0e1012 41%,         /* the groove the crown sits in */
+			#e6ebf0 46%, #a4abb2 57%,
+			#f2f6f9 68%, #aab1b8 78%,
+			#70777e 86%, #454a50 92%,
+			#1b1d20 97%, #0c0d0f 100%);
+	box-shadow:
+		0 0.3em 0.4em rgba(0,0,0,0.75),
+		inset 0 0 0 0.14em rgba(0,0,0,0.50);
 }
 
-.led.on .led_dot {
-    /* lit: dark yellow / orange, not red -- these are indicator lamps, not alarms */
-    background-color: #f2a007;
-    box-shadow: 0px 0px 15px rgba(255, 240, 200, 0.6) inset, 0px 0px 15px rgba(242, 160, 7, 0.9);
-  transition: all 0.1s linear;
+/* the lever. The silhouette is the teardrop; the gradient across it is the
+ * polish. Its shadow is taken from the silhouette, so it swings with it. */
+.fsw-lever {
+	width: 5.1em;
+	height: 10em;
+	left: 5.35em;
+	top: 8.5em;                     /* off: hanging down out of the crown */
+	z-index: 3;
+	--bulb-y: 76%;                  /* where the fat end is, for the shine */
+	clip-path: polygon(
+		45% 0%,  55% 0%,  62% 9%,  69% 24%, 78% 42%, 88% 58%,
+		94% 73%, 88% 88%, 73% 97%, 57% 100%, 43% 100%, 27% 97%,
+		12% 88%,  6% 73%, 12% 58%, 22% 42%, 31% 24%, 38% 9%);
+	background: linear-gradient(to right,
+		#4c525a 0%, #949ba3 9%, #d6dce2 23%, #f8fbfd 38%,
+		#d8dee4 50%, #a4abb3 67%, #737a82 85%, #40454c 100%);
+	filter: drop-shadow(0.5em 0.9em 0.45em rgba(0,0,0,0.78));
 }
+
+/* the shine sitting on the fat end of the teardrop */
+.fsw-lever::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(ellipse 26% 12% at 37% var(--bulb-y),
+		rgba(255,255,255,0.85), rgba(255,255,255,0) 78%);
+}
+
+/* the crown: a chrome dome, lit from the upper left like everything else on
+ * this panel, sitting over the root of the lever and hiding where it enters */
+.fsw-crown {
+	width: 9.2em;
+	height: 9.2em;
+	left: 3.3em;
+	top: 4.9em;
+	z-index: 2;
+	border-radius: 50%;
+	background:
+		radial-gradient(ellipse 60% 46% at 33% 25%,
+			rgba(255,255,255,0.46), rgba(255,255,255,0) 72%),
+		radial-gradient(circle at 50% 50%,
+			#2c3137 0%, #2c3137 16%,          /* the hole the lever leaves */
+			#f4f7fa 25%, #b8bfc6 41%,
+			#868d94 55%, #e8edf2 71%,
+			#9aa1a8 84%, #575d64 94%, #23272b 100%);
+	box-shadow:
+		inset 0 0 0 0.12em rgba(0,0,0,0.35),
+		0 0 0 0.10em rgba(0,0,0,0.60),
+		0 0.4em 0.5em rgba(0,0,0,0.80);
+}
+
+/* Switch on: the lever stands up. Same teardrop, turned over, so the fat
+ * end is still the free end and the taper still runs into the crown. */
+.fancyswitch2 input:checked ~ .fsw-lever {
+	top: 0.5em;
+	--bulb-y: 24%;
+	clip-path: polygon(
+		45% 100%, 55% 100%, 62% 91%, 69% 76%, 78% 58%, 88% 42%,
+		94% 27%, 88% 12%, 73% 3%, 57% 0%, 43% 0%, 27% 3%,
+		12% 12%,  6% 27%, 12% 42%, 22% 58%, 31% 76%, 38% 91%);
+	filter: drop-shadow(0.55em 0.7em 0.45em rgba(0,0,0,0.75));
+}
+
+/* ---- lamp housings ----------------------------------------------------
+ *
+ * A GE-120 panel lamp is not a dot. Every bulb stands in its own moulded
+ * holder that sits proud of the panel -- a little pillar, arched over the
+ * top -- and the front of that pillar is cut away as a door. The door is
+ * BULLET shaped: a rounded arch, straight parallel sides, and no bottom
+ * edge whatever.
+ *
+ * Neither has the moulding itself: there is no plastic on the south side
+ * of these lamps at all. The pillar has no foot, no bottom rim and casts
+ * nothing under itself -- it simply runs off the bottom of the row. And
+ * the plastic is a matt mid grey, lighter than the strip it stands on, so
+ * the shape of every holder reads with every lamp dark.
+ *
+ * The light itself is not ours. The filament model writes --lamp-face,
+ * --lamp-glow and --lamp-heat onto the element carrying the l_* id (the
+ * .led), and everything below paints from those three; "unlit" is simply
+ * what the fallbacks look like -- cold grey-brown glass in a black hole.
+ */
+
+.led {
+    position: relative;
+
+    /* proportions measured off the SO-row photograph, in door-widths:
+     * the pillar is 1.33 wide and 2.0 tall, the door 1.5 tall, which
+     * leaves half a door-width of solid plastic capping the arch */
+    --door-w: 1em;
+    --door-h: calc(var(--door-w) * 1.50);
+    --pillar-w: calc(var(--door-w) * 1.33);
+    --pillar-h: calc(var(--door-w) * 2.00);
+}
+
+/* the pillar: matt moulded plastic, arched over the top and cut off flat
+ * at the bottom -- no rounding there, no rim, no foot. Diffuse: lighter
+ * down the middle where the front of the moulding faces us, falling away
+ * softly to both mould edges, with no specular anywhere on it. */
+.lamp_holder {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--pillar-w);
+    height: var(--pillar-h);
+    margin: 0 auto;
+    border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+    background:
+        linear-gradient(to bottom, rgba(255,255,255,0.07), rgba(255,255,255,0) 60%),
+        linear-gradient(to right,
+            #3b3b40 0%, #54545c 18%, #6b6b74 50%, #54545c 82%, #3b3b40 100%);
+    /* it stands proud, so it darkens away from the panel at the sides and
+     * over the crown -- and nowhere at all along the bottom */
+    box-shadow:
+        -0.06em 0 0.12em rgba(0,0,0,0.65),
+         0.06em 0 0.12em rgba(0,0,0,0.65),
+         0 -0.05em 0.10em rgba(0,0,0,0.55);
+}
+
+/* a burning bulb does not stay inside its door: on the photograph the
+ * whole moulding of a bright lamp is alight, crown included, hottest
+ * around the mouth. The alpha of --lamp-glow already carries the heat --
+ * near nothing at a dull red, most of the way up at full -- so washing
+ * the pillar with it flat is enough, with a second helping at the mouth.
+ * The mould edges are then put back on top, so the shape survives being
+ * lit and the plastic does not go flat. */
+.lamp_holder::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-color: var(--lamp-glow, transparent);
+    background-image:
+        linear-gradient(to right, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0) 26%,
+                        rgba(0,0,0,0) 74%, rgba(0,0,0,0.60) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0) 46%),
+        radial-gradient(ellipse 96% 62% at 50% 86%,
+            var(--lamp-glow, transparent), transparent 88%);
+}
+
+/* the door, with the bulb burning through it */
+.led_dot {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    /* the arch sits under the crown and the opening runs to the very foot
+     * of the pillar: pillar-h - door-h is the plastic left above it */
+    top: calc(var(--pillar-h) - var(--door-h));
+    width: var(--door-w);
+    height: var(--door-h);
+    display: block;
+
+    /* BULLET: arch on top, parallel sides, open at the foot */
+    border-radius: 50% 50% 0 0 / 25% 25% 0 0;
+
+    background: var(--lamp-face, #3a2a06);
+    box-shadow:
+        /* the cut edge of the moulding, holding the glass back in shade.
+         * The shade is at the TOP, under the arch -- the foot of the door
+         * is where the light gets out, so nothing darkens it there. */
+        inset 0 0 0 0.05em rgba(0,0,0,0.80),
+        inset 0 0.16em 0.26em rgba(0,0,0,0.50),
+        /* and the light that gets out, washing the plastic around it */
+        0 0 0.26em var(--lamp-glow, transparent),
+        0 0 0.70em var(--lamp-glow, transparent),
+        0 0 1.30em var(--lamp-glow, transparent);
+}
+
+/* the glass: a real bulb, sat back in the hole, its dome fat at the top
+ * and necking towards the base. Cold, it is clear glass picking up the
+ * room -- grey, with one hard specular off the top left, lighter than the
+ * plastic around it. Hot, it drowns in its own light, so the reflection
+ * is faded out again by heat. */
+.led_dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: calc(1 - var(--lamp-heat, 0) * 0.82);
+    background:
+        /* the faintest specular the room leaves on the glass */
+        radial-gradient(ellipse 26% 15% at 37% 26%,
+            rgba(255,255,255,0.17), rgba(255,255,255,0) 80%),
+        /* the dome itself. A cold bulb reflects very little: the slot has
+         * to stay a dark hole with a shape in it, or it competes with a
+         * lamp that is actually alight. */
+        radial-gradient(ellipse 72% 44% at 50% 32%,
+            rgba(176,180,190,0.20), rgba(140,144,153,0.08) 74%,
+            rgba(140,144,153,0) 97%),
+        /* and where it necks down to its base, out of the light */
+        linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,0.50) 100%),
+        radial-gradient(ellipse 112% 80% at 50% 34%,
+            rgba(0,0,0,0) 44%, rgba(0,0,0,0.72) 100%);
+}
+
+/* the white core. A filament near the top of its ramp blows out the middle
+ * of the door on the photograph -- a small hard white blob low in the
+ * opening with the orange still burning all round it. That is heat doing
+ * it, not hue, so it comes straight off --lamp-heat and only up there. */
+.led_dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: calc((var(--lamp-heat, 0) - 0.76) * 3.4);
+    background: radial-gradient(ellipse 40% 24% at 50% 57%,
+        rgba(255,250,238,0.92), rgba(255,242,218,0) 72%);
+}
+
+/* (nothing is drawn under the pillar: there is no south side to it, so
+ *  there is no foot for light or shade to gather on) */
 
 .bottom-panel {
     display: inline-flex;
@@ -583,10 +658,9 @@ padding: 1px;
     width: 0.8em;
 }
 
-#lights_container .led_dot {
-    width: 1.5em;
-    height: 1.5em;
-    margin: 0.1em;
+#lights_container .led {
+    --door-w: 1.4em;
+    margin: 0.15em 0.13em 0;   /* no gap below: the moulding has no foot */
 }
 
 #lights_container .label {
@@ -1456,21 +1530,12 @@ function makeFancySwitch2(id) {
     div.class = "fancycontainer"
     div.innerHTML = `
     <div class="fancyswitch2">
-        <span class="fancyswitch2-border1">
-            <span class="fancyswitch2-border2">
-                <input id="${id}" type="checkbox" onchange="document.set_switches()"/>
-                <label for="${id}"></label>
-                <span class="fancyswitch2-top"></span>
-                <span class="fancyswitch2-shadow"></span>
-                <span class="fancyswitch2-handle"></span>
-                <span class="fancyswitch2-handle-left"></span>
-                <span class="fancyswitch2-handle-right"></span>
-                <span class="fancyswitch2-2handle-top"></span>
-                <span class="fancyswitch2-handle-bottom"></span>
-                <span class="fancyswitch2-handle-base"></span>
-            </span>
-        </span>
-    </span>
+        <input id="${id}" type="checkbox" onchange="document.set_switches()"/>
+        <label for="${id}"></label>
+        <span class="fsw-washer"></span>
+        <span class="fsw-lever"></span>
+        <span class="fsw-crown"></span>
+    </div>
     `
 
     return div;
@@ -1488,7 +1553,9 @@ const labels_03_00  = ["03", "02", "01", "00"]
 
 function makeLed(id) {
     const led = makeDiv("led")
-    led.innerHTML = '<div class="led_dot"></div>'
+    /* the bulb is not loose on the panel: it stands in a moulded holder,
+     * and the door of that holder is the shape you actually read */
+    led.innerHTML = '<div class="lamp_holder"><div class="led_dot"></div></div>'
     if (id) led.id = "l_" + id
     return led
 }
@@ -1817,12 +1884,53 @@ load_sel_button.addEventListener("click", () => { if (!module) return; load1 ^= 
 /* Run speed: 1 = nominal GE-120 wall-clock real time (one ge_run_cycle = 4 us). */
 speed_sel.addEventListener("change", () => { if (module) module._set_speed(parseFloat(speed_sel.value)); });
 
-/* Lamp elements, looked up once. This is called from the emulator for every
- * lamp that moves, on every frame, so the id lookup was the most-executed line
- * on the page. */
+/* ---- lamps: a filament at a temperature -------------------------------- *
+ *
+ * The emulator sends a level 0..255, the temperature its filament model has
+ * this bulb at (main.c) -- not on/off. A steadily-set bit reaches the top and
+ * burns orange; a bit toggling faster than the filament can follow sits in the
+ * middle and glows dull red; a clear bit is dark glass. That is what the panel
+ * does, and reading a register off it depends on the difference.
+ *
+ * The ramp is anchored on the photograph of the SO row (2026-08-01): dull red
+ * at a quarter heat, orange-red at half, saturated orange with a near-white
+ * core at the top. Colour and glow go out as CSS custom properties so the
+ * holder's own styling decides how to paint them.
+ */
+const LAMP_RAMP = [        /* heat, r, g, b */
+    [0.00,  58,  42,   6],   /* cold glass, unlit                */
+    [0.08,  70,   8,   2],   /* the first visible red            */
+    [0.25, 150,  20,   0],   /* faint red: a bit that is toggling */
+    [0.50, 210,  70,   4],   /* orange-red                       */
+    [0.80, 245, 125,  12],   /* orange                           */
+    [1.00, 255, 152,  32],   /* full: orange with a white core   */
+];
+
+const _lampPaint = [];       /* level -> {face, glow, heat} */
+for (let lv = 0; lv < 256; lv++) {
+    const x = lv / 255;
+    let k = 0;
+    while (k < LAMP_RAMP.length - 2 && x > LAMP_RAMP[k + 1][0]) k++;
+    const [x0, r0, g0, b0] = LAMP_RAMP[k], [x1, r1, g1, b1] = LAMP_RAMP[k + 1];
+    const t = x1 > x0 ? (x - x0) / (x1 - x0) : 0;
+    const r = Math.round(r0 + (r1 - r0) * t);
+    const g = Math.round(g0 + (g1 - g0) * t);
+    const b = Math.round(b0 + (b1 - b0) * t);
+    /* the halo is the light escaping the holder: it grows faster than the
+     * face brightens, the way a radiating filament does. It keeps the hue of
+     * the filament that made it -- lifting the green to widen the glow turned
+     * a hot lamp yellow-amber, and these lamps are orange. */
+    const a = Math.min(0.85, Math.pow(x, 1.6) * 0.9);
+    _lampPaint.push({
+        face: `rgb(${r},${g},${b})`,
+        glow: `rgba(${Math.min(255, r + 12)},${Math.min(255, Math.round(g * 1.06))},${Math.min(255, b + 8)},${a.toFixed(3)})`,
+        heat: x.toFixed(3),
+    });
+}
+
 const _lampEls = new Map();
 
-document.set_lamp = function(lamp, val) {
+document.set_lamp = function(lamp, level) {
     if (!module) return;
     if (lampCheckActive) return;   /* don't fight the bulb test while it's held */
 
@@ -1833,8 +1941,16 @@ document.set_lamp = function(lamp, val) {
     }
     if (!e) return;
 
-    if (val) e.classList.add("on")
-    else     e.classList.remove("on")
+    const p = _lampPaint[level < 0 ? 0 : level > 255 ? 255 : level];
+    e.style.setProperty('--lamp-face', p.face);
+    e.style.setProperty('--lamp-glow', p.glow);
+    e.style.setProperty('--lamp-heat', p.heat);
+
+    /* `.on` is the coarse question -- is this lamp lit -- for the styling that
+     * cannot interpolate (the coloured button caps). The bulbs paint from the
+     * variables above. Half heat counts as lit. */
+    if (level >= 128) e.classList.add("on")
+    else              e.classList.remove("on")
 }
 
 /* live disassembly: each line is "<marker><AAAA>: <hex>  <asm>"; the line whose

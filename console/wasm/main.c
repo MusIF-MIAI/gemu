@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <emscripten.h>
@@ -35,8 +36,9 @@ static double run_speed    = 1.0;
 static double last_now_ms  = 0.0;
 static double cycle_budget = 0.0;
 
-EM_JS(void, set_lamp, (const char *lamp, int val), {
-    document.set_lamp(UTF8ToString(lamp), val);
+/* `level` is the filament temperature, 0..255, not a switch. */
+EM_JS(void, set_lamp, (const char *lamp, int level), {
+    document.set_lamp(UTF8ToString(lamp), level);
 });
 
 /* Live Assembly: the full-space listing (rebuilt occasionally — it is large)
@@ -107,136 +109,264 @@ void EMSCRIPTEN_KEEPALIVE printer_key(int c) {
     printer_feed_key(ge, (uint8_t)c);
 }
 
-/* Only the lamps that CHANGED cross into JS.
+/* ---- the lamps are incandescent ---------------------------------------- *
  *
- * The panel has about 150 of them and send_console runs every frame; pushing
- * all of them meant 150 EM_JS calls, 150 string decodes and 150 DOM lookups
- * per frame whatever the machine was doing, which is the sort of overhead that
- * decides whether the page keeps up with a 2 us machine. Steady state is now
- * nearly silent: a lamp is written when it moves. The order of the LAMP() calls
- * below is the index, so it must not be reordered without invalidating the
- * cache, which `lamps_dirty` does anyway whenever the page asks for a repaint. */
-static uint8_t lamp_prev[192];
-static int lamps_dirty = 1;
+ * A panel bulb is a filament with thermal inertia, and at 500,000 elementary
+ * cycles a second most of what the register lamps do is far faster than that
+ * filament can follow. It does not flicker: it sits at whatever temperature
+ * the duty cycle holds it at, and glows accordingly. On the machine you can
+ * read the difference straight off the row -- a bit that is steadily set burns
+ * bright orange, a bit that is toggling glows dull red, and a bit that is
+ * clear is dark glass (photograph of the SO row, 2026-08-01).
+ *
+ * A panel repainted at 60 Hz cannot see that by sampling once a frame: it
+ * would catch one arbitrary cycle out of eight thousand and blink nonsense. So
+ * the emulator measures the duty cycle -- sampling the lamps as it turns, at a
+ * prime stride so nothing beats with a periodic bit -- and integrates it into
+ * a per-lamp filament temperature with a first-order lag. Heating is quicker
+ * than cooling, as it is in a bulb: the filament is driven up and radiates
+ * down. What crosses into JS is that temperature, and the page decides what a
+ * filament at that temperature looks like.
+ */
+#define LAMP_COUNT       80
+#define LAMP_SAMPLE_EVERY 17      /* prime: no aliasing with a periodic bit */
+#define LAMP_TAU_HEAT_MS 22.0
+#define LAMP_TAU_COOL_MS 45.0
 
-void EMSCRIPTEN_KEEPALIVE refresh_lamps(void);
+static const char *const lamp_names[LAMP_COUNT] = {
+    "RO_0",
+    "RO_1",
+    "RO_2",
+    "RO_3",
+    "RO_4",
+    "RO_5",
+    "RO_6",
+    "RO_7",
+    "RO_8",
+    "SO_0",
+    "SO_1",
+    "SO_2",
+    "SO_3",
+    "SO_4",
+    "SO_5",
+    "SO_6",
+    "SO_7",
+    "FA_0",
+    "FA_1",
+    "FA_2",
+    "FA_3",
+    "SA_0",
+    "SA_1",
+    "SA_2",
+    "SA_3",
+    "SA_4",
+    "SA_5",
+    "SA_6",
+    "SA_7",
+    "B_0",
+    "B_1",
+    "B_2",
+    "B_3",
+    "ADD_0",
+    "ADD_1",
+    "ADD_2",
+    "ADD_3",
+    "ADD_4",
+    "ADD_5",
+    "ADD_6",
+    "ADD_7",
+    "ADD_8",
+    "ADD_9",
+    "ADD_A",
+    "ADD_B",
+    "ADD_C",
+    "ADD_D",
+    "ADD_E",
+    "ADD_F",
+    "OP_0",
+    "OP_1",
+    "OP_2",
+    "OP_3",
+    "OP_4",
+    "OP_5",
+    "OP_6",
+    "OP_7",
+    "UR",
+    "C3",
+    "C2",
+    "C1",
+    "I",
+    "JE",
+    "IM",
+    "NZ",
+    "OF",
+    "DC_ALERT",
+    "POWER_OFF",
+    "STAND_BY",
+    "POWER_ON",
+    "MAINTENANCE_ON",
+    "MEM_CHECK",
+    "INV_ADD",
+    "SWITCH_1",
+    "SWITCH_2",
+    "STEP_BY_STEP",
+    "HALT",
+    "LOAD_1",
+    "LOAD_2",
+    "OPERATOR_CALL"
+};
+
+static uint32_t lamp_on[LAMP_COUNT];    /* samples in which the lamp was lit */
+static uint32_t lamp_samples;
+static double   lamp_heat[LAMP_COUNT];  /* filament temperature, 0..1        */
+static uint8_t  lamp_sent[LAMP_COUNT];  /* what the page last saw            */
+static int      lamps_dirty = 1;
+static double   lamp_last_ms;
+
+/* The lamp states as the console reads them, in the order the page knows. */
+static void lamp_snapshot(struct ge_console *c, int powered, int running,
+                          uint8_t *out)
+{
+    int i = 0;
+    out[i++] = (BIT(c->lamps.RO, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 4)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 5)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 6)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 7)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.RO, 8)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 4)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 5)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 6)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SO, 7)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.FA, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.FA, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.FA, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.FA, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 4)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 5)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 6)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.SA, 7)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.B, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.B, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.B, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.B, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 4)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 5)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 6)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 7)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 8)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 9)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 10)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 11)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 12)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 13)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 14)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.ADD_reg, 15)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 0)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 1)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 2)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 3)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 4)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 5)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 6)) ? 1 : 0;
+    out[i++] = (BIT(c->lamps.OP_reg, 7)) ? 1 : 0;
+    out[i++] = (c->lamps.UR) ? 1 : 0;
+    out[i++] = (c->lamps.C3) ? 1 : 0;
+    out[i++] = (c->lamps.C2) ? 1 : 0;
+    out[i++] = (c->lamps.C1) ? 1 : 0;
+    out[i++] = (c->lamps.I) ? 1 : 0;
+    out[i++] = (c->lamps.JE) ? 1 : 0;
+    out[i++] = (c->lamps.IM) ? 1 : 0;
+    out[i++] = (c->lamps.NZ) ? 1 : 0;
+    out[i++] = (c->lamps.OF) ? 1 : 0;
+    out[i++] = (c->lamps.DC_ALERT) ? 1 : 0;
+    out[i++] = (!powered) ? 1 : 0;
+    out[i++] = (powered && !running) ? 1 : 0;
+    out[i++] = (powered) ? 1 : 0;
+    out[i++] = (c->lamps.MAINTENANCE_ON) ? 1 : 0;
+    out[i++] = (c->lamps.MEM_CHECK) ? 1 : 0;
+    out[i++] = (c->lamps.INV_ADD) ? 1 : 0;
+    out[i++] = (c->lamps.SWITCH_1) ? 1 : 0;
+    out[i++] = (c->lamps.SWITCH_2) ? 1 : 0;
+    out[i++] = (c->lamps.STEP_BY_STEP) ? 1 : 0;
+    out[i++] = (c->lamps.HALT) ? 1 : 0;
+    out[i++] = (c->lamps.LOAD_1) ? 1 : 0;
+    out[i++] = (c->lamps.LOAD_2) ? 1 : 0;
+    out[i++] = (c->lamps.OPERATOR_CALL) ? 1 : 0;
+}
+
+/* One duty-cycle sample. Called from the run loop, not from the frame. */
+static void lamp_sample(void)
+{
+    struct ge_console console = { 0 };
+    uint8_t bits[LAMP_COUNT];
+    int powered = ge->powered != 0;
+
+    ge_fill_console_data(ge, &console);
+    lamp_snapshot(&console, powered, powered && running_loop, bits);
+
+    for (int i = 0; i < LAMP_COUNT; i++)
+        lamp_on[i] += bits[i];
+    lamp_samples++;
+}
 
 void send_console() {
     struct ge_console console = { 0 };
+    uint8_t bits[LAMP_COUNT];
     int powered = ge->powered != 0;
     int running = powered && running_loop;
-    int lamp_i = 0;
+    double now = emscripten_get_now();
+    double dt  = now - lamp_last_ms;
 
     ge_fill_console_data(ge, &console);
+    lamp_snapshot(&console, powered, running, bits);
 
-#define LAMP(name, val) do {                                       \
-        uint8_t v_ = (val) ? 1 : 0;                                \
-        if (lamps_dirty || lamp_prev[lamp_i] != v_) {              \
-            set_lamp(name, v_);                                    \
-            lamp_prev[lamp_i] = v_;                                \
-        }                                                          \
-        lamp_i++;                                                  \
-    } while (0)
+    /* A frame with no cycles behind it (the machine is stopped, or this is a
+     * key press repainting the panel) still has a lamp state: the one it is
+     * showing right now, held for the whole interval. */
+    if (dt < 0.0 || dt > 250.0)
+        dt = 16.0;
+    lamp_last_ms = now;
 
-    LAMP("RO_0", BIT(console.lamps.RO, 0));
-    LAMP("RO_1", BIT(console.lamps.RO, 1));
-    LAMP("RO_2", BIT(console.lamps.RO, 2));
-    LAMP("RO_3", BIT(console.lamps.RO, 3));
-    LAMP("RO_4", BIT(console.lamps.RO, 4));
-    LAMP("RO_5", BIT(console.lamps.RO, 5));
-    LAMP("RO_6", BIT(console.lamps.RO, 6));
-    LAMP("RO_7", BIT(console.lamps.RO, 7));
-    LAMP("RO_8", BIT(console.lamps.RO, 8));
+    for (int i = 0; i < LAMP_COUNT; i++) {
+        double duty = lamp_samples ? (double)lamp_on[i] / (double)lamp_samples
+                                   : (double)bits[i];
+        double tau  = duty > lamp_heat[i] ? LAMP_TAU_HEAT_MS : LAMP_TAU_COOL_MS;
+        double a    = 1.0 - exp(-dt / tau);
 
-    LAMP("SO_0", BIT(console.lamps.SO, 0));
-    LAMP("SO_1", BIT(console.lamps.SO, 1));
-    LAMP("SO_2", BIT(console.lamps.SO, 2));
-    LAMP("SO_3", BIT(console.lamps.SO, 3));
-    LAMP("SO_4", BIT(console.lamps.SO, 4));
-    LAMP("SO_5", BIT(console.lamps.SO, 5));
-    LAMP("SO_6", BIT(console.lamps.SO, 6));
-    LAMP("SO_7", BIT(console.lamps.SO, 7));
+        lamp_heat[i] += (duty - lamp_heat[i]) * a;
 
-    LAMP("FA_0", BIT(console.lamps.FA, 0));
-    LAMP("FA_1", BIT(console.lamps.FA, 1));
-    LAMP("FA_2", BIT(console.lamps.FA, 2));
-    LAMP("FA_3", BIT(console.lamps.FA, 3));
+        /* The bulb test is not a filament effect: it says "every lamp works",
+         * so it drives them all the way. */
+        if (ge->lamps_test)
+            lamp_heat[i] = 1.0;
 
-    LAMP("SA_0", BIT(console.lamps.SA, 0));
-    LAMP("SA_1", BIT(console.lamps.SA, 1));
-    LAMP("SA_2", BIT(console.lamps.SA, 2));
-    LAMP("SA_3", BIT(console.lamps.SA, 3));
-    LAMP("SA_4", BIT(console.lamps.SA, 4));
-    LAMP("SA_5", BIT(console.lamps.SA, 5));
-    LAMP("SA_6", BIT(console.lamps.SA, 6));
-    LAMP("SA_7", BIT(console.lamps.SA, 7));
+        uint8_t level = (uint8_t)(lamp_heat[i] * 255.0 + 0.5);
+        if (lamps_dirty || lamp_sent[i] != level) {
+            set_lamp(lamp_names[i], level);
+            lamp_sent[i] = level;
+        }
+    }
 
-    LAMP("B_0", BIT(console.lamps.B, 0));
-    LAMP("B_1", BIT(console.lamps.B, 1));
-    LAMP("B_2", BIT(console.lamps.B, 2));
-    LAMP("B_3", BIT(console.lamps.B, 3));
-
-    LAMP("ADD_0", BIT(console.lamps.ADD_reg,  0));
-    LAMP("ADD_1", BIT(console.lamps.ADD_reg,  1));
-    LAMP("ADD_2", BIT(console.lamps.ADD_reg,  2));
-    LAMP("ADD_3", BIT(console.lamps.ADD_reg,  3));
-    LAMP("ADD_4", BIT(console.lamps.ADD_reg,  4));
-    LAMP("ADD_5", BIT(console.lamps.ADD_reg,  5));
-    LAMP("ADD_6", BIT(console.lamps.ADD_reg,  6));
-    LAMP("ADD_7", BIT(console.lamps.ADD_reg,  7));
-    LAMP("ADD_8", BIT(console.lamps.ADD_reg,  8));
-    LAMP("ADD_9", BIT(console.lamps.ADD_reg,  9));
-    LAMP("ADD_A", BIT(console.lamps.ADD_reg, 10));
-    LAMP("ADD_B", BIT(console.lamps.ADD_reg, 11));
-    LAMP("ADD_C", BIT(console.lamps.ADD_reg, 12));
-    LAMP("ADD_D", BIT(console.lamps.ADD_reg, 13));
-    LAMP("ADD_E", BIT(console.lamps.ADD_reg, 14));
-    LAMP("ADD_F", BIT(console.lamps.ADD_reg, 15));
-
-    LAMP("OP_0", BIT(console.lamps.OP_reg, 0));
-    LAMP("OP_1", BIT(console.lamps.OP_reg, 1));
-    LAMP("OP_2", BIT(console.lamps.OP_reg, 2));
-    LAMP("OP_3", BIT(console.lamps.OP_reg, 3));
-    LAMP("OP_4", BIT(console.lamps.OP_reg, 4));
-    LAMP("OP_5", BIT(console.lamps.OP_reg, 5));
-    LAMP("OP_6", BIT(console.lamps.OP_reg, 6));
-    LAMP("OP_7", BIT(console.lamps.OP_reg, 7));
-
-    LAMP("UR",  console.lamps.UR);
-    LAMP("C3",  console.lamps.C3);
-    LAMP("C2",  console.lamps.C2);
-    LAMP("C1",  console.lamps.C1);
-    LAMP("I",   console.lamps.I );
-    LAMP("JE",  console.lamps.JE);
-    LAMP("IM",  console.lamps.IM);
-    LAMP("NZ",  console.lamps.NZ);
-    LAMP("OF",  console.lamps.OF);
-
-    LAMP("DC_ALERT",       console.lamps.DC_ALERT      );
-    LAMP("POWER_OFF",      !powered                    );
-    LAMP("STAND_BY",       powered && !running         );
-    LAMP("POWER_ON",       powered                     );
-    LAMP("MAINTENANCE_ON", console.lamps.MAINTENANCE_ON);
-    LAMP("MEM_CHECK",      console.lamps.MEM_CHECK     );
-    LAMP("INV_ADD",        console.lamps.INV_ADD       );
-    LAMP("SWITCH_1",       console.lamps.SWITCH_1      );
-    LAMP("SWITCH_2",       console.lamps.SWITCH_2      );
-    LAMP("STEP_BY_STEP",   console.lamps.STEP_BY_STEP  );
-    LAMP("HALT",           console.lamps.HALT          );
-    LAMP("LOAD_1",         console.lamps.LOAD_1        );
-    LAMP("LOAD_2",         console.lamps.LOAD_2        );
-    LAMP("OPERATOR_CALL",  console.lamps.OPERATOR_CALL );
-
-    /* gdb-style disassembly window centred on the instruction-start PC
-     * (latched in the alpha fetch), so the highlight stays on the instruction
-     * being executed instead of drifting onto operand bytes / the next line as
-     * the live PO advances mid-instruction (e.g. while computing a jump). */
-    /* Mark the current instruction every frame (cheap: JS moves the highlight
-     * and, while following, scrolls it into view). Rebuild the full-space
-     * listing only occasionally (~2 Hz) since it covers the whole program and
-     * is large; the JS skips the DOM rebuild when the text is unchanged. */
+    memset(lamp_on, 0, sizeof lamp_on);
+    lamp_samples = 0;
     lamps_dirty = 0;
-#undef LAMP
+
 
     disasm_set_pc(ge->instr_pc);
     {
@@ -444,9 +574,15 @@ void em_main_loop() {
     long n = (long)cycle_budget;
     cycle_budget -= (double)n;
 
+    static long sample_phase = 0;
+
     for (long i = 0; i < n; i++) {
         if (ge_run_cycle(ge) != 0)            /* timing-chart error: stop */
             break;
+        if (++sample_phase >= LAMP_SAMPLE_EVERY) {
+            sample_phase = 0;
+            lamp_sample();                    /* what the filaments are seeing */
+        }
         /* keep cycling when halted: ALTO freezes the CPU at the HLT (PO stays
          * put, HALT lamp lit), but the delay line still turns so the panel and
          * console forcing/display stay live. */
