@@ -43,6 +43,7 @@
 #include "decks.h"
 #include "../ge.h"
 #include "../cardreader.h"
+#include "../peripherical.h"
 #include "../cap.h"
 #include "../transcode.h"
 #include "../bit.h"
@@ -983,7 +984,7 @@ UTEST(cardreader, hopper_reports_what_is_left)
     ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
 
     ASSERT_EQ(cardreader_deck_cards(&g), 1);
-    ASSERT_EQ(cardreader_cards_left(&g), 1);       /* still waiting at the throat */
+    ASSERT_EQ(cardreader_cards_left(&g), 1);       /* still in the hopper */
 
     ge_start(&g);
     for (int i = 0; i < 2048; i++) {
@@ -993,6 +994,59 @@ UTEST(cardreader, hopper_reports_what_is_left)
 
     ASSERT_EQ(cardreader_deck_cards(&g), 1);       /* the deck does not shrink */
     ASSERT_EQ(cardreader_cards_left(&g), 0);       /* the hopper does */
+
+    ge_deinit(&g);
+}
+
+/* --------------------------------------------------------------------------
+ * Test: a deck can be loaded twice.
+ *
+ * The operator's most ordinary move -- run a deck, put the cards back, run it
+ * again -- and gemu could not do it. Everything the first run left behind got
+ * in the way of the second: RIG1, the channel-1 end-of-transfer latch, still
+ * saying the transfer that had not started had already finished; FININ still
+ * standing on the reader's pins from the last card of the previous deck; and
+ * the program addresser parked where the deck halted, which the load's own
+ * address build then picked up out of the knot and turned into an order of
+ * 0x41 -- one bit off "read unchanged". CLEAR is what clears all three.
+ * -------------------------------------------------------------------------- */
+UTEST(cardreader, a_deck_can_be_loaded_twice)
+{
+    static const char cap_path[] = "/tmp/gemu_test_twice.cap";
+    uint16_t cols[4] = { 0x00AB, 0x00CD, 0x00EF, 0x00AA };
+    ASSERT_EQ(write_synthetic_cap(cap_path, cols, 4), 0);
+
+    struct ge g;
+    ge_init(&g);
+    ge_log_set_active_types(0);
+
+    for (int pass = 0; pass < 2; pass++) {
+        /* rewind: the unit comes off the connector and goes back on with the
+         * whole deck in the hopper, which is what the panel's REWIND does */
+        ge_peri_deinit(&g);
+        g.peri = NULL;
+        ASSERT_EQ(cardreader_register(&g, cap_path, TC_BINARY), 0);
+        ASSERT_EQ(cardreader_cards_left(&g), 1);
+
+        g.mem[0] = g.mem[1] = 0x00;     /* wipe what the last pass packed */
+
+        ge_clear(&g);
+        ge_load_1(&g);
+        ge_load(&g);
+        ge_start(&g);
+
+        int reached = 0;
+        for (int i = 0; i < 4096; i++) {
+            ASSERT_EQ(ge_run_cycle(&g), 0);
+            if (g.rSO == 0xe3) { reached = 1; break; }
+            if (ge_halted(&g)) break;
+        }
+
+        ASSERT_TRUE(reached);                          /* the load completed */
+        ASSERT_EQ((int)g.mem[0], 0xBD);                /* with the same bytes */
+        ASSERT_EQ((int)g.mem[1], 0xFA);
+        ASSERT_EQ(cardreader_cards_left(&g), 0);
+    }
 
     ge_deinit(&g);
 }

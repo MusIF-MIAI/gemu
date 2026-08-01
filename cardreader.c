@@ -557,8 +557,23 @@ static int cardreader_on_clock(struct ge *ge, void *opaque)
 static int cardreader_deinit(struct ge *ge, void *opaque)
 {
     struct cardreader_ctx *ctx = (struct cardreader_ctx *)opaque;
-    if (ge)
-        ge->integrated_reader.lesab = 0;   /* the unit leaves the connector */
+    if (ge) {
+        /* The unit leaves the connector, and every line it was holding goes
+         * with it. FININ especially: it STANDS after the last character of a
+         * card (cr_finin_release, and the bench says so), so a reader taken off
+         * with a finished deck leaves an end-of-record on the wire. The next
+         * unit to arrive would find the channel already ended and read nothing
+         * -- which is exactly what a rewound deck did: 00 -> 80 -> c8 and then
+         * parked in b8, the input wait, with FININ standing from the deck
+         * before it. */
+        ge->integrated_reader.lesab = 0;
+        ge->integrated_reader.lu08  = 0;
+        ge->integrated_reader.fini  = 0;
+        ge->integrated_reader.data  = 0;
+        ge->integrated_reader.lupor = 0;
+        ge->integrated_reader.cmd_pending = 0;
+        ge->integrated_reader.cmd_reject  = 0;
+    }
     if (ctx) {
         cap_free(ctx->deck);
         free(ctx);
@@ -608,7 +623,7 @@ int cardreader_cards_left(struct ge *ge)
         if (cap_card_ncols(ctx->deck, i) > 0)
             left++;
     /* The card under the station has left the hopper: it is being read, or has
-     * been. Only a card still waiting at the throat counts. */
+     * been. Only a card still in the hopper counts. */
     if (left > 0 && (ctx->state == CR_PRESENTING || ctx->state == CR_CARD_DONE))
         left--;
     return left;

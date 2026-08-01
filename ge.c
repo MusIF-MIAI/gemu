@@ -191,13 +191,64 @@ void ge_clear(struct ge *ge)
     /* The condition flip-flops are part of the preset state: FI carries the
      * 2-bit condition code the jumps test (alu_cc.c) and FA its console-visible
      * copy, and a machine just cleared must not answer a JC with the last
-     * program's result. The program addresser (PO) is deliberately NOT touched:
-     * the first START after CLEAR "runs the program" (CPU[4] §3.3), which needs
-     * the address it is parked on -- and the display/forcing sequences the
-     * engineer uses between CLEAR and START read and write exactly these. */
+     * program's result. */
     ge->ffFI = 0;
     ge->ffFA = 0;
     ge->JE   = 0;
+
+    /* The channel latches go with them. RIG1 is "end from controller 1", set
+     * when a transfer's last character arrives (reader.c, with FININ) and
+     * normally taken down by CE03 inside the next order -- which the load
+     * sequence never issues. Left standing it says the transfer that has not
+     * started yet has already finished, so the IPL reads nothing: a second deck
+     * could not be loaded without powering the machine off, which is not a
+     * machine anyone could work with. The operator loads deck after deck, and
+     * CLEAR between them is what makes that possible. RACI (rejected command)
+     * and RECE (selection check) are error conditions in the same breath. */
+    ge->RIG1 = 0;
+    ge->RIG3 = 0;
+    ge->RACI = 0;
+    ge->RAVI = 0;
+    ge->RECE = 0;
+    ge->PEC1 = 0;
+
+    /* And the working registers, which is the rest of what "presets the CPU to
+     * a defined state" has to mean. They are not core: V1-V4 stage operand
+     * addresses within a cycle, L1-L3 lengths, FO the opcode being executed, RO
+     * the memory data register (cleared at TO20 of every cycle anyway). The
+     * program addresser PO is deliberately NOT among them -- the first START
+     * after CLEAR runs the program from where it is parked.
+     *
+     * This is what a second LOAD needs. The bootstrap builds its order out of
+     * the knot, and the knot is fed by these: with the last run's values still
+     * in them the load read an order of 0x41 -- one bit off "read unchanged",
+     * an anomaly at the reader -- and the machine sat in the input wait having
+     * asked for nothing. A machine you cannot load twice without switching it
+     * off is not the machine. */
+    ge->rV1 = ge->rV2 = ge->rV3 = ge->rV4 = 0;
+    ge->rL1 = ge->rL3 = 0;
+    ge->rL2 = 0;
+    ge->rFO = 0;
+    ge->rRO = 0;
+    ge->rBO = 0;
+
+    /* The program addresser goes to zero with them, and this is the row that
+     * makes CLEAR -> LOAD -> START work twice.
+     *
+     * LOAD "sets AINI and nothing else" (CPU[4] §3.3), so it is CLEAR that has
+     * to leave the machine somewhere the bootstrap can start: the IPL reads one
+     * card to 0x0000 and executes it there, and gemu builds the load's
+     * addresses out of the knot, which the display sequence feeds with PO. With
+     * the last program's PO still standing -- 0x010c, where print.cap halts --
+     * the load went looking for its order block up there and asked the reader
+     * for 0x41 instead of 0x40: one bit off "read unchanged", an anomaly at the
+     * reader, and the machine sat in the input wait having asked for nothing.
+     * A deck could be loaded once per power-on.
+     *
+     * Resuming a halted program is unaffected: that is START on its own, which
+     * is what an operator presses. CLEAR is how you say start over -- and the
+     * engineer keying an address into PO does it after the CLEAR, not before. */
+    ge->rPO = 0;
 
     /* And the defined state the sequencer is preset TO is the display state.
      *
