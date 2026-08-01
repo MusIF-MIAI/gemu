@@ -1876,17 +1876,19 @@ step_by_step_button.addEventListener("click", e => module && module._press_step_
  * The emulator owns this (ge->lamps_test), so the lamps that light are exactly
  * the lamps the model knows about; the page just reports the key. The CSS-side
  * force is kept only as instant feedback before the next frame lands. */
-let lampCheckActive = false;
-
+/* The machine owns the bulb test: ge->lamps_test drives every filament to full
+ * (console.c paints the lamp struct, main.c holds the heat at 1.0), and what
+ * arrives here is the same stream of levels as always. The page used to add an
+ * `.on` class to everything instead AND lock set_lamp out while the key was
+ * held -- which lit the coloured button caps, did nothing at all for the bulbs
+ * (they paint from --lamp-face now, not from a class), and blocked the levels
+ * the emulator was sending. The lamps that were off stayed off, and you saw
+ * them move only on release, when the lock came off and the real levels landed.
+ * Now the key is just the key. */
 function lampCheckStart() {
-    lampCheckActive = true;
     if (module) module._set_lamps_check(1);
-    document.querySelectorAll('[id^="l_"]').forEach(e => e.classList.add("on"));
 }
 function lampCheckEnd() {
-    if (!lampCheckActive) return;
-    lampCheckActive = false;
-    document.querySelectorAll('[id^="l_"]').forEach(e => e.classList.remove("on"));
     if (module) module._set_lamps_check(0);
 }
 lamps_check_button.addEventListener("mousedown",  lampCheckStart);
@@ -1955,8 +1957,6 @@ const _lampEls = new Map();
 
 document.set_lamp = function(lamp, level) {
     if (!module) return;
-    if (lampCheckActive) return;   /* don't fight the bulb test while it's held */
-
     let e = _lampEls.get(lamp);
     if (e === undefined) {
         e = document.getElementById('l_' + lamp);
