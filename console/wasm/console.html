@@ -1007,7 +1007,7 @@ padding: 1px;
   border-radius: 3px; font: inherit; font-size: 8.5pt; padding: 0.1em 0.5em; cursor: pointer;
 }
 #tp_paper {
-  height: 13em; overflow: auto;
+  height: 11.5em; overflow: auto;
   padding: 0.6em 0.8em; margin: 0;
   background:
     repeating-linear-gradient(#f4f1e6, #f4f1e6 1.45em, #e7e3d2 1.45em, #e7e3d2 1.5em);
@@ -1418,6 +1418,26 @@ padding: 1px;
 
     </div>
 </div>
+</section>
+
+<aside id=tools_pane>
+<section id=disasm_card class=tool-card>
+    <h3 id=disasm_heading>Live Assembly</h3>
+    <div id=disasm></div>
+</section>
+
+<aside id=teleprinter class=tool-card>
+    <div class=tp-bar>
+        <span>Printer / Typewriter &nbsp;(channel 2)</span>
+        <button id=tp_clear type=button>Clear</button>
+    </div>
+    <div id=tp_paper><span class=tp-note>Channel-2 printer ready. The machine's printed output appears here; type below to feed the operator keyboard.
+</span></div>
+    <div class=tp-input>
+        <input id=tp_line type=text autocomplete=off placeholder="type to the operator keyboard...">
+        <button id=tp_send type=button>Send</button>
+    </div>
+</aside>
 <section id=simpanel class=tool-card>
     <div id=sim_header>
         <div>
@@ -1448,26 +1468,6 @@ padding: 1px;
         </section>
     </div>
 </section>
-</section>
-
-<aside id=tools_pane>
-<section id=disasm_card class=tool-card>
-    <h3 id=disasm_heading>Live Assembly</h3>
-    <div id=disasm></div>
-</section>
-
-<aside id=teleprinter class=tool-card>
-    <div class=tp-bar>
-        <span>Printer / Typewriter &nbsp;(channel 2)</span>
-        <button id=tp_clear type=button>Clear</button>
-    </div>
-    <div id=tp_paper><span class=tp-note>Channel-2 printer ready. The machine's printed output appears here; type below to feed the operator keyboard.
-</span></div>
-    <div class=tp-input>
-        <input id=tp_line type=text autocomplete=off placeholder="type to the operator keyboard...">
-        <button id=tp_send type=button>Send</button>
-    </div>
-</aside>
 </aside>
 
 
