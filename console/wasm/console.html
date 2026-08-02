@@ -1049,6 +1049,194 @@ padding: 1px;
   color: #d1bb83;
 }
 
+/* ---- the view rail ------------------------------------------------------ *
+ * Three ways to look at the same machine: the operator's console, the front
+ * of the CPU with its boards in, and the back with the wire-wrap pins. The
+ * rail stays thin because it is navigation, not instrumentation. */
+#workspace {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+#viewbar {
+  flex: 0 0 4.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 0.4rem;
+  background: #0b0b0b;
+  border-right: 1px solid #262626;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+}
+
+#viewbar .rail-mark {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 6.5pt;
+  letter-spacing: 0.18em;
+  text-align: center;
+  color: #4a4a4a;
+  padding-bottom: 0.6rem;
+  text-transform: uppercase;
+}
+
+.viewbtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #8d8d8d;
+  font-family: inherit;
+  font-size: 6.5pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  padding: 0.55rem 0.15rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  transition: color 120ms, background 120ms;
+}
+
+.viewbtn svg { width: 22px; height: 22px; display: block; }
+.viewbtn svg * { stroke: currentColor; fill: none; stroke-width: 1.3; }
+.viewbtn .vb-label { display: block; }
+
+.viewbtn:hover { color: #cfcfcf; background: #161616; }
+
+.viewbtn[aria-current="page"] {
+  color: #d1bb83;
+  background: #17150f;
+}
+
+.viewbtn[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -0.4rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 2px;
+  background: #d1bb83;
+}
+
+.viewbtn:focus-visible { outline: 1px solid #d1bb83; outline-offset: 1px; }
+
+#views { flex: 1 1 auto; min-width: 0; }
+.view[hidden] { display: none; }
+
+/* ---- the rack views ----------------------------------------------------- */
+.rackview {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem 1rem;
+  gap: 0.7rem;
+}
+
+.rack-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rack-head h2 {
+  margin: 0;
+  font-size: 11pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d1bb83;
+  font-weight: normal;
+}
+
+.rack-head p {
+  margin: 0;
+  color: #8a8a8a;
+  max-width: 62ch;
+  line-height: 1.5;
+}
+
+.rack-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rack-tools button {
+  appearance: none;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #cfcfcf;
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 9pt;
+  min-width: 1.9rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.rack-tools button:hover { border-color: #d1bb83; color: #d1bb83; }
+.rack-tools .zoomreadout {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 8pt;
+  color: #7a7a7a;
+  min-width: 3.4rem;
+  text-align: right;
+}
+
+.rack-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #1c1c1c 0%, #101010 60%, #0a0a0a 100%);
+  border: 1px solid #262626;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: grab;
+}
+.rack-stage.dragging { cursor: grabbing; }
+.rack-stage svg { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.rack-foot {
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+  color: #6f6f6f;
+  min-height: 3.4em;
+}
+
+.rack-legend {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.rack-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.rack-legend i {
+  width: 0.75rem; height: 0.75rem; border-radius: 1px; display: inline-block;
+}
+
+/* the pin read-out on the back view */
+#pin_info {
+  flex: 1 1 auto;
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 8.5pt;
+  line-height: 1.55;
+  color: #9a9a9a;
+}
+#pin_info .pi-pos { color: #e8c877; font-size: 10pt; letter-spacing: 0.06em; }
+#pin_info .pi-net { color: #eee; }
+#pin_info .pi-dim { color: #6a6a6a; }
+#pin_info .pi-warn { color: #c98b5a; }
+
 @media (max-width: 1500px) {
   #app_shell {
     grid-template-columns: minmax(0, 1fr);
@@ -1076,6 +1264,37 @@ padding: 1px;
 }
 </style>
 
+<div id=workspace>
+<nav id=viewbar aria-label="Machine views">
+    <div class=rail-mark>GE<br>120</div>
+    <button class=viewbtn type=button data-view=console aria-current=page>
+        <svg viewBox="0 0 24 24" aria-hidden=true>
+            <rect x="2.5" y="4.5" width="19" height="13" rx="1"/>
+            <path d="M6 8.5h4M12 8.5h6M6 12h12M8 20.5h8"/>
+        </svg>
+        <span class=vb-label>Operator<br>console</span>
+    </button>
+    <button class=viewbtn type=button data-view=front>
+        <svg viewBox="0 0 24 24" aria-hidden=true>
+            <rect x="3.5" y="2.5" width="17" height="19" rx="1"/>
+            <path d="M6 5.5v5M9 5.5v5M12 5.5v5M15 5.5v5M18 5.5v5
+                     M6 13.5v5M9 13.5v5M12 13.5v5M15 13.5v5M18 13.5v5"/>
+        </svg>
+        <span class=vb-label>CPU<br>front</span>
+    </button>
+    <button class=viewbtn type=button data-view=back>
+        <svg viewBox="0 0 24 24" aria-hidden=true>
+            <rect x="3.5" y="2.5" width="17" height="19" rx="1"/>
+            <path d="M8 6h.01M8 9h.01M8 12h.01M8 15h.01M8 18h.01
+                     M16 7.5h.01M16 10.5h.01M16 13.5h.01M16 16.5h.01"
+                  stroke-linecap=round stroke-width=2.2/>
+        </svg>
+        <span class=vb-label>CPU<br>back</span>
+    </button>
+</nav>
+
+<main id=views>
+<div class=view id=view_console>
 <div id=app_shell>
 <section id=console_pane>
 <div id=verticalcontainer>
@@ -1469,6 +1688,56 @@ padding: 1px;
     </div>
 </section>
 </aside>
+</div><!-- /#app_shell -->
+</div><!-- /#view_console -->
+
+<div class="view rackview" id=view_front hidden>
+    <div class=rack-head>
+        <h2>CPU &mdash; front</h2>
+        <p>Cabinet section 2A, drawing 14026&nbsp;136. Nine tiers of forty card
+           positions; a board usually spans two backplane rows at one column
+           (A+B, C+D, &hellip;). Position 40 is at the left, 1 at the right.
+           Scroll to zoom, drag to pan.</p>
+        <div class=rack-tools>
+            <span class=zoomreadout id=front_zoom>100%</span>
+            <button type=button data-zoom=out title="Zoom out">&minus;</button>
+            <button type=button data-zoom=in title="Zoom in">+</button>
+            <button type=button data-zoom=fit title="Fit to window">Fit</button>
+        </div>
+    </div>
+    <div class=rack-stage id=front_stage></div>
+    <div class=rack-foot>
+        <div class=rack-legend>
+            <span><i style="background:#4f87ae"></i> board spanning both rows</span>
+            <span><i style="background:#6ea3c4"></i> single-row board</span>
+            <span><i style="background:#23282c"></i> position empty</span>
+            <span id=front_count class=pi-dim></span>
+        </div>
+    </div>
+</div>
+
+<div class="view rackview" id=view_back hidden>
+    <div class=rack-head>
+        <h2>CPU &mdash; back</h2>
+        <p>The wire-wrap side. Every card position presents seventeen pins:
+           the nine odd ones down the left, the eight even ones down the right,
+           pin&nbsp;01 top-left and pin&nbsp;17 bottom-left. Zoom in and click a
+           contact to read what the backplane carries there.</p>
+        <div class=rack-tools>
+            <span class=zoomreadout id=back_zoom>100%</span>
+            <button type=button data-zoom=out title="Zoom out">&minus;</button>
+            <button type=button data-zoom=in title="Zoom in">+</button>
+            <button type=button data-zoom=fit title="Fit to window">Fit</button>
+        </div>
+    </div>
+    <div class=rack-stage id=back_stage></div>
+    <div class=rack-foot>
+        <div id=pin_info><span class=pi-dim>Zoom in to a card position, then
+            click a contact.</span></div>
+    </div>
+</div>
+</main>
+</div><!-- /#workspace -->
 
 
 <script>
@@ -1717,6 +1986,719 @@ function set_knob_position(pos) {
 }
 
 set_knob_position(9) // RS_NORM
+
+
+/* ======================================================================== *
+ * The rack views: the front of the CPU with its boards in, and the back
+ * with the wire-wrap pins.
+ *
+ * Both draw from backplane.js, baked out of the card-layout Atlas by
+ * gen-backplane.py -- 18 rows (A-T, no J or K in the Italian alphabet), 40
+ * card positions each, 17 pins per connector. It is 150 KB, so it is fetched
+ * the first time one of these views is opened rather than at page load: the
+ * operator console must come up whether or not anyone looks at the iron.
+ * ======================================================================== */
+
+const NS = "http://www.w3.org/2000/svg"
+const svgEl = (name, attrs) => {
+    const e = document.createElementNS(NS, name)
+    for (const k in attrs) e.setAttribute(k, attrs[k])
+    return e
+}
+
+/* ---- zoom and pan ------------------------------------------------------- *
+ * One controller for both stages. The scene is laid out once in world units
+ * and never re-laid-out; panning and zooming only touch one transform, so a
+ * drag costs a single attribute write no matter how much is on screen. */
+function makeStage(host, world, opts = {}) {
+    const svg = svgEl("svg", { preserveAspectRatio: "xMidYMid meet" })
+    const scene = svgEl("g", {})
+    svg.appendChild(scene)
+    host.appendChild(svg)
+
+    const st = {
+        svg, scene, world,
+        scale: 1, tx: 0, ty: 0,
+        min: opts.min || 0.05, max: opts.max || 60,
+        onview: opts.onview || (() => {}),
+    }
+
+    function apply() {
+        scene.setAttribute("transform",
+            `translate(${st.tx} ${st.ty}) scale(${st.scale})`)
+        if (opts.readout) {
+            const fit = fitScale()
+            opts.readout.textContent = Math.round(st.scale / fit * 100) + "%"
+        }
+        st.onview(st)
+    }
+
+    function box() { return host.getBoundingClientRect() }
+
+    function fitScale() {
+        const b = box()
+        if (!b.width || !b.height) return 1
+        const pad = 1.04
+        return Math.min(b.width / (world.w * pad), b.height / (world.h * pad))
+    }
+
+    st.fit = function () {
+        const b = box()
+        st.scale = fitScale()
+        st.tx = (b.width - world.w * st.scale) / 2 - world.x * st.scale
+        st.ty = (b.height - world.h * st.scale) / 2 - world.y * st.scale
+        apply()
+    }
+
+    /* Zoom about a fixed screen point, so the thing under the cursor stays
+     * under the cursor -- the only zoom that feels like moving your head. */
+    st.zoomAt = function (factor, cx, cy) {
+        const next = Math.min(st.max, Math.max(st.min, st.scale * factor))
+        const k = next / st.scale
+        st.tx = cx - (cx - st.tx) * k
+        st.ty = cy - (cy - st.ty) * k
+        st.scale = next
+        apply()
+    }
+
+    st.zoomCentre = function (factor) {
+        const b = box()
+        st.zoomAt(factor, b.width / 2, b.height / 2)
+    }
+
+    /* world rectangle currently visible, for the back view's pin culling */
+    st.visible = function () {
+        const b = box()
+        return {
+            x0: (-st.tx) / st.scale,        y0: (-st.ty) / st.scale,
+            x1: (b.width - st.tx) / st.scale, y1: (b.height - st.ty) / st.scale,
+        }
+    }
+
+    host.addEventListener("wheel", ev => {
+        ev.preventDefault()
+        const b = box()
+        st.zoomAt(Math.exp(-ev.deltaY * 0.0016),
+                  ev.clientX - b.left, ev.clientY - b.top)
+    }, { passive: false })
+
+    let drag = null
+    host.addEventListener("pointerdown", ev => {
+        if (ev.button !== 0) return
+        drag = { x: ev.clientX, y: ev.clientY, tx: st.tx, ty: st.ty, moved: 0 }
+        host.setPointerCapture(ev.pointerId)
+        host.classList.add("dragging")
+    })
+    host.addEventListener("pointermove", ev => {
+        if (!drag) return
+        const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y
+        drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy))
+        st.tx = drag.tx + dx
+        st.ty = drag.ty + dy
+        apply()
+    })
+    const endDrag = ev => {
+        if (!drag) return
+        /* a click that never moved is a click, not the end of a pan */
+        st.suppressClick = drag.moved > 4
+        drag = null
+        host.classList.remove("dragging")
+        host.releasePointerCapture?.(ev.pointerId)
+    }
+    host.addEventListener("pointerup", endDrag)
+    host.addEventListener("pointercancel", endDrag)
+
+    new ResizeObserver(() => { if (st.autofit) st.fit() }).observe(host)
+    st.autofit = true
+    return st
+}
+
+function wireZoomButtons(head, st) {
+    head.querySelectorAll("[data-zoom]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const what = btn.dataset.zoom
+            if (what === "fit") { st.autofit = true; st.fit() }
+            else { st.autofit = false; st.zoomCentre(what === "in" ? 1.5 : 1 / 1.5) }
+        })
+    })
+}
+
+/* ---- geometry ----------------------------------------------------------- *
+ * World units are arbitrary but shared, so the front and the back line up:
+ * one card position is COL_W wide in both, and position 40 is at the left. */
+/* Proportions off the photographs: the board handles repeat every ~13.7 px
+ * across a cage that steps ~102 px per tier, so a position is about one to
+ * seven and a half -- thin and tall, not the stubby keys a first pass drew. */
+const COL_W = 13, COL_GAP = 3.5
+const ROW_H = 52, ROW_GAP = 6, TIER_GAP = 22
+const MARGIN = 34
+/* The core store does not sit under the cages -- it stands in them. Rows Q to
+ * T carry the memory, and the two stacks fill the only two column runs that
+ * are empty of cards across all four of those rows: 33-38 and 3-8, six
+ * positions each. With 40 at the left on the front, that puts one stack near
+ * the left edge and the other over towards the right, which is where they are
+ * in the photographs. */
+const MEM_RUNS = [[33, 38], [3, 8]]
+const MEM_ROW_TOP = "Q", MEM_ROW_BOT = "T"
+
+/* Looking at the front of the cage, position 40 is on the left. Walk round to
+ * the wire-wrap side and you are looking at the same rack from behind, so the
+ * columns run the other way: 1 on the left, 40 on the right. */
+const colX     = slot => MARGIN + (40 - slot) * (COL_W + COL_GAP)
+const colXBack = slot => MARGIN + (slot - 1) * (COL_W + COL_GAP)
+const rackW = 40 * (COL_W + COL_GAP) - COL_GAP
+
+/* y of a backplane row, and of the tier it belongs to */
+function rowY(bp, row) {
+    const i = bp.rows.indexOf(row)
+    const tier = Math.floor(i / 2)
+    return MARGIN + tier * (2 * ROW_H + ROW_GAP + TIER_GAP)
+                  + (i % 2) * (ROW_H + ROW_GAP)
+}
+const tierH = 2 * ROW_H + ROW_GAP
+function rackH(bp) {
+    const tiers = bp.tiers.length
+    return tiers * tierH + (tiers - 1) * TIER_GAP
+}
+
+/* ---- the data ----------------------------------------------------------- */
+let backplane = null, backplaneWanted = null
+function loadBackplane() {
+    if (backplaneWanted) return backplaneWanted
+    backplaneWanted = new Promise((resolve, reject) => {
+        const s = document.createElement("script")
+        s.src = "backplane.js"
+        s.onload = () => {
+            backplane = window.GE_BACKPLANE
+            backplane ? resolve(backplane) : reject(new Error("no data"))
+        }
+        s.onerror = () => reject(new Error("backplane.js did not load"))
+        document.head.appendChild(s)
+    })
+    return backplaneWanted
+}
+
+const cardAt = (bp, row, slot) => (bp.cards[row] || {})[slot] || null
+const pinsAt = (bp, row, slot) => (bp.pins[row] || {})[slot] || null
+
+/* ---- the front ---------------------------------------------------------- *
+ * Boards, blue, seen edge-on the way they sit in the cage. A board normally
+ * spans both rows of its tier -- one part number appears against A and again
+ * against B -- so it is drawn full height. Where the two rows carry different
+ * cards (row I and row L do this) each is drawn at half height, because that
+ * is what the layout says is in there. */
+let frontStage = null
+function buildFront(bp) {
+    const host = document.getElementById("front_stage")
+    if (frontStage) return frontStage
+    const world = {
+        x: 0, y: 0, w: rackW + 2 * MARGIN,
+        h: rackH(bp) + 2 * MARGIN,
+    }
+    frontStage = makeStage(host, world, {
+        readout: document.getElementById("front_zoom"),
+        min: 0.08, max: 26,
+    })
+    const scene = frontStage.scene
+    let full = 0, half = 0, empty = 0
+
+    const defs = svgEl("defs", {})
+    const grad = svgEl("linearGradient",
+        { id: "boardface", x1: "0", y1: "0", x2: "1", y2: "0" })
+    grad.appendChild(svgEl("stop", { offset: "0",    "stop-color": "#5d95bb" }))
+    grad.appendChild(svgEl("stop", { offset: "0.45", "stop-color": "#4f87ae" }))
+    grad.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#3f7095" }))
+    defs.appendChild(grad)
+    scene.appendChild(defs)
+
+    bp.tiers.forEach(([top, bot], ti) => {
+        const g = svgEl("g", {})
+        const y = MARGIN + ti * (tierH + TIER_GAP)
+
+        /* the cage rail the boards seat into */
+        g.appendChild(svgEl("rect", {
+            x: MARGIN - 12, y: y - 8, width: rackW + 24, height: tierH + 16,
+            rx: 3, fill: "#151719", stroke: "#2c3033", "stroke-width": 1,
+        }))
+
+        for (let slot = 1; slot <= 40; slot++) {
+            const x = colX(slot)
+            const a = cardAt(bp, top, slot), b = cardAt(bp, bot, slot)
+            const spans = a && b && a.code && a.code === b.code
+            const seats = spans ? [[a, y, tierH, "#4f87ae"]]
+                                : [[a, y, ROW_H, "#6ea3c4"],
+                                   [b, y + ROW_H + ROW_GAP, ROW_H, "#6ea3c4"]]
+            for (const [card, sy, sh, tint] of seats) {
+                if (!card || (!card.code && card.type === "//////")) {
+                    empty++
+                    g.appendChild(svgEl("rect", {
+                        x, y: sy, width: COL_W, height: sh, rx: 1,
+                        fill: "#23282c", stroke: "#1a1e21",
+                    }))
+                    continue
+                }
+                spans ? full++ : half++
+                const board = svgEl("g", {})
+                board.appendChild(svgEl("rect", {
+                    x, y: sy, width: COL_W, height: sh, rx: 1.5,
+                    fill: spans ? "url(#boardface)" : tint,
+                    stroke: "#2f5878", "stroke-width": 0.6,
+                }))
+                /* the extractor lip along the top, and the seam of the board
+                 * inside its handle -- what you actually see looking at a row */
+                board.appendChild(svgEl("rect", {
+                    x: x + 1.5, y: sy + 2, width: COL_W - 3, height: 3,
+                    rx: 1, fill: "#6fa6c9", opacity: "0.75",
+                }))
+                board.appendChild(svgEl("rect", {
+                    x: x + 2, y: sy + sh - 7, width: COL_W - 4, height: 4,
+                    rx: 0.6, fill: "#2c6a4a", opacity: "0.55",
+                }))
+                /* the part number is printed in red down the handle, and the
+                 * slot number is on the tape above it. Both only legible up
+                 * close, which is why they are hidden until the zoom earns it */
+                const code = svgEl("text", {
+                    class: "b-code",
+                    x: x + COL_W / 2, y: sy + sh * 0.55,
+                    "text-anchor": "middle", fill: "#b8452f",
+                    "font-size": 4.4, "font-family": "monospace",
+                    transform: `rotate(-90 ${x + COL_W / 2} ${sy + sh * 0.55})`,
+                })
+                code.textContent = card.code || card.type
+                board.appendChild(code)
+                const tag = svgEl("text", {
+                    class: "b-slot",
+                    x: x + COL_W / 2, y: sy + 12,
+                    "text-anchor": "middle", fill: "#20303a",
+                    "font-size": 5.2, "font-family": "monospace",
+                })
+                tag.textContent = slot
+                board.appendChild(tag)
+                const title = svgEl("title", {})
+                title.textContent =
+                    `${spans ? top + "+" + bot : (card === a ? top : bot)}${slot}`
+                    + ` — ${card.type || "?"}${card.code ? " (" + card.code + ")" : ""}`
+                board.appendChild(title)
+                g.appendChild(board)
+            }
+        }
+
+        /* row letters on the rail, as they are inked on the real one */
+        for (const [r, ry] of [[top, y + ROW_H / 2], [bot, y + ROW_H * 1.5 + ROW_GAP]]) {
+            const t = svgEl("text", {
+                x: MARGIN + rackW + 16, y: ry + 3, fill: "#5c6a74",
+                "font-size": 11, "font-family": "monospace",
+            })
+            t.textContent = r
+            g.appendChild(t)
+        }
+        scene.appendChild(g)
+    })
+
+    /* ---- the core store ------------------------------------------------ *
+     * Each stack is a dark red core mat behind a perspex cover between light
+     * metal brackets, standing in the cage across rows Q to T. It occupies six
+     * card positions' worth of width but is not a card, so it is drawn over
+     * the run rather than as boards. This machine straps 32K (PONT 2N/2P,
+     * cp06 ch.001), which is what the pair comes to. */
+    const memTop = rowY(bp, MEM_ROW_TOP)
+    const bankH = rowY(bp, MEM_ROW_BOT) + ROW_H - memTop
+    const mem = svgEl("g", {})
+    const banks = MEM_RUNS.map(([lo, hi], i) => ({
+        /* 40 is at the left, so the higher slot number is the left edge */
+        x: colX(hi),
+        w: (hi - lo + 1) * (COL_W + COL_GAP) - COL_GAP,
+        name: `core store ${i + 1}`,
+        run: `${lo}–${hi}`,
+    }))
+    const mdefs = svgEl("defs", {})
+    const core = svgEl("linearGradient",
+        { id: "corestack", x1: "0", y1: "0", x2: "1", y2: "0.25" })
+    core.appendChild(svgEl("stop", { offset: "0",    "stop-color": "#4d1622" }))
+    core.appendChild(svgEl("stop", { offset: "0.35", "stop-color": "#7d2b3a" }))
+    core.appendChild(svgEl("stop", { offset: "0.72", "stop-color": "#5a1c28" }))
+    core.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#3d1119" }))
+    mdefs.appendChild(core)
+    const glass = svgEl("linearGradient",
+        { id: "perspex", x1: "0", y1: "0", x2: "1", y2: "0" })
+    glass.appendChild(svgEl("stop", { offset: "0",    "stop-color": "#ffffff", "stop-opacity": "0.16" }))
+    glass.appendChild(svgEl("stop", { offset: "0.18", "stop-color": "#ffffff", "stop-opacity": "0.05" }))
+    glass.appendChild(svgEl("stop", { offset: "0.55", "stop-color": "#ffffff", "stop-opacity": "0.13" }))
+    glass.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#ffffff", "stop-opacity": "0.04" }))
+    mdefs.appendChild(glass)
+    mem.appendChild(mdefs)
+
+    for (const bank of banks) {
+        const g = svgEl("g", {})
+        const y = memTop, bw = bank.w
+        /* the wound core mat, seen through the cover */
+        g.appendChild(svgEl("rect", {
+            x: bank.x + 3, y: y + 14, width: bw - 6, height: bankH - 28,
+            rx: 2, fill: "url(#corestack)",
+        }))
+        /* the mat is potted in loops that catch the light unevenly */
+        for (let i = 0; i < 7; i++) {
+            g.appendChild(svgEl("ellipse", {
+                cx: bank.x + bw / 2 + (i % 2 ? 4 : -4),
+                cy: y + 26 + i * (bankH - 52) / 6,
+                rx: bw * 0.28, ry: 5,
+                fill: "none", stroke: "#93404f", "stroke-width": 0.8,
+                opacity: 0.35,
+            }))
+        }
+        /* the clear cover over it */
+        g.appendChild(svgEl("rect", {
+            x: bank.x, y: y + 8, width: bw, height: bankH - 16, rx: 2.5,
+            fill: "url(#perspex)", stroke: "#b9c0c4",
+            "stroke-width": 1, opacity: 0.9,
+        }))
+        /* the light metal brackets that clamp it top and bottom */
+        for (const by of [y, y + bankH - 12]) {
+            g.appendChild(svgEl("rect", {
+                x: bank.x - 3, y: by, width: bw + 6, height: 12, rx: 1.5,
+                fill: "#c3c7c4", stroke: "#8d918e", "stroke-width": 0.6,
+            }))
+        }
+        /* the brass fitting on the face, near each end */
+        for (const cy of [y + 26, y + bankH - 26]) {
+            g.appendChild(svgEl("circle", {
+                cx: bank.x + bw / 2, cy, r: 4.2,
+                fill: "#b08a2c", stroke: "#6d5518", "stroke-width": 0.7,
+            }))
+        }
+        const t = svgEl("text", {
+            class: "b-code",
+            x: bank.x + bw / 2, y: y + bankH / 2, "text-anchor": "middle",
+            fill: "#d3b9be", "font-size": 7, "font-family": "monospace",
+            transform: `rotate(-90 ${bank.x + bw / 2} ${y + bankH / 2})`,
+        })
+        t.textContent = bank.name
+        g.appendChild(t)
+        const title = svgEl("title", {})
+        title.textContent = `${bank.name} — core memory, rows `
+            + `${MEM_ROW_TOP}–${MEM_ROW_BOT} at positions ${bank.run};`
+            + ` the pair straps this machine to 32K`
+        g.appendChild(title)
+        mem.appendChild(g)
+    }
+    scene.appendChild(mem)
+
+    /* the slot ruler along the top */
+    const ruler = svgEl("g", {})
+    for (let slot = 40; slot >= 1; slot -= 2) {
+        const t = svgEl("text", {
+            x: colX(slot) + COL_W / 2, y: MARGIN - 12,
+            "text-anchor": "middle", fill: "#4f5b64",
+            "font-size": 8, "font-family": "monospace",
+        })
+        t.textContent = slot
+        ruler.appendChild(t)
+    }
+    scene.appendChild(ruler)
+
+    document.getElementById("front_count").textContent =
+        `${full + half} boards fitted — ${full} spanning two rows,`
+        + ` ${half} in a single row — of 720 row positions`
+
+    /* Labels are noise at rack scale and the point of zooming at board scale. */
+    const codes = scene.querySelectorAll(".b-code")
+    const slots = scene.querySelectorAll(".b-slot")
+    frontStage.onview = st => {
+        const showCode = st.scale > 2.6 ? "" : "none"
+        const showSlot = st.scale > 1.5 ? "" : "none"
+        codes.forEach(e => e.style.display = showCode)
+        slots.forEach(e => e.style.display = showSlot)
+    }
+    wireZoomButtons(document.querySelector("#view_front .rack-tools"), frontStage)
+    frontStage.fit()
+    return frontStage
+}
+
+/* ---- the back ----------------------------------------------------------- *
+ * Seventeen wire-wrap pins per position: the odd nine down the left, the even
+ * eight down the right, offset half a pitch so they interleave the way the
+ * connector body is moulded. Pin 01 is top-left, pin 17 bottom-left.
+ *
+ * 18 rows x 40 positions x 17 pins is 12,240 contacts, which is more than a
+ * browser wants as live SVG. So the pins for a position are only built when
+ * that position is both on screen and big enough to aim at; everything else
+ * is a block. Panning rebuilds only what came into view. */
+const PIN_PITCH = 4.8, PIN_TOP = 5.5, PIN_R = 1.3
+const CONN_W = COL_W, PIN_X_ODD = 4.3, PIN_X_EVEN = 8.9
+
+/* Odd pins down the left at full pitch, even pins down the right offset half a
+ * pitch so the two columns interleave -- nine on the left, eight on the right,
+ * pin 01 top-left and pin 17 bottom-left. */
+function pinPos(pin) {
+    if (pin % 2) return { x: PIN_X_ODD, y: PIN_TOP + ((pin - 1) / 2) * PIN_PITCH }
+    return { x: PIN_X_EVEN, y: PIN_TOP + (pin / 2 - 0.5) * PIN_PITCH }
+}
+
+let backStage = null, backLive = new Map(), selectedPin = null
+function buildBack(bp) {
+    const host = document.getElementById("back_stage")
+    if (backStage) return backStage
+    const world = { x: 0, y: 0, w: rackW + 2 * MARGIN, h: rackH(bp) + 2 * MARGIN }
+    backStage = makeStage(host, world, {
+        readout: document.getElementById("back_zoom"),
+        min: 0.08, max: 60,
+    })
+    const scene = backStage.scene
+    const blocks = svgEl("g", {})
+    const detail = svgEl("g", {})
+    scene.appendChild(blocks)
+    scene.appendChild(detail)
+
+    /* the coarse layer: one block per position, always present */
+    bp.rows.forEach(row => {
+        const y = rowY(bp, row)
+        for (let slot = 1; slot <= 40; slot++) {
+            const names = pinsAt(bp, row, slot)
+            const n = names ? names.filter(Boolean).length : 0
+            blocks.appendChild(svgEl("rect", {
+                x: colXBack(slot), y, width: CONN_W, height: ROW_H, rx: 1.5,
+                fill: n ? "#1d1f22" : "#141516",
+                stroke: n ? "#33383d" : "#1c1e20", "stroke-width": 0.5,
+            }))
+            if (n) {
+                /* a hint of the two pin columns, so the rack reads as a
+                 * backplane even before the contacts are drawn */
+                blocks.appendChild(svgEl("rect", {
+                    x: colXBack(slot) + PIN_X_ODD - 1.1, y: y + 5,
+                    width: 2.2, height: ROW_H - 10, rx: 1,
+                    fill: "#6b5a2a", opacity: "0.5",
+                }))
+                blocks.appendChild(svgEl("rect", {
+                    x: colXBack(slot) + PIN_X_EVEN - 1.1, y: y + 7,
+                    width: 2.2, height: ROW_H - 14, rx: 1,
+                    fill: "#6b5a2a", opacity: "0.5",
+                }))
+            }
+        }
+        const t = svgEl("text", {
+            x: MARGIN + rackW + 16, y: y + ROW_H / 2 + 3, fill: "#5c6a74",
+            "font-size": 11, "font-family": "monospace",
+        })
+        t.textContent = row
+        blocks.appendChild(t)
+    })
+    for (let slot = 40; slot >= 1; slot -= 2) {
+        const t = svgEl("text", {
+            x: colXBack(slot) + COL_W / 2, y: MARGIN - 12,
+            "text-anchor": "middle", fill: "#4f5b64",
+            "font-size": 8, "font-family": "monospace",
+        })
+        t.textContent = slot
+        blocks.appendChild(t)
+    }
+
+    function connectorGroup(row, slot) {
+        const names = pinsAt(bp, row, slot)
+        const g = svgEl("g", { transform: `translate(${colXBack(slot)} ${rowY(bp, row)})` })
+        g.appendChild(svgEl("rect", {
+            x: 0.6, y: 2.4, width: CONN_W - 1.2, height: 45, rx: 1.5,
+            fill: "#26292d", stroke: "#3a4045", "stroke-width": 0.4,
+        }))
+        for (let pin = 1; pin <= 17; pin++) {
+            const p = pinPos(pin)
+            const net = names ? names[pin - 1] : ""
+            const key = `${row}${slot}-${String(pin).padStart(2, "0")}`
+            const c = svgEl("circle", {
+                cx: p.x, cy: p.y, r: PIN_R,
+                fill: net ? "#d8b45a" : "#4a4133",
+                stroke: net ? "#8a6d24" : "#332e26", "stroke-width": 0.25,
+                class: "pin", "data-key": key,
+            })
+            c.style.cursor = "pointer"
+            if (selectedPin === key) {
+                c.setAttribute("stroke", "#fff")
+                c.setAttribute("stroke-width", "0.6")
+            }
+            const title = svgEl("title", {})
+            title.textContent = key + (net ? " · " + net : " · (not read)")
+            c.appendChild(title)
+            g.appendChild(c)
+        }
+        const lbl = svgEl("text", {
+            x: CONN_W / 2, y: ROW_H - 2, "text-anchor": "middle",
+            fill: "#4a545d", "font-size": 3.4, "font-family": "monospace",
+        })
+        lbl.textContent = row + slot
+        g.appendChild(lbl)
+        return g
+    }
+
+    /* Build the contacts only where they can be seen and hit. */
+    function refresh(st) {
+        const wantPins = st.scale > 3.2
+        if (!wantPins) {
+            if (backLive.size) { detail.textContent = ""; backLive.clear() }
+            blocks.style.display = ""
+            return
+        }
+        const v = st.visible()
+        const pad = COL_W
+        const need = new Set()
+        bp.rows.forEach(row => {
+            const y = rowY(bp, row)
+            if (y > v.y1 + pad || y + ROW_H < v.y0 - pad) return
+            for (let slot = 1; slot <= 40; slot++) {
+                const x = colXBack(slot)
+                if (x > v.x1 + pad || x + COL_W < v.x0 - pad) continue
+                if (!pinsAt(bp, row, slot)) continue
+                need.add(row + ":" + slot)
+            }
+        })
+        for (const [key, node] of backLive) {
+            if (!need.has(key)) { node.remove(); backLive.delete(key) }
+        }
+        for (const key of need) {
+            if (backLive.has(key)) continue
+            const [row, slot] = key.split(":")
+            const g = connectorGroup(row, +slot)
+            detail.appendChild(g)
+            backLive.set(key, g)
+        }
+    }
+    backStage.onview = refresh
+
+    host.addEventListener("click", ev => {
+        if (backStage.suppressClick) { backStage.suppressClick = false; return }
+        const t = ev.target.closest?.("circle.pin")
+        if (!t) return
+        selectPin(bp, t.dataset.key)
+        detail.querySelectorAll("circle.pin").forEach(c => {
+            const on = c.dataset.key === selectedPin
+            c.setAttribute("stroke", on ? "#fff" : (c.getAttribute("fill") === "#d8b45a" ? "#8a6d24" : "#332e26"))
+            c.setAttribute("stroke-width", on ? "0.6" : "0.25")
+        })
+    })
+
+    wireZoomButtons(document.querySelector("#view_back .rack-tools"), backStage)
+    backStage.fit()
+    return backStage
+}
+
+/* ---- what a pin carries ------------------------------------------------- */
+function selectPin(bp, key) {
+    selectedPin = key
+    const m = /^([A-Z])(\d+)-(\d+)$/.exec(key)
+    const out = document.getElementById("pin_info")
+    if (!m) { out.textContent = ""; return }
+    const [, row, slot, pin] = m
+    const names = pinsAt(bp, row, +slot) || []
+    const net = names[+pin - 1] || ""
+    const card = cardAt(bp, row, +slot)
+    const gloss = net ? bp.sigs[net] : null
+    const docs = (bp.docPins || {})[`${row}${+slot}-${pin}`] || []
+
+    const bits = []
+    bits.push(`<span class=pi-pos>${row}${slot}·${pin}</span>`)
+    if (net) {
+        bits.push(`&nbsp; <span class=pi-net>${net}</span>`)
+        if (gloss && gloss.as && gloss.as !== net)
+            bits.push(`<span class=pi-dim> (the schematics spell it ${gloss.as};`
+                      + ` the layout scan reads ${net})</span>`)
+    } else {
+        bits.push(` <span class=pi-dim>— no net read off the layout here</span>`)
+    }
+    let line2 = []
+    if (gloss) {
+        if (gloss.ch) line2.push(`chapter <b>${gloss.ch}</b>`)
+        if (gloss.m) line2.push(gloss.m)
+        if (gloss.eq)
+            line2.push(`<span class=pi-net>${gloss.as || net} = ${gloss.eq}</span>`)
+    } else if (net) {
+        line2.push(`<span class=pi-dim>not in the signal index —`
+                   + ` docs/signals/ covers the reader and channel work, not the whole machine</span>`)
+    }
+    /* Only a genuine disagreement is worth flagging: the docs naming NOG6A
+     * where the layout scan reads N0G6A is the same net, and the alias line
+     * above has already said so. */
+    const known = new Set([net, gloss && gloss.as].filter(Boolean))
+    const extra = docs.filter(d => !known.has(d))
+    if (extra.length)
+        line2.push(`<span class=pi-warn>the signal docs read `
+                   + `${extra.join(", ")} here</span>`)
+
+    const where = card && (card.code || card.type)
+        ? `<span class=pi-dim>position carries ${card.type || "?"}`
+          + `${card.code ? " · " + card.code : ""}</span>`
+        : `<span class=pi-dim>position empty in the layout</span>`
+
+    out.innerHTML = bits.join("") + "<br>" + (line2.join(" &nbsp;·&nbsp; ") || "")
+                    + (line2.length ? "<br>" : "") + where
+}
+
+/* Centre the back view on one card position, optionally with a pin picked.
+ * This is what makes a backplane reference in the docs -- P32·01 -- something
+ * you can follow to the contact itself. */
+function focusPosition(bp, row, slot, pin) {
+    if (!backStage || bp.rows.indexOf(row) < 0 || slot < 1 || slot > 40) return
+    const b = document.getElementById("back_stage").getBoundingClientRect()
+    backStage.autofit = false
+    backStage.scale = Math.min(backStage.max, pin ? 14 : 8)
+    backStage.tx = b.width / 2 - (colXBack(slot) + COL_W / 2) * backStage.scale
+    backStage.ty = b.height / 2 - (rowY(bp, row) + ROW_H / 2) * backStage.scale
+    backStage.scene.setAttribute("transform",
+        `translate(${backStage.tx} ${backStage.ty}) scale(${backStage.scale})`)
+    if (pin) selectPin(bp, `${row}${slot}-${String(pin).padStart(2, "0")}`)
+    backStage.onview(backStage)
+    document.getElementById("back_zoom").textContent =
+        Math.round(backStage.scale * 100) + "%"
+}
+
+/* ---- switching ---------------------------------------------------------- */
+const viewButtons = document.querySelectorAll("#viewbar .viewbtn")
+const viewPanes = {
+    console: document.getElementById("view_console"),
+    front:   document.getElementById("view_front"),
+    back:    document.getElementById("view_back"),
+}
+
+function showView(which, target) {
+    for (const k in viewPanes) viewPanes[k].hidden = (k !== which)
+    viewButtons.forEach(b => {
+        if (b.dataset.view === which) b.setAttribute("aria-current", "page")
+        else b.removeAttribute("aria-current")
+    })
+    if (which === "console") return
+    loadBackplane().then(bp => {
+        const st = which === "front" ? buildFront(bp) : buildBack(bp)
+        /* the stage had no size while hidden, so its fit was meaningless */
+        if (st.autofit) st.fit()
+        const at = target && /^([A-Z])(\d{1,2})(?:[-·.](\d{1,2}))?$/.exec(target)
+        if (at && which === "back")
+            focusPosition(bp, at[1], +at[2], at[3] ? +at[3] : 0)
+    }).catch(err => {
+        const host = viewPanes[which].querySelector(".rack-stage")
+        host.innerHTML = `<p style="padding:2rem;color:#c98b5a">`
+            + `The card layout could not be loaded (${err.message}).<br>`
+            + `backplane.js is generated by gen-backplane.py from the Atlas CSVs`
+            + ` and must sit next to console.html.</p>`
+    })
+}
+
+viewButtons.forEach(b =>
+    b.addEventListener("click", () => {
+        location.hash = b.dataset.view === "console" ? "" : b.dataset.view
+        showView(b.dataset.view)
+    }))
+
+/* The view is in the URL, so a look at the backplane can be linked to --
+ * "#back/P32-01" opens the back view on that contact. */
+const routeFromHash = () => {
+    const [name, target] = location.hash.replace("#", "").split("/")
+    return { view: viewPanes[name] ? name : "console", target }
+}
+window.addEventListener("hashchange", () => {
+    const r = routeFromHash()
+    showView(r.view, r.target)
+})
+{
+    const r = routeFromHash()
+    if (r.view !== "console") showView(r.view, r.target)
+}
 
 </script>
 

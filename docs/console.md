@@ -344,6 +344,59 @@ useful: the rotary register dials can force values into memory (e.g. the
 diagnostic test-select byte at `0x0E00` — dial `V1 ← 0x0E00`, `V1 SCR ← 0x40`)
 and they survive into the run.
 
+### 5.2 The three views: console, front, back
+
+A rail down the left of the browser panel switches between three ways of
+looking at the same machine. Only the first is a control surface; the other two
+are the iron, drawn from the card-layout Atlas (drawing 14026 136, cabinet
+section 2A) and reachable at `#front` and `#back`.
+
+**CPU front** is the card cage as you see it with the boards in: nine tiers of
+forty positions, blue board faces, position 40 at the left and 1 at the right.
+A board normally spans both backplane rows of its tier — one part number
+appears against A and again against B — so it is drawn full height; where the
+two rows carry different cards (rows I and L do this) each is drawn at half
+height, because that is what the layout says is in there. 373 boards are
+fitted, 246 of them across two rows. Scroll to zoom, drag to pan; the part
+number and slot label appear once the zoom makes them legible. No controls —
+looking only.
+
+The proportions are measured off the photographs rather than guessed: the board
+handles repeat about every 13.7 px across a cage that steps about 110 px per
+tier, so a card position is roughly one to eight — thin and tall.
+
+The **two core stores** stand in the cage, not under it. They occupy rows Q to
+T, which is also the only place they can go: those four rows have exactly two
+column runs empty of cards across all of them, **33–38** and **3–8**, six
+positions each, and that is where the stacks are. With 40 at the left on the
+front view, that puts one near the left edge and the other over towards the
+right, flanking the boards between them — the arrangement in the photographs.
+Each is a dark red core mat behind a perspex cover between light metal brackets,
+spanning both the Q+R and S+T tiers. They are not card positions and are not in
+the Atlas, so they are drawn over the run rather than as boards. The pair is
+what straps this machine to 32K (PONT 2N/2P, cp06 ch.001).
+
+**CPU back** is the wire-wrap side, so the columns mirror: position 1 at the
+left, 40 at the right. Every position presents its seventeen pins, the nine odd
+ones down the left and the eight even ones down the right, offset half a pitch
+the way the connector body is moulded, pin 01 top-left and pin 17 bottom-left.
+Contacts are gold where the layout reads a net and dark where it does not.
+Click one and the read-out names it, gives the schematic chapter and — where a
+trace in `docs/signals/traces/` has it — the gate equation that drives it. A
+position or a contact can be linked to directly: `#back/P32` centres on that
+connector, `#back/P32-01` picks the pin.
+
+12,240 contacts is more than a browser wants as live SVG, so the pins for a
+position are built only when it is both on screen and big enough to aim at.
+Panning rebuilds just what came into view; everything else stays a block.
+
+The data is baked by `console/wasm/gen-backplane.py` into `backplane.js`, which
+is committed because the Atlas CSVs live outside this repo. The generator reads
+two independent sources and says so when they differ: the Atlas names the
+signal at a position, and the Backplane columns and traces in `docs/signals/`
+place signals at positions. They agree at 760 of the 766 pins both describe;
+where they do not, the read-out flags it rather than picking a winner.
+
 ---
 
 ## 6. Example procedures
