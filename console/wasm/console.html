@@ -2715,11 +2715,14 @@ function buildFront(bp) {
                         rx: ww * 0.34, fill: "#17181a",
                         stroke: "#050506", "stroke-width": 0.5,
                     }))
-                    for (let k = -2; k <= 2; k++)       /* the knurling */
+                    /* the knurling: four bands across the drum, two either
+                     * side of the digit, bright enough to read as machined */
+                    for (const k of [-1.55, -0.8, 0.8, 1.55])
                         board.appendChild(svgEl("line", {
-                            x1: wx - ww / 2 + 0.7, y1: wy + k * wh * 0.17,
-                            x2: wx + ww / 2 - 0.7, y2: wy + k * wh * 0.17,
-                            stroke: "#3a3d41", "stroke-width": 0.35,
+                            x1: wx - ww / 2 + 0.6, y1: wy + k * wh * 0.19,
+                            x2: wx + ww / 2 - 0.6, y2: wy + k * wh * 0.19,
+                            stroke: "#9aa1a8", "stroke-width": 0.55,
+                            "stroke-linecap": "round", opacity: 0.9,
                         }))
                     const dg = svgEl("text", {
                         class: "b-slot",
