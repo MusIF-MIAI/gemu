@@ -1219,6 +1219,7 @@ padding: 1px;
   flex-wrap: wrap;
   align-items: center;
 }
+.rack-legend span[hidden] { display: none; }   /* author display beats [hidden] */
 .rack-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .rack-legend i {
   width: 0.75rem; height: 0.75rem; border-radius: 1px; display: inline-block;
@@ -1877,6 +1878,9 @@ padding: 1px;
         <div class=rack-legend>
             <span><i style="background:#4f87ae"></i> board spanning both rows</span>
             <span><i style="background:#6ea3c4"></i> single-row board</span>
+            <span><i style="background:#38402f"></i> COCA connector</span>
+            <span><i style="background:#4a4638"></i> filter board</span>
+            <span id=lg_opt hidden><i style="background:#4d565d"></i> option socket, contents unknown</span>
             <span><i style="background:#23282c"></i> position empty</span>
             <span id=front_count class=pi-dim></span>
         </div>
@@ -2344,15 +2348,25 @@ function wireZoomButtons(head, st) {
  * seven and a half -- thin and tall, not the stubby keys a first pass drew. */
 const COL_W = 13, COL_GAP = 3.5
 const ROW_H = 52, ROW_GAP = 6, TIER_GAP = 22
-const MARGIN = 34
-/* The core store does not sit under the cages -- it stands in them. Rows Q to
- * T carry the memory, and the two stacks fill the only two column runs that
- * are empty of cards across all four of those rows: 33-38 and 3-8, six
- * positions each. With 40 at the left on the front, that puts one stack near
- * the left edge and the other over towards the right, which is where they are
- * in the photographs. */
-const MEM_RUNS = [[33, 38], [3, 8]]
-const MEM_ROW_TOP = "Q", MEM_ROW_BOT = "T"
+const MARGIN = 52          /* room for the side panels and the cable ends */
+/* The core store does not sit under the cages -- it stands in them, across
+ * rows Q to T. Its footprint comes from the restoration workbook, which fills
+ * those cells with a colour of its own: two runs of nine positions, one at
+ * each end of the memory rows. */
+const memRuns = bp => {
+    const slots = (bp.mem || []).slice().sort((a, b) => a - b)
+    const runs = []
+    for (const s of slots) {
+        const last = runs[runs.length - 1]
+        if (last && s === last[1] + 1) last[1] = s
+        else runs.push([s, s])
+    }
+    return runs
+}
+const memRows = bp => {
+    const t = (bp.memTiers || []).join("")
+    return t ? [t[0], t[t.length - 1]] : ["Q", "T"]
+}
 
 /* Looking at the front of the cage, position 40 is on the left. Walk round to
  * the wire-wrap side and you are looking at the same rack from behind, so the
@@ -2437,6 +2451,38 @@ function netMembers(bp, canon) {
     return netIndex.get(canon) || []
 }
 
+/* The OPTION sockets. The Atlas prints their card_type as ****** (OPZIONE) and
+ * gives them two or three pins, which are the strap signals the ch.001/ch.002
+ * tables read; what card is in each is a property of this machine, and comes
+ * from ge_init in ge.c. E03/F03 and E05/F05 hold PONT bridge cards here;
+ * column 4 is empty, which is itself a setting. */
+const isOption = c => !!(c && (c.type || "").indexOf("*") === 0)
+
+/* Two boards in the machine are not the usual blue: Q+R 30 and 31 have a dark
+ * olive-brown face. Observed, not derived -- the layout says nothing about
+ * colour, so it is recorded here against the position. */
+const ODD_FACE = {
+    "QR30": { face: "#5b5733", lip: "#7c7748", seam: "#3f4a2c" },
+    "QR31": { face: "#5b5733", lip: "#7c7748", seam: "#3f4a2c" },
+}
+const oddFace = (rows, slot) => ODD_FACE[`${rows}${slot}`] || null
+const strapAt = (bp, row, slot) =>
+    ((bp.manual && bp.manual.straps && bp.manual.straps.at) || {})[`${row}${slot}`]
+    || null
+/* An option socket the build populates: the memory rows are laid out for the
+ * largest machine and marked OPZIONE below it, so on a 32K build rows Q to T
+ * are filled. What is in them comes from the generator, not from the layout. */
+const fittedAt = (bp, row, slot) =>
+    ((bp.manual && bp.manual.fitted) || {})[`${row}${slot}`] || null
+
+/* Inside a core store's footprint. The CO1N2x cards the layout drawing puts at
+ * the positions bracketing each box -- 39/32 and 9/2 -- are the MEM 470's own
+ * connectors, inside its housing, so the box covers them and they are not
+ * drawn as cards standing in the cage. */
+const inMemory = (bp, row, slot) =>
+    (bp.memTiers || []).some(t => t.indexOf(row) >= 0)
+    && (bp.mem || []).indexOf(slot) >= 0
+
 /* The board seated at a position, as the front view draws it: the tier pair
  * when one part number appears against both rows, otherwise the single row
  * that carries a card, and nothing where the position is empty. */
@@ -2461,6 +2507,7 @@ let frontStage = null
 function buildFront(bp) {
     const host = document.getElementById("front_stage")
     if (frontStage) return frontStage
+    /* MARGIN either side has to hold the frame uprights and the cable ends */
     const world = {
         x: 0, y: 0, w: rackW + 2 * MARGIN,
         h: rackH(bp) + 2 * MARGIN,
@@ -2470,7 +2517,7 @@ function buildFront(bp) {
         min: 0.08, max: 26,
     })
     const scene = frontStage.scene
-    let full = 0, half = 0, empty = 0, cocas = 0
+    let full = 0, half = 0, empty = 0, cocas = 0, opts = 0, filts = 0
 
     const defs = svgEl("defs", {})
     const grad = svgEl("linearGradient",
@@ -2482,7 +2529,23 @@ function buildFront(bp) {
     scene.appendChild(defs)
 
     const isCoca = c => !!(c && (c.type || "").toUpperCase() === "COCA")
-    const cocaAt = []
+    /* The filter boards are naked too, and one per row. Their cable is a thin
+     * one that runs to the side and ends behind the rail, where the 5V / 20V /
+     * 12V rails are. */
+    /* The scans read I as 1, so the same board is typed FILT2B at one position
+     * and F1LT2B at the next -- G5 and H5 are the one card. Fold the digit
+     * back before testing, or half a pair renders as something else. */
+    /* The workbook writes both CONN and FILTRI over the filter positions, so
+     * either label means a filter board. The scans also read I as 1, so the
+     * same card is typed FILT2B at one position and F1LT2B at the next -- G5
+     * and H5 are the one card; fold the digit back before testing. */
+    const isFilt = c => {
+        if (!c) return false
+        const t = (c.type || "").toUpperCase().replace(/1/g, "I").replace(/0/g, "O")
+        return t.startsWith("FILT")
+            || ["FILTRI", "CONN"].indexOf(c.sheetLabel || "") >= 0
+    }
+    const cocaAt = [], filtAt = []
 
     bp.tiers.forEach(([top, bot], ti) => {
         const g = svgEl("g", {})
@@ -2502,13 +2565,48 @@ function buildFront(bp) {
              * do not catalogue it -- cp06's connector sheets draw it instead.
              * Both rows of the pair are always COCA together. */
             const coca = isCoca(a) || isCoca(b)
-            const spans = (a && b && a.code && a.code === b.code)
-                       || (isCoca(a) && isCoca(b))
+            const filt = isFilt(a) || isFilt(b)
+            /* Which part number is really in each row: the layout's, or the
+             * one the build puts in an option socket. 0610002J is a dual-slot
+             * board, so the fitted pairs at Q/R 28-31 have to span the tier
+             * exactly as their populated neighbours at 24-27 do. */
+            const codeIn = (card, row) => (card && card.code)
+                || ((isOption(card) && fittedAt(bp, row, slot)) || {}).code || ""
+            const codeA = codeIn(a, top), codeB = codeIn(b, bot)
+            /* A COCA is one card per row: the pair at a column is two
+             * connectors, not one board across both. */
+            const spans = !coca && !filt && a && b && codeA && codeA === codeB
             const seats = spans ? [[a, y, tierH, "#4f87ae"]]
                                 : [[a, y, ROW_H, "#6ea3c4"],
                                    [b, y + ROW_H + ROW_GAP, ROW_H, "#6ea3c4"]]
             for (const [card, sy, sh, tint] of seats) {
-                if (!card || (!card.code && card.type === "//////")) {
+                if (inMemory(bp, card === a ? top : bot, slot)) continue
+                /* An option socket with no card in it is empty on purpose --
+                 * on this machine column 4 is the interrupts-enabled and
+                 * load-on-2-and-3 variant, which is the absence of a card. */
+                const rowOf = card === a ? top : bot
+                const strap = isOption(card) ? strapAt(bp, rowOf, slot) : null
+                const fit = isOption(card) ? fittedAt(bp, rowOf, slot) : null
+                if (strap && !strap.pont) {
+                    empty++
+                    g.appendChild(svgEl("rect", {
+                        x, y: sy, width: COL_W, height: sh, rx: 1,
+                        fill: "#23282c", stroke: "#3a3320", "stroke-width": 0.6,
+                        "stroke-dasharray": "2 2",
+                    }))
+                    const et = svgEl("title", {})
+                    et.textContent = `${rowOf}${slot} — option socket, empty`
+                        + (strap && strap.note ? ` (${strap.note})` : "")
+                    g.lastChild.appendChild(et)
+                    continue
+                }
+                /* A free position, whatever the type cell says. The scans
+                 * put junk in that cell now and then -- I22 reads "HUH" and is
+                 * annotated FREE slot -- so the test is what is actually
+                 * there: no part number and not a wire on any pin. */
+                const bare = !card || (!card.code
+                    && !(pinsAt(bp, rowOf, slot) || []).some(Boolean))
+                if (bare) {
                     empty++
                     g.appendChild(svgEl("rect", {
                         x, y: sy, width: COL_W, height: sh, rx: 1,
@@ -2517,6 +2615,8 @@ function buildFront(bp) {
                     continue
                 }
                 if (coca) cocas++
+                else if (filt) filts++
+                else if (isOption(card) && !(strap && strap.pont) && !fit) opts++
                 else if (spans) full++
                 else half++
                 /* the rows this one board occupies, for the sheet */
@@ -2526,7 +2626,38 @@ function buildFront(bp) {
                     "data-slot": slot,
                 })
                 board.style.cursor = "pointer"
-                if (coca) {
+                if (isOption(card) && !(strap && strap.pont) && !fit) {
+                    /* An option socket gemu has no record of. The layout says
+                     * OPZIONE and nothing more, so it is drawn as neither a
+                     * board nor an empty slot -- twenty of these sit in the
+                     * memory rows Q to T, and asserting either way would be
+                     * inventing the machine's configuration. */
+                    board.appendChild(svgEl("rect", {
+                        x, y: sy, width: COL_W, height: sh, rx: 1.2,
+                        fill: "#4d565d", stroke: "#39424a", "stroke-width": 0.6,
+                    }))
+                    board.appendChild(svgEl("rect", {
+                        x: x + 1.5, y: sy + 2, width: COL_W - 3, height: 3,
+                        rx: 1, fill: "#67727a", opacity: "0.7",
+                    }))
+                } else if (filt) {
+                    /* bare board, no blue handle, held by a screw top and
+                     * bottom, with a thin cable off the top */
+                    board.appendChild(svgEl("rect", {
+                        x: x + 1, y: sy, width: COL_W - 2, height: sh, rx: 0.8,
+                        fill: "#4a4638", stroke: "#2b2921", "stroke-width": 0.5,
+                    }))
+                    board.appendChild(svgEl("rect", {
+                        x: x + 1, y: sy + sh - 6, width: COL_W - 2, height: 5,
+                        rx: 0.5, fill: "#b8952f", opacity: "0.55",
+                    }))
+                    for (const cy of [sy + 5, sy + sh - 10])
+                        board.appendChild(svgEl("circle", {
+                            cx: x + COL_W / 2, cy, r: 1.8,
+                            fill: "#b9bfba", stroke: "#7c817d", "stroke-width": 0.4,
+                        }))
+                    filtAt.push({ x: x + COL_W / 2, y: sy + sh / 2, tier: ti })
+                } else if (coca) {
                     /* Naked: no blue handle at all. The board face is bare and
                      * the conductors leave the top as a thick cable that bends
                      * away towards the side of the panel. */
@@ -2544,23 +2675,44 @@ function buildFront(bp) {
                             width: 1.4, height: sh - 12,
                             fill: "#4c563f", opacity: 0.8,
                         }))
-                    cocaAt.push({ x: x + COL_W / 2, y: sy, slot, tier: ti })
+                    /* the loom leaves the middle of the board face, not
+                     * the top: it is the board's own conductors carrying on */
+                    cocaAt.push({ x: x + COL_W / 2, y: sy + sh / 2, slot, tier: ti })
                 } else {
+                const odd = oddFace(spans ? top + bot : rowOf, slot)
                 board.appendChild(svgEl("rect", {
                     x, y: sy, width: COL_W, height: sh, rx: 1.5,
-                    fill: spans ? "url(#boardface)" : tint,
-                    stroke: "#2f5878", "stroke-width": 0.6,
+                    fill: odd ? odd.face : (spans ? "url(#boardface)" : tint),
+                    stroke: odd ? "#3c3a20" : "#2f5878", "stroke-width": 0.6,
                 }))
                 /* the extractor lip along the top, and the seam of the board
                  * inside its handle -- what you actually see looking at a row */
                 board.appendChild(svgEl("rect", {
                     x: x + 1.5, y: sy + 2, width: COL_W - 3, height: 3,
-                    rx: 1, fill: "#6fa6c9", opacity: "0.75",
+                    rx: 1, fill: odd ? odd.lip : "#6fa6c9", opacity: "0.75",
                 }))
+                /* The green label at the foot of the card. An expansion --
+                 * anything sitting in an OPTION socket, PONT straps included --
+                 * carries EXP on it, which is how you tell at the cage which
+                 * boards are there because of the build rather than always. */
+                const expansion = isOption(card)
                 board.appendChild(svgEl("rect", {
                     x: x + 2, y: sy + sh - 7, width: COL_W - 4, height: 4,
-                    rx: 0.6, fill: "#2c6a4a", opacity: "0.55",
+                    rx: 0.6, fill: expansion ? "#3f9c68"
+                        : (odd ? odd.seam : "#2c6a4a"),
+                    opacity: expansion ? "0.95" : "0.55",
                 }))
+                if (expansion) {
+                    const ex = svgEl("text", {
+                        class: "b-slot",
+                        x: x + COL_W / 2, y: sy + sh - 3.85,
+                        "text-anchor": "middle", fill: "#0d2b1c",
+                        "font-size": 2.9, "font-family": "monospace",
+                        "letter-spacing": "0.15",
+                    })
+                    ex.textContent = "EXP"
+                    board.appendChild(ex)
+                }
                 }
                 /* the part number is printed in red down the handle, and the
                  * slot number is on the tape above it. Both only legible up
@@ -2572,7 +2724,12 @@ function buildFront(bp) {
                     "font-size": 4.4, "font-family": "monospace",
                     transform: `rotate(-90 ${x + COL_W / 2} ${sy + sh * 0.55})`,
                 })
-                code.textContent = card.code || card.type
+                /* A PONT carries no part number, so the face gets the strap
+                 * name -- which is the one thing about it worth reading. */
+                code.textContent = (strap && strap.pont)
+                    || card.code || (fit && fit.code) || ""
+                if (fit && !fit.code) code.textContent = fit.type || ""
+
                 board.appendChild(code)
                 const tag = svgEl("text", {
                     class: "b-slot",
@@ -2584,54 +2741,160 @@ function buildFront(bp) {
                 board.appendChild(tag)
                 const title = svgEl("title", {})
                 title.textContent =
-                    `${spans ? top + "+" + bot : (card === a ? top : bot)}${slot}`
-                    + ` — ${card.type || "?"}${card.code ? " (" + card.code + ")" : ""}`
+                    `${spans ? top + "+" + bot : rowOf}${slot} — `
+                    + (strap && strap.pont
+                        ? `${strap.pont} strap card`
+                          + (strap.note ? ` — ${strap.note}` : "")
+                    : fit
+                        ? `option socket, ${fit.why}`
+                          + (fit.type ? ` — ${fit.type}`
+                             + (fit.code ? ` (${fit.code})` : "") : "")
+                        : `${card.type || "?"}`
+                          + `${card.code ? " (" + card.code + ")" : ""}`)
                     + " — double-click for the board"
                 board.appendChild(title)
                 g.appendChild(board)
             }
         }
 
-        /* row letters on the rail, as they are inked on the real one */
-        for (const [r, ry] of [[top, y + ROW_H / 2], [bot, y + ROW_H * 1.5 + ROW_GAP]]) {
-            const t = svgEl("text", {
-                x: MARGIN + rackW + 16, y: ry + 3, fill: "#5c6a74",
-                "font-size": 11, "font-family": "monospace",
-            })
-            t.textContent = r
-            g.appendChild(t)
-        }
         scene.appendChild(g)
     })
 
-    /* ---- the cable loom ------------------------------------------------- *
-     * Every COCA continues into a thick cable that leaves the top of the
-     * board, bends, and runs off to the nearer side of the panel, where the
-     * looms gather and drop down the outside of the frame. Drawn last so the
-     * cables lie over the cages, which is where they are. */
+    /* ---- the cable looms ------------------------------------------------ *
+     * A COCA continues into a thick cable and a filter board into a thin one,
+     * and both do the same thing with it: leave the top of the board, bend,
+     * and disappear behind the frame. They do not run across the face of the
+     * cage -- the COCA looms bend back behind the metal bar, and the filter
+     * cables end behind the rail where the 5V / 20V / 12V rails are.
+     * (Photographed with a loom hanging out in front, but that is a bench
+     * arrangement, not how it sits.) */
     const loom = svgEl("g", {})
-    cocaAt.sort((p, q) => p.x - q.x).forEach((c, i) => {
-        /* out to whichever side is nearer, in x -- not in slot number, which
-         * runs the other way on the front */
+    /* Both cables leave the middle of the board face and run to the side of
+     * the machine. The COCA loom passes behind the frame and carries on; the
+     * filter's thin lead ends there, on the power rails the frame hides. */
+    const FRAME_W = 39
+    const frameInner = left => left ? MARGIN - 9 : MARGIN + rackW + 9
+    const drawCable = (c, i, thick, colours, terminate) => {
         const left = c.x < MARGIN + rackW / 2
-        const edge = left ? MARGIN - 16 : MARGIN + rackW + 16
-        const off = (i % 5) * 2.4                  /* the bundle is not neat */
-        const rise = 16 + off
-        const path = `M ${c.x} ${c.y + 3}`
-            + ` C ${c.x} ${c.y - rise * 0.7}, ${c.x} ${c.y - rise},`
-            + ` ${c.x + (left ? -8 : 8)} ${c.y - rise}`
-            + ` L ${edge + (left ? 10 : -10)} ${c.y - rise}`
-            + ` Q ${edge} ${c.y - rise}, ${edge} ${c.y - rise + 14 + off}`
-            + ` L ${edge} ${c.y - rise + 46 + off * 2}`
-        for (const [w, col, op] of [[5.2, "#15171a", 1], [4, "#4a4d52", 1],
-                                    [1.2, "#6a6e75", 0.6]])
+        const dir = left ? -1 : 1
+        const wobble = (i % 4) * 1.4               /* no two lie the same */
+        const stop = frameInner(left) + dir * (terminate ? 1 : FRAME_W * 0.9)
+        const mid = (c.x + stop) / 2
+        const path = `M ${c.x} ${c.y}`
+            + ` C ${c.x + dir * 8} ${c.y + 1},`
+            + ` ${mid} ${c.y - 6 - wobble},`
+            + ` ${stop} ${c.y - 9 - wobble}`
+        for (const [w, col, op] of colours)
             loom.appendChild(svgEl("path", {
-                d: path, fill: "none", stroke: col, "stroke-width": w,
+                d: path, fill: "none", stroke: col, "stroke-width": w * thick,
                 "stroke-linecap": "round", "stroke-linejoin": "round",
                 opacity: op,
             }))
-    })
+        if (terminate)                             /* the lug on the rail */
+            loom.appendChild(svgEl("circle", {
+                cx: stop, cy: c.y - 9 - wobble, r: 1.9 * thick + 0.6,
+                fill: "#8d8878", stroke: "#5c584c", "stroke-width": 0.4,
+            }))
+    }
+    /* The COCA loom is a heavy multi-way cable -- much thicker than a filter's
+     * single lead. */
+    cocaAt.sort((p, q) => p.x - q.x).forEach((c, i) =>
+        drawCable(c, i, 2.1, [[5.2, "#101214", 1], [4, "#43464b", 1],
+                              [1.4, "#666a71", 0.55]], false))
+    filtAt.sort((p, q) => p.x - q.x).forEach((c, i) =>
+        drawCable(c, i, 0.5, [[5.2, "#141618", 1], [4, "#585349", 1],
+                              [1.2, "#7d786b", 0.6]], true))
     scene.appendChild(loom)
+
+    /* ---- the frame ------------------------------------------------------ *
+     * The uprights the cage is built into. Drawn last on this side so the
+     * looms pass behind them: a COCA cable runs under the bar and carries on
+     * out of sight, a filter lead stops at it. */
+    const frame = svgEl("g", {})
+    for (const left of [true, false]) {
+        const fx = frameInner(left) - (left ? FRAME_W : 0)
+        frame.appendChild(svgEl("rect", {
+            x: fx, y: MARGIN - 26, width: FRAME_W, height: rackH(bp) + 52,
+            rx: 1.5, fill: "#8e9490", stroke: "#5d625f", "stroke-width": 0.8,
+        }))
+        frame.appendChild(svgEl("rect", {
+            x: fx + 1.2, y: MARGIN - 26, width: 2.4, height: rackH(bp) + 52,
+            fill: "#b6bbb7", opacity: 0.55,
+        }))
+        /* the row of holes punched down it */
+        for (let y = MARGIN - 14; y < MARGIN + rackH(bp) + 20; y += 17)
+            frame.appendChild(svgEl("circle", {
+                cx: fx + FRAME_W / 2, cy: y, r: 1.5,
+                fill: "#4c514e", stroke: "#a8ada9", "stroke-width": 0.4,
+            }))
+    }
+    /* The cross-bars. They run under rows D, H, N and P -- and P is the odd
+     * one out, a tier higher than the rhythm would put it, because the core
+     * stores stand in the rows below it and the bar has to clear them. */
+    for (const row of ["D", "H", "N", "P"]) {
+        if (bp.rows.indexOf(row) < 0) continue
+        const by = rowY(bp, row) + ROW_H + 5
+        const x0 = frameInner(true) - FRAME_W, x1 = frameInner(false)
+        frame.appendChild(svgEl("rect", {
+            x: x0, y: by, width: x1 - x0 + FRAME_W, height: 8, rx: 1.5,
+            fill: "#8e9490", stroke: "#5d625f", "stroke-width": 0.8,
+        }))
+        frame.appendChild(svgEl("rect", {
+            x: x0, y: by + 1, width: x1 - x0 + FRAME_W, height: 2.2,
+            fill: "#b6bbb7", opacity: 0.5,
+        }))
+        for (let x = x0 + 14; x < x1; x += 34)
+            frame.appendChild(svgEl("circle", {
+                cx: x, cy: by + 4, r: 1.3,
+                fill: "#4c514e", stroke: "#a8ada9", "stroke-width": 0.35,
+            }))
+    }
+    /* The row letters are not printed anywhere: somebody went down the
+     * right-hand panel with a marker and wrote them on. Drawing them as text
+     * would put whatever face the browser happens to have on a hand-lettered
+     * panel, so they are stroked instead -- single-stroke letterforms in a
+     * 10x14 box, laid down with a round nib and a little wobble, so each one
+     * is written rather than set. */
+    const GLYPH = {
+        A: "M1,14 L5,1 L9,14 M2.6,9.6 L7.4,9.6",
+        B: "M2,1 L2,14 M2,1 C8,1 8.6,7.2 2,7.2 M2,7.2 C9,7.2 9,14 2,14",
+        C: "M8.6,3 C5,0 1.5,3 1.5,7.5 C1.5,12 5,15 8.6,12",
+        D: "M2,1 L2,14 M2,1 C9.6,1.6 9.6,13.2 2,14",
+        E: "M8.2,1 L2,1 L2,14 L8.2,14 M2,7.4 L6.6,7.4",
+        F: "M8.2,1 L2,1 L2,14 M2,7.4 L6.4,7.4",
+        G: "M8.6,3 C5,0 1.5,3 1.5,7.5 C1.5,12 5,15 8.6,12 L8.6,8.4 L5.6,8.4",
+        H: "M2,1 L2,14 M8.6,1 L8.6,14 M2,7.4 L8.6,7.4",
+        I: "M5,1 L5,14",
+        L: "M2,1 L2,14 L8.2,14",
+        M: "M1.4,14 L1.4,1 L5,8.2 L8.6,1 L8.6,14",
+        N: "M2,14 L2,1 L8.6,14 L8.6,1",
+        O: "M5,1 C1,1 1,14 5,14 C9,14 9,1 5,1",
+        P: "M2,14 L2,1 C9,1 9,8.2 2,8.2",
+        Q: "M5,1 C1,1 1,14 5,14 C9,14 9,1 5,1 M6.2,10.8 L9.2,15",
+        R: "M2,14 L2,1 C9,1 9,8.2 2,8.2 M5,8.2 L8.6,14",
+        S: "M8.6,3 C6,0.4 2,1.6 2,4.6 C2,7.6 8,7.6 8,10.6 C8,13.6 4,14.8 1.4,12",
+        T: "M1.4,1 L8.6,1 M5,1 L5,14",
+    }
+    const inkX = frameInner(false) + FRAME_W / 2
+    bp.rows.forEach((r, i) => {
+        const d = GLYPH[r]
+        if (!d) return
+        const size = 1.55 + ((i * 17) % 5) * 0.045    /* steady, not random */
+        const tilt = ((i * 37) % 15) - 7
+        const jog = ((i * 23) % 7) - 3
+        const ry = rowY(bp, r) + ROW_H / 2 - 7 * size
+        const at = `translate(${inkX + jog - 5 * size} ${ry})`
+             + ` rotate(${tilt} ${5 * size} ${7 * size}) scale(${size})`
+        /* the felt bleeds a little into the metal, then the stroke itself */
+        for (const [w, col, op] of [[3.4, "#33489b", 0.30],
+                                    [1.9, "#16256e", 1]])
+            frame.appendChild(svgEl("path", {
+                d, transform: at, fill: "none", stroke: col,
+                "stroke-width": w, "stroke-linecap": "round",
+                "stroke-linejoin": "round", opacity: String(op),
+            }))
+    })
+    scene.appendChild(frame)
 
     /* ---- the core store ------------------------------------------------ *
      * Each stack is a dark red core mat behind a perspex cover between light
@@ -2639,10 +2902,11 @@ function buildFront(bp) {
      * card positions' worth of width but is not a card, so it is drawn over
      * the run rather than as boards. This machine straps 32K (PONT 2N/2P,
      * cp06 ch.001), which is what the pair comes to. */
-    const memTop = rowY(bp, MEM_ROW_TOP)
-    const bankH = rowY(bp, MEM_ROW_BOT) + ROW_H - memTop
+    const [memRowTop, memRowBot] = memRows(bp)
+    const memTop = rowY(bp, memRowTop)
+    const bankH = rowY(bp, memRowBot) + ROW_H - memTop
     const mem = svgEl("g", {})
-    const banks = MEM_RUNS.map(([lo, hi], i) => ({
+    const banks = memRuns(bp).map(([lo, hi], i) => ({
         /* 40 is at the left, so the higher slot number is the left edge */
         x: colX(hi),
         w: (hi - lo + 1) * (COL_W + COL_GAP) - COL_GAP,
@@ -2651,74 +2915,137 @@ function buildFront(bp) {
     }))
     const mdefs = svgEl("defs", {})
     const core = svgEl("linearGradient",
-        { id: "corestack", x1: "0", y1: "0", x2: "1", y2: "0.25" })
-    core.appendChild(svgEl("stop", { offset: "0",    "stop-color": "#4d1622" }))
-    core.appendChild(svgEl("stop", { offset: "0.35", "stop-color": "#7d2b3a" }))
-    core.appendChild(svgEl("stop", { offset: "0.72", "stop-color": "#5a1c28" }))
-    core.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#3d1119" }))
+        { id: "corestack", x1: "0", y1: "0", x2: "1", y2: "0.15" })
+    core.appendChild(svgEl("stop", { offset: "0",    "stop-color": "#2e0d14" }))
+    core.appendChild(svgEl("stop", { offset: "0.25", "stop-color": "#6e2530" }))
+    core.appendChild(svgEl("stop", { offset: "0.58", "stop-color": "#7c2f37" }))
+    core.appendChild(svgEl("stop", { offset: "0.85", "stop-color": "#4b171f" }))
+    core.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#250a10" }))
     mdefs.appendChild(core)
-    const glass = svgEl("linearGradient",
-        { id: "perspex", x1: "0", y1: "0", x2: "1", y2: "0" })
-    glass.appendChild(svgEl("stop", { offset: "0",    "stop-color": "#ffffff", "stop-opacity": "0.16" }))
-    glass.appendChild(svgEl("stop", { offset: "0.18", "stop-color": "#ffffff", "stop-opacity": "0.05" }))
-    glass.appendChild(svgEl("stop", { offset: "0.55", "stop-color": "#ffffff", "stop-opacity": "0.13" }))
-    glass.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#ffffff", "stop-opacity": "0.04" }))
-    mdefs.appendChild(glass)
+    /* The cover is glass, and it throws the wires behind it out of focus. The
+     * two round ports, one near each end, are open -- through them the same
+     * wires read sharp, which is the one place the mat is legible. */
+    const blur = svgEl("filter", { id: "ramhaze",
+        x: "-8%", y: "-4%", width: "116%", height: "108%" })
+    blur.appendChild(svgEl("feGaussianBlur", { stdDeviation: "2.1" }))
+    mdefs.appendChild(blur)
     mem.appendChild(mdefs)
 
-    for (const bank of banks) {
+    /* the wire mass behind the glass, drawn twice: hazy under it, sharp in
+     * the ports */
+    function coreMat(bx, y, bw, h) {
         const g = svgEl("g", {})
-        const y = memTop, bw = bank.w
-        /* the wound core mat, seen through the cover */
         g.appendChild(svgEl("rect", {
-            x: bank.x + 3, y: y + 14, width: bw - 6, height: bankH - 28,
-            rx: 2, fill: "url(#corestack)",
+            x: bx, y, width: bw, height: h, fill: "url(#corestack)",
         }))
-        /* the mat is potted in loops that catch the light unevenly */
-        for (let i = 0; i < 7; i++) {
-            g.appendChild(svgEl("ellipse", {
-                cx: bank.x + bw / 2 + (i % 2 ? 4 : -4),
-                cy: y + 26 + i * (bankH - 52) / 6,
-                rx: bw * 0.28, ry: 5,
-                fill: "none", stroke: "#93404f", "stroke-width": 0.8,
-                opacity: 0.35,
+        for (let i = 0; i < 26; i++) {
+            const t = i / 25
+            g.appendChild(svgEl("path", {
+                d: `M ${bx + 2 + t * (bw - 4)} ${y + 2}`
+                 + ` c ${(i % 3 - 1) * 9} ${h * 0.3},`
+                 + ` ${(i % 4 - 2) * 7} ${h * 0.6}, ${(i % 5 - 2) * 4} ${h - 4}`,
+                fill: "none",
+                stroke: ["#a03d48", "#5d1d27", "#8a343f", "#43141c"][i % 4],
+                "stroke-width": 1.1 + (i % 3) * 0.6, opacity: 0.75,
+                "stroke-linecap": "round",
             }))
         }
-        /* the clear cover over it */
+        return g
+    }
+
+    banks.forEach((bank, bi) => {
+        const g = svgEl("g", {})
+        /* The box fills its bay: the connector cards the layout drawing puts
+         * at either end are the core store's own, inside the housing. */
+        const bw = bank.w, bx = bank.x
+        const capH = bankH * 0.07
+        const y = memTop + capH
+        const h = bankH - capH * 1.9
+        const ports = [
+            { cy: y + h * 0.145, r: bw * 0.115, ring: "#b8902f", lip: "#5f4712" },
+            { cy: y + h * 0.885, r: bw * 0.095, ring: "#7d3a33", lip: "#3d1a17" },
+        ]
+
+        const clipId = `ramports${bi}`
+        const clip = svgEl("clipPath", { id: clipId })
+        for (const p of ports)
+            clip.appendChild(svgEl("circle",
+                { cx: bx + bw * 0.5, cy: p.cy, r: p.r * 0.82 }))
+        mdefs.appendChild(clip)
+
+        /* 1. the mat, hazy, as the glass shows it */
+        const hazy = coreMat(bx + 2, y + 2, bw - 4, h - 4)
+        hazy.setAttribute("filter", "url(#ramhaze)")
+        g.appendChild(hazy)
+        /* 2. the glass itself, milky over the whole face */
         g.appendChild(svgEl("rect", {
-            x: bank.x, y: y + 8, width: bw, height: bankH - 16, rx: 2.5,
-            fill: "url(#perspex)", stroke: "#b9c0c4",
-            "stroke-width": 1, opacity: 0.9,
+            x: bx + 2, y: y + 2, width: bw - 4, height: h - 4,
+            fill: "#b9c2c8", opacity: "0.17",
         }))
-        /* the light metal brackets that clamp it top and bottom */
-        for (const by of [y, y + bankH - 12]) {
-            g.appendChild(svgEl("rect", {
-                x: bank.x - 3, y: by, width: bw + 6, height: 12, rx: 1.5,
-                fill: "#c3c7c4", stroke: "#8d918e", "stroke-width": 0.6,
-            }))
-        }
-        /* the brass fitting on the face, near each end */
-        for (const cy of [y + 26, y + bankH - 26]) {
+        g.appendChild(svgEl("rect", {
+            x: bx + 2, y: y + 2, width: bw * 0.22, height: h - 4,
+            fill: "#eef4f8", opacity: "0.10",
+        }))
+        /* 3. and the same mat sharp where the ports are open */
+        const sharp = coreMat(bx + 2, y + 2, bw - 4, h - 4)
+        sharp.setAttribute("clip-path", `url(#${clipId})`)
+        g.appendChild(sharp)
+        /* 4. the rings around them */
+        for (const p of ports) {
             g.appendChild(svgEl("circle", {
-                cx: bank.x + bw / 2, cy, r: 4.2,
-                fill: "#b08a2c", stroke: "#6d5518", "stroke-width": 0.7,
+                cx: bx + bw * 0.5, cy: p.cy, r: p.r,
+                fill: "none", stroke: p.ring, "stroke-width": p.r * 0.36,
+            }))
+            g.appendChild(svgEl("circle", {
+                cx: bx + bw * 0.5, cy: p.cy, r: p.r * 0.84,
+                fill: "none", stroke: p.lip, "stroke-width": p.r * 0.12,
             }))
         }
+
+        /* the housing: a frame round the glass, pillars either side */
+        g.appendChild(svgEl("rect", {
+            x: bx, y, width: bw, height: h, rx: 1.5,
+            fill: "none", stroke: "#aab2b6", "stroke-width": 2,
+        }))
+        for (const px of [bx - 1, bx + bw - 3])
+            g.appendChild(svgEl("rect", {
+                x: px, y: y - 1, width: 4, height: h + 2, rx: 1,
+                fill: "#b6bcbd", opacity: 0.85,
+            }))
+
+        /* two clamps across the top, each with its screw, and the foot rail */
+        for (const side of [0, 1]) {
+            const cw = bw * 0.36
+            const cx = bx + (side ? bw - cw - 1 : 1)
+            g.appendChild(svgEl("rect", {
+                x: cx, y: memTop, width: cw, height: capH * 1.6, rx: 1,
+                fill: "#d3d8d4", stroke: "#8e938f", "stroke-width": 0.6,
+            }))
+            g.appendChild(svgEl("circle", {
+                cx: cx + cw / 2, cy: memTop + capH * 0.85, r: capH * 0.32,
+                fill: "#8f9591", stroke: "#6e7370", "stroke-width": 0.4,
+            }))
+        }
+        g.appendChild(svgEl("rect", {
+            x: bx - 2, y: y + h - 1, width: bw + 4, height: capH * 1.4, rx: 1,
+            fill: "#c6ccc8", stroke: "#8e938f", "stroke-width": 0.6,
+        }))
+
         const t = svgEl("text", {
             class: "b-code",
-            x: bank.x + bw / 2, y: y + bankH / 2, "text-anchor": "middle",
-            fill: "#d3b9be", "font-size": 7, "font-family": "monospace",
-            transform: `rotate(-90 ${bank.x + bw / 2} ${y + bankH / 2})`,
+            x: bx + bw / 2, y: y + h * 0.5, "text-anchor": "middle",
+            fill: "#efe2e4", "font-size": 8, "font-family": "monospace",
+            opacity: 0.6,
         })
-        t.textContent = bank.name
+        t.textContent = "MEM 470"
         g.appendChild(t)
         const title = svgEl("title", {})
-        title.textContent = `${bank.name} — core memory, rows `
-            + `${MEM_ROW_TOP}–${MEM_ROW_BOT} at positions ${bank.run};`
+        title.textContent = `${bank.name} — MEM 470 core store, rows `
+            + `${memRowTop}–${memRowBot} at positions ${bank.run};`
             + ` the pair straps this machine to 32K`
         g.appendChild(title)
         mem.appendChild(g)
-    }
+    })
     scene.appendChild(mem)
 
     /* the slot ruler along the top */
@@ -2734,10 +3061,13 @@ function buildFront(bp) {
     }
     scene.appendChild(ruler)
 
+    document.getElementById("lg_opt").hidden = !opts
     document.getElementById("front_count").textContent =
         `${full + half} boards fitted — ${full} spanning two rows,`
-        + ` ${half} in a single row — plus ${cocas} COCA connectors,`
-        + ` of 720 row positions`
+        + ` ${half} in a single row — plus ${cocas} COCA connectors and`
+        + ` ${filts} filter boards`
+        + (opts ? ` and ${opts} option sockets of unrecorded contents` : "")
+        + `, of 720 row positions`
 
     /* Labels are noise at rack scale and the point of zooming at board scale. */
     const codes = scene.querySelectorAll(".b-code")
@@ -3110,8 +3440,15 @@ function openBoard(bp, rows, slot) {
     const card = rows.map(r => cardAt(bp, r, slot)).find(c => c && (c.code || c.type))
     boardOpen = { bp, rows, slot }
 
+    const strap0 = strapAt(bp, rows[0], slot)
     bsEl("bs_pos").textContent = rows.join("+") + slot
-    bsEl("bs_type").textContent = card && card.type ? card.type : "(no card)"
+    /* "******" is the layout's mark for an option socket, not a part name --
+     * say what is in it instead. */
+    bsEl("bs_type").textContent =
+        strap0 ? (strap0.pont || "option socket — empty")
+        : (card && card.type && !isOption(card)) ? card.type
+        : isOption(card) ? "option socket"
+        : "(no card)"
     bsEl("bs_code").textContent = card && card.code ? card.code : ""
 
     /* --- left column: what the layout says is in this position --- */
@@ -3123,6 +3460,44 @@ function openBoard(bp, rows, slot) {
         if (html !== undefined) e.innerHTML = html
         L.appendChild(e)
         return e
+    }
+    const strap = strapAt(bp, rows[0], slot)
+    const fit = fittedAt(bp, rows[0], slot)
+    if (inMemory(bp, rows[0], slot)) {
+        add("h4", null, "Where this is")
+        add("div", null, `Inside the housing of a <b>MEM 470</b> core store — `
+            + `the connector cards at the ends of each box belong to the store, `
+            + `not to the cage beside it.`)
+    }
+    if (isOption(card) || strap) {
+        add("h4", null, "What this is")
+        add("div", null, strap && strap.pont
+            ? `An <b>OPTION socket</b> holding a <b>${strap.pont}</b> — a bare `
+              + `card carrying a few wire bridges and nothing else. The bridges `
+              + `tie strap signals to the zero rail, and the ch.001/ch.002 tables `
+              + `read them to fix how this machine is built.`
+              + (strap.note ? ` Here: <b>${strap.note}</b>.` : "")
+            : strap
+            ? `An <b>OPTION socket</b>, <b>empty</b> — which is itself a setting: `
+              + `the tables read the absent bridges as the other variant.`
+              + (strap.note ? ` Here: <b>${strap.note}</b>.` : "")
+            : fit
+            ? `An <b>OPTION socket</b>, and this machine <b>fills it</b>: `
+              + `${fit.why}.`
+              + (fit.type
+                 ? ` The card is <b>${fit.type}</b>`
+                   + `${fit.code ? ` (${fit.code})` : ""}.`
+                 : ` Which card is not recorded — the neighbouring positions `
+                   + `are not a uniform run, so nothing here names it.`)
+            : `An <b>OPTION socket</b>. The layout marks it OPZIONE and says no `
+              + `more, and gemu has no record of what is in it — so this is `
+              + `neither a board nor an empty slot until somebody looks.`)
+        add("div", "pi-dim", `PONT 2N and PONT 2P are both four-bridge cards `
+            + `differing in one hole; on this machine the pair at column 5 is `
+            + `{2N, 2P}, which is TAB.1's UCE 464 row — 32K of core. gemu takes `
+            + `the strapping from <code>ge_init</code> in <code>ge.c</code>; the `
+            + `tables and the probing notes are in `
+            + `<code>docs/hardware-options.md</code>.`)
     }
     if (card && (card.type || "").toUpperCase() === "COCA") {
         add("h4", null, "What this is")
@@ -3179,6 +3554,16 @@ function openBoard(bp, rows, slot) {
             note: cardPage.as && cardPage.as !== card.code
                 ? `matched as ${cardPage.as}` : "",
         })
+    /* An option socket points at the strap tables that read it, and at the
+     * bridge card's own catalogue drawing, rather than at a part number it
+     * does not have. */
+    if (isOption(card) || strap)
+        for (const [k, p] of Object.entries((man.straps || {}).pages || {}))
+            sources.push({
+                label: k === "card" ? "PONT card" : `Strap table — ${k}`,
+                sub: `${p.v} p${p.p}`, vol: p.v, page: p.p, hint: p.t,
+            })
+
     /* A type with no part number is not a catalogued card -- COCA is the
      * connector the cable loom lands on, and cp06 draws it on its connector
      * sheets instead. */

@@ -365,10 +365,36 @@ The proportions are measured off the photographs rather than guessed: the board
 handles repeat about every 13.7 px across a cage that steps about 110 px per
 tier, so a card position is roughly one to eight — thin and tall.
 
-The **two core stores** stand in the cage, not under it. They occupy rows Q to
-T, which is also the only place they can go: those four rows have exactly two
-column runs empty of cards across all of them, **33–38** and **3–8**, six
-positions each, and that is where the stacks are. With 40 at the left on the
+**Which card is in each position comes from the restoration workbook**, sheet
+`SCHEDE CPU` — the layout as checked against the real machine. It is organised
+by tier (one cell per AB, CD, … ST per column), which is itself the statement
+that a board spans two rows, and it holds the part number's last three
+characters. `console/wasm/import-sheet.py` exports it to `atlas/tier_layout.tsv`
+alongside the Atlas CSVs; the generator reads that. Where the two sources meet
+they agree at 481 positions and the workbook overrides 36, and it fills 29 the
+Atlas left blank. Most of the overrides are OCR slips in the scan of the factory
+drawing — `E17` read `0610016G` and `F17` read `06100160`, the same card under
+the O↔0 confusion, which is why that position used to draw as two half-height
+boards instead of the one dual-slot board it is.
+
+The **two core stores** stand in the cage, not under it, in rows Q to T,
+spanning slots **39–32** and **9–2** — eight positions each, per the machine's
+owner. (The workbook's own fill runs a slot wider at each outer end, 40–32 and
+10–2, because it marks the bay rather than the box; the fill is used only to
+find which rows are memory rows.)
+
+The `CO1N2x` connector cards the layout drawing puts at the four positions
+bracketing the boxes — 39/32 and 9/2 — are the core store's **own**, inside its
+housing, so the box covers them and they are not drawn as cards standing in the
+cage. The board sheet says as much for those positions.
+
+The box is drawn as the photographs show it: a glass cover that throws the wire
+mass behind it out of focus, with two round ports, one near each end, through
+which the same wires read sharp — the brass-ringed one at the top and the dark
+red one at the foot. Light metal clamps with their screws sit across the top and
+a rail runs under it. Q+R 30 and 31 carry a dark olive-brown face rather than
+the usual blue; that is observed, not derived, and recorded against the position
+in `console.html`. With 40 at the left on the
 front view, that puts one near the left edge and the other over towards the
 right, flanking the boards between them — the arrangement in the photographs.
 Each is a dark red core mat behind a perspex cover between light metal brackets,
@@ -448,13 +474,96 @@ across the rack rather than outlining all 619 positions.
 plugged in on the other side, the same sheet the front view gives. It works at
 any zoom, including fitted, where no contacts are drawn at all.
 
+**The option sockets are drawn as what is in them.** Columns 3, 4 and 5 of rows
+E and F are the OPTION sockets — the Atlas prints their type as `******`
+(OPZIONE) and gives them the two or three strap signals the ch.001/ch.002 tables
+read. What card sits in each is a property of this machine rather than of the
+layout, so it comes from `ge_init` in `ge.c`, which is where the emulator
+already keeps it: E03/F03 and E05/F05 hold PONT bridge cards, and column 4 is
+empty — itself a setting, since the tables read the absent bridges as the other
+variant. A PONT sits in the same blue handle as any other card, so it is drawn
+as an ordinary single-row board — its face carries `PONT2N` or `PONT2P` in place
+of a part number, which is the one thing about it worth reading. The two
+positions `ge.c` calls empty get a dashed outline.
+
+The other twenty option sockets — Q28–31, R28–31, S26–31, T26–31 — are in the
+memory rows, which are laid out for the largest build and marked OPZIONE below
+it. Whether they are populated is therefore a function of the capacity strap,
+not of the layout, and this machine straps the 32K row, so **they are filled**.
+
+Which card is in each comes from the workbook, which names them where the Atlas
+CSVs are blank: `0610002J` ×8 across Q/R 28–31, `0610029W` ×8 at S/T 26–29 and
+`0610030U` ×4 at S/T 30–31. All three are dual-slot, so the fitted pairs span
+their tier like their neighbours. (The generator can also recover a socket's
+card from its **pin shape** — the signal names with the digits masked, matched
+against the named positions in its own row — which reaches the same answer
+independently and stands in wherever the workbook is silent.)
+
+Every board sitting in an option socket — the PONT straps included — carries
+**EXP** on the green label at its foot, so the cards that are there because of
+the build rather than always are readable off the cage. Fourteen boards are
+marked: E3/E5 and F3/F5, Q+R 28–31, and S+T 26–31.
+
+A socket that is neither strapped nor confidently named would be drawn in
+neutral slate — neither board nor empty — but on this machine there are none.
+
+Their sheet points at the strap documentation instead of a part number they do
+not have: **cp06 p78** (TAB.1, memory capacity — the `{PONT2N, PONT2P}` row that
+makes this machine 32K), **cp06 p79** (version, cycle period, interruptions,
+loading) and **cp10F p253**, the PONT card's own catalogue drawing. All three
+are located rather than hardcoded — p78 by being the only cp06 page printing
+`VAMC2`, p79 through the chapter index at ch.002, and p253 by the drawing number
+`015 433 91` that `ge.c` cites.
+
+**The filter boards are naked too, and single.** `FILT2A`/`FILT2B`/`FILT2C` and
+their kin sit one per row — never a pair spanning a tier — with no blue handle
+and a screw holding them top and bottom. Eighteen of them: slot 1 across the
+AB/CD/EF/QR/ST tiers, slot 5 across GH/IL/MN, slot 7 across OP. The scans read I
+as 1, so the same card is typed `FILT2B` at one position and `F1LT2B` at the
+next; the test folds the digit back, without which `G5` and `H5` — one card
+either side of a tier — render as two different things. The workbook writes
+either `CONN` or `FILTRI` over these positions and both mean a filter, so the
+label is accepted as well as the type.
+
+The COCA positions stay as the Atlas has them even though the workbook is silent
+there: the looms were unplugged when the machine was surveyed, which is why that
+survey has nothing to record.
+
+Both cables leave the **middle of the board face** — they are the board's own
+conductors carrying on, not something plugged into its top — and run to the side
+of the machine. The **frame is drawn** — broad uprights either side and the cross-bars that run
+under rows **D**, **H**, **N** and **P**. That last one breaks the rhythm: the
+bars would otherwise fall every two tiers, but P sits one tier lower down the
+run because the core stores stand in the rows beneath it and the bar has to
+clear them. With the frame in place the difference between the two cables is
+visible:
+the COCA loom, a heavy multi-way cable, passes *behind* the upright and carries
+on out of sight, while the filter's thin lead *ends* there, on the 5V / 20V /
+12V rails the frame hides, with a lug where it lands. (One photograph shows a
+COCA loom hanging out in front of the cage, but that is a bench arrangement, not
+how it sits.)
+
+**The row letters are inked on.** They are not printed anywhere on the machine —
+somebody went down the right-hand upright with a dark blue marker and wrote them
+— so they are drawn as that. Setting them as text would put whatever face the
+browser happens to have on a hand-lettered panel (and headless has no script
+font at all), so each letter is stroked instead: single-stroke letterforms in a
+10×14 box, laid down with a round nib, each at its own slight tilt and offset,
+with the bleed the felt leaves in the metal around it.
+
+**A position is free when nothing is wired to it**, whatever the type cell
+says. The scans drop junk in that cell now and then — `I22` reads `HUH` and is
+annotated *FREE slot* — so the test is what is actually there: no part number,
+and not a wire on any pin. It changes exactly one position and flips no other.
+
 **COCA positions are drawn naked.** Thirty positions along the edges of rows G
 to N carry no part number on any layout page, and neither catalogue lists them:
 a COCA is not a circuit card but the connector the cable loom lands on, drawn on
 cp06's connector sheets (p80–84). The front view gives them a bare board with no
 blue handle, running straight into thick cables that bend away to the nearer
 side of the panel, and their sheet offers the connector sheets in place of a
-catalogue entry.
+catalogue entry. A COCA is one card per row and never a pair spanning a tier,
+even where both rows of a column carry one — so each gets its own cable.
 
 **What is framed is the scan, not the explorer.** ge120.xyz renders its PDFs
 client-side and routes on `#/<volume>/<page>`, but it does not apply that route

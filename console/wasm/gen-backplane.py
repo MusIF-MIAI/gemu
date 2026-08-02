@@ -331,7 +331,227 @@ def read_manual(manual_dir, docs_dir):
                 continue
             flat = re.sub(r"[^A-Z0-9]", "", t.upper())
             out.setdefault("_flat", {})[(slug, n)] = flat
+            if slug == "cp10F":
+                out.setdefault("_flat_cp10F", {})[n] = t.upper()
     return out
+
+
+# "ge->options.E05 = PONT_2N;   /* UCE 464: 32K core, TAB.1's {N,P} row */"
+STRAP = re.compile(r"ge->options\.([EF])0(\d)\s*=\s*PONT_(\w+)\s*;"
+                   r"(?:\s*/\*(.*?)\*/)?")
+
+
+def read_straps(root):
+    """How this machine is strapped, read from ge_init in ge.c.
+
+    Positions E03/E04/E05 and F03/F04/F05 are the OPTION sockets -- the Atlas
+    prints their card_type as ****** (OPZIONE) and gives them two or three pins
+    apiece, which are the strap signals the ch.001/ch.002 tables read.  What
+    card is in each is a property of this machine, not of the layout, and gemu
+    already carries it because the whole emulator is bounded by it.  Reading it
+    from ge.c keeps one source of truth: change the strap there and the drawing
+    follows.
+    """
+    path = os.path.join(root, "ge.c")
+    if not os.path.exists(path):
+        return {}
+    out = {}
+    for col, num, kind, note in STRAP.findall(open(path).read()):
+        out[f"{col}{int(num)}"] = {
+            "pont": "" if kind == "NONE" else f"PONT{kind}",
+            "note": re.sub(r"\s+", " ", note).strip(),
+        }
+    return out
+
+
+def index_straps(manual, straps):
+    """Where the strap tables and the card's own drawing are printed."""
+    if not straps:
+        return
+    flat6 = manual.get("_flat_cp06") or {}
+    flat10 = manual.get("_flat_cp10F") or {}
+    pages = {}
+    # TAB.1 memory capacity: the only page printing the E05/F05 signal VAMC2
+    hit = sorted(n for n, t in flat6.items() if re.search(r"VAMC\s*2", t))
+    if hit:
+        pages["capacity"] = {"v": "cp06", "p": hit[0],
+                             "t": "TAB.1 — memory capacity (E05/F05)"}
+    # version / cycle period / interruptions / loading, the ch.002 tables
+    ch2 = manual["chapters"].get("002")
+    if ch2:
+        pages["version"] = {"v": "cp06", "p": ch2["p"],
+                            "t": "TAB.1–3 — version, cycle, interrupts, loading"}
+    # the strap card itself, by the drawing number ge.c cites
+    hit = sorted(n for n, t in flat10.items() if re.search(r"015\s*433\s*91", t))
+    if hit:
+        pages["card"] = {"v": "cp10F", "p": hit[0],
+                         "t": "PONT card — bridge recipe (dwg 015 433 91)"}
+    manual["straps"] = {"at": straps, "pages": pages}
+
+
+def read_tier_layout(atlas_dir):
+    """The restoration workbook's layout, exported by import-sheet.py.
+
+    One entry per tier per occupied slot.  This is the layout as checked
+    against the real machine, so where it and the Atlas CSVs disagree it wins:
+    the CSVs are OCR of the factory drawing and differ from it at eleven
+    positions, and they leave the OPZIONE sockets blank where the workbook
+    says what is fitted.
+    """
+    path = os.path.join(atlas_dir, "tier_layout.tsv")
+    if not os.path.exists(path):
+        return {}
+    out = {}
+    for line in open(path):
+        if line.startswith("#") or not line.strip():
+            continue
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) < 4:
+            continue
+        tier, slot, kind, value = parts[0], parts[1], parts[2], parts[3]
+        out[(tier, int(slot))] = {"kind": kind, "value": value}
+    return out
+
+
+def apply_tier_layout(cards, layout):
+    """Set each position's part number from the workbook.
+
+    A tier cell covers both of its rows -- that is what a dual-slot board is --
+    so both rows take the code, which is also what makes the front view draw
+    them as one board.  Three-character values are part-number tails (53F ->
+    0610053F); anything else (CONN, FILTRI, a pair of full part numbers) is
+    carried through as it is written.
+    """
+    fixed = disagreed = filled = 0
+    for (tier, slot), cell in layout.items():
+        if cell["kind"] == "MEM470":
+            continue
+        value = cell["value"]
+        if re.fullmatch(r"[0-9A-Z]{3}", value):
+            code, label = "06100" + value, ""
+        else:
+            code, label = "", value
+        for row in tier:
+            card = cards.get(row, {}).get(slot)
+            if card is None:
+                continue
+            card["sheet"] = value
+            if not code:
+                card["sheetLabel"] = label
+                continue
+            if not card.get("code"):
+                filled += 1
+            elif card["code"] != code:
+                disagreed += 1
+                card["wasCode"] = card["code"]
+            else:
+                fixed += 1
+            card["code"] = code
+    return fixed, disagreed, filled
+
+
+def pin_shape(pins):
+    """A position's wiring with the numbers masked out.
+
+    Two sockets carrying the same card are wired the same way and differ only
+    in which bit or which stack they serve, so LZ861/LZ841 and LZ461/LZ441 have
+    one shape.  That makes the shape a fingerprint for the card type.
+    """
+    return tuple(re.sub(r"\d", "#", p) if p else "" for p in pins)
+
+
+def guess_option_card(cards, pins, row, slot):
+    """Name the card in an option socket from the layout, not from a guess.
+
+    The Atlas leaves card_code and card_type blank at the OPZIONE sockets --
+    the OCR read the slot number into the type cell -- but it did read their
+    pins, and the machine wires a socket the same way whatever build fills it.
+    So: match the socket's pin shape against the named positions in its own
+    row.  An exact shape match is taken outright; otherwise the best match by
+    signal-family overlap is taken when it is decisive.
+
+    Checked against the layout spreadsheet: this returns 0610029W for S/T
+    26-29 and 0610030U for S/T 30-31, which is what the sheet's ST row prints
+    (29W at 26-29, 30U at 30-31), and 0610002J across Q/R 28-31, which is the
+    "eight identical 02J boards at 24-31" hardware-options.md reads off the
+    layout sheet.
+    """
+    mine = pins.get(row, {}).get(slot)
+    if not mine:
+        return None
+    named = [(s, c) for s, c in cards.get(row, {}).items()
+             if c.get("code") and not (c.get("type") or "").startswith("*")]
+    if not named:
+        return None
+
+    want = pin_shape(mine)
+    exact = {(c["code"], c["type"]) for s, c in named
+             if pin_shape(pins[row][s]) == want}
+    if len(exact) == 1:
+        code, ctype = exact.pop()
+        return {"code": code, "type": ctype, "how": "same wiring"}
+
+    def families(ps):
+        out = {}
+        for p in ps:
+            m = re.match(r"[A-Z]+", p or "")
+            if m:
+                out[m.group(0)] = out.get(m.group(0), 0) + 1
+        return out
+
+    wf = families(mine)
+    scored = []
+    for s, c in named:
+        gf = families(pins[row][s])
+        keys = set(wf) | set(gf)
+        inter = sum(min(wf.get(k, 0), gf.get(k, 0)) for k in keys)
+        union = sum(max(wf.get(k, 0), gf.get(k, 0)) for k in keys)
+        if union:
+            scored.append((inter / union, c["code"], c["type"]))
+    if not scored:
+        return None
+    scored.sort(reverse=True)
+    best = scored[0]
+    runner = next((x for x in scored if (x[1], x[2]) != (best[1], best[2])), None)
+    # decisive: a strong match, and clearly ahead of the next different card
+    if best[0] >= 0.85 and (not runner or best[0] - runner[0] >= 0.1):
+        return {"code": best[1], "type": best[2], "how": "matching signals"}
+    return None
+
+
+def index_fitted(manual, cards, pins):
+    """Option sockets this machine's build actually fills.
+
+    The memory rows Q to T are laid out for the largest build and marked
+    OPZIONE below it, so whether a socket is populated is a function of the
+    capacity strap rather than of the layout.  This machine straps the 32K row
+    ({E05,F05} = {PONT2N, PONT2P}), and on a 32K build rows Q to T are filled.
+
+    For Q and R the card is known: docs/hardware-options.md reads the layout
+    sheet as eight identical 02J AMPL2A boards at positions 24-31, and the
+    Atlas shows 24-27 are exactly that, so 28-31 take the same card.  Rows S
+    and T have no uniform run to read from -- their neighbours are 1NTE23 and
+    PATE24 -- so those are recorded as fitted with the card left unnamed
+    rather than guessed from the position next door.
+    """
+    straps = (manual.get("straps") or {}).get("at") or {}
+    cap = (straps.get("E5", {}).get("pont"), straps.get("F5", {}).get("pont"))
+    if cap != ("PONT2N", "PONT2P"):
+        return                                   # not the 32K row; leave them
+    fitted = {}
+    why = ("fitted on the GE-130 / 32K build — the memory rows are laid out for "
+           "the largest machine and marked OPZIONE below it")
+    for row in ("Q", "R", "S", "T"):
+        for slot, c in cards.get(row, {}).items():
+            if not (c.get("type") or "").startswith("*"):
+                continue
+            entry = {"why": why}
+            named = guess_option_card(cards, pins, row, slot)
+            if named:
+                entry.update(named)
+            fitted[f"{row}{slot}"] = entry
+    if fitted:
+        manual["fitted"] = fitted
 
 
 def index_types(manual, types, docs_dir):
@@ -386,6 +606,11 @@ def main():
     args = ap.parse_args()
 
     cards, pins = read_atlas(args.atlas)
+    layout = read_tier_layout(args.atlas)
+    if layout:
+        agree, differ, filled = apply_tier_layout(cards, layout)
+        print(f"layout: workbook agrees with the Atlas at {agree} positions, "
+              f"overrides {differ}, fills {filled} the Atlas left blank")
     glosses = read_glosses(args.docs)
     located = read_locations(args.docs)
     equations, trace_locs = read_traces(args.docs)
@@ -425,6 +650,23 @@ def main():
         for name in names:
             want(name)
 
+    # Where the two MEM 470 boxes stand, given by the machine's owner: slots
+    # 39 down to 32, and 9 down to 2, across the memory rows.  The workbook's
+    # tan fill is a slot wider at each outer end (40..32 and 10..2) because it
+    # marks the bay rather than the box, so the fill is used only to find which
+    # rows are memory rows, not how wide the box is.
+    MEM_BAYS = [(32, 39), (2, 9)]
+    mem_fill = sorted({(t, sl) for (t, sl), c in layout.items()
+                       if c["kind"] == "MEM470"})
+    mem_tiers = sorted({t for t, _ in mem_fill})
+    mem = [(t, sl) for t in mem_tiers
+           for lo, hi in MEM_BAYS for sl in range(lo, hi + 1)]
+    if mem_fill:
+        print(f"memory: two MEM 470 boxes over "
+              f"{', '.join(f'{hi}-{lo}' for lo, hi in MEM_BAYS)} "
+              f"({', '.join(str(hi - lo + 1) for lo, hi in MEM_BAYS)} slots each) "
+              f"in tiers {'/'.join(mem_tiers)}")
+
     manual = read_manual(args.manual, args.docs)
     if manual:
         codes = {c["code"] for row in ROWS for c in cards[row].values()
@@ -436,8 +678,11 @@ def main():
                 if c.get("type") and c["type"] != "//////":
                     (coded if c.get("code") else uncoded).add(c["type"])
         index_types(manual, uncoded - coded, args.docs)
+        index_straps(manual, read_straps(os.path.join(here, "../..")))
+        index_fitted(manual, cards, pins)
         index_cards(manual, codes)
         manual.pop("_flat_cp06", None)
+        manual.pop("_flat_cp10F", None)
 
     data = {
         "rows": ROWS,
@@ -448,6 +693,9 @@ def main():
         "pins": pins,
         "sigs": used,
         "docPins": located,
+        # the two core stores, as slot runs per tier
+        "mem": sorted({sl for _, sl in mem}),
+        "memTiers": sorted({t for t, _ in mem}),
     }
     if manual:
         data["manual"] = manual
@@ -458,6 +706,23 @@ def main():
               f"({by.get('read', 0)} read off the page, {by.get('ocr', 0)} from "
               f"the OCR layer, {by.get('between', 0)} interpolated between "
               f"anchors), {len(manual['cards'])} card codes found in a catalogue")
+        st = manual.get("straps", {})
+        if st:
+            fitted = [k for k, v in st["at"].items() if v["pont"]]
+            print(f"straps: {len(st['at'])} option sockets read from ge.c "
+                  f"({', '.join(k + '=' + st['at'][k]['pont'] for k in sorted(fitted))}"
+                  f"; the rest empty), tables at "
+                  f"{', '.join(f'{v[chr(118)]} p{v[chr(112)]}' for v in st['pages'].values())}")
+        fit = manual.get("fitted") or {}
+        if fit:
+            named = sum(1 for v in fit.values() if v.get("code"))
+            kinds = {}
+            for v in fit.values():
+                if v.get("code"):
+                    kinds[v["code"]] = kinds.get(v["code"], 0) + 1
+            print(f"fitted: {len(fit)} option sockets in rows Q-T populated by "
+                  f"the 32K build, {named} named from the layout "
+                  f"({', '.join(f'{k}x{n}' for k, n in sorted(kinds.items()))})")
     else:
         print(f"manual: no cache at {args.manual} — the sheets will not be "
               f"offered (see read_manual for the fetch)")
