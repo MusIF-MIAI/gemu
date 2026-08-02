@@ -285,11 +285,36 @@ with the transfers from peripheral unit" (CPU[4] §2.4); the same <code>ALS71</c
 <div class="line">(console) CLEAR → LOAD1 → LOAD → START</div>
 </div><!-- fragment --><p>There is no staging path and no image path. <code>LOAD</code> sets <code>AINI</code> and nothing else; <code>START</code> runs the <code>80 → c8 → … → e3</code> bootstrap, which reads <b>one</b> card, packs its 80 columns into 40 bytes at <code>0x0000</code> and executes them. Every card after that is pulled by a <code>PER</code> read the loaded program issues itself.</p>
 <p>The operator's window between <code>LOAD</code> and <code>START</code> is still there and still useful: the rotary register dials can force values into memory (e.g. the diagnostic test-select byte at <code>0x0E00</code> — dial <code>V1 ← 0x0E00</code>, <code>V1 SCR ← 0x40</code>) and they survive into the run.</p>
+<h2><a class="anchor" id="autotoc_md46"></a>
+5.2 The three views: console, front, back</h2>
+<p>A rail down the left of the browser panel switches between three ways of looking at the same machine. Only the first is a control surface; the other two are the iron, drawn from the card-layout Atlas (drawing 14026 136, cabinet section 2A) and reachable at <code>#front</code> and <code>#back</code>.</p>
+<p><b>CPU front</b> is the card cage as you see it with the boards in: nine tiers of forty positions, blue board faces, position 40 at the left and 1 at the right. A board normally spans both backplane rows of its tier — one part number appears against A and again against B — so it is drawn full height; where the two rows carry different cards (rows I and L do this) each is drawn at half height, because that is what the layout says is in there. 373 boards are fitted, 246 of them across two rows. Scroll to zoom, drag to pan; the part number and slot label appear once the zoom makes them legible. No controls — looking only.</p>
+<p>The proportions are measured off the photographs rather than guessed: the board handles repeat about every 13.7 px across a cage that steps about 110 px per tier, so a card position is roughly one to eight — thin and tall.</p>
+<p>The <b>two core stores</b> stand in the cage, not under it. They occupy rows Q to T, which is also the only place they can go: those four rows have exactly two column runs empty of cards across all of them, <b>33–38</b> and <b>3–8</b>, six positions each, and that is where the stacks are. With 40 at the left on the front view, that puts one near the left edge and the other over towards the right, flanking the boards between them — the arrangement in the photographs. Each is a dark red core mat behind a perspex cover between light metal brackets, spanning both the Q+R and S+T tiers. They are not card positions and are not in the Atlas, so they are drawn over the run rather than as boards. The pair is what straps this machine to 32K (PONT 2N/2P, cp06 ch.001).</p>
+<p><b>CPU back</b> is the wire-wrap side, so the columns mirror: position 1 at the left, 40 at the right. Every position presents its seventeen pins, the nine odd ones down the left and the eight even ones down the right, offset half a pitch the way the connector body is moulded, pin 01 top-left and pin 17 bottom-left. Contacts are gold where the layout reads a net and dark where it does not. Click one and the read-out names it, gives the schematic chapter and — where a trace in <code>docs/signals/traces/</code> has it — the gate equation that drives it. A position or a contact can be linked to directly: <code>#back/P32</code> centres on that connector, <code>#back/P32-01</code> picks the pin.</p>
+<p>12,240 contacts is more than a browser wants as live SVG, so the pins for a position are built only when it is both on screen and big enough to aim at. Panning rebuilds just what came into view; everything else stays a block.</p>
+<h2><a class="anchor" id="autotoc_md47"></a>
+5.3 The board sheet</h2>
+<p><b>Double-click a board</b> on the front view and everything else goes behind a modal sheet for that one card (<code>Esc</code>, the ×, or a click outside closes it; the rack is <code>inert</code> while it is up). <code>#front/EF12</code> opens it directly.</p>
+<p>The left column is what the layout knows: which rows and position, the card mnemonic and part number, any OCR caveats the Atlas recorded for that cell, and both connectors' seventeen pins with the net at each and its chapter. Clicking a pin closes the sheet and lands on that contact on the back view.</p>
+<p>The right column is the manual. Which pages are offered is derived, not configured:</p>
+<ul>
+<li>the <b>card catalogue</b> entry, found by looking the part number up in the OCR text of cp09 (SCM 3) and cp10F (SCL 1). 75 of the layout's 99 distinct part numbers are found; the rest are OCR-mangled past matching.</li>
+<li>one tab per <b>chapter</b> the card's own nets belong to, ranked by how many of its pins point there. A board whose pins carry no glossed net — a filter, a power card — gets none, and just shows its catalogue page. That is the "picture of the board" case and it falls out of the same rule.</li>
+</ul>
+<p>Chapter pages come from three places, and the sheet says which. <b>27</b> are stated outright in <code>docs/signals/traces/</code> ("Chapter 052 (cp06 p129)") and are trusted as read. <b>109</b> are recovered from cp06's own OCR text layer by taking pages that name exactly one chapter and keeping the longest run whose chapter number rises with the page — the gate sheets are bound in order, so a number that goes backwards is a misread; where these and the hand-read pages overlap they never disagree. The remaining <b>150</b> are interpolated between anchors, across stretches where the chapter gap and the page gap agree and the sheets are therefore running one page per chapter. Interpolation stops at any page whose own text names a different chapter, and never overwrites a page somebody read.</p>
+<p>Interpolated pages are shown as <code>cp06 ~p201</code>, with a tooltip saying so, because they are a good place to start and not a citation: held out against the hand-read anchors the method predicts 24 of 25 exactly, and the miss (chapter 158) lands four pages off. 286 chapters are located in total; one with no page still says so rather than guessing.</p>
+<p><b>Clicking a contact isolates its net.</b> The rest of the rack goes dark and only the contacts wired to the same signal stay lit, so a wire reads as a shape rather than as a list of positions; the read-out names the other ends and links to them, and the coarse layer outlines the positions carrying it so the far end is findable from zoomed out. Members are gathered on a canonical spelling — the schematics' name where the index knows it, otherwise the reading with O/0 and I/1 folded together — because the same wire can be read two ways at two pins. Clicking off a contact lets the net go.</p>
+<p><b>Pin 17 is the zero rail on every board.</b> The layout leaves it blank at 613 of the 619 populated positions because it is not a signal anyone routes; at the six where the scan did read something it says <code>ZERO0</code>, the same rail. It is drawn in a cooler tint and reported as GND everywhere, and picking one lights pin 17 across the rack rather than outlining all 619 positions.</p>
+<p><b>Double-clicking a position</b> — anywhere on it but a contact — opens the board plugged in on the other side, the same sheet the front view gives. It works at any zoom, including fitted, where no contacts are drawn at all.</p>
+<p><b>COCA positions are drawn naked.</b> Thirty positions along the edges of rows G to N carry no part number on any layout page, and neither catalogue lists them: a COCA is not a circuit card but the connector the cable loom lands on, drawn on cp06's connector sheets (p80–84). The front view gives them a bare board with no blue handle, running straight into thick cables that bend away to the nearer side of the panel, and their sheet offers the connector sheets in place of a catalogue entry.</p>
+<p><b>What is framed is the scan, not the explorer.</b> ge120.xyz renders its PDFs client-side and routes on <code>#/&lt;volume&gt;/&lt;page&gt;</code>, but it does not apply that route inside a frame — it comes up on "pick a manual" however the <code>src</code> is set, which is reproducible headless with and without virtual time. The PDFs themselves are served plainly and honour byte ranges, so the sheet frames <code>manuals/&lt;file&gt;#page=N</code> and the browser's own viewer opens the one page. The "open in the manual explorer ↗" link still goes to the explorer, which is the better place to navigate on to contents, thumbnails and search.</p>
+<p>The data is baked by <code>console/wasm/gen-backplane.py</code> into <code>backplane.js</code>, which is committed because the Atlas CSVs live outside this repo. The generator reads two independent sources and says so when they differ: the Atlas names the signal at a position, and the Backplane columns and traces in <code>docs/signals/</code> place signals at positions. They agree at 760 of the 766 pins both describe; where they do not, the read-out flags it rather than picking a winner.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md47"></a>
+<h1><a class="anchor" id="autotoc_md49"></a>
 6. Example procedures</h1>
 <p>Each procedure is taken from the original manuals and is reproduced verbatim in gemu's tests. Confidence is <b>high</b> where a regression test passes.</p>
-<h2><a class="anchor" id="autotoc_md48"></a>
+<h2><a class="anchor" id="autotoc_md50"></a>
 6.1 Bootstrap a program from a peripheral (normal load)</h2>
 <p><b>Source:</b> CPU[4] §3.3 / §5.3 (fo.31–32, fo.43). <b>Confidence:</b> high.</p>
 <div class="fragment"><div class="line">1. CLEAR                       presets CPU + peripherals</div>
@@ -297,7 +322,7 @@ with the transfers from peripheral unit" (CPU[4] §2.4); the same <code>ALS71</c
 <div class="line">3. LOAD                        arm the bootstrap (sets AINI)</div>
 <div class="line">4. START                       state 80 → c8: read ≤129 words, then execute</div>
 </div><!-- fragment --><p>In gemu this is exactly what <code>./ge --deck funktionalcpu.cap</code> does (<code><a class="el" href="main_8c.html">main.c</a>:192</code>): <code>ge_load_1</code> → <code>ge_load</code> → attach the deck to the reader on connector 2 → run. The natural <code>00 → 80 → c8 → alpha</code> bootstrap leaves the entry address as the machine defines it.</p>
-<h2><a class="anchor" id="autotoc_md49"></a>
+<h2><a class="anchor" id="autotoc_md51"></a>
 6.2 Single-step a running program</h2>
 <p><b>Source:</b> CPU[4] §3.3 (STEP-BY-STEP) + §4 (PAPA). <b>Confidence:</b> high.</p>
 <div class="fragment"><div class="line">1. CLEAR</div>
@@ -305,7 +330,7 @@ with the transfers from peripheral unit" (CPU[4] §2.4); the same <code>ALS71</c
 <div class="line">3. START                       advance exactly one operation, then HALT</div>
 <div class="line">   …repeat START to walk forward, watching SO/SA/PO/FO on the lamps</div>
 </div><!-- fragment --><p>During step-by-step the address (PO) and function code (FO) of the <b>next</b> instruction are displayed (CPU[4] §3.3).</p>
-<h2><a class="anchor" id="autotoc_md50"></a>
+<h2><a class="anchor" id="autotoc_md52"></a>
 6.3 Key a byte into memory and read it back</h2>
 <p><b>Source:</b> CPU[4] §4.2 rotary pos 8 / pos 9; reproduced as <code>cpu_isolation.test_k</code> ("diag fo.82"). <b>Confidence:</b> high.</p>
 <div class="fragment"><div class="line">WRITE (pos 8, V1 SCR):</div>
@@ -320,7 +345,7 @@ with the transfers from peripheral unit" (CPU[4] §2.4); the same <code>ALS71</c
 <div class="line">  START                      reads mem[V1], +1 into V1; byte shows on RO lamps</div>
 <div class="line">                             (→ RO == 0xFF, MEM CHECK off)</div>
 </div><!-- fragment --><p><code>INAR</code> is inserted so writing into never-before-written memory does not raise <code>MEM CHECK</code> / <code>INV ADD</code>.</p>
-<h2><a class="anchor" id="autotoc_md51"></a>
+<h2><a class="anchor" id="autotoc_md53"></a>
 6.4 Key an instruction into the registers and light OPER CALL</h2>
 <p><b>Source:</b> CPU[4] §4 "Maintenance Panel", dwg 30004122 fo.35–37; reproduced as <code>cpu_isolation.oper_call_by_register_forcing</code>. <b>Confidence:</b> high (validated on gemu against the real-machine procedure).</p>
 <p>This keys a 2-character <code>LON</code> instruction (opcode <code>0x02</code>, second char <code>0x80</code>) straight into the CPU registers and single-steps it through every fetch phase until it executes and raises <b>OPER CALL</b>.</p>
@@ -335,7 +360,7 @@ with the transfers from peripheral unit" (CPU[4] §2.4); the same <code>ALS71</c
 <div class="line">                                       → OPER CALL lamp on</div>
 </div><!-- fragment --><p><b>Key fidelity point (gemu <code><a class="el" href="ge_8c.html">ge.c</a>:fsn_last_clock</code>):</b> a forcing cycle preserves the program sequencer <b>SO</b> — only forcing SO itself (pos 13) changes it. Without this, each register-force would clobber the sequencer and the phase walk could never complete. This was the bug fixed in commit *"preserve the program sequencer
 during console forcing (CPU[4] fo.35-37)"*.</p>
-<h2><a class="anchor" id="autotoc_md52"></a>
+<h2><a class="anchor" id="autotoc_md54"></a>
 6.5 Display a register without disturbing the program</h2>
 <p><b>Source:</b> CPU[4] §4.2 (fo.36). <b>Confidence:</b> medium (display path verified; "non-disturbing" guarantee relies on the delay line still clocking the LSM).</p>
 <div class="fragment"><div class="line">1. (machine stopped — e.g. on HALT)</div>
@@ -343,7 +368,7 @@ during console forcing (CPU[4] fo.35-37)"*.</p>
 <div class="line">3. read it on the BO display lamps; do NOT press START (START would force)</div>
 </div><!-- fragment --><p>Because the rotary only <em>forces</em> on <code>START</code>, simply turning it to a register and reading the lamps is non-destructive.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md54"></a>
+<h1><a class="anchor" id="autotoc_md56"></a>
 7. Fidelity status &amp; open items</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">

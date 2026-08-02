@@ -44,11 +44,11 @@
   <div class="headertitle"><div class="title">Integrated peripherals (channels 1 and 2)</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md163"></a> This documents how gemu models the two integrated peripherals that hang off the CPU's organisation phase: the <b>card reader</b> (channel 1, input) and the <b>printer / console-typewriter</b> (channel 2, output + keyboard). Both attach through the <code><a class="el" href="structge__peri.html">ge_peri</a></code> callback list (<code>ge_register_peri</code>); their <code>on_clock</code> callback runs at <code>TO00</code>, the first clock of every machine cycle, before the MSL chart for that cycle executes.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md165"></a> This documents how gemu models the two integrated peripherals that hang off the CPU's organisation phase: the <b>card reader</b> (channel 1, input) and the <b>printer / console-typewriter</b> (channel 2, output + keyboard). Both attach through the <code><a class="el" href="structge__peri.html">ge_peri</a></code> callback list (<code>ge_register_peri</code>); their <code>on_clock</code> callback runs at <code>TO00</code>, the first clock of every machine cycle, before the MSL chart for that cycle executes.</p>
 <blockquote class="doxtable">
 <p>&zwj;Confidence: the <em>completion mechanism</em> below is <b>medium-high</b> — it is derived from the channel-2 / TPER flow charts (state b8 → alpha via <code>DU97</code>) and verified empirically against the funktionalcpu deck. The <em>per-character channel-2 transfer</em> (the <code>rSI</code> sequencer states) is <b>not yet wired</b> (the pragmatic one-shot stands in); capture is therefore best-effort. See "Limitations". The faithful <code>rSI</code> transfer states are now recovered from the manuals — see "CAN2 data-transfer phase (recovered evidence)" below. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md164"></a>
+<h1><a class="anchor" id="autotoc_md166"></a>
 CAN2 data-transfer phase (recovered evidence — dwg 14023130₁ sheet 18)</h1>
 <p>Source: <code>CPU/GE 120 CENTRAL PROCESSOR [7].pdf</code>, flow-chart foldout <b>dwg 14023130₁</b> titled <em>FASE TRASFERIMENTO DATI CANALE 2 / CHANNEL 2 DATA TRANSFER PHASE</em> (render-pg <b>36</b>; UCE 460; "for integrated reader and printer"). Read via page-image render at 500 DPI (no OCR text layer). Confidence: <b>high</b> for state codes/commands/branches as drawn; <b>medium</b> for a few faint command suffixes.</p>
 <blockquote class="doxtable">
@@ -58,7 +58,7 @@ CAN2 data-transfer phase (recovered evidence — dwg 14023130₁ sheet 18)</h1>
 `SI→SA`" — i.e. they run as genuine <code>RES2</code> cycles where <code>NA_knot</code> routes <code>rSA = rSI &amp; 0x0f</code> (<a class="el" href="signals_8h.html" title="Signals.">signals.h</a>). State <code>0C</code> "is performed on the arrival of each
 request from the integrated reader and printer." On completion the chart returns to the external request-wait (<code>SO→46</code>, the <code>b8</code> family) or, if a higher-priority <code>CAN3</code> request arrives, "interrupts the operation under way and performs an
 external sequence cycle" (the inter-channel priority/interrupt interplay).</p>
-<h1><a class="anchor" id="autotoc_md165"></a>
+<h1><a class="anchor" id="autotoc_md167"></a>
 The only input: a &lt;tt&gt;.cap&lt;/tt&gt; card deck</h1>
 <p>A <code>.cap</code> deck is the <b>only</b> thing gemu will load, because it is the only thing the machine will load. <code>./ge deck.cap</code> puts the cards in the hopper and drives <code>CLEAR → LOAD1 → LOAD → START</code>; <code>--deck</code> is an alias for the same thing. There is no image path, no <code>--bin</code>, no poke: those existed, and they were removed, because nothing on the iron corresponds to them.</p>
 <p><b>The IPL reads exactly one card.</b> 80 columns, nibble-packed by the channel-1 transfer into 40 bytes at <code>0x0000</code>, and executed there. <code>software/loader.txt</code> is the original listing and it fits that budget exactly — <code>0x0000..0x0027</code> is 40 bytes of two <code>PER</code> reads and a <code>JU 0x0028</code>. Everything after the first card is the <em>program's</em> doing.</p>
@@ -97,21 +97,21 @@ Buffer") — the CPU reads <code>mem[V4]</code> into <code>RO</code> and hands t
 </table>
 <p>| <code>FIRU</code> | emitted at end-of-print (<code>0A|0B</code>) | | <code>SA00</code>, <code>SA01</code> | sequencer/status bits gating the per-char loop |</p>
 <p>This is the Phase-3/Phase-5 wiring target: add states <code>0x02/0x03</code>, <code>0x04/0x06</code>, <code>0x0C/0x0E</code>, <code>0x0A/0x0B</code> to <code><a class="el" href="msl-states_8c.html">msl-states.c</a></code>, reached via <code>RES2 → rSI&amp;0x0f</code>, with <code>CE16</code> driving <code>channel_accept_output</code> (printer) and <code>CI34</code> the input read.</p>
-<h1><a class="anchor" id="autotoc_md166"></a>
+<h1><a class="anchor" id="autotoc_md168"></a>
 The external-operation organisation phase and state b8</h1>
 <p>An external instruction (<code>PER</code>, the channel-2 print/typewriter operation) runs the CPU through the organisation-phase sequence</p>
 <div class="fragment"><div class="line">65  e2 e0 e4 e6  65  c8  d8 d9 da db dc  cc ca  a8 a9 aa ab  b8</div>
 </div><!-- fragment --><p>and parks at <b>state b8</b>, the org-phase <em>external request-wait</em>. There the CPU suspends: the CPU-active request <code>RC00</code> drops, so the next-address knot (<code>NA_knot</code>, <a class="el" href="signals_8h.html" title="Signals.">signals.h</a>) yields 0 and the executing state <code>rSA</code> stays <b>0</b> (idle) while <code>rSO</code> holds <b>b8</b> pending. The wait is held in <code>state_00</code>, not <code>state_b8</code>.</p>
 <p><code>state_b8</code> is <b>shared</b> with the card reader's channel-1 input wait — the reader's "waiting for the next column" gap looks identical at the register level (<code>rSO=b8, rSA=0, RASI=1, lu08=0, RC00=0</code>).</p>
-<h2><a class="anchor" id="autotoc_md167"></a>
+<h2><a class="anchor" id="autotoc_md169"></a>
 The faithful exit (DU97)</h2>
 <p><code>state_b8</code> leaves to alpha when **<code>DU97</code>** is true. From <a class="el" href="signals_8h.html" title="Signals.">signals.h</a>:</p>
 <div class="fragment"><div class="line">DU97 = PUC2 ⊕ L2.3          (DU97A = !(PUC2 ^ L2.0 ^ L2.0 ^ L2.3), DU97 = !DU97A)</div>
 </div><!-- fragment --><p>With <code>PUC2</code> asserted (the channel-2 unit signalling ready/done) and <code>L2.3 = 0</code>, <code>DU97 = 1</code>, and <code>state_b8</code>'s own commands <code>CU01 / CU13 / CU14 / CU06</code> build the PER-completion future_state. The sequencer returns to <b>alpha at the post-PER instruction with the CPU context intact</b> — verified: the funktionalcpu deck then executes its real final-verify <code>CMC</code> at <code>0x19d4</code> cleanly (correct PO, no register corruption). Forcing <code>future_state</code> from outside instead lands alpha at a garbage PO (<code>0x6324</code>), because it skips the org-phase cleanup that restores the fetch context — so the completion must go through the machine's own microcode.</p>
-<h1><a class="anchor" id="autotoc_md168"></a>
+<h1><a class="anchor" id="autotoc_md170"></a>
 Card reader — channel 1 (&lt;tt&gt;cardreader.c&lt;/tt&gt;)</h1>
 <p>Feeds a <code>.cap</code> deck through the integrated-reader handshake (<code>reader_setup_to_send</code> / <code>reader_clear_sending</code>), gated on <code>RASI</code>. See the file header for the per-byte / per-card state machine and end-of-card cadence. This is the bootstrap LOAD path (<code>./ge --deck X.cap</code>, or <code>mount_deck</code> + CLEAR/LOAD/START in the wasm console).</p>
-<h1><a class="anchor" id="autotoc_md169"></a>
+<h1><a class="anchor" id="autotoc_md171"></a>
 The PER order block, and which channel an order names</h1>
 <p>Transcribed from the page, not inferred: <b>CPU[4] §5.8.2 / §5.8.3.1</b>, drawing <b>30004122 o/A</b>, folios 72-73 (emiss. 27/1/69).</p>
 <div class="fragment"><div class="line">PER / PERI :  [ OP ][ C ][ I1        ]</div>
@@ -154,7 +154,7 @@ printer." </p>
 <p><b>Z bit 02</b> asks for a preliminary availability check: <code>1</code> = ignore the unit's status and perform the instruction anyway; <code>0</code> = block the CPU in a waiting period until the unit is available again (for <code>LPER</code>, fold availability into the qualitative result instead of waiting).</p>
 <p>gemu models the channel decode in <code>CE02</code> (<code><a class="el" href="msl-commands_8c.html">msl-commands.c</a></code>): <code>L2</code> holds Z, and <code><a class="el" href="bit_8h.html#a189a2b9ea409ca0c1fe090d68a1dcc57">BIT(rL2, 0)</a></code> latches <code>PB26</code> for channel 2, while <code>L1</code> bits 6/7 latch <code>PB06</code>/<code>PB07</code>, the connector select that <code>PC111</code>/<code>PC121</code>/<code>PC131</code>/<code>PC141</code> decode.</p>
 <p><b>This is how <code><a class="el" href="printer_8c.html">printer.c</a></code> knows an order is its own.</b> State <code>c8</code> is the org phase of <em>every</em> peripheral order — the channel-1 card reader walks through it too — so the printer claims one only when its Z names channel 2. The real SAT decks agree with the manual: every printer order in <code>printermechanicaltest.cap</code> carries Z bit 00 (<code>Z=51</code> line-printer WRITE, <code>Z=81</code>, <code>Z=C5</code> paper space), while the centre-card read in the same deck carries <code>Z=00</code>, channel 1.</p>
-<h1><a class="anchor" id="autotoc_md170"></a>
+<h1><a class="anchor" id="autotoc_md172"></a>
 Printer / console-typewriter — channel 2 (&lt;tt&gt;printer.c&lt;/tt&gt;)</h1>
 <p>Pragmatic model. gemu drives no channel-2 timing at signal level, so a print <code>PER</code> would hang at the b8 wait forever. The printer peripheral:</p>
 <ol type="1">
@@ -162,7 +162,7 @@ Printer / console-typewriter — channel 2 (&lt;tt&gt;printer.c&lt;/tt&gt;)</h1>
 <li><b>Captures</b> (best-effort): reads up to 160 bytes of the print order block at the channel-2 operand addresser <code>rV2</code>, rendering each byte through the <b>GE 100-series internal graphic set</b> (<code><a class="el" href="gecode_8c.html">gecode.c</a></code> — the machine's own character code, <em>not</em> ASCII; non-graphic codes → <code>.</code>), stopping at NUL, into <code>integrated_printer.out[]</code>. The glyph table is single-sourced with the disassembler's DB-comment glyphs (<code>gdis</code> links the same <code><a class="el" href="gecode_8c.html">gecode.c</a></code>).</li>
 <li><b>Completes</b>: asserts <code>PUC2</code> (→ <code>DU97 = 1</code>) and <code>RC00</code> (→ <code>NA_knot</code> routes <code>rSO=b8</code> into <code>rSA</code>) so the machine's own <code>state_b8</code> microcode returns to alpha. One-shot: <code>rSO</code> leaves b8 on the next cycle.</li>
 </ol>
-<h2><a class="anchor" id="autotoc_md171"></a>
+<h2><a class="anchor" id="autotoc_md173"></a>
 gemu completion cells</h2>
 <p>For the current <code>gec</code> stdio runtime and the halting <code>assembler/examples/print.s</code> demo, gemu also exposes a small completion convention in low memory:</p>
 <ul>
@@ -171,7 +171,7 @@ gemu completion cells</h2>
 </ul>
 <p>These are <b>gemu runtime cells</b>, not claimed hardware registers from the PTR manuals. They exist so compiled C stdio and simple assembly demos can wait for the overlapped typewriter/printer transfer to finish before halting.</p>
 <p><code>present</code> is set only by <code>printer_register</code>, so bootstrap/reader tests (which do not register a printer) leave it 0 and are completely unaffected.</p>
-<h2><a class="anchor" id="autotoc_md172"></a>
+<h2><a class="anchor" id="autotoc_md174"></a>
 Example: load a small printer program</h2>
 <p><code>assembler/examples/print.s</code> is the shortest end-to-end channel-2 output demo. It issues a <code>PER 0x80, order</code>, waits for <code>__io_status</code> at <code>0x0031</code> to become <code>0x01</code>, then halts.</p>
 <p>Punch it:</p>
@@ -189,7 +189,7 @@ Example: load a small printer program</h2>
 <p>Run it in wasm:</p>
 <div class="fragment"><div class="line">make -C software/gemu wasm</div>
 </div><!-- fragment --><p>Then open the wasm console, choose <code>/tmp/print.cap</code> in the simulator gadget, press <code>Put In Hopper</code>, then on the panel press <code>CLEAR</code>, <code>LOAD1</code>, <code>LOAD</code>, <code>START</code>.</p>
-<h2><a class="anchor" id="autotoc_md173"></a>
+<h2><a class="anchor" id="autotoc_md175"></a>
 Example: load the authentic printer deck</h2>
 <p>The real punched deck in the dump set is <code>software/DUMP1/printermechanicaltest.cap</code>. This is a full card deck, not a direct binary image.</p>
 <p>CLI, authentic reader/bootstrap path:</p>
@@ -207,13 +207,13 @@ Example: load the authentic printer deck</h2>
 <li>Press <code>START</code>.</li>
 </ol>
 <p>In the browser, <code>.cap</code> currently follows the staged scatter-image path rather than the authentic multi-card reader chain, so use the <code>--deck</code> CLI form above when you specifically want to exercise the real bootstrap/read path.</p>
-<h2><a class="anchor" id="autotoc_md174"></a>
+<h2><a class="anchor" id="autotoc_md176"></a>
 Two-way chat (wasm + interactive CLI)</h2>
 <ul>
 <li><b>Output</b> — <code><a class="el" href="printer_8c.html#a890616d97cdcf2cc34aea642ea1418ce">printer_output()</a></code> / <code><a class="el" href="printer_8c.html#a1d72251ae79e373f43eee9a1c5367e83">printer_output_len()</a></code> expose the captured paper feed. The wasm front-end (<code>console/wasm/console.html</code>) drains it each frame into a paper-teletype panel (<code>#teleprinter</code>), drawn deliberately unlike the metal console since it represents a peripheral, not a console control. The <code>--interactive</code> CLI echoes it as <code>PRN&gt; …</code>.</li>
 <li><b>Input</b> — <code><a class="el" href="printer_8c.html#a968e4c8d393a4a63a9e3de02305913db">printer_feed_key()</a></code> enqueues operator-keyboard bytes into <code>integrated_printer.kbd[]</code> (a ring). The wasm chat input and the CLI's non-blocking stdin feed it.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md175"></a>
+<h1><a class="anchor" id="autotoc_md177"></a>
 Limitations (honest scope)</h1>
 <ul>
 <li>The <b>byte-transfer core is modelled for the documented paths</b>:<ul>
@@ -229,7 +229,7 @@ Limitations (honest scope)</h1>
 </li>
 <li>The funktionalcpu deck, after the completed print PER, takes its <code>report_restart</code> branch (the final 40-char signature <code>CMC</code> at <code>0x19d4</code> compares <code>mem[0x1100]</code> vs <code>mem[0x0036]</code> and mismatches) — i.e. it loops as a continuous self-test. That is <b>deck logic, not a printer issue</b>: the End HLT <code>0x19DE</code> is only reached when that signature matches.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md176"></a>
+<h1><a class="anchor" id="autotoc_md178"></a>
 Tests</h1>
 <p><code>tests/printer.c</code>:</p><ul>
 <li><code>printer.present_completes_channel2_per</code> — with the printer, the print PER completes (output captured) instead of parking at b8.</li>
