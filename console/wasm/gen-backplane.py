@@ -208,11 +208,180 @@ def variants(name):
     return out
 
 
+# ---------------------------------------------------------------- the manual
+
+# "**Chapter 052 (cp06 p129)**" -- a page a human read off the scan, which is
+# worth more than anything derived below.
+CHAP_PAGE = re.compile(r"\*\*Chapter\s+0*(\d{1,3})\s*\(cp06\s*p(\d{1,4})\)")
+CHAPTER_IN_TEXT = re.compile(r"CHAPTER\s*0*(\d{1,3})\b")
+
+
+def longest_rising(pairs):
+    """Keep the longest run of (page, chapter) that rises with the page.
+
+    The gate sheets are bound in chapter order, so a page whose OCR'd chapter
+    number goes backwards is a misread, not a sheet. Dropping those costs a
+    few real pages and keeps the index from pointing anywhere confidently
+    wrong.
+    """
+    if not pairs:
+        return []
+    best = [1] * len(pairs)
+    prev = [-1] * len(pairs)
+    for i in range(len(pairs)):
+        for j in range(i):
+            if pairs[j][1] < pairs[i][1] and best[j] + 1 > best[i]:
+                best[i], prev[i] = best[j] + 1, j
+    i = best.index(max(best))
+    out = []
+    while i >= 0:
+        out.append(pairs[i])
+        i = prev[i]
+    return out[::-1]
+
+
+def read_manual(manual_dir, docs_dir):
+    """Index the scanned manuals on ge120.xyz: which page draws a chapter, and
+    which page catalogues a card.
+
+    Wants a directory holding the explorer's own data, fetched once:
+
+        for f in manuals data/text/cp06 data/text/cp09 data/text/cp10F; do
+            curl -sO --create-dirs --output-dir <dir> https://ge120.xyz/data/$f.json
+        done
+
+    Without it the page still works; it just cannot offer the sheets.
+    """
+    def load(name):
+        p = os.path.join(manual_dir, name)
+        return json.load(open(p)) if os.path.exists(p) else None
+
+    manuals = load("manuals.json")
+    if not manuals:
+        return None
+    out = {"site": "https://ge120.xyz/", "pdf": "manuals/",
+           "vols": {}, "chapters": {}, "cards": {}}
+    for m in manuals.get("manuals", []):
+        out["vols"][m["slug"]] = {
+            "t": m.get("title", ""),
+            "n": m.get("pages"),
+            # the scan itself: the explorer renders it with pdf.js, but the
+            # file is served plainly and with byte ranges, so a frame can open
+            # it at one page without pulling the whole binder
+            "f": m.get("file", ""),
+        }
+
+    # chapters: hand-read pairs win; OCR fills the rest where it stays in order
+    cp06 = load("cp06.json")
+    if cp06:
+        pages = cp06["pages"]
+        out["_flat_cp06"] = {n: t.upper() for n, t in enumerate(pages) if t}
+        seen = []
+        for n, t in enumerate(pages):
+            if not t:
+                continue
+            got = {int(x) for x in CHAPTER_IN_TEXT.findall(t.upper())}
+            if len(got) == 1:
+                seen.append((n, got.pop()))
+        for page, ch in longest_rising(seen):
+            out["chapters"][f"{ch:03d}"] = {"p": page, "src": "ocr"}
+    for path in sorted(glob.glob(os.path.join(docs_dir, "**/*.md"), recursive=True)):
+        for ch, page in CHAP_PAGE.findall(open(path).read()):
+            out["chapters"][f"{int(ch):03d}"] = {"p": int(page), "src": "read"}
+
+    # Fill the gaps between anchors, but only across a stretch where the sheets
+    # clearly run one page per chapter -- the chapter gap and the page gap
+    # agree.  Where they disagree the binder has skipped or doubled up and
+    # there is nothing to interpolate along, so those chapters stay unknown
+    # rather than get a number that looks authoritative and is not.
+    #
+    # Held out against the hand-read anchors this predicts 24 of 25 exactly;
+    # the miss (chapter 158) drifts four pages, which is why the result is
+    # marked "between" and the page is offered as approximate.
+    # A page whose own text names one plausible chapter and it is not the one
+    # being interpolated onto it is a page that says otherwise; leave it alone.
+    # The threshold drops readings like "CHAPTER 3", which are OCR noise off a
+    # drawing rather than a sheet title.
+    says = {}
+    if cp06:
+        for n, t in enumerate(cp06["pages"]):
+            if not t:
+                continue
+            got = {int(x) for x in CHAPTER_IN_TEXT.findall(t.upper()) if int(x) >= 20}
+            if len(got) == 1:
+                says[n] = got.pop()
+
+    anchors = sorted((int(c), v["p"]) for c, v in out["chapters"].items())
+    for (c1, p1), (c2, p2) in zip(anchors, anchors[1:]):
+        if c2 - c1 > 1 and c2 - c1 == p2 - p1:
+            for k in range(1, c2 - c1):
+                ch, page = c1 + k, p1 + k
+                if says.get(page, ch) != ch:
+                    continue
+                out["chapters"].setdefault(f"{ch:03d}",
+                                           {"p": page, "src": "between"})
+
+    # cards: the catalogues print the part number on the entry's own pages
+    for slug in ("cp09", "cp10F"):
+        vol = load(f"{slug}.json")
+        if not vol:
+            continue
+        for n, t in enumerate(vol["pages"]):
+            if not t:
+                continue
+            flat = re.sub(r"[^A-Z0-9]", "", t.upper())
+            out.setdefault("_flat", {})[(slug, n)] = flat
+    return out
+
+
+def index_types(manual, types, docs_dir):
+    """Pages for card types that carry no part number at all.
+
+    COCA is the case this exists for: thirty positions along the edges of rows
+    G to N whose card_code is blank on every layout page, because a COCA is not
+    a circuit card -- it is the connector the cable loom lands on, and it is
+    drawn on cp06's connector sheets rather than catalogued in cp09/cp10F.
+    """
+    flat = manual.get("_flat_cp06") or {}
+    if not flat:
+        return
+    for name in sorted(types):
+        if len(name) < 4:
+            continue
+        pages = sorted(n for n, txt in flat.items()
+                       if re.search(r"\b" + re.escape(name) + r"\b", txt))
+        if pages:
+            manual.setdefault("types", {})[name] = {
+                "v": "cp06", "p": pages[0], "n": len(pages)}
+
+
+def index_cards(manual, codes):
+    """code -> {v, p}: the first catalogue page printing that part number."""
+    flat = manual.pop("_flat", {})
+    if not flat:
+        return
+    for code in sorted(codes):
+        norm = re.sub(r"[^A-Z0-9]", "", code.upper())
+        if len(norm) < 6:
+            continue
+        for cand in variants(norm):
+            hit = next(((s, n) for (s, n), txt in sorted(flat.items())
+                        if cand in txt), None)
+            if hit:
+                entry = {"v": hit[0], "p": hit[1]}
+                if cand != norm:
+                    entry["as"] = cand
+                manual["cards"][code] = entry
+                break
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser()
     ap.add_argument("--atlas", default=os.path.join(here, "../../../atlas"))
     ap.add_argument("--docs", default=os.path.join(here, "../../docs/signals"))
+    ap.add_argument("--manual", default=os.path.join(here, "../../../manual-cache"),
+                    help="directory of ge120.xyz data JSONs (see read_manual)")
     ap.add_argument("-o", "--out", default=os.path.join(here, "backplane.js"))
     args = ap.parse_args()
 
@@ -256,6 +425,20 @@ def main():
         for name in names:
             want(name)
 
+    manual = read_manual(args.manual, args.docs)
+    if manual:
+        codes = {c["code"] for row in ROWS for c in cards[row].values()
+                 if c.get("code")}
+        # a type that never carries a part number is not a catalogued card
+        coded, uncoded = set(), set()
+        for row in ROWS:
+            for c in cards[row].values():
+                if c.get("type") and c["type"] != "//////":
+                    (coded if c.get("code") else uncoded).add(c["type"])
+        index_types(manual, uncoded - coded, args.docs)
+        index_cards(manual, codes)
+        manual.pop("_flat_cp06", None)
+
     data = {
         "rows": ROWS,
         "tiers": [list(t) for t in TIERS],
@@ -266,6 +449,18 @@ def main():
         "sigs": used,
         "docPins": located,
     }
+    if manual:
+        data["manual"] = manual
+        by = {}
+        for c in manual["chapters"].values():
+            by[c["src"]] = by.get(c["src"], 0) + 1
+        print(f"manual: {len(manual['chapters'])} chapters located "
+              f"({by.get('read', 0)} read off the page, {by.get('ocr', 0)} from "
+              f"the OCR layer, {by.get('between', 0)} interpolated between "
+              f"anchors), {len(manual['cards'])} card codes found in a catalogue")
+    else:
+        print(f"manual: no cache at {args.manual} — the sheets will not be "
+              f"offered (see read_manual for the fetch)")
 
     filled = sum(len(pins[r]) for r in ROWS)
     named = sum(1 for r in ROWS for n in pins[r].values() for x in n if x)

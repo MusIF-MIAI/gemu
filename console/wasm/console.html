@@ -1236,6 +1236,173 @@ padding: 1px;
 #pin_info .pi-net { color: #eee; }
 #pin_info .pi-dim { color: #6a6a6a; }
 #pin_info .pi-warn { color: #c98b5a; }
+#pin_info .netlink { color: #cfae63; text-decoration: none; border-bottom: 1px dotted #6b5a2a; }
+#pin_info .netlink:hover { color: #f0d089; border-color: #f0d089; }
+
+/* ---- the board sheet ---------------------------------------------------- *
+ * Double-click a board and everything else goes behind this. It is modal on
+ * purpose: you are reading one card, and the rack is not going anywhere. */
+#board_overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.2rem;
+  background: rgba(4, 5, 6, 0.72);
+  backdrop-filter: blur(2px);
+}
+#board_overlay[hidden] { display: none; }
+
+#board_sheet {
+  width: min(1240px, 100%);
+  height: min(860px, 100%);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: #121417;
+  border: 1px solid #343a40;
+  border-radius: 5px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+#bs_head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid #262b30;
+  background: #0e1013;
+  flex-wrap: wrap;
+}
+#bs_pos {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 13pt;
+  letter-spacing: 0.08em;
+  color: #e8c877;
+}
+#bs_type {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 10pt;
+  color: #eee;
+}
+#bs_code {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 9pt;
+  color: #8a8a8a;
+}
+#bs_close {
+  margin-left: auto;
+  appearance: none;
+  background: #1a1d21;
+  border: 1px solid #3a4045;
+  color: #cfcfcf;
+  font-size: 12pt;
+  line-height: 1;
+  padding: 0.25rem 0.6rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+#bs_close:hover { border-color: #d1bb83; color: #d1bb83; }
+
+#bs_body {
+  display: grid;
+  grid-template-columns: minmax(19rem, 24rem) minmax(0, 1fr);
+  min-height: 0;
+}
+
+#bs_left {
+  border-right: 1px solid #262b30;
+  overflow: auto;
+  padding: 0.8rem 0.9rem 1.2rem;
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 8.5pt;
+  line-height: 1.5;
+}
+#bs_left h4 {
+  margin: 1.1rem 0 0.4rem;
+  font-size: 7.5pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7d8288;
+  font-weight: normal;
+}
+#bs_left h4:first-child { margin-top: 0; }
+#bs_note { color: #c98b5a; }
+
+.pinrow {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 0.4rem;
+  padding: 0.1rem 0.25rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.pinrow:hover { background: #1b1f23; }
+.pinrow .pn { color: #b99a4e; }
+.pinrow .nt { color: #dcdcdc; }
+.pinrow .ch { color: #6f7d88; }
+.pinrow.blank .nt { color: #4e5459; }
+
+.chiplist { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+  appearance: none;
+  background: #1a1d21;
+  border: 1px solid #333a40;
+  color: #cfcfcf;
+  font: inherit;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.chip:hover { border-color: #d1bb83; color: #d1bb83; }
+.chip[aria-pressed="true"] { background: #17150f; border-color: #d1bb83; color: #e8c877; }
+.chip small { color: #6f7d88; }
+
+#bs_right { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+#bs_tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid #262b30;
+  flex-wrap: wrap;
+  align-items: center;
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 8.5pt;
+}
+#bs_frame_wrap { position: relative; min-height: 0; background: #08090a; }
+#bs_frame { width: 100%; height: 100%; border: 0; display: block; }
+/* An author `display` beats the UA rule for [hidden], so this needs saying
+ * explicitly: without it the panel stays laid out over the whole frame, and
+ * being transparent it looks gone while swallowing every wheel and click the
+ * PDF viewer underneath should have had. */
+#bs_blank[hidden] { display: none; }
+#bs_blank {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  color: #6f7d88;
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  font-size: 9pt;
+  line-height: 1.6;
+}
+#bs_out {
+  margin-left: auto;
+  color: #7d8288;
+  text-decoration: none;
+  border-bottom: 1px dotted #4a5157;
+}
+#bs_out:hover { color: #d1bb83; border-color: #d1bb83; }
+
+@media (max-width: 1100px) {
+  #bs_body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  #bs_left { border-right: 0; border-bottom: 1px solid #262b30; max-height: 34vh; }
+}
 
 @media (max-width: 1500px) {
   #app_shell {
@@ -1737,6 +1904,27 @@ padding: 1px;
     </div>
 </div>
 </main>
+
+<div id=board_overlay hidden role=dialog aria-modal=true aria-labelledby=bs_pos>
+  <div id=board_sheet>
+    <div id=bs_head>
+      <span id=bs_pos></span>
+      <span id=bs_type></span>
+      <span id=bs_code></span>
+      <button id=bs_close type=button title="Close (Esc)" aria-label=Close>&times;</button>
+    </div>
+    <div id=bs_body>
+      <div id=bs_left></div>
+      <div id=bs_right>
+        <div id=bs_tabs></div>
+        <div id=bs_frame_wrap>
+          <iframe id=bs_frame title="GE-120 manual" referrerpolicy=no-referrer></iframe>
+          <div id=bs_blank hidden></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </div><!-- /#workspace -->
 
 
@@ -2082,35 +2270,60 @@ function makeStage(host, world, opts = {}) {
                   ev.clientX - b.left, ev.clientY - b.top)
     }, { passive: false })
 
+    /* Capture is taken only once the pointer has really moved.
+     *
+     * Capturing on press is the obvious way to keep a drag alive outside the
+     * element, and it silently breaks everything you can click on inside it:
+     * while a pointer is captured the compatibility mouse events go to the
+     * CAPTURING element, so click and dblclick arrive with target = the stage
+     * div and never with the board or the contact under the cursor. Waiting
+     * for movement means a press that does not move is an ordinary click. */
+    const DRAG_SLOP = 4
     let drag = null
     host.addEventListener("pointerdown", ev => {
         if (ev.button !== 0) return
-        drag = { x: ev.clientX, y: ev.clientY, tx: st.tx, ty: st.ty, moved: 0 }
-        host.setPointerCapture(ev.pointerId)
-        host.classList.add("dragging")
+        drag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY,
+                 tx: st.tx, ty: st.ty, moved: 0, held: false }
     })
     host.addEventListener("pointermove", ev => {
         if (!drag) return
         const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y
         drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy))
+        if (!drag.held && drag.moved > DRAG_SLOP) {
+            try { host.setPointerCapture(drag.id); drag.held = true } catch (e) {}
+            host.classList.add("dragging")
+        }
         st.tx = drag.tx + dx
         st.ty = drag.ty + dy
         apply()
     })
     const endDrag = ev => {
         if (!drag) return
-        /* a click that never moved is a click, not the end of a pan */
-        st.suppressClick = drag.moved > 4
+        /* a press that never moved is a click, not the end of a pan */
+        st.suppressClick = drag.moved > DRAG_SLOP
+        if (drag.held) { try { host.releasePointerCapture(drag.id) } catch (e) {} }
         drag = null
         host.classList.remove("dragging")
-        host.releasePointerCapture?.(ev.pointerId)
     }
     host.addEventListener("pointerup", endDrag)
     host.addEventListener("pointercancel", endDrag)
+    /* Until the drag takes capture the release can land anywhere, and a press
+     * left armed would make the next stray move over the stage pan. */
+    window.addEventListener("pointerup", endDrag)
 
     new ResizeObserver(() => { if (st.autofit) st.fit() }).observe(host)
     st.autofit = true
     return st
+}
+
+/* What the pointer is over, whatever the event says its target is. Capture,
+ * and anything else that retargets, would otherwise hide the thing that was
+ * actually clicked; the point under the cursor cannot lie. */
+function hitAt(ev, selector) {
+    const direct = ev.target && ev.target.closest && ev.target.closest(selector)
+    if (direct) return direct
+    const under = document.elementFromPoint(ev.clientX, ev.clientY)
+    return (under && under.closest) ? under.closest(selector) : null
 }
 
 function wireZoomButtons(head, st) {
@@ -2181,6 +2394,63 @@ function loadBackplane() {
 const cardAt = (bp, row, slot) => (bp.cards[row] || {})[slot] || null
 const pinsAt = (bp, row, slot) => (bp.pins[row] || {})[slot] || null
 
+/* Pin 17 is the zero rail on every board. The layout leaves it blank at 613 of
+ * the 619 populated positions because it is not a signal anyone routes; at the
+ * six where the scan did read something it says ZERO0, which is the same rail.
+ * So it is drawn and reported as ground everywhere, whatever the cell holds. */
+const GND_PIN = 17, GND = "GND"
+const netAt = (bp, row, slot, pin) =>
+    pin === GND_PIN ? GND : ((pinsAt(bp, row, slot) || [])[pin - 1] || "")
+
+/* Pins wired together carry the same signal, but the same signal can be read
+ * two ways at two pins -- the scans confuse O with 0 and I with 1. Group on a
+ * canonical spelling (the schematics' name where the index knows it) so a
+ * net's members find each other instead of splitting on a misread character. */
+function canonNet(bp, net) {
+    if (!net) return ""
+    if (net === GND) return GND
+    const g = bp.sigs[net]
+    return ((g && g.as) || net).toUpperCase().replace(/O/g, "0").replace(/I/g, "1")
+}
+
+let netIndex = null
+function netMembers(bp, canon) {
+    if (!canon) return []
+    if (canon === GND) {
+        const out = []
+        for (const row of bp.rows)
+            for (const slot in bp.pins[row] || {})
+                out.push({ row, slot: +slot, pin: GND_PIN, net: GND })
+        return out
+    }
+    if (!netIndex) {
+        netIndex = new Map()
+        for (const row of bp.rows)
+            for (const slot in bp.pins[row] || {})
+                bp.pins[row][slot].forEach((net, i) => {
+                    if (!net || i + 1 === GND_PIN) return
+                    const k = canonNet(bp, net)
+                    if (!netIndex.has(k)) netIndex.set(k, [])
+                    netIndex.get(k).push({ row, slot: +slot, pin: i + 1, net })
+                })
+    }
+    return netIndex.get(canon) || []
+}
+
+/* The board seated at a position, as the front view draws it: the tier pair
+ * when one part number appears against both rows, otherwise the single row
+ * that carries a card, and nothing where the position is empty. */
+function boardRowsAt(bp, row, slot) {
+    const tier = (bp.tiers || []).find(t => t.indexOf(row) >= 0)
+    const has = c => !!(c && (c.code || (c.type && c.type !== "//////")))
+    if (tier) {
+        const [top, bot] = tier
+        const a = cardAt(bp, top, slot), b = cardAt(bp, bot, slot)
+        if (has(a) && has(b) && a.code && a.code === b.code) return [top, bot]
+    }
+    return has(cardAt(bp, row, slot)) ? [row] : null
+}
+
 /* ---- the front ---------------------------------------------------------- *
  * Boards, blue, seen edge-on the way they sit in the cage. A board normally
  * spans both rows of its tier -- one part number appears against A and again
@@ -2200,7 +2470,7 @@ function buildFront(bp) {
         min: 0.08, max: 26,
     })
     const scene = frontStage.scene
-    let full = 0, half = 0, empty = 0
+    let full = 0, half = 0, empty = 0, cocas = 0
 
     const defs = svgEl("defs", {})
     const grad = svgEl("linearGradient",
@@ -2210,6 +2480,9 @@ function buildFront(bp) {
     grad.appendChild(svgEl("stop", { offset: "1",    "stop-color": "#3f7095" }))
     defs.appendChild(grad)
     scene.appendChild(defs)
+
+    const isCoca = c => !!(c && (c.type || "").toUpperCase() === "COCA")
+    const cocaAt = []
 
     bp.tiers.forEach(([top, bot], ti) => {
         const g = svgEl("g", {})
@@ -2224,7 +2497,13 @@ function buildFront(bp) {
         for (let slot = 1; slot <= 40; slot++) {
             const x = colX(slot)
             const a = cardAt(bp, top, slot), b = cardAt(bp, bot, slot)
-            const spans = a && b && a.code && a.code === b.code
+            /* A COCA is not a card: it is the connector the cable loom lands
+             * on, it carries no part number on any layout page, and cp09/cp10F
+             * do not catalogue it -- cp06's connector sheets draw it instead.
+             * Both rows of the pair are always COCA together. */
+            const coca = isCoca(a) || isCoca(b)
+            const spans = (a && b && a.code && a.code === b.code)
+                       || (isCoca(a) && isCoca(b))
             const seats = spans ? [[a, y, tierH, "#4f87ae"]]
                                 : [[a, y, ROW_H, "#6ea3c4"],
                                    [b, y + ROW_H + ROW_GAP, ROW_H, "#6ea3c4"]]
@@ -2237,8 +2516,36 @@ function buildFront(bp) {
                     }))
                     continue
                 }
-                spans ? full++ : half++
-                const board = svgEl("g", {})
+                if (coca) cocas++
+                else if (spans) full++
+                else half++
+                /* the rows this one board occupies, for the sheet */
+                const board = svgEl("g", {
+                    class: "board",
+                    "data-rows": spans ? top + bot : (card === a ? top : bot),
+                    "data-slot": slot,
+                })
+                board.style.cursor = "pointer"
+                if (coca) {
+                    /* Naked: no blue handle at all. The board face is bare and
+                     * the conductors leave the top as a thick cable that bends
+                     * away towards the side of the panel. */
+                    board.appendChild(svgEl("rect", {
+                        x: x + 1, y: sy, width: COL_W - 2, height: sh, rx: 0.8,
+                        fill: "#38402f", stroke: "#232a1e", "stroke-width": 0.5,
+                    }))
+                    board.appendChild(svgEl("rect", {
+                        x: x + 1, y: sy + sh - 6, width: COL_W - 2, height: 5,
+                        rx: 0.5, fill: "#b8952f", opacity: "0.65",
+                    }))
+                    for (let i = 0; i < 3; i++)
+                        board.appendChild(svgEl("rect", {
+                            x: x + 2.5 + i * 3.2, y: sy + 4,
+                            width: 1.4, height: sh - 12,
+                            fill: "#4c563f", opacity: 0.8,
+                        }))
+                    cocaAt.push({ x: x + COL_W / 2, y: sy, slot, tier: ti })
+                } else {
                 board.appendChild(svgEl("rect", {
                     x, y: sy, width: COL_W, height: sh, rx: 1.5,
                     fill: spans ? "url(#boardface)" : tint,
@@ -2254,6 +2561,7 @@ function buildFront(bp) {
                     x: x + 2, y: sy + sh - 7, width: COL_W - 4, height: 4,
                     rx: 0.6, fill: "#2c6a4a", opacity: "0.55",
                 }))
+                }
                 /* the part number is printed in red down the handle, and the
                  * slot number is on the tape above it. Both only legible up
                  * close, which is why they are hidden until the zoom earns it */
@@ -2278,6 +2586,7 @@ function buildFront(bp) {
                 title.textContent =
                     `${spans ? top + "+" + bot : (card === a ? top : bot)}${slot}`
                     + ` — ${card.type || "?"}${card.code ? " (" + card.code + ")" : ""}`
+                    + " — double-click for the board"
                 board.appendChild(title)
                 g.appendChild(board)
             }
@@ -2294,6 +2603,35 @@ function buildFront(bp) {
         }
         scene.appendChild(g)
     })
+
+    /* ---- the cable loom ------------------------------------------------- *
+     * Every COCA continues into a thick cable that leaves the top of the
+     * board, bends, and runs off to the nearer side of the panel, where the
+     * looms gather and drop down the outside of the frame. Drawn last so the
+     * cables lie over the cages, which is where they are. */
+    const loom = svgEl("g", {})
+    cocaAt.sort((p, q) => p.x - q.x).forEach((c, i) => {
+        /* out to whichever side is nearer, in x -- not in slot number, which
+         * runs the other way on the front */
+        const left = c.x < MARGIN + rackW / 2
+        const edge = left ? MARGIN - 16 : MARGIN + rackW + 16
+        const off = (i % 5) * 2.4                  /* the bundle is not neat */
+        const rise = 16 + off
+        const path = `M ${c.x} ${c.y + 3}`
+            + ` C ${c.x} ${c.y - rise * 0.7}, ${c.x} ${c.y - rise},`
+            + ` ${c.x + (left ? -8 : 8)} ${c.y - rise}`
+            + ` L ${edge + (left ? 10 : -10)} ${c.y - rise}`
+            + ` Q ${edge} ${c.y - rise}, ${edge} ${c.y - rise + 14 + off}`
+            + ` L ${edge} ${c.y - rise + 46 + off * 2}`
+        for (const [w, col, op] of [[5.2, "#15171a", 1], [4, "#4a4d52", 1],
+                                    [1.2, "#6a6e75", 0.6]])
+            loom.appendChild(svgEl("path", {
+                d: path, fill: "none", stroke: col, "stroke-width": w,
+                "stroke-linecap": "round", "stroke-linejoin": "round",
+                opacity: op,
+            }))
+    })
+    scene.appendChild(loom)
 
     /* ---- the core store ------------------------------------------------ *
      * Each stack is a dark red core mat behind a perspex cover between light
@@ -2398,7 +2736,8 @@ function buildFront(bp) {
 
     document.getElementById("front_count").textContent =
         `${full + half} boards fitted — ${full} spanning two rows,`
-        + ` ${half} in a single row — of 720 row positions`
+        + ` ${half} in a single row — plus ${cocas} COCA connectors,`
+        + ` of 720 row positions`
 
     /* Labels are noise at rack scale and the point of zooming at board scale. */
     const codes = scene.querySelectorAll(".b-code")
@@ -2410,6 +2749,14 @@ function buildFront(bp) {
         slots.forEach(e => e.style.display = showSlot)
     }
     wireZoomButtons(document.querySelector("#view_front .rack-tools"), frontStage)
+
+    host.addEventListener("dblclick", ev => {
+        const g = hitAt(ev, "g.board")
+        if (!g) return
+        ev.preventDefault()
+        openBoard(bp, g.dataset.rows.split(""), +g.dataset.slot)
+    })
+
     frontStage.fit()
     return frontStage
 }
@@ -2434,7 +2781,11 @@ function pinPos(pin) {
     return { x: PIN_X_EVEN, y: PIN_TOP + (pin / 2 - 0.5) * PIN_PITCH }
 }
 
-let backStage = null, backLive = new Map(), selectedPin = null
+let backStage = null, backLive = new Map()
+/* what is picked, and the whole net it belongs to */
+let selectedPin = null, selectedNet = "", selectedKeys = new Set(), selectedOn = []
+const MARK_LIMIT = 120        /* outlining every position tells you nothing */
+
 function buildBack(bp) {
     const host = document.getElementById("back_stage")
     if (backStage) return backStage
@@ -2445,8 +2796,10 @@ function buildBack(bp) {
     })
     const scene = backStage.scene
     const blocks = svgEl("g", {})
+    const netmark = svgEl("g", {})
     const detail = svgEl("g", {})
     scene.appendChild(blocks)
+    scene.appendChild(netmark)
     scene.appendChild(detail)
 
     /* the coarse layer: one block per position, always present */
@@ -2455,11 +2808,22 @@ function buildBack(bp) {
         for (let slot = 1; slot <= 40; slot++) {
             const names = pinsAt(bp, row, slot)
             const n = names ? names.filter(Boolean).length : 0
-            blocks.appendChild(svgEl("rect", {
+            const block = svgEl("rect", {
                 x: colXBack(slot), y, width: CONN_W, height: ROW_H, rx: 1.5,
                 fill: n ? "#1d1f22" : "#141516",
                 stroke: n ? "#33383d" : "#1c1e20", "stroke-width": 0.5,
-            }))
+                class: "pos", "data-row": row, "data-slot": slot,
+            })
+            const card = cardAt(bp, row, slot)
+            const bt = svgEl("title", {})
+            bt.textContent = `${row}${slot}`
+                + (card && (card.type || card.code)
+                    ? ` — ${card.type || "?"}`
+                      + `${card.code ? " (" + card.code + ")" : ""}`
+                      + ` — double-click for the board`
+                    : " — empty")
+            block.appendChild(bt)
+            blocks.appendChild(block)
             if (n) {
                 /* a hint of the two pin columns, so the rack reads as a
                  * backplane even before the contacts are drawn */
@@ -2494,20 +2858,31 @@ function buildBack(bp) {
 
     function connectorGroup(row, slot) {
         const names = pinsAt(bp, row, slot)
-        const g = svgEl("g", { transform: `translate(${colXBack(slot)} ${rowY(bp, row)})` })
+        const g = svgEl("g", {
+            transform: `translate(${colXBack(slot)} ${rowY(bp, row)})`,
+            class: "pos", "data-row": row, "data-slot": slot,
+        })
         g.appendChild(svgEl("rect", {
             x: 0.6, y: 2.4, width: CONN_W - 1.2, height: 45, rx: 1.5,
             fill: "#26292d", stroke: "#3a4045", "stroke-width": 0.4,
         }))
         for (let pin = 1; pin <= 17; pin++) {
             const p = pinPos(pin)
-            const net = names ? names[pin - 1] : ""
+            const net = netAt(bp, row, slot, pin)
+            const gnd = pin === GND_PIN
             const key = `${row}${slot}-${String(pin).padStart(2, "0")}`
+            /* With a net picked the rack goes quiet apart from that net: only
+             * the contacts wired to it stay lit, so the wire is visible as a
+             * shape rather than as a list of positions. */
+            const lit = selectedNet ? selectedKeys.has(key) : !!net
+            const dark = selectedNet && !lit
             const c = svgEl("circle", {
                 cx: p.x, cy: p.y, r: PIN_R,
-                fill: net ? "#d8b45a" : "#4a4133",
-                stroke: net ? "#8a6d24" : "#332e26", "stroke-width": 0.25,
-                class: "pin", "data-key": key,
+                fill: dark ? "#2a2723"
+                    : lit ? (gnd ? "#9d9c88" : "#d8b45a") : "#4a4133",
+                stroke: dark ? "#211f1c"
+                    : lit ? (gnd ? "#63645a" : "#8a6d24") : "#332e26",
+                "stroke-width": 0.25, class: "pin", "data-key": key,
             })
             c.style.cursor = "pointer"
             if (selectedPin === key) {
@@ -2515,7 +2890,8 @@ function buildBack(bp) {
                 c.setAttribute("stroke-width", "0.6")
             }
             const title = svgEl("title", {})
-            title.textContent = key + (net ? " · " + net : " · (not read)")
+            title.textContent = key + " · "
+                + (gnd ? "GND (zero rail)" : net || "(not read)")
             c.appendChild(title)
             g.appendChild(c)
         }
@@ -2562,16 +2938,49 @@ function buildBack(bp) {
     }
     backStage.onview = refresh
 
+    /* Where the picked net goes, marked on the coarse layer so the other end
+     * of the wire is findable from zoomed out, where no contacts are drawn. */
+    function drawNetMarks() {
+        netmark.textContent = ""
+        if (!selectedNet || selectedOn.length > MARK_LIMIT) return
+        const seen = new Set()
+        for (const m of selectedOn) {
+            const k = m.row + ":" + m.slot
+            if (seen.has(k)) continue
+            seen.add(k)
+            netmark.appendChild(svgEl("rect", {
+                x: colXBack(m.slot) - 1.2, y: rowY(bp, m.row) - 1.2,
+                width: CONN_W + 2.4, height: ROW_H + 2.4, rx: 2,
+                fill: "none", stroke: "#e8c877", "stroke-width": 1.1,
+                opacity: 0.85,
+            }))
+        }
+    }
+
+    /* A change of selection restyles every contact, so the built ones are
+     * thrown away and rebuilt from the current state rather than patched. */
+    backStage.redraw = () => {
+        detail.textContent = ""
+        backLive.clear()
+        refresh(backStage)
+        drawNetMarks()
+    }
+
     host.addEventListener("click", ev => {
         if (backStage.suppressClick) { backStage.suppressClick = false; return }
-        const t = ev.target.closest?.("circle.pin")
-        if (!t) return
-        selectPin(bp, t.dataset.key)
-        detail.querySelectorAll("circle.pin").forEach(c => {
-            const on = c.dataset.key === selectedPin
-            c.setAttribute("stroke", on ? "#fff" : (c.getAttribute("fill") === "#d8b45a" ? "#8a6d24" : "#332e26"))
-            c.setAttribute("stroke-width", on ? "0.6" : "0.25")
-        })
+        const t = hitAt(ev, "circle.pin")
+        if (t) { selectPin(bp, t.dataset.key); return }
+        if (selectedNet) { selectPin(bp, null) }   /* clicking off lets go */
+    })
+
+    /* Double-clicking the position itself -- not a contact -- opens the board
+     * plugged in on the other side, if one is. */
+    host.addEventListener("dblclick", ev => {
+        if (hitAt(ev, "circle.pin")) return       /* a contact is its own thing */
+        const p = hitAt(ev, ".pos")
+        if (!p) return
+        const rows = boardRowsAt(bp, p.dataset.row, +p.dataset.slot)
+        if (rows) openBoard(bp, rows, +p.dataset.slot)
     })
 
     wireZoomButtons(document.querySelector("#view_back .rack-tools"), backStage)
@@ -2581,20 +2990,39 @@ function buildBack(bp) {
 
 /* ---- what a pin carries ------------------------------------------------- */
 function selectPin(bp, key) {
-    selectedPin = key
-    const m = /^([A-Z])(\d+)-(\d+)$/.exec(key)
     const out = document.getElementById("pin_info")
-    if (!m) { out.textContent = ""; return }
+    const m = key && /^([A-Z])(\d+)-(\d+)$/.exec(key)
+    if (!m) {                                   /* let go of the net */
+        selectedPin = null; selectedNet = ""
+        selectedKeys = new Set(); selectedOn = []
+        out.innerHTML = `<span class=pi-dim>Zoom in to a card position, then `
+            + `click a contact.</span>`
+        if (backStage && backStage.redraw) backStage.redraw()
+        return
+    }
+    selectedPin = key
     const [, row, slot, pin] = m
-    const names = pinsAt(bp, row, +slot) || []
-    const net = names[+pin - 1] || ""
+    const net = netAt(bp, row, +slot, +pin)
     const card = cardAt(bp, row, +slot)
-    const gloss = net ? bp.sigs[net] : null
+
+    /* Light the whole net, not just the contact under the pointer. */
+    selectedNet = canonNet(bp, net)
+    selectedOn = netMembers(bp, selectedNet)
+    selectedKeys = new Set(selectedOn.map(
+        p => `${p.row}${p.slot}-${String(p.pin).padStart(2, "0")}`))
+    selectedKeys.add(key)
+    if (backStage && backStage.redraw) backStage.redraw()
+    const gloss = (net && net !== GND) ? bp.sigs[net] : null
     const docs = (bp.docPins || {})[`${row}${+slot}-${pin}`] || []
 
     const bits = []
     bits.push(`<span class=pi-pos>${row}${slot}·${pin}</span>`)
-    if (net) {
+    if (+pin === GND_PIN) {
+        bits.push(`&nbsp; <span class=pi-net>GND</span>`)
+        bits.push(`<span class=pi-dim> — the zero rail, pin 17 on every board`
+                  + `${net && net !== GND ? "; the scan reads " + net + " here" : ""}`
+                  + `</span>`)
+    } else if (net) {
         bits.push(`&nbsp; <span class=pi-net>${net}</span>`)
         if (gloss && gloss.as && gloss.as !== net)
             bits.push(`<span class=pi-dim> (the schematics spell it ${gloss.as};`
@@ -2603,12 +3031,30 @@ function selectPin(bp, key) {
         bits.push(` <span class=pi-dim>— no net read off the layout here</span>`)
     }
     let line2 = []
+    if (+pin === GND_PIN) {
+        line2.push(`<span class=pi-dim>common to all ${selectedOn.length} `
+                   + `populated positions — not marked on the rack, it would `
+                   + `outline everything</span>`)
+    } else if (selectedOn.length > 1) {
+        const others = selectedOn
+            .filter(p => `${p.row}${p.slot}-${String(p.pin).padStart(2, "0")}` !== key)
+        const shown = others.slice(0, 14).map(p =>
+            `<a href="#back/${p.row}${p.slot}-${String(p.pin).padStart(2, "0")}"`
+            + ` class=netlink>${p.row}${p.slot}·${String(p.pin).padStart(2, "0")}</a>`)
+        line2.push(`wired to <b>${others.length}</b> other contact`
+            + `${others.length > 1 ? "s" : ""}: ` + shown.join(", ")
+            + (others.length > shown.length ? ` <span class=pi-dim>and `
+               + `${others.length - shown.length} more</span>` : ""))
+    } else if (net) {
+        line2.push(`<span class=pi-dim>the only contact the layout gives this `
+                   + `net — the rest of the wire is off the 2A pages</span>`)
+    }
     if (gloss) {
         if (gloss.ch) line2.push(`chapter <b>${gloss.ch}</b>`)
         if (gloss.m) line2.push(gloss.m)
         if (gloss.eq)
             line2.push(`<span class=pi-net>${gloss.as || net} = ${gloss.eq}</span>`)
-    } else if (net) {
+    } else if (net && net !== GND) {
         line2.push(`<span class=pi-dim>not in the signal index —`
                    + ` docs/signals/ covers the reader and channel work, not the whole machine</span>`)
     }
@@ -2629,6 +3075,225 @@ function selectPin(bp, key) {
     out.innerHTML = bits.join("") + "<br>" + (line2.join(" &nbsp;·&nbsp; ") || "")
                     + (line2.length ? "<br>" : "") + where
 }
+
+/* ---- the board sheet ---------------------------------------------------- *
+ * Everything the layout and the manuals know about one card, with the pages
+ * themselves in a frame: ge120.xyz serves the scans and routes by
+ * "#/<volume>/<page>", so a chapter sheet or a catalogue entry can be opened
+ * where it is rather than described second-hand. */
+const GE120 = (window.GE_BACKPLANE_SITE || "https://ge120.xyz/")
+
+const bsEl = id => document.getElementById(id)
+let boardOpen = null
+
+function boardChapters(bp, rows, slot) {
+    /* Which sheets draw this card's logic: take the nets on its pins, ask the
+     * signal index which chapter each belongs to, and rank by how much of the
+     * card points there. A board with no glossed nets -- a filter, a power
+     * card -- simply gets none, which is the honest answer for it. */
+    const tally = new Map()
+    for (const row of rows) {
+        for (const net of (pinsAt(bp, row, slot) || [])) {
+            const g = net && bp.sigs[net]
+            if (!g || !g.ch) continue
+            for (const ch of String(g.ch).split(/[^0-9]+/).filter(Boolean)) {
+                const key = ch.padStart(3, "0")
+                tally.set(key, (tally.get(key) || 0) + 1)
+            }
+        }
+    }
+    return [...tally.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+}
+
+function openBoard(bp, rows, slot) {
+    const man = bp.manual || { chapters: {}, cards: {}, vols: {} }
+    const card = rows.map(r => cardAt(bp, r, slot)).find(c => c && (c.code || c.type))
+    boardOpen = { bp, rows, slot }
+
+    bsEl("bs_pos").textContent = rows.join("+") + slot
+    bsEl("bs_type").textContent = card && card.type ? card.type : "(no card)"
+    bsEl("bs_code").textContent = card && card.code ? card.code : ""
+
+    /* --- left column: what the layout says is in this position --- */
+    const L = bsEl("bs_left")
+    L.textContent = ""
+    const add = (tag, cls, html) => {
+        const e = document.createElement(tag)
+        if (cls) e.className = cls
+        if (html !== undefined) e.innerHTML = html
+        L.appendChild(e)
+        return e
+    }
+    if (card && (card.type || "").toUpperCase() === "COCA") {
+        add("h4", null, "What this is")
+        add("div", null, `A <b>COCA</b> — not a circuit card but the connector `
+            + `the cable loom lands on. It carries no part number on any layout `
+            + `page and neither catalogue lists it; cp06's connector sheets `
+            + `draw it. On the machine it has no blue handle: the board is bare `
+            + `and runs straight into the thick cables that bend away to the `
+            + `side of the panel.`)
+    }
+    add("h4", null, "Position")
+    add("div", null, rows.length > 1
+        ? `backplane rows <b>${rows[0]}</b> and <b>${rows[1]}</b>, position `
+          + `<b>${slot}</b> — one board across the pair`
+        : `backplane row <b>${rows[0]}</b>, position <b>${slot}</b>`)
+    const notes = rows.map(r => cardAt(bp, r, slot)).filter(Boolean)
+        .map(c => c.notes).filter(Boolean)
+    if (notes.length) {
+        add("h4", null, "Layout notes")
+        add("div", "pi-dim", [...new Set(notes)].join("<br>"))
+    }
+
+    for (const row of rows) {
+        const names = pinsAt(bp, row, slot)
+        add("h4", null, `Row ${row} — connector pins`)
+        if (!names) { add("div", "pi-dim", "not read on this layout page"); continue }
+        for (let pin = 1; pin <= 17; pin++) {
+            const net = names[pin - 1]
+            const g = net && bp.sigs[net]
+            const r = add("div", "pinrow" + (net ? "" : " blank"),
+                `<span class=pn>${String(pin).padStart(2, "0")}</span>`
+                + `<span><span class=nt>${net || "—"}</span>`
+                + (g && g.ch ? ` <span class=ch>ch ${g.ch}</span>` : "") + `</span>`)
+            r.title = net ? "Show this contact on the back of the machine"
+                          : "No net read at this pin"
+            if (net) r.addEventListener("click", () => {
+                closeBoard()
+                location.hash = `back/${row}${slot}-${String(pin).padStart(2, "0")}`
+            })
+        }
+    }
+
+    /* --- right column: the pages --- */
+    const chapters = boardChapters(bp, rows, slot)
+    const tabs = bsEl("bs_tabs")
+    tabs.textContent = ""
+    const sources = []
+    const cardPage = card && card.code ? man.cards[card.code] : null
+    if (cardPage)
+        sources.push({
+            label: "Card catalogue",
+            sub: `${cardPage.v} p${cardPage.p}`,
+            vol: cardPage.v, page: cardPage.p,
+            note: cardPage.as && cardPage.as !== card.code
+                ? `matched as ${cardPage.as}` : "",
+        })
+    /* A type with no part number is not a catalogued card -- COCA is the
+     * connector the cable loom lands on, and cp06 draws it on its connector
+     * sheets instead. */
+    const typePage = card && !cardPage && card.type
+        ? (man.types || {})[card.type] : null
+    if (typePage)
+        sources.push({
+            label: `${card.type} connector sheets`,
+            sub: `${typePage.v} p${typePage.p}`,
+            vol: typePage.v, page: typePage.p,
+        })
+    for (const [ch, n] of chapters) {
+        const loc = man.chapters[ch]
+        sources.push({
+            label: `Chapter ${ch}`,
+            /* "~" marks a page nobody has read off the scan: it was filled in
+             * between two anchors on a stretch where the sheets run one page
+             * per chapter. Right 24 times in 25 against the hand-read pages,
+             * and the one miss was four pages out -- so it is a good place to
+             * start, not a citation. */
+            sub: loc ? (loc.src === "between" ? `cp06 ~p${loc.p}` : `cp06 p${loc.p}`)
+                     : "page not indexed",
+            vol: "cp06", page: loc ? loc.p : null,
+            pins: n, src: loc && loc.src,
+        })
+    }
+
+    if (!sources.length) {
+        tabs.innerHTML = `<span class=pi-dim>No manual page is indexed for this `
+            + `position.</span>`
+        showPage(null)
+    } else {
+        sources.forEach((s, i) => {
+            const b = document.createElement("button")
+            b.className = "chip"
+            b.type = "button"
+            b.innerHTML = `${s.label} <small>${s.sub}`
+                + (s.pins ? ` · ${s.pins} pin${s.pins > 1 ? "s" : ""}` : "")
+                + `</small>`
+            if (s.src === "between")
+                b.title = "Page not read off the scan — filled in between two "
+                        + "known chapters, so it may be a page or two out."
+            b.addEventListener("click", () => {
+                tabs.querySelectorAll(".chip").forEach(c =>
+                    c.setAttribute("aria-pressed", c === b ? "true" : "false"))
+                showPage(s)
+            })
+            if (i === 0) b.setAttribute("aria-pressed", "true")
+            tabs.appendChild(b)
+        })
+        const out = document.createElement("a")
+        out.id = "bs_out"
+        out.target = "_blank"
+        out.rel = "noreferrer"
+        out.textContent = "open in the manual explorer ↗"
+        tabs.appendChild(out)
+        showPage(sources[0])
+    }
+
+    bsEl("board_overlay").hidden = false
+    /* the rack behind is not just covered, it is out of reach: no tabbing into
+     * it, no clicking through the scrim */
+    bsEl("views").inert = true
+    bsEl("bs_close").focus()
+}
+
+function showPage(src) {
+    const frame = bsEl("bs_frame"), blank = bsEl("bs_blank"), out = bsEl("bs_out")
+    if (!src || !src.page) {
+        frame.removeAttribute("src")
+        frame.style.visibility = "hidden"
+        blank.hidden = false
+        blank.innerHTML = src
+            ? `Chapter ${src.label.replace(/\D/g, "")} is not in the page index.<br>`
+              + `<span class=pi-dim>The index knows the pages the traces name and `
+              + `those the scan's own text layer gives up; this one is neither. `
+              + `Open cp06 and search for it.</span>`
+            : `Nothing indexed for this position.`
+        if (out) { out.href = GE120 + "#/cp06/78"; out.hidden = !src }
+        return
+    }
+    blank.hidden = true
+    frame.style.visibility = ""
+    /* Frame the scan itself rather than the explorer around it. The explorer
+     * routes on its hash and boots through several fetches before it applies
+     * one, which it does not manage inside a frame -- it comes up on "pick a
+     * manual" however the src is set. The PDF is served plainly and honours
+     * byte ranges, so "#page=N" opens the one page in the browser's own
+     * viewer, with no app to boot. The link out still goes to the explorer,
+     * which is the better place to navigate from once you are there. */
+    const vol = (backplane.manual.vols || {})[src.vol] || {}
+    const base = backplane.manual.pdf || "manuals/"
+    frame.src = vol.f
+        ? GE120 + base + vol.f.split("/").map(encodeURIComponent).join("/")
+          + `#page=${src.page}&view=FitH&toolbar=1`
+        : `${GE120}#/${src.vol}/${src.page}`
+    if (out) { out.hidden = false; out.href = `${GE120}#/${src.vol}/${src.page}` }
+}
+
+function closeBoard() {
+    const o = bsEl("board_overlay")
+    if (o.hidden) return
+    o.hidden = true
+    bsEl("bs_frame").removeAttribute("src")   /* stop the framed page working */
+    bsEl("views").inert = false
+    boardOpen = null
+}
+
+bsEl("bs_close").addEventListener("click", closeBoard)
+bsEl("board_overlay").addEventListener("mousedown", ev => {
+    if (ev.target === bsEl("board_overlay")) closeBoard()
+})
+window.addEventListener("keydown", ev => {
+    if (ev.key === "Escape") closeBoard()
+})
 
 /* Centre the back view on one card position, optionally with a pin picked.
  * This is what makes a backplane reference in the docs -- P32·01 -- something
@@ -2667,9 +3332,12 @@ function showView(which, target) {
         const st = which === "front" ? buildFront(bp) : buildBack(bp)
         /* the stage had no size while hidden, so its fit was meaningless */
         if (st.autofit) st.fit()
-        const at = target && /^([A-Z])(\d{1,2})(?:[-·.](\d{1,2}))?$/.exec(target)
-        if (at && which === "back")
-            focusPosition(bp, at[1], +at[2], at[3] ? +at[3] : 0)
+        const at = target && /^([A-Z]{1,2})(\d{1,2})(?:[-·.](\d{1,2}))?$/.exec(target)
+        if (!at) return
+        if (which === "back")
+            focusPosition(bp, at[1][0], +at[2], at[3] ? +at[3] : 0)
+        else                       /* "#front/EF12" opens that board's sheet */
+            openBoard(bp, at[1].split(""), +at[2])
     }).catch(err => {
         const host = viewPanes[which].querySelector(".rack-stage")
         host.innerHTML = `<p style="padding:2rem;color:#c98b5a">`

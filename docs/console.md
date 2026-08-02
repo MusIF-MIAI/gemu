@@ -390,6 +390,81 @@ connector, `#back/P32-01` picks the pin.
 position are built only when it is both on screen and big enough to aim at.
 Panning rebuilds just what came into view; everything else stays a block.
 
+### 5.3 The board sheet
+
+**Double-click a board** on the front view and everything else goes behind a
+modal sheet for that one card (`Esc`, the ×, or a click outside closes it; the
+rack is `inert` while it is up). `#front/EF12` opens it directly.
+
+The left column is what the layout knows: which rows and position, the card
+mnemonic and part number, any OCR caveats the Atlas recorded for that cell, and
+both connectors' seventeen pins with the net at each and its chapter. Clicking a
+pin closes the sheet and lands on that contact on the back view.
+
+The right column is the manual. Which pages are offered is derived, not
+configured:
+
+- the **card catalogue** entry, found by looking the part number up in the OCR
+  text of cp09 (SCM 3) and cp10F (SCL 1). 75 of the layout's 99 distinct part
+  numbers are found; the rest are OCR-mangled past matching.
+- one tab per **chapter** the card's own nets belong to, ranked by how many of
+  its pins point there. A board whose pins carry no glossed net — a filter, a
+  power card — gets none, and just shows its catalogue page. That is the
+  "picture of the board" case and it falls out of the same rule.
+
+Chapter pages come from three places, and the sheet says which. **27** are
+stated outright in `docs/signals/traces/` ("Chapter 052 (cp06 p129)") and are
+trusted as read. **109** are recovered from cp06's own OCR text layer by taking
+pages that name exactly one chapter and keeping the longest run whose chapter
+number rises with the page — the gate sheets are bound in order, so a number
+that goes backwards is a misread; where these and the hand-read pages overlap
+they never disagree. The remaining **150** are interpolated between anchors,
+across stretches where the chapter gap and the page gap agree and the sheets are
+therefore running one page per chapter. Interpolation stops at any page whose
+own text names a different chapter, and never overwrites a page somebody read.
+
+Interpolated pages are shown as `cp06 ~p201`, with a tooltip saying so, because
+they are a good place to start and not a citation: held out against the
+hand-read anchors the method predicts 24 of 25 exactly, and the miss (chapter
+158) lands four pages off. 286 chapters are located in total; one with no page
+still says so rather than guessing.
+
+**Clicking a contact isolates its net.** The rest of the rack goes dark and
+only the contacts wired to the same signal stay lit, so a wire reads as a shape
+rather than as a list of positions; the read-out names the other ends and links
+to them, and the coarse layer outlines the positions carrying it so the far end
+is findable from zoomed out. Members are gathered on a canonical spelling — the
+schematics' name where the index knows it, otherwise the reading with O/0 and
+I/1 folded together — because the same wire can be read two ways at two pins.
+Clicking off a contact lets the net go.
+
+**Pin 17 is the zero rail on every board.** The layout leaves it blank at 613 of
+the 619 populated positions because it is not a signal anyone routes; at the six
+where the scan did read something it says `ZERO0`, the same rail. It is drawn in
+a cooler tint and reported as GND everywhere, and picking one lights pin 17
+across the rack rather than outlining all 619 positions.
+
+**Double-clicking a position** — anywhere on it but a contact — opens the board
+plugged in on the other side, the same sheet the front view gives. It works at
+any zoom, including fitted, where no contacts are drawn at all.
+
+**COCA positions are drawn naked.** Thirty positions along the edges of rows G
+to N carry no part number on any layout page, and neither catalogue lists them:
+a COCA is not a circuit card but the connector the cable loom lands on, drawn on
+cp06's connector sheets (p80–84). The front view gives them a bare board with no
+blue handle, running straight into thick cables that bend away to the nearer
+side of the panel, and their sheet offers the connector sheets in place of a
+catalogue entry.
+
+**What is framed is the scan, not the explorer.** ge120.xyz renders its PDFs
+client-side and routes on `#/<volume>/<page>`, but it does not apply that route
+inside a frame — it comes up on "pick a manual" however the `src` is set, which
+is reproducible headless with and without virtual time. The PDFs themselves are
+served plainly and honour byte ranges, so the sheet frames
+`manuals/<file>#page=N` and the browser's own viewer opens the one page. The
+"open in the manual explorer ↗" link still goes to the explorer, which is the
+better place to navigate on to contents, thumbnails and search.
+
 The data is baked by `console/wasm/gen-backplane.py` into `backplane.js`, which
 is committed because the Atlas CSVs live outside this repo. The generator reads
 two independent sources and says so when they differ: the Atlas names the
