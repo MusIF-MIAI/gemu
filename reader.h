@@ -9,7 +9,8 @@ struct ge;
 
 /*
  * The integrated card reader on connector 2 / channel 1, modelled signal-by-
- * signal against the COCA connector (see docs/signals.md). The data path
+ * signal against the COCA connector (see docs/signals/01-coca-connector.md).
+ * The data path
  * (lu08/fini/data) is the working base; the remaining 1-bit fields are the
  * other COCA pins, each a discrete modelled wire (reader->CPU status and
  * CPU->reader command/mode). They are added inert and wired up phase by phase.

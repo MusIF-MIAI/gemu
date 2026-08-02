@@ -850,7 +850,7 @@ SIG(ED91A0) { return !ED91A(ge); }
 SIG(AITE)  { return ge->console_switches.SITE; }
 SIG(AITEA) { return !AITE(ge); }
 
-/* RI — integrated card reader on channel 1 (COCA pins; see docs/signals.md §1). */
+/* RI — integrated card reader on channel 1 (COCA pins; see docs/signals/01-coca-connector.md). */
 SIG(LU081) { return reader_get_LU08(ge); }       /* LU08N : char-ready strobe   */
 SIG(LUPO1) { return reader_get_LUPO1(ge); }      /* LUPOR : reader free / ready */
 SIG(FINI1) { return reader_get_FINI1(ge); }      /* FININ : end-of-read         */
