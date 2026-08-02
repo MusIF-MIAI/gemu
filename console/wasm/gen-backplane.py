@@ -30,6 +30,23 @@ SLOTS = 40
 PINS = 17
 
 
+# Card types the scans read with an H where the machine has an M -- the 1968
+# typeface puts the two close enough that the OCR takes one for the other.
+# Each of these is corroborated: ALAM2A and LOSE2M appear under their M
+# spelling elsewhere in the layout itself (7 and 18 times), AMPL2A and TEME2A
+# are written that way in docs/hardware-options.md and
+# backplane_layout_verified.md, and MAME2A is the machine's owner reading the
+# card. Listed one by one rather than replacing every H, so a type that really
+# does carry one is not quietly rewritten.
+TYPE_FIX = {
+    "AHPL2A": "AMPL2A",
+    "ALAH2A": "ALAM2A",
+    "HAME2A": "MAME2A",
+    "LOSE2H": "LOSE2M",
+    "TEHE2A": "TEME2A",
+}
+
+
 def read_atlas(atlas_dir):
     """-> cards[row][slot] = {code,type,notes}, pins[row][slot] = [17 names]."""
     cards, pins = {}, {}
@@ -48,6 +65,7 @@ def read_atlas(atlas_dir):
                 code = (rec.get("card_code") or "").strip()
                 ctype = (rec.get("card_type") or "").strip()
                 notes = (rec.get("notes") or "").strip()
+                ctype = TYPE_FIX.get(ctype, ctype)
                 if any(names) or code or (ctype and ctype != "//////"):
                     pins[row][slot] = names
                     cards[row][slot] = {"code": code, "type": ctype,

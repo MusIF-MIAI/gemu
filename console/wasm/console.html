@@ -2461,11 +2461,21 @@ const isOption = c => !!(c && (c.type || "").indexOf("*") === 0)
 /* Two boards in the machine are not the usual blue: Q+R 30 and 31 have a dark
  * olive-brown face. Observed, not derived -- the layout says nothing about
  * colour, so it is recorded here against the position. */
+const OLIVE = { face: "#5b5733", lip: "#7c7748", seam: "#3f4a2c" }
 const ODD_FACE = {
-    "QR30": { face: "#5b5733", lip: "#7c7748", seam: "#3f4a2c" },
-    "QR31": { face: "#5b5733", lip: "#7c7748", seam: "#3f4a2c" },
+    "QR30": OLIVE,   /* 0610002J */
+    "QR31": OLIVE,   /* 0610002J */
+    "IL32": OLIVE,   /* 0610055Y -- a different card, so this is not a
+                      * property of the type: it is per position */
 }
 const oddFace = (rows, slot) => ODD_FACE[`${rows}${slot}`] || null
+
+/* Q+R 21 is the rotary switch card (0610051X, "rotary SW 51X" on the layout
+ * sheet): blue at the bottom like any other board, grey up top, with a black
+ * thumbwheel mounted along the card and the selected digit showing in white.
+ * It is set by hand on the machine and gemu does not read it, so it is drawn
+ * at its resting zero. */
+const ROTARY_AT = "QR21", ROTARY_DIGIT = "0"
 const strapAt = (bp, row, slot) =>
     ((bp.manual && bp.manual.straps && bp.manual.straps.at) || {})[`${row}${slot}`]
     || null
@@ -2507,10 +2517,15 @@ let frontStage = null
 function buildFront(bp) {
     const host = document.getElementById("front_stage")
     if (frontStage) return frontStage
-    /* MARGIN either side has to hold the frame uprights and the cable ends */
+    /* MARGIN either side has to hold the frame uprights and the cable ends.
+     * The cabinet cover overhangs all of it -- it is the full width of the
+     * machine, and the side panels that would fill that width are not in this
+     * view -- so the scene is given room above and beyond the frame. */
+    const TOP_LIFT = 34, SIDE_LIFT = 26
     const world = {
-        x: 0, y: 0, w: rackW + 2 * MARGIN,
-        h: rackH(bp) + 2 * MARGIN,
+        x: -SIDE_LIFT, y: -TOP_LIFT,
+        w: rackW + 2 * MARGIN + 2 * SIDE_LIFT,
+        h: rackH(bp) + 2 * MARGIN + TOP_LIFT,
     }
     frontStage = makeStage(host, world, {
         readout: document.getElementById("front_zoom"),
@@ -2680,11 +2695,41 @@ function buildFront(bp) {
                     cocaAt.push({ x: x + COL_W / 2, y: sy + sh / 2, slot, tier: ti })
                 } else {
                 const odd = oddFace(spans ? top + bot : rowOf, slot)
+                const rotary = `${spans ? top + bot : rowOf}${slot}` === ROTARY_AT
                 board.appendChild(svgEl("rect", {
                     x, y: sy, width: COL_W, height: sh, rx: 1.5,
                     fill: odd ? odd.face : (spans ? "url(#boardface)" : tint),
                     stroke: odd ? "#3c3a20" : "#2f5878", "stroke-width": 0.6,
                 }))
+                if (rotary) {
+                    const gh = sh * 0.44
+                    board.appendChild(svgEl("rect", {   /* the grey head */
+                        x, y: sy, width: COL_W, height: gh, rx: 1.5,
+                        fill: "#8b9095", stroke: "#5f6468", "stroke-width": 0.6,
+                    }))
+                    /* the thumbwheel, lying along the card */
+                    const wx = x + COL_W / 2, wy = sy + gh * 0.52
+                    const ww = COL_W * 0.62, wh = gh * 0.62
+                    board.appendChild(svgEl("rect", {
+                        x: wx - ww / 2, y: wy - wh / 2, width: ww, height: wh,
+                        rx: ww * 0.34, fill: "#17181a",
+                        stroke: "#050506", "stroke-width": 0.5,
+                    }))
+                    for (let k = -2; k <= 2; k++)       /* the knurling */
+                        board.appendChild(svgEl("line", {
+                            x1: wx - ww / 2 + 0.7, y1: wy + k * wh * 0.17,
+                            x2: wx + ww / 2 - 0.7, y2: wy + k * wh * 0.17,
+                            stroke: "#3a3d41", "stroke-width": 0.35,
+                        }))
+                    const dg = svgEl("text", {
+                        class: "b-slot",
+                        x: wx, y: wy + 1.7, "text-anchor": "middle",
+                        fill: "#f2f4f6", "font-size": 4.6,
+                        "font-family": "monospace",
+                    })
+                    dg.textContent = ROTARY_DIGIT
+                    board.appendChild(dg)
+                }
                 /* the extractor lip along the top, and the seam of the board
                  * inside its handle -- what you actually see looking at a row */
                 board.appendChild(svgEl("rect", {
@@ -2733,7 +2778,8 @@ function buildFront(bp) {
                 board.appendChild(code)
                 const tag = svgEl("text", {
                     class: "b-slot",
-                    x: x + COL_W / 2, y: sy + 12,
+                    /* clear of the thumbwheel on the rotary card */
+                    x: x + COL_W / 2, y: sy + (rotary ? sh * 0.44 + 11 : 12),
                     "text-anchor": "middle", fill: "#20303a",
                     "font-size": 5.2, "font-family": "monospace",
                 })
@@ -2750,7 +2796,10 @@ function buildFront(bp) {
                           + (fit.type ? ` — ${fit.type}`
                              + (fit.code ? ` (${fit.code})` : "") : "")
                         : `${card.type || "?"}`
-                          + `${card.code ? " (" + card.code + ")" : ""}`)
+                          + `${card.code ? " (" + card.code + ")" : ""}`
+                          + (rotary ? ` — rotary switch, set to `
+                             + `${ROTARY_DIGIT} by hand; gemu does not read it`
+                             : ""))
                     + " — double-click for the board"
                 board.appendChild(title)
                 g.appendChild(board)
@@ -2849,6 +2898,42 @@ function buildFront(bp) {
                 fill: "#4c514e", stroke: "#a8ada9", "stroke-width": 0.35,
             }))
     }
+    /* A thinner bar closes the top of the cage, and above it the cabinet's
+     * own cover: a broad dark blue band, the console front's #5a7bb3 taken
+     * down to what the top of the machine reads as. */
+    {
+        const x0 = frameInner(true) - FRAME_W
+        const x1 = frameInner(false) + FRAME_W
+        const barY = MARGIN - 24
+        frame.appendChild(svgEl("rect", {
+            x: x0, y: barY, width: x1 - x0, height: 5.5, rx: 1.2,
+            fill: "#8e9490", stroke: "#5d625f", "stroke-width": 0.7,
+        }))
+        frame.appendChild(svgEl("rect", {
+            x: x0, y: barY + 0.8, width: x1 - x0, height: 1.6,
+            fill: "#b6bbb7", opacity: 0.5,
+        }))
+
+        const cov = svgEl("linearGradient", { id: "topcover",
+            x1: "0", y1: "0", x2: "0", y2: "1" })
+        cov.appendChild(svgEl("stop", { offset: "0",   "stop-color": "#3b4f72" }))
+        cov.appendChild(svgEl("stop", { offset: "0.3", "stop-color": "#2c3d5b" }))
+        cov.appendChild(svgEl("stop", { offset: "1",   "stop-color": "#1d2a41" }))
+        frame.appendChild(cov)
+        /* wider than the cage on both sides: this is the width of the
+         * machine, sides and all, and the sides are not drawn here */
+        const covH = 50, over = 24
+        frame.appendChild(svgEl("rect", {
+            x: x0 - over, y: barY - covH - 2, width: x1 - x0 + over * 2,
+            height: covH, rx: 1.5, fill: "url(#topcover)",
+            stroke: "#16202f", "stroke-width": 1,
+        }))
+        frame.appendChild(svgEl("rect", {         /* the light along its edge */
+            x: x0 - over, y: barY - covH - 2, width: x1 - x0 + over * 2,
+            height: 3.5, rx: 1, fill: "#5a7bb3", opacity: 0.5,
+        }))
+    }
+
     /* The row letters are not printed anywhere: somebody went down the
      * right-hand panel with a marker and wrote them on. Drawing them as text
      * would put whatever face the browser happens to have on a hand-lettered

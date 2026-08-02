@@ -361,6 +361,15 @@ fitted, 246 of them across two rows. Scroll to zoom, drag to pan; the part
 number and slot label appear once the zoom makes them legible. No controls —
 looking only.
 
+Five card types are corrected on the way in, where the scans read an **H** for
+the machine's **M** — the 1968 typeface puts the two close enough that the OCR
+takes one for the other. `ALAH2A`→`ALAM2A` and `LOSE2H`→`LOSE2M` are settled by
+the layout itself, which spells both the other way 7 and 18 times over;
+`AHPL2A`→`AMPL2A` and `TEHE2A`→`TEME2A` by `docs/hardware-options.md` and
+`backplane_layout_verified.md`; `HAME2A`→`MAME2A` by the machine's owner reading
+the card. They are listed one by one rather than replacing every H, so a type
+that really does carry one is not quietly rewritten.
+
 The proportions are measured off the photographs rather than guessed: the board
 handles repeat about every 13.7 px across a cage that steps about 110 px per
 tier, so a card position is roughly one to eight — thin and tall.
@@ -392,9 +401,17 @@ The box is drawn as the photographs show it: a glass cover that throws the wire
 mass behind it out of focus, with two round ports, one near each end, through
 which the same wires read sharp — the brass-ringed one at the top and the dark
 red one at the foot. Light metal clamps with their screws sit across the top and
-a rail runs under it. Q+R 30 and 31 carry a dark olive-brown face rather than
-the usual blue; that is observed, not derived, and recorded against the position
-in `console.html`. With 40 at the left on the
+a rail runs under it. Q+R 30 and 31 and I+L 32 carry a dark olive-brown face rather
+than the usual blue; that is observed, not derived, and recorded against the
+position in `console.html`. **Q+R 21 is the rotary switch card** — `MAME2A`, `0610051X`, which the layout
+sheet calls *rotary SW 51X*: blue at the bottom like any other board, grey up top, with a
+black thumbwheel mounted along the card and the selected digit showing in white.
+On the machine it is set by hand; gemu does not read it, so it is drawn at its
+resting **0**.
+
+The odd faces are per position and not per card type — Q/R 30–31
+are `0610002J` and I+L 32 is `0610055Y`, and the other `0610055Y` in the machine
+(I+L 16) is ordinary blue. With 40 at the left on the
 front view, that puts one near the left edge and the other over towards the
 right, flanking the boards between them — the arrangement in the photographs.
 Each is a dark red core mat behind a perspex cover between light metal brackets,
@@ -531,8 +548,13 @@ survey has nothing to record.
 
 Both cables leave the **middle of the board face** — they are the board's own
 conductors carrying on, not something plugged into its top — and run to the side
-of the machine. The **frame is drawn** — broad uprights either side and the cross-bars that run
-under rows **D**, **H**, **N** and **P**. That last one breaks the rhythm: the
+of the machine. The **frame is drawn** — broad uprights either side, the cross-bars that run
+under rows **D**, **H**, **N** and **P**, a thinner bar closing the top of the
+cage, and above that the cabinet's own cover: a deep dark blue band, the
+console front's `#5a7bb3` taken down to what the top of the machine reads as,
+with the light catching its leading edge. It overhangs the cage on both sides
+because it is the width of the whole machine, and the side panels that would
+fill that width are not in this view. That last one breaks the rhythm: the
 bars would otherwise fall every two tiers, but P sits one tier lower down the
 run because the core stores stand in the rows beneath it and the bar has to
 clear them. With the frame in place the difference between the two cables is
