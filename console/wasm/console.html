@@ -2557,7 +2557,10 @@ function buildFront(bp) {
     const isFilt = c => {
         if (!c) return false
         const t = (c.type || "").toUpperCase().replace(/1/g, "I").replace(/0/g, "O")
-        return t.startsWith("FILT")
+        /* cp09 names the card FILI2B, which is what the verified catalogue
+         * calls it; the layout drawing reads FILT. Accept either, and the
+         * workbook's own label as well. */
+        return t.startsWith("FILT") || t.startsWith("FILI")
             || ["FILTRI", "CONN"].indexOf(c.sheetLabel || "") >= 0
     }
     const cocaAt = [], filtAt = []

@@ -30,21 +30,78 @@ SLOTS = 40
 PINS = 17
 
 
-# Card types the scans read with an H where the machine has an M -- the 1968
-# typeface puts the two close enough that the OCR takes one for the other.
-# Each of these is corroborated: ALAM2A and LOSE2M appear under their M
-# spelling elsewhere in the layout itself (7 and 18 times), AMPL2A and TEME2A
-# are written that way in docs/hardware-options.md and
-# backplane_layout_verified.md, and MAME2A is the machine's owner reading the
-# card. Listed one by one rather than replacing every H, so a type that really
-# does carry one is not quietly rewritten.
-TYPE_FIX = {
-    "AHPL2A": "AMPL2A",
-    "ALAH2A": "ALAM2A",
-    "HAME2A": "MAME2A",
-    "LOSE2H": "LOSE2M",
-    "TEHE2A": "TEME2A",
+# A card name never contains a 0 or a 1: across all 74 entries read by hand off
+# cp09 the only digits are the 2 in "2A" and one 8. So a digit like that in a
+# type is the scan reading O or I, and folding it back is safe. It only matters
+# for the handful of codes cp09_verified.json does not cover -- everywhere else
+# the verified name replaces the type outright.
+#
+# There used to be an H->M table here as well, on the reasoning that the 1968
+# typeface confuses the two. cp09 settled four of its five entries and it had
+# two of them wrong: AHPL2A is AMFL2A, not AMPL2A, and LOSE2H is LOSE2G, not
+# LOSE2M. The corroboration looked good and was not -- hardware-options.md was
+# following the same bad reading, and LOSE2M does exist, at a different code.
+# So the inference is gone; an uncovered type now reads as the scan has it.
+def fold_type(t):
+    return t.replace("0", "O").replace("1", "I") if t and not t.startswith(("*", "/")) else t
+
+
+# Names the machine's owner has corrected over the verified catalogue, with
+# the card in hand. cp09_verified.json is itself a careful reading of a poor
+# scan, so it is not the last word: 0610025 reads FILI2B there and the card is
+# a FILT -- a filter, which is what the position is for.
+OWNER_NAME = {
+    "0610025": "FILT2B",   # catalogue reads FILI2B; the card is a filter
+    "0610002": "AMPL2A",   # catalogue reads AMFL2A; the card carries the
+                           # amplifiers and is named for them. The suffix is
+                           # the catalogue's -- the page shows 2A or 2B and
+                           # which of the two this code is has not been settled
+    "0610045": "LOSE2H",   # catalogue reads LOSE2G. The H is real, which is
+                           # the best argument yet for having dropped the
+                           # blanket H->M table: it would have broken this one
+    "0610047": "LOSE2M",   # catalogue agrees, kept here beside its neighbour
 }
+
+
+def read_verified(atlas_dir):
+    """The circuit-card catalogue, read by hand off cp09.
+
+    Keyed by the part number's first seven digits (0610002 for 0610002J), with
+    the card's real name and the page its entry starts on.  The Atlas CSVs are
+    OCR of the layout drawing and mangle the names badly -- 1 for I, 0 for O,
+    and worse -- so where this file covers a code it decides the name, and the
+    Atlas type is only a fallback.  The code is the reliable key; the type
+    printed beside it is not.
+    """
+    path = os.path.join(atlas_dir, "cp09_verified.json")
+    if not os.path.exists(path):
+        return {}
+    out = {}
+    for code7, rec in json.load(open(path)).items():
+        page = re.sub(r"[^0-9]", "", rec.get("page") or "")
+        out[code7] = {
+            "name": OWNER_NAME.get(code7, (rec.get("name") or "").upper()),
+            "page": int(page) if page else None,
+            "dwg": rec.get("dwg") or "",
+        }
+    return out
+
+
+def apply_verified(cards, verified):
+    """Name every card from its part number."""
+    fixed = kept = 0
+    for row in cards:
+        for card in cards[row].values():
+            code = card.get("code") or ""
+            rec = verified.get(code[:7])
+            if not rec or not rec["name"]:
+                kept += 1
+                continue
+            if card.get("type") != rec["name"]:
+                card["wasType"] = card.get("type", "")
+                card["type"] = rec["name"]
+                fixed += 1
+    return fixed, kept
 
 
 def read_atlas(atlas_dir):
@@ -65,7 +122,7 @@ def read_atlas(atlas_dir):
                 code = (rec.get("card_code") or "").strip()
                 ctype = (rec.get("card_type") or "").strip()
                 notes = (rec.get("notes") or "").strip()
-                ctype = TYPE_FIX.get(ctype, ctype)
+                ctype = fold_type(ctype)
                 if any(names) or code or (ctype and ctype != "//////"):
                     pins[row][slot] = names
                     cards[row][slot] = {"code": code, "type": ctype,
@@ -572,6 +629,29 @@ def index_fitted(manual, cards, pins):
         manual["fitted"] = fitted
 
 
+def catalogue_pages(manual, code7s):
+    """Where cp09 actually prints each part number, from its text layer.
+
+    Skips the first dozen pages, which are the catalogue's own index and name
+    every code. Then walks the codes in order and keeps a page only if it moves
+    forward by a sensible step -- the catalogue is bound in code order, so a
+    page that goes backwards or leaps is the number turning up in a
+    cross-reference rather than on its own entry.
+    """
+    flat = manual.get("_flat") or {}
+    cp09 = {n: t for (slug, n), t in flat.items() if slug == "cp09"}
+    out, last = {}, 0
+    for code7 in code7s:
+        hit = next((n for n in sorted(cp09) if n > 12 and code7 in cp09[n]), None)
+        if hit is None:
+            continue
+        if hit <= last or (last and hit - last > 20):
+            continue
+        out[code7] = hit
+        last = hit
+    return out
+
+
 def index_types(manual, types, docs_dir):
     """Pages for card types that carry no part number at all.
 
@@ -624,11 +704,18 @@ def main():
     args = ap.parse_args()
 
     cards, pins = read_atlas(args.atlas)
+    verified = read_verified(args.atlas)
     layout = read_tier_layout(args.atlas)
     if layout:
         agree, differ, filled = apply_tier_layout(cards, layout)
         print(f"layout: workbook agrees with the Atlas at {agree} positions, "
               f"overrides {differ}, fills {filled} the Atlas left blank")
+    if verified:
+        # after the workbook has settled the codes, since the name follows it
+        renamed, untouched = apply_verified(cards, verified)
+        print(f"names: {len(verified)} cards read by hand off cp09; "
+              f"{renamed} positions renamed from their part number, "
+              f"{untouched} left with the layout's own type")
     glosses = read_glosses(args.docs)
     located = read_locations(args.docs)
     equations, trace_locs = read_traces(args.docs)
@@ -698,7 +785,23 @@ def main():
         index_types(manual, uncoded - coded, args.docs)
         index_straps(manual, read_straps(os.path.join(here, "../..")))
         index_fitted(manual, cards, pins)
+        # before index_cards, which consumes the flattened catalogue text
+        text_pages = catalogue_pages(manual, sorted(verified))
         index_cards(manual, codes)
+        # Catalogue pages: the verified file's own column drifts through the
+        # middle of the volume -- 0610045 is printed on 158, not the 143 it
+        # gives -- so where the scan's text layer finds the part number past
+        # the index it is preferred, provided that keeps the catalogue in code
+        # order and does not jump. Both pages the machine's owner checked came
+        # out on the text layer's side.
+        for code in codes:
+            rec = verified.get(code[:7])
+            if not rec:
+                continue
+            page = text_pages.get(code[:7]) or rec["page"]
+            if page:
+                manual["cards"][code] = {"v": "cp09", "p": page,
+                                         "dwg": rec["dwg"]}
         manual.pop("_flat_cp06", None)
         manual.pop("_flat_cp10F", None)
 

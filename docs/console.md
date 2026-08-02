@@ -361,14 +361,46 @@ fitted, 246 of them across two rows. Scroll to zoom, drag to pan; the part
 number and slot label appear once the zoom makes them legible. No controls —
 looking only.
 
-Five card types are corrected on the way in, where the scans read an **H** for
-the machine's **M** — the 1968 typeface puts the two close enough that the OCR
-takes one for the other. `ALAH2A`→`ALAM2A` and `LOSE2H`→`LOSE2M` are settled by
-the layout itself, which spells both the other way 7 and 18 times over;
-`AHPL2A`→`AMPL2A` and `TEHE2A`→`TEME2A` by `docs/hardware-options.md` and
-`backplane_layout_verified.md`; `HAME2A`→`MAME2A` by the machine's owner reading
-the card. They are listed one by one rather than replacing every H, so a type
-that really does carry one is not quietly rewritten.
+**The card names come from the part number, not from the layout drawing.**
+`atlas/cp09_verified.json` is the circuit-card catalogue read by hand off cp09 —
+74 entries keyed by the part number's first seven digits, each with the card's
+real name and the page its entry starts on. The Atlas CSVs are OCR of the
+layout drawing and mangle the names badly, so where the catalogue covers a code
+it decides the name and the Atlas type is only a fallback. That renames 208
+positions: `AND02A`→`ANDO2A`, `1NVE2A`→`INVE2A`, `L1R12A`→`LIRI2A`,
+`LOG12C`→`CISP2C`, and so on. The catalogue's page number is used for the
+board sheet's *Card catalogue* tab too, in place of the page found by searching
+the OCR text.
+
+The catalogue is itself a careful reading of a poor scan, so it is not the last
+word either. Corrections the machine's owner makes with the manual open
+override it, in `OWNER_NAME`: `0610025` is **`FILT2B`** not `FILI2B` (it is a
+filter, which is what the position is for), `0610002` is **`AMPL2A`** not
+`AMFL2A` (the card carries the amplifiers and is named for them), and `0610045`
+is **`LOSE2H`** not `LOSE2G` — that `H` is real, which is the best argument yet
+for having dropped the blanket H→M table, since it would have broken this one.
+
+**The catalogue's page column drifts** through the middle of the volume: it puts
+`0610045` on 143 where the card is printed on 158. So the page comes from where
+the scan's text layer finds the part number, past the index, and only where that
+keeps the catalogue in code order without jumping — the volume is bound in code
+order, so a page that goes backwards or leaps is the number appearing in a
+cross-reference rather than on its own entry. Both pages checked against the
+manual came out on the text layer's side.
+
+No verified name contains a `0` or a `1` — across all 74 the only digits are the
+`2` in `2A` and one `8` — so a digit like that in a type is the scan reading O
+or I, and it is folded back. That only matters for the seven codes the
+catalogue does not cover; everywhere else the verified name replaces the type
+outright.
+
+> There used to be an H→M correction table here as well, on the reasoning that
+> the 1968 typeface confuses the two. cp09 settled four of its five entries and
+> **two were wrong**: `AHPL2A` is `AMFL2A`, not `AMPL2A`, and `LOSE2H` is
+> `LOSE2G`, not `LOSE2M`. The corroboration had looked good and was not —
+> `hardware-options.md` was following the same bad reading, and `LOSE2M` does
+> exist, at a different code. The inference is gone; an uncovered type now reads
+> as the scan has it, disagreements and all.
 
 The proportions are measured off the photographs rather than guessed: the board
 handles repeat about every 13.7 px across a cage that steps about 110 px per
